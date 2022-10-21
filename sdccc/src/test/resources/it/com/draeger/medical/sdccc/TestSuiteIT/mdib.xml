@@ -1,0 +1,367 @@
+<!--
+  ~ This Source Code Form is subject to the terms of the MIT License.
+  ~ Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+  ~
+  ~ SPDX-License-Identifier: MIT
+  -->
+
+<msg:GetMdibResponse xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+                     xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
+                     xmlns:s12="http://www.w3.org/2003/05/soap-envelope"
+                     xmlns:wsa="http://www.w3.org/2005/08/addressing" MdibVersion="115" SequenceId="urn:uuid:e739e01e-e072-4f64-9e9b-8e0112d02ba3">
+    <msg:Mdib xmlns:dpws="http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01"
+              xmlns:ext="http://standards.ieee.org/downloads/11073/11073-10207-2017/extension"
+              xmlns:mdpws="http://standards.ieee.org/downloads/11073/11073-20702-2016"
+              xmlns:sdc="http://standards.ieee.org/downloads/11073/11073-20701-2018"
+              xmlns:wsd="http://docs.oasis-open.org/ws-dd/ns/discovery/2009/01"
+              xmlns:wse="http://schemas.xmlsoap.org/ws/2004/08/eventing"
+              xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MdibVersion="115" SequenceId="urn:uuid:e739e01e-e072-4f64-9e9b-8e0112d02ba3">
+        <pm:MdDescription DescriptionVersion="0">
+            <pm:Mds Handle="mds0" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:MdsDescriptor">
+                <pm:Type Code="130535">
+                    <pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
+                </pm:Type>
+                <pm:AlertSystem Handle="asy.mds0" DescriptorVersion="0" SafetyClassification="MedA" SelfCheckPeriod="P0Y0M0DT0H0M5.0S" xsi:type="pm:AlertSystemDescriptor">
+                    <pm:AlertCondition Handle="ac0.mds0" DescriptorVersion="0" SafetyClassification="MedA" Kind="Phy" Priority="Me" xsi:type="pm:AlertConditionDescriptor">
+                        <pm:Type Code="262108‬">
+                            <pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Source>mds0</pm:Source>
+                    </pm:AlertCondition>
+                    <pm:AlertSignal Handle="as0.mds0" DescriptorVersion="0" SafetyClassification="MedA" ConditionSignaled="ac0.mds0" Manifestation="Aud" Latching="false" xsi:type="pm:AlertSignalDescriptor"/>
+                </pm:AlertSystem>
+                <pm:Sco Handle="sco.mds0" DescriptorVersion="0" xsi:type="pm:ScoDescriptor">
+                    <pm:Operation Handle="actop.mds0_sco_0" DescriptorVersion="0" SafetyClassification="MedC" OperationTarget="mds0" MaxTimeToFinish="P0Y0M0DT0H0M1.0S" Retriggerable="true" xsi:type="pm:ActivateOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="196279">
+                            <pm:ConceptDescription Lang="en-US">dummy activate operation</pm:ConceptDescription>
+                        </pm:Type>
+                    </pm:Operation>
+                    <pm:Operation Handle="AP__ON" DescriptorVersion="0" OperationTarget="mds0" xsi:type="pm:ActivateOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="193820"/>
+                    </pm:Operation>
+                    <pm:Operation Handle="AP__CANCEL" DescriptorVersion="0" OperationTarget="mds0" xsi:type="pm:ActivateOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="193821"/>
+                    </pm:Operation>
+                    <pm:Operation Handle="DN_SET" DescriptorVersion="0" OperationTarget="DN_METRIC" xsi:type="pm:SetStringOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="DN_SET" CodingSystem="urn:oid:1.2.3.4.5">
+                            <pm:CodingSystemName>Very cool coding system</pm:CodingSystemName>
+                        </pm:Type>
+                    </pm:Operation>
+                    <pm:Operation Handle="SET_NTP_SRV_mds0" DescriptorVersion="0" OperationTarget="CL.mds0" xsi:type="pm:SetStringOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="194041"/>
+                    </pm:Operation>
+                    <pm:Operation Handle="SET_TZONE_mds0" DescriptorVersion="0" OperationTarget="CL.mds0" xsi:type="pm:SetStringOperationDescriptor">
+                        <ext:Extension/>
+                        <pm:Type Code="194040"/>
+                    </pm:Operation>
+                    <pm:Operation Handle="opSetPatCtx" DescriptorVersion="0" OperationTarget="PC.mds0" xsi:type="pm:SetContextStateOperationDescriptor">
+                        <ext:Extension/>
+                    </pm:Operation>
+                </pm:Sco>
+                <pm:MetaData/>
+                <pm:SystemContext Handle="SC.mds0" DescriptorVersion="0" xsi:type="pm:SystemContextDescriptor">
+                    <pm:PatientContext Handle="PC.mds0" DescriptorVersion="0" xsi:type="pm:PatientContextDescriptor"/>
+                    <pm:LocationContext Handle="LC.mds0" DescriptorVersion="0" xsi:type="pm:LocationContextDescriptor"/>
+                </pm:SystemContext>
+                <pm:Clock Handle="CL.mds0" DescriptorVersion="0" xsi:type="pm:ClockDescriptor">
+                    <pm:TimeProtocol Code="532224">
+                        <pm:ConceptDescription Lang="en-us">None
+                        </pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                    <pm:TimeProtocol Code="532225">
+                        <pm:ConceptDescription Lang="en-us">NTPv4
+                        </pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                    <pm:TimeProtocol Code="532234">
+                        <pm:ConceptDescription Lang="en-us">EBWW
+                        </pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                </pm:Clock>
+                <pm:Vmd Handle="vmd0" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:VmdDescriptor">
+                    <pm:Type Code="130536">
+                        <pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:AlertSystem Handle="asy.vmd0" DescriptorVersion="0" SafetyClassification="MedA" SelfCheckPeriod="P0Y0M0DT0H0M5.0S" xsi:type="pm:AlertSystemDescriptor">
+                        <pm:AlertCondition Handle="ac0.vmd0.mds0" DescriptorVersion="0" SafetyClassification="MedA" Kind="Phy" Priority="Me" xsi:type="pm:AlertConditionDescriptor">
+                            <pm:Type Code="262108‬">
+                                <pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>mds0</pm:Source>
+                        </pm:AlertCondition>
+                        <pm:AlertSignal Handle="as0.vmd0.mds0" DescriptorVersion="0" SafetyClassification="MedA" ConditionSignaled="ac0.vmd0.mds0" Manifestation="Aud" Latching="false" xsi:type="pm:AlertSignalDescriptor"/>
+                    </pm:AlertSystem>
+                    <pm:Sco Handle="sco.vmd0" DescriptorVersion="0" xsi:type="pm:ScoDescriptor"/>
+                    <pm:Channel Handle="ch0.vmd0" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:ChannelDescriptor">
+                        <pm:Type Code="130637">
+                            <pm:ConceptDescription Lang="en-US">static not settable metrics</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric Handle="numeric.ch0.vmd0" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1" xsi:type="pm:NumericMetricDescriptor">
+                            <pm:Type Code="196174">
+                                <pm:ConceptDescription Lang="en-US">dummy static numeric metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:TechnicalRange Lower="1" Upper="100" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric Handle="enumstring.ch0.vmd0" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" xsi:type="pm:EnumStringMetricDescriptor">
+                            <pm:Type Code="196175">
+                                <pm:ConceptDescription Lang="en-US">dummy static enum string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:AllowedValue>
+                                <pm:Value>ON</pm:Value>
+                                <pm:Type Code="192834">
+                                    <pm:ConceptDescription Lang="en-US">ON</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                            <pm:AllowedValue>
+                                <pm:Value>OFF</pm:Value>
+                                <pm:Type Code="192835">
+                                    <pm:ConceptDescription Lang="en-US">OFF</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                        </pm:Metric>
+                        <pm:Metric Handle="string.ch0.vmd0" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" xsi:type="pm:StringMetricDescriptor">
+                            <pm:Type Code="196176">
+                                <pm:ConceptDescription Lang="en-US">dummy static string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                        </pm:Metric>
+                    </pm:Channel>
+                    <pm:Channel Handle="ch1.vmd0" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:ChannelDescriptor">
+                        <pm:Type Code="130537">
+                            <pm:ConceptDescription Lang="en-US">dynamic (periodic changed) not settable metrics</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric Handle="numeric.ch1.vmd0" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Msrmt" MetricAvailability="Cont" Resolution="0.1" xsi:type="pm:NumericMetricDescriptor">
+                            <pm:Type Code="196074">
+                                <pm:ConceptDescription Lang="en-US">dummy dynamic numeric metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:TechnicalRange Lower="1" Upper="100" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric Handle="enumstring2.ch0.vmd0" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Clc" MetricAvailability="Cont" xsi:type="pm:EnumStringMetricDescriptor">
+                            <pm:Type Code="196075">
+                                <pm:ConceptDescription Lang="en-US">dummy dynamic enum string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:AllowedValue>
+                                <pm:Value>ON</pm:Value>
+                                <pm:Type Code="192834">
+                                    <pm:ConceptDescription Lang="en-US">ON</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                            <pm:AllowedValue>
+                                <pm:Value>OFF</pm:Value>
+                                <pm:Type Code="192835">
+                                    <pm:ConceptDescription Lang="en-US">OFF</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                        </pm:Metric>
+                        <pm:Metric Handle="string2.ch0.vmd1" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Clc" MetricAvailability="Cont" xsi:type="pm:StringMetricDescriptor">
+                            <pm:Type Code="196076">
+                                <pm:ConceptDescription Lang="en-US">dummy static string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                        </pm:Metric>
+                        <pm:Metric Handle="rtsa.ch0.vmd0" MetricCategory="Msrmt" MetricAvailability="Cont" xsi:type="pm:RealTimeSampleArrayMetricDescriptor" Resolution="1" SamplePeriod="PT0.001S">
+                            <pm:Type Code="196076">
+                                <pm:ConceptDescription Lang="en-US">dummy waveform</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+                <pm:Vmd Handle="vmd1" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:VmdDescriptor">
+                    <pm:Type Code="130736">
+                        <pm:ConceptDescription Lang="en-US">settable metrics</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:Sco Handle="sco.vmd1.mds0" DescriptorVersion="0" xsi:type="pm:ScoDescriptor">
+                        <pm:Operation Handle="actop.vmd1_sco_0" DescriptorVersion="0" SafetyClassification="MedC" OperationTarget="mds0" MaxTimeToFinish="P0Y0M0DT0H0M1.0S" Retriggerable="true" xsi:type="pm:ActivateOperationDescriptor">
+                            <ext:Extension/>
+                            <pm:Type Code="196279">
+                                <pm:ConceptDescription Lang="en-US">dummy activate operation</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:Operation>
+                        <pm:Operation Handle="numeric.ch0.vmd1_sco_0" DescriptorVersion="0" SafetyClassification="MedA" OperationTarget="numeric.ch0.vmd1" MaxTimeToFinish="P0Y0M0DT0H0M1.0S" Retriggerable="true" xsi:type="pm:SetValueOperationDescriptor">
+                            <ext:Extension/>
+                            <pm:Type Code="196276">
+                                <pm:ConceptDescription Lang="en-US">set numeric metric value</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:Operation>
+                        <pm:Operation Handle="enumstring.ch0.vmd1_sco_0" DescriptorVersion="0" SafetyClassification="MedA" OperationTarget="enumstring.ch0.vmd1" MaxTimeToFinish="P0Y0M0DT0H0M1.0S" Retriggerable="true" xsi:type="pm:SetStringOperationDescriptor">
+                            <ext:Extension/>
+                            <pm:Type Code="196277">
+                                <pm:ConceptDescription Lang="en-US">set enum string metric value</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:Operation>
+                        <pm:Operation Handle="string.ch0.vmd1_sco_0" DescriptorVersion="0" SafetyClassification="MedA" OperationTarget="string.ch0.vmd1" MaxTimeToFinish="P0Y0M0DT0H0M1.0S" Retriggerable="true" xsi:type="pm:SetStringOperationDescriptor">
+                            <ext:Extension/>
+                            <pm:Type Code="196278">
+                                <pm:ConceptDescription Lang="en-US">set string metric value</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:Operation>
+                    </pm:Sco>
+                    <pm:Channel Handle="ch0.vmd1" DescriptorVersion="0" SafetyClassification="MedA" xsi:type="pm:ChannelDescriptor">
+                        <pm:Type Code="130737">
+                            <pm:ConceptDescription Lang="en-US">settable metrics</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric Handle="numeric.ch0.vmd1" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1" xsi:type="pm:NumericMetricDescriptor">
+                            <pm:Type Code="196274">
+                                <pm:ConceptDescription Lang="en-US">dummy settable numeric metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:TechnicalRange Lower="1" Upper="100" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric Handle="enumstring.ch0.vmd1" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" xsi:type="pm:EnumStringMetricDescriptor">
+                            <pm:Type Code="196275">
+                                <pm:ConceptDescription Lang="en-US">dummy settable enum string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                            <pm:AllowedValue>
+                                <pm:Value>ON</pm:Value>
+                                <pm:Type Code="192834">
+                                    <pm:ConceptDescription Lang="en-US">ON</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                            <pm:AllowedValue>
+                                <pm:Value>OFF</pm:Value>
+                                <pm:Type Code="192835">
+                                    <pm:ConceptDescription Lang="en-US">OFF</pm:ConceptDescription>
+                                </pm:Type>
+                            </pm:AllowedValue>
+                        </pm:Metric>
+                        <pm:Metric Handle="string.ch0.vmd1" DescriptorVersion="0" SafetyClassification="MedA" MetricCategory="Set" MetricAvailability="Intr" xsi:type="pm:StringMetricDescriptor">
+                            <pm:Type Code="196276">
+                                <pm:ConceptDescription Lang="en-US">dummy settable string metric</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="262656">
+                                <pm:ConceptDescription Lang="en-US">no unit</pm:ConceptDescription>
+                            </pm:Unit>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+                <pm:Vmd Handle="DN_VMD" DescriptorVersion="0" SafetyClassification="Inf" xsi:type="pm:VmdDescriptor">
+                    <pm:Type Code="DN_VMD" CodingSystem="urn:oid:1.2.3.4.5">
+                        <pm:CodingSystemName>Very cool coding system</pm:CodingSystemName>
+                    </pm:Type>
+                    <pm:Channel Handle="DN_CHAN" DescriptorVersion="0" SafetyClassification="Inf" xsi:type="pm:ChannelDescriptor">
+                        <pm:Type Code="DN_CHAN" CodingSystem="urn:oid:1.2.3.4.5">
+                            <pm:CodingSystemName>Very cool coding system</pm:CodingSystemName>
+                        </pm:Type>
+                        <pm:Metric Handle="DN_METRIC" DescriptorVersion="0" SafetyClassification="Inf" MetricCategory="Set" MetricAvailability="Intr" xsi:type="pm:EnumStringMetricDescriptor">
+                            <pm:Type Code="DN_METRIC" CodingSystem="urn:oid:1.2.3.4.5">
+                                <pm:CodingSystemName>Very cool coding system</pm:CodingSystemName>
+                            </pm:Type>
+                            <pm:Unit Code="262656"/>
+                            <pm:AllowedValue>
+                                <pm:Value>Day</pm:Value>
+                            </pm:AllowedValue>
+                            <pm:AllowedValue>
+                                <pm:Value>Night</pm:Value>
+                            </pm:AllowedValue>
+                            <pm:AllowedValue>
+                                <pm:Value>DayDark</pm:Value>
+                            </pm:AllowedValue>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+            </pm:Mds>
+        </pm:MdDescription>
+        <pm:MdState StateVersion="115">
+            <pm:State xsi:type="pm:SystemContextState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="SC.mds0"/>
+            <pm:State xsi:type="pm:StringMetricState" DescriptorHandle="string.ch0.vmd1" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:StringMetricState" DescriptorHandle="string.ch0.vmd0" DescriptorVersion="0" StateVersion="0">
+                <pm:MetricValue Value="STATIC">
+                    <pm:MetricQuality Validity="Vld"/>
+                </pm:MetricValue>
+            </pm:State>
+            <pm:State xsi:type="pm:SetValueOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="numeric.ch0.vmd1_sco_0"/>
+            <pm:State xsi:type="pm:ScoState" DescriptorVersion="0" StateVersion="0" InvocationRequested="" InvocationRequired="" DescriptorHandle="sco.vmd0"/>
+            <pm:State xsi:type="pm:ActivateOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="AP__ON"/>
+            <pm:State xsi:type="pm:SetStringOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="enumstring.ch0.vmd1_sco_0"/>
+            <pm:State xsi:type="pm:AlertConditionState" DescriptorVersion="0" StateVersion="0" ActivationState="On" DeterminationTime="1579170261104" DescriptorHandle="ac0.vmd0.mds0"/>
+            <pm:State xsi:type="pm:AlertConditionState" DescriptorVersion="0" StateVersion="37" ActivationState="On" DeterminationTime="1579170442508" Presence="true" DescriptorHandle="ac0.mds0"/>
+            <pm:State xsi:type="pm:ClockState" DescriptorVersion="0" StateVersion="0" DateAndTime="1579170444576" RemoteSync="true" LastSet="1579170261104" DescriptorHandle="CL.mds0"/>
+            <pm:State xsi:type="pm:StringMetricState" DescriptorHandle="string2.ch0.vmd1" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:VmdState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="vmd1"/>
+            <pm:State xsi:type="pm:SetStringOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="string.ch0.vmd1_sco_0"/>
+            <pm:State xsi:type="pm:ActivateOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="AP__CANCEL"/>
+            <pm:State xsi:type="pm:ScoState" DescriptorVersion="0" StateVersion="0" InvocationRequested="" InvocationRequired="" DescriptorHandle="sco.mds0"/>
+            <pm:State xsi:type="pm:ChannelState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="ch1.vmd0"/>
+            <pm:State xsi:type="pm:AlertSystemState" DescriptorVersion="0" StateVersion="37" ActivationState="On" LastSelfCheck="1579170441478" SelfCheckCount="37" PresentPhysiologicalAlarmConditions="" PresentTechnicalAlarmConditions="" DescriptorHandle="asy.vmd0">
+                <pm:SystemSignalActivation Manifestation="Aud" State="Psd"/>
+            </pm:State>
+            <pm:State xsi:type="pm:SetStringOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="DN_SET"/>
+            <pm:State xsi:type="pm:ChannelState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="ch0.vmd1"/>
+            <pm:State xsi:type="pm:AlertSignalState" DescriptorVersion="0" StateVersion="1" ActivationState="Psd" Presence="Off" DescriptorHandle="as0.vmd0.mds0"/>
+            <pm:State xsi:type="pm:AlertSignalState" DescriptorVersion="0" StateVersion="38" ActivationState="On" Presence="On" DescriptorHandle="as0.mds0"/>
+            <pm:State xsi:type="pm:ScoState" DescriptorVersion="0" StateVersion="0" InvocationRequested="" InvocationRequired="" DescriptorHandle="sco.vmd1.mds0"/>
+            <pm:State xsi:type="pm:ChannelState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="ch0.vmd0"/>
+            <pm:State xsi:type="pm:VmdState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="vmd0"/>
+            <pm:State xsi:type="pm:NumericMetricState" DescriptorHandle="numeric.ch0.vmd1" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:NumericMetricState" DescriptorHandle="numeric.ch0.vmd0" DescriptorVersion="0" StateVersion="37">
+                <pm:MetricValue DeterminationTime="1579170442498" Value="36" xsi:type="pm:NumericMetricValue">
+                    <pm:MetricQuality Validity="Vld"/>
+                </pm:MetricValue>
+            </pm:State>
+            <pm:State xsi:type="pm:EnumStringMetricState" DescriptorHandle="enumstring2.ch0.vmd0" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:EnumStringMetricState" DescriptorHandle="DN_METRIC" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:NumericMetricState" DescriptorHandle="numeric.ch1.vmd0" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:SetStringOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="SET_NTP_SRV_mds0"/>
+            <pm:State xsi:type="pm:VmdState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="DN_VMD"/>
+            <pm:State xsi:type="pm:AlertSystemState" DescriptorVersion="0" StateVersion="40" ActivationState="On" LastSelfCheck="1579170442507" SelfCheckCount="40" PresentPhysiologicalAlarmConditions="ac0.mds0" PresentTechnicalAlarmConditions="" DescriptorHandle="asy.mds0">
+                <pm:SystemSignalActivation Manifestation="Aud" State="Psd"/>
+            </pm:State>
+            <pm:State xsi:type="pm:ActivateOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="actop.vmd1_sco_0"/>
+            <pm:State xsi:type="pm:ChannelState" DescriptorVersion="0" StateVersion="0" DescriptorHandle="DN_CHAN"/>
+            <pm:State xsi:type="pm:MdsState" DescriptorVersion="0" StateVersion="0" OperatingMode="Nml" Lang="en" DescriptorHandle="mds0"/>
+            <pm:State xsi:type="pm:SetStringOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="SET_TZONE_mds0"/>
+            <pm:State xsi:type="pm:ActivateOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="actop.mds0_sco_0"/>
+            <pm:State xsi:type="pm:EnumStringMetricState" DescriptorHandle="enumstring.ch0.vmd1" DescriptorVersion="0" StateVersion="0"/>
+            <pm:State xsi:type="pm:EnumStringMetricState" DescriptorHandle="enumstring.ch0.vmd0" DescriptorVersion="0" StateVersion="0">
+                <pm:MetricValue Value="ON">
+                    <pm:MetricQuality Validity="Vld"/>
+                </pm:MetricValue>
+            </pm:State>
+            <pm:State xsi:type="pm:SetContextStateOperationState" DescriptorVersion="0" StateVersion="0" OperatingMode="En" DescriptorHandle="opSetPatCtx"/>
+            <pm:State xsi:type="pm:PatientContextState" DescriptorVersion="0" StateVersion="0" Handle="d78ef3460038401ab90957ec204dba0c" ContextAssociation="Assoc" BindingMdibVersion="1" BindingStartTime="1579170261207" DescriptorHandle="PC.mds0">
+                <pm:CoreData>
+                    <pm:Givenname>Given</pm:Givenname>
+                    <pm:Middlename>Middle</pm:Middlename>
+                    <pm:Familyname>Familiy</pm:Familyname>
+                    <pm:Birthname>Birthname</pm:Birthname>
+                    <pm:Title>Title</pm:Title>
+                </pm:CoreData>
+            </pm:State>
+            <pm:State xsi:type="pm:RealTimeSampleArrayMetricState" DescriptorHandle="rtsa.ch0.vmd0">
+                <pm:MetricValue DeterminationTime="234" Samples="1 2 3" xsi:type="pm:SampleArrayValue">
+                    <pm:MetricQuality Validity="NA"/>
+                </pm:MetricValue>
+            </pm:State>
+        </pm:MdState>
+    </msg:Mdib>
+</msg:GetMdibResponse>

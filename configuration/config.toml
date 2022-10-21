@@ -1,0 +1,23 @@
+[SDCcc]
+CIMode=false
+GraphicalPopups=true
+
+[SDCcc.TLS]
+FileDirectory="./configuration"
+KeyStorePassword="whatever"
+TrustStorePassword="whatever"
+ParticipantPrivatePassword="dummypass"
+EnabledProtocols = ["TLSv1.2", "TLSv1.3"]
+
+[SDCcc.Network]
+InterfaceAddress="127.0.0.1"
+
+[SDCcc.Consumer]
+Enable=true
+DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
+
+[SDCcc.Provider]
+Enable=false
+
+[SDCcc.gRPC]
+ServerAddress="localhost:50051"

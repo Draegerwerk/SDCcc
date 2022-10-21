@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xjb:bindings xmlns:xjb="http://java.sun.com/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.1">
+    <xjb:bindings schemaLocation="wsdd-dpws-1.1-schema.xsd">
+        <!-- Put WS-Discovery 1.1 elements to package com.draeger.medical.dpws.model. -->
+        <xjb:schemaBindings>
+            <xjb:package name="com.draeger.medical.dpws.model"/>
+        </xjb:schemaBindings>
+    </xjb:bindings>
+</xjb:bindings>

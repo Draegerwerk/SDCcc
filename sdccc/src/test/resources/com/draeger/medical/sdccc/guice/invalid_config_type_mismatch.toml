@@ -1,0 +1,11 @@
+[PrivateKey]
+
+StringValue=12
+BoolValue=true
+FloatValue=+1.0
+
+[PrivateKey.Arrays]
+
+StringArrayValue = [ "String1", "String2"]
+BoolArrayValue = [ true, false ]
+FloatArrayValue = [ -1.0, +1.0 ]

@@ -1,0 +1,52 @@
+<xs:schema
+        targetNamespace="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+        xmlns:tns="http://schemas.xmlsoap.org/ws/2004/09/transfer"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        elementFormDefault="qualified"
+        blockDefault="#all">
+
+    <xs:import
+            namespace="http://schemas.xmlsoap.org/ws/2004/08/addressing"/>
+            <!-- schemaLocation="http://schemas.xmlsoap.org/ws/2004/08/addressing/addressing.xsd"/> -->
+
+    <xs:import
+            namespace="http://www.w3.org/2005/08/addressing"/>
+            <!-- schemaLocation="http://www.w3.org/2006/03/addressing/ws-addr.xsd"/> -->
+
+    <xs:complexType name="AnyXmlType">
+        <xs:sequence>
+            <xs:any namespace="##other" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="AnyXmlOptionalType">
+        <xs:sequence>
+            <xs:any minOccurs="0" namespace="##other" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--
+    The type of the ResourceCreated is effectively
+    the union of wsa04:EndpointReferenceType and
+    wsa10:EndpointReferenceType. Unfortunately, xs:union only
+    works for simple types. As a interceptorResult, we have to define
+    the element in an unvalidated way to accommodate either
+    addressing type.
+    -->
+
+    <xs:element name="ResourceCreated">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:any minOccurs='1' maxOccurs='unbounded' processContents='skip' namespace='##other'/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="CreateResponseType">
+        <xs:sequence>
+            <xs:element ref="tns:ResourceCreated"/>
+            <xs:any minOccurs="0" namespace="##other" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

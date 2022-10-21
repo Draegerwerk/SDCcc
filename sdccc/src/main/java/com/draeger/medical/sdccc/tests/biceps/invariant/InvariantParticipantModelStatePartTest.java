@@ -1,0 +1,250 @@
+/*
+ * This Source Code Form is subject to the terms of the MIT License.
+ * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+package com.draeger.medical.sdccc.tests.biceps.invariant;
+
+import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
+import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
+import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
+import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
+import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
+import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
+import com.draeger.medical.sdccc.tests.util.NoTestData;
+import com.draeger.medical.sdccc.util.Constants;
+import com.draeger.medical.t2iapi.ResponseTypes;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.somda.sdc.biceps.model.message.AbstractMetricReport;
+import org.somda.sdc.biceps.model.participant.AbstractState;
+import org.somda.sdc.biceps.model.participant.ComponentActivation;
+import org.somda.sdc.biceps.model.participant.MetricCategory;
+import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapUtil;
+import org.somda.sdc.dpws.soap.exception.MarshallingException;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+/**
+ * BICEPS participant model state part tests (ch. 5.4).
+ */
+public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
+    public static final String NO_SET_METRIC_STATUS_MANIPULATION =
+        "No setMetricStatus manipulation for metrics with category %s performed, test failed.";
+    public static final String NO_SUCCESSFUL_MANIPULATION =
+        "No successful setMetricStatus manipulation seen, test failed.";
+    public static final String NO_REPORT_IN_TIME_INTERVAL =
+        "No metric reports for %s manipulation found between %s and %s, test failed.";
+    public static final String NO_REPORT_WITH_EXPECTED_HANDLE =
+        "No metric reports with metric handle %s found, test failed.";
+    public static final String WRONG_ACTIVATION_STATE =
+        "The manipulated activation state for metric %s should be %s but is %s";
+    private static final long BUFFER = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
+    private MessageStorage messageStorage;
+    private MarshallingService marshalling;
+    private SoapUtil soapUtil;
+
+    @BeforeEach
+    void setUp() {
+        this.messageStorage = getInjector().getInstance(MessageStorage.class);
+        final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
+        this.marshalling = riInjector.getInstance(MarshallingService.class);
+        this.soapUtil = riInjector.getInstance(SoapUtil.class);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC is being"
+        + " performed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_0_0)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated to perform measurements and"
+        + " then it is verified that the ActivationState of the metric is set to On.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.class})
+    void testRequirement54700() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.ON;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC has been"
+        + " initialized, but is not being performed, the SERVICE PROVIDER SHALL set"
+        + " pm:AbstractMetricState/@ActivationState = StndBy.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_2)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated so that the measurement of the"
+        + " metric is initialized but no measurement is performed and then it is verified that the ActivationState of"
+        + " the metric is set to StndBy.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSTNDBY.class})
+    void testRequirement5472() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.STND_BY;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC is not"
+        + " being performed and is de-initialized, the SERVICE PROVIDER SHALL set"
+        + " pm:AbstractMetricState/@ActivationState = Off.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_4)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated so that the measurement of"
+        + " the metric is de-initialized and no measurement is performed and then it is verified that the"
+        + " ActivationState of the metric is set to Off.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateOFF.class})
+    void testRequirement5474() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.OFF;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is currently being applied, the"
+        + " SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_6_0)
+    @TestDescription("For each metric with the category SET, the device is manipulated to apply settings and"
+        + " then it is verified that the ActivationState of the metric is set to On.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationSETActivationStateON.class})
+    void testRequirement54760() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.ON;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting has been initialized, but is not"
+        + " being applied, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = StndBy.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_8)
+    @TestDescription("For each metric with the category SET, the device is manipulated so that the setting of the"
+        + " metric is initialized but no setting is applied and then it is verified that the ActivationState of"
+        + " the metric is set to StndBy.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationSETActivationStateSTNDBY.class})
+    void testRequirement5478() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.STND_BY;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is not being performed and is"
+        + " de-initialized, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Off.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_10)
+    @TestDescription("For each metric with the category SET, the device is manipulated so that the setting"
+        + " of the metric is de-initialized and no setting is applied and then it is verified that the ActivationState"
+        + " of the metric is set to Off.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationSETActivationStateOFF.class})
+    void testRequirement54710() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.OFF;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    private void testRequirement547(final MetricCategory category, final ComponentActivation activation)
+        throws NoTestData {
+        final var successfulReportsSeen = new AtomicBoolean(false);
+        try (final var manipulations =
+                 messageStorage.getManipulationDataByParametersAndManipulation(
+                     List.of(
+                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
+                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())
+                     ),
+                     Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
+            assertTestData(manipulations.areObjectsPresent(), String.format(
+                NO_SET_METRIC_STATUS_MANIPULATION, category));
+            manipulations.getStream().filter(it -> it.getResult().equals(
+                ResponseTypes.Result.RESULT_SUCCESS)).forEachOrdered(it -> {
+                    successfulReportsSeen.getAndSet(true);
+                    checkAssociatedReport(it, activation);
+                });
+        } catch (IOException e) {
+            fail(e);
+            // unreachable
+            throw new RuntimeException(e);
+        }
+        assertTestData(successfulReportsSeen.get(), NO_SUCCESSFUL_MANIPULATION);
+    }
+
+    private void checkAssociatedReport(final ManipulationData manipulationData,
+                                       final ComponentActivation expectedActivationState) {
+        final var manipulationParameter = manipulationData.getParameters();
+        final var manipulatedHandle = manipulationParameter.stream().filter(it -> it.getParameterName()
+                .equals(Constants.MANIPULATION_PARAMETER_HANDLE)).map(ManipulationParameter::getParameterValue)
+            .findFirst().orElseThrow();
+        try (final var relevantReports = messageStorage.getInboundMessagesByTimeIntervalAndBodyType(
+            manipulationData.getStartTimestamp(), manipulationData.getFinishTimestamp() + BUFFER,
+            Constants.MSG_EPISODIC_METRIC_REPORT)) {
+            assertTestData(relevantReports.areObjectsPresent(),
+                String.format(NO_REPORT_IN_TIME_INTERVAL, manipulationData.getMethodName(),
+                    manipulationData.getStartTimestamp(), manipulationData.getFinishTimestamp()));
+
+            final var relevantReport = relevantReports.getStream().map(it -> {
+                    final Optional<AbstractMetricReport> reportOpt;
+                    try {
+                        final var message = marshalling.unmarshal(new ByteArrayInputStream(
+                            it.getBody().getBytes(StandardCharsets.UTF_8)));
+                        reportOpt = soapUtil.getBody(message, AbstractMetricReport.class);
+                    } catch (MarshallingException e) {
+                        fail("Error unmarshalling MessageContent " + e);
+                        // unreachable
+                        throw new RuntimeException(e);
+                    }
+                    return reportOpt.orElseThrow();
+                }
+            ).filter(it -> {
+                boolean present = false;
+                for (var part : it.getReportPart()) {
+                    if (part.getMetricState().stream()
+                        .anyMatch(state -> state.getDescriptorHandle().equals(manipulatedHandle))) {
+                        present = true;
+                    }
+                }
+                return present;
+            }).findFirst();
+
+            assertTrue(relevantReport.isPresent(), String.format(NO_REPORT_WITH_EXPECTED_HANDLE,
+                manipulatedHandle));
+            boolean relevantMetricPresent = false;
+            for (var part : relevantReport.orElseThrow().getReportPart()) {
+                if (part.getMetricState().stream().map(AbstractState::getDescriptorHandle)
+                    .anyMatch(it -> it.equals(manipulatedHandle))) {
+                    relevantMetricPresent = true;
+                    final var state = part.getMetricState().stream()
+                        .filter(it -> it.getDescriptorHandle().equals(manipulatedHandle)).findFirst();
+                    state.ifPresent(abstractMetricState -> Assertions.assertEquals(expectedActivationState,
+                        ImpliedValueUtil.getMetricActivation(abstractMetricState), String.format(
+                            WRONG_ACTIVATION_STATE, manipulatedHandle, expectedActivationState,
+                            ImpliedValueUtil.getMetricActivation(abstractMetricState)
+                        )));
+                }
+            }
+            assertTrue(relevantMetricPresent, String.format(NO_REPORT_WITH_EXPECTED_HANDLE, manipulatedHandle));
+        } catch (IOException | NoTestData e) {
+            fail(e);
+            // unreachable
+            throw new RuntimeException(e);
+        }
+    }
+}

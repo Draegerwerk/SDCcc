@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.draeger.medical</groupId>
+    <artifactId>sdccc_parent</artifactId>
+    <packaging>pom</packaging>
+    <version>${revision}${changelist}</version>
+
+    <modules>
+        <module>sdccc</module>
+        <module>biceps-model</module>
+        <module>dpws-model</module>
+    </modules>
+
+    <properties>
+        <revision>5.0.0</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <execPluginVersion>1.6.0</execPluginVersion>
+        <jaxbBasicsVersion>0.12.0</jaxbBasicsVersion>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <release>11</release>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${execPluginVersion}</version>
+                <configuration>
+                    <skip>true</skip>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>com.draeger.medical.sdccc.TestSuite</argument>
+                        <argument>-c</argument>
+                        <argument>${project.basedir}/../configuration/config.toml</argument>
+                        <argument>-t</argument>
+                        <argument>${project.basedir}/../configuration/test_configuration.toml</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.0.0</version>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
