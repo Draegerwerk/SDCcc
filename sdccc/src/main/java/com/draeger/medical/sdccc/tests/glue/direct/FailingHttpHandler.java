@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the MIT License.
+ * Copyright (c) %year% Draegerwerk AG & Co. KGaA.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.draeger.medical.sdccc.tests.glue.direct;
 
 import org.apache.logging.log4j.LogManager;
