@@ -24,6 +24,7 @@ import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -51,7 +52,6 @@ import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
-import com.google.inject.Binder;
 
 
 import javax.net.ssl.HttpsURLConnection;
@@ -149,7 +149,7 @@ public class TestSuiteIT {
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
-            assertNotNull (mdibAsStream);
+            assertNotNull(mdibAsStream);
             final var providerFac = injector.getInstance(ProviderFactory.class);
             return providerFac.createProvider(mdibAsStream);
         }
