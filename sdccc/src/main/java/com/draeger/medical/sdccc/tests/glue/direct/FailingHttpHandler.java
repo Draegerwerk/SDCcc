@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * HTTPHandler that fails reception (answers the Request 500 Return Code)
+ * HTTPHandler that fails reception (answers the Request with the HTTP Response Status Code 500)
  * whenever reportTestData.failOnReceivingReport is set to true.
  */
 public class FailingHttpHandler implements HttpHandler {
