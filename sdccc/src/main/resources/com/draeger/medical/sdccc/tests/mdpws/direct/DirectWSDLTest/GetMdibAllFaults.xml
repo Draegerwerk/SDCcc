@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Request contains three errors triggering faults:
+    1. Envelope namespace does not match SOAP 1.2 or 1.1 -> VersionMismatch
+    2. Header contains custom element with mustUnderstand true -> MustUnderstand
+    3. Body and action do not match, violating the WSDL -> Sender
+-->
+<s12:Envelope xmlns:ns3="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+              xmlns:s12="http://www.w3.org/2003/05/soap-poas" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+    <s12:Header>
+        <wsa:Action>http://standards.ieee.org/downloads/11073/11073-20701-2018/GetService/GetMdib</wsa:Action>
+        <wsa:MessageID>urn:uuid:f147cc10-e854-42e5-961c-50ef8c977fb6</wsa:MessageID>
+        <ns12:MyFunkyRoot xmlns:ns12="ftp://namespace.example.com" s12:mustUnderstand="true">Youwillnotunderstandthis</ns12:MyFunkyRoot>
+    </s12:Header>
+    <s12:Body>
+        <ns3:GetMdDescription/>
+    </s12:Body>
+</s12:Envelope>

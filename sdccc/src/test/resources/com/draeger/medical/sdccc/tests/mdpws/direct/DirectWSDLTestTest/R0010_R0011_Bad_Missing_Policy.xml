@@ -1,0 +1,59 @@
+<!--
+  ~ This Source Code Form is subject to the terms of the MIT License.
+  ~ Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+  ~
+  ~ SPDX-License-Identifier: MIT
+  -->
+
+<wsdl:definitions
+        name='StockQuote'
+        targetNamespace='http://services.example.org/stockquote'
+        xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/'
+        xmlns:tns='http://services.example.org/stockquote'
+        xmlns:msgs='http://services.example.org/stockquote/schemas'
+        xmlns:wsp='http://www.w3.org/ns/ws-policy'
+        xmlns:wsoap='http://schemas.xmlsoap.org/wsdl/soap/'
+        xmlns:dpws="http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01">
+    <wsdl:import namespace='http://services.example.org/stockquote'
+                 location='http://services.example.org/stockquote/schemas'/>
+    <wsdl:portType name='StockQuotePortType' dpws:DiscoveryType="something">
+        <wsdl:operation name='GetLastTradePrice'>
+            <wsdl:input message='msgs:GetLastTradePriceInput' name='GetLastTradePriceInput'/>
+            <wsdl:output message='msgs:GetLastTradePriceOutput' name='GetLastTradePriceOutput'/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name='StockQuoteBinding' type='tns:StockQuotePortType'>
+        <wsoap:binding style='document' transport='http://schemas.xmlsoap.org/soap/http'/>
+        <wsdl:operation name='GetLastTradePrice'>
+            <wsoap:operation soapAction='http://services.example.org/stockquote/GetLastTradePrice'/>
+            <wsdl:input name='GetLastTradePriceInput'>
+                <wsoap:body use='literal'/>
+            </wsdl:input>
+            <wsdl:output name='GetLastTradePriceOutput'>
+                <wsoap:body use='literal'/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsp:Policy>
+            <dpws:Profile wsp:Optional="true"/>
+            <mdpws:Profile xmlns:mdpws="http://standards.ieee.org/downloads/11073/11073-20702-2016" wsp:Optional="true"/>
+        </wsp:Policy>
+    </wsdl:binding>
+    <wsdl:binding name='StockQuoteBinding2' type='tns:StockQuotePortType'>
+        <!-- binding missing policy -->
+        <wsoap:binding style='document' transport='http://schemas.xmlsoap.org/soap/http'/>
+        <wsdl:operation name='GetLastTradePrice'>
+            <wsoap:operation soapAction='http://services.example.org/stockquote/GetLastTradePrice'/>
+            <wsdl:input name='GetLastTradePriceInput'>
+                <wsoap:body use='literal'/>
+            </wsdl:input>
+            <wsdl:output name='GetLastTradePriceOutput'>
+                <wsoap:body use='literal'/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name='StockQuoteService'>
+        <wsdl:port name='StockQuotePort' binding='tns:StockQuoteBinding'>
+            <wsoap:address location='http://services.example.org/stockquote'/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

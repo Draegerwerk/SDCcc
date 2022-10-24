@@ -1,0 +1,51 @@
+name: Build java package
+
+on:
+  pull_request: # Apply to all pull requests
+  push: # Apply to all branches
+
+jobs:
+  test-java-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      # Run `git checkout`
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: mvn verify -Dchangelist=-SNAPSHOT -f pom.xml
+          working-directory: ./ #optional
+          options: #optional
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: retrieve jre cache
+        id: jre-cache
+        uses: actions/cache@v3
+        with:
+          path: sdccc/target/jre
+          key: jre-cache
+      - name: Build package and download license information
+        run: |
+          mvn package license:download-licenses -Dchangelist=-SNAPSHOT -DskipTests=true -f pom.xml -Pexecutable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Zip
+        run: |
+          mkdir sdccc/target/zip
+          cp -r sdccc/target/lib sdccc/target/zip/
+          cp -r sdccc/target/jre sdccc/target/zip/
+          cp -r sdccc/target/generated-resources/licenses sdccc/target/zip/lib/
+          cp -r sdccc/target/generated-resources/licenses.xml sdccc/target/zip/lib/
+          cp -r configuration sdccc/target/zip/
+          cp sdccc/target/sdccc-*.exe sdccc/target/zip/
+          cp README.md sdccc/target/zip/
+      - name: Archive built executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: executable
+          path: sdccc/target/zip

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xjb:bindings xmlns:xjb="http://java.sun.com/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.1" xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc" xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant">
+	<xjb:bindings schemaLocation="BICEPS_ParticipantModel.xsd">
+		<!-- Put Participant Model elements to package com.draeger.medical.biceps.model.participant. -->
+		<xjb:schemaBindings>
+			<xjb:package name="com.draeger.medical.biceps.model.participant"/>
+		</xjb:schemaBindings>
+
+		<!-- Customized type-safe bindings for anonymous enums -->
+		<xjb:bindings node="//xs:complexType[@name='InstanceIdentifier']/xs:attribute[@name='Root']">
+			<xjb:property name="rootName"/>
+		</xjb:bindings>
+		<xjb:bindings node="//xs:complexType[@name='InstanceIdentifier']/xs:attribute[@name='Extension']">
+			<xjb:property name="extensionName"/>
+		</xjb:bindings>
+		<xjb:bindings node="//xs:complexType[@name='AbstractMetricDescriptor']//xs:attribute[@name='Kind']/xs:simpleType">
+			<xjb:typesafeEnumClass name="Kind" />
+		</xjb:bindings>
+		<xjb:bindings node="//xs:complexType[@name='AbstractOperationDescriptor']//xs:attribute[@name='AccessLevel']/xs:simpleType">
+			<xjb:typesafeEnumClass name="AccessLevel" />
+		</xjb:bindings>
+		<xjb:bindings node="//xs:complexType[@name='BatteryState']//xs:attribute[@name='ChargeStatus']/xs:simpleType">
+			<xjb:typesafeEnumClass name="ChargeStatus" />
+		</xjb:bindings>
+		<xjb:bindings node="//xs:complexType[@name='ClinicalInfo']//xs:element[@name='Criticality']/xs:simpleType">
+			<xjb:typesafeEnumClass name="Criticality" />
+		</xjb:bindings>
+	</xjb:bindings>
+</xjb:bindings>

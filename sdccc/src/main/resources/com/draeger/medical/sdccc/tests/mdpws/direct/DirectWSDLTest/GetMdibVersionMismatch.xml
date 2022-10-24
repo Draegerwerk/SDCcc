@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Envelope namespace does not match SOAP 1.2 or 1.1 -> VersionMismatch -->
+<s12:Envelope xmlns:ns3="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+              xmlns:s12="http://www.w3.org/2003/05/soap-poas" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+    <s12:Header>
+        <wsa:Action>http://standards.ieee.org/downloads/11073/11073-20701-2018/GetService/GetMdib</wsa:Action>
+        <wsa:MessageID>urn:uuid:f147cc10-e854-42e5-961c-50ef8c977fb7</wsa:MessageID>
+    </s12:Header>
+    <s12:Body>
+        <ns3:GetMdib/>
+    </s12:Body>
+</s12:Envelope>
