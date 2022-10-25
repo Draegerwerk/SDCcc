@@ -1,3 +1,8 @@
+
+// Describe the purpose of the pull request here and remove this line. Keep the checklist.
+
+# Checklist
+
 The following aspects have been respected by the author of this pull request, confirmed by both pull request assignee **and** reviewer:
 
 * Adherence to coding conventions
