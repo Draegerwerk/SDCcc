@@ -10,5 +10,5 @@ The following aspects have been respected by the author of this pull request, co
   * [ ] Pull Request Assignee
   * [ ] Reviewer
 * SDCcc executable ran against a test device (if necessary)
-    * [ ] Pull Request Assignee
-    * [ ] Reviewer
+  * [ ] Pull Request Assignee
+  * [ ] Reviewer
