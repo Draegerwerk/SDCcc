@@ -14,6 +14,9 @@ The following aspects have been respected by the author of this pull request, co
 * Changelog update (necessity checked and entry added or not added respectively)
   * [ ] Pull Request Assignee
   * [ ] Reviewer
+* README update (necessity checked and entry added or not added respectively)
+  * [ ] Pull Request Assignee
+  * [ ] Reviewer
 * SDCcc executable ran against a test device (if necessary)
   * [ ] Pull Request Assignee
   * [ ] Reviewer
