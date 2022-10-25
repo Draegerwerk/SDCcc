@@ -4,7 +4,7 @@ on:
   pull_request: # Apply to all pull requests
   push: # Apply to all branches
 
-envs:
+env:
   CHANGELIST: -SNAPSHOT
   RELEASE_VERSION: 0.0.0
 
