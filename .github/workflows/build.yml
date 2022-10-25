@@ -44,8 +44,3 @@ jobs:
           cp -r configuration sdccc/target/zip/
           cp sdccc/target/sdccc-*.exe sdccc/target/zip/
           cp README.md sdccc/target/zip/
-      - name: Archive built executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: executable
-          path: sdccc/target/zip
