@@ -306,6 +306,7 @@ public class DirectSubscriptionHandlingTestTest {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+            assertNotNull(wsdlStream);
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         assertNotNull(wsdl);
@@ -325,7 +326,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -334,7 +336,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -352,7 +355,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -361,7 +365,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         setupTestScenarioForR0036(false);
         cancelledSubscriptions = new HashSet<>();
@@ -419,7 +424,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -428,7 +434,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -454,7 +461,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -479,7 +487,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -504,7 +513,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -529,7 +539,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -554,7 +565,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, 0);
     }
@@ -572,7 +584,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -580,7 +593,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -596,7 +610,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -604,7 +619,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -620,7 +636,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -628,7 +645,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -644,7 +662,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -652,7 +671,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -668,7 +688,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -676,7 +697,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, 0);
     }
@@ -686,6 +708,32 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForEpisodicOperationalStateReport() throws Exception {
+        subscriptionsToCancel = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+            ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
+        ));
+        supportedReports = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+            ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
+        ));
+        testDeviceForR0036(false, 0);
+    }
+
+    /**
+     * Tests whether a device that does not support the SystemErrorReport can still pass the test.
+     */
+    @Test
+    public void testRequirementR0036NoSupportForSystemErrorReport() throws Exception {
         subscriptionsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
@@ -717,7 +765,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -726,7 +775,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(false, INSIGNIFICANT_DELAY_IN_SECONDS);
     }
@@ -752,7 +802,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+            ActionConstants.ACTION_SYSTEM_ERROR_REPORT
         ));
         testDeviceForR0036(true, SIGNIFICANT_DELAY_IN_SECONDS);
     }
@@ -874,10 +925,10 @@ public class DirectSubscriptionHandlingTestTest {
         when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient), anyString())).thenReturn(eventSink);
 
         when(eventSink.subscribe(anyList(), any(), any())).thenAnswer(call -> {
-            final String action = ((List<String>) call.getArgument(0)).get(0);
-            if (this.supportedReports.contains(action)) {
+            final List<String> actions = call.getArgument(0);
+            if (this.supportedReports.containsAll(actions)) {
                 return createListenableFuture(
-                    new SubscribeResult(action, Duration.ofSeconds(DEFAULT_DURATION_IN_SECONDS, 0)));
+                    new SubscribeResult(actions.get(0), Duration.ofSeconds(DEFAULT_DURATION_IN_SECONDS, 0)));
             } else {
                 return createListenableFuture(null);
             }

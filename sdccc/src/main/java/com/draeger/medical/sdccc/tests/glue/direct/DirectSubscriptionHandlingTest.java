@@ -292,6 +292,20 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                 },
                 () -> {
                     // does not need to be triggered in this test.
+                }),
+            new ReportTestData(
+                WsdlConstants.OPERATION_SYSTEM_ERROR_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT,
+                report -> { // subscribe to Report
+                    return subscribeToReport(getLocalBaseURI(),
+                        WsdlConstants.OPERATION_SYSTEM_ERROR_REPORT,
+                        ActionConstants.ACTION_SYSTEM_ERROR_REPORT,
+                        WsdlConstants.SERVICE_STATE_EVENT,
+                        MessageGeneratingUtil::getStateEventService,
+                        report);
+                },
+                () -> {
+                    // does not need to be triggered in this test.
                 })
         );
 
