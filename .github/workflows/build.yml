@@ -86,6 +86,12 @@ jobs:
         run: |
           zip -qq -r ${{ env.ZIP_FILE_NAME }} .
 
+      - name: Zip test results
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: sdccc/target/
+        run: |
+          zip -qq -r test-results.zip failsafe-reports surefire-reports checkstyle-result.xml spotbugsXml.xml
+
       - name: Attach artifacts to snapshot
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -93,5 +99,6 @@ jobs:
           files: |
             CHANGELOG.md
             sdccc/target/zip/${{ env.ZIP_FILE_NAME }}
+            sdccc/target/test-results.zip
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
           body_path: CHANGELOG.md
