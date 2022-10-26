@@ -60,26 +60,30 @@ jobs:
           cp -r configuration sdccc/target/zip/
           cp sdccc/target/sdccc-*.exe sdccc/target/zip/
           cp README.md sdccc/target/zip/
+
+      - name: Set zip file name for release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: montudor/action-zip@v1
+        with:
+          args: ZIP_FILE_NAME=SDCcc-${{ env.RELEASE_VERSION }}-executable-win64.zip >> $GITHUB_ENV
+      - name: Set zip file name for snapshot
+        if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
+        uses: montudor/action-zip@v1
+        with:
+          args: ZIP_FILE_NAME=SDCcc-${{ env.RELEASE_VERSION }}-${{ env.CHANGELIST }}-executable-win64.zip >> $GITHUB_ENV
+
       - name: Zip executable
         if: startsWith(github.ref, 'refs/tags/')
         uses: montudor/action-zip@v1
         with:
-          args: zip -qq -r SDCcc-${{ env.RELEASE_VERSION }}-executable-win64.zip sdccc/target/zip/
-      - name: Attach artifacts to release
+          args: zip -qq -r ${{ env.ZIP_FILE_NAME }} sdccc/target/zip/
+
+      - name: Attach artifacts to snapshot
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            SDCcc-${{ env.RELEASE_VERSION }}-executable-win64.zip
+            ${{ env.ZIP_FILE_NAME }}
             CHANGELOG.md
-          body_path: CHANGELOG.md
-      - name: Attach artifacts to snapshotrelease
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
-        with:
-          files: |
-            SDCcc-${{ env.RELEASE_VERSION }}-${{ env.CHANGELIST }}-executable-win64.zip
-            CHANGELOG.md
-          prerelease: true
-          name: SNAPSHOT
+          prerelease: !startsWith(github.ref, 'refs/tags/v')
           body_path: CHANGELOG.md
