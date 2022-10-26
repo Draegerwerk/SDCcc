@@ -67,8 +67,19 @@ jobs:
           args: zip -qq -r SDCcc-${{ env.RELEASE_VERSION }}-executable-win64.zip sdccc/target/zip/
       - name: Attach artifacts to release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: |
             SDCcc-${{ env.RELEASE_VERSION }}-executable-win64.zip
             CHANGELOG.md
+          body_path: CHANGELOG.md
+      - name: Attach artifacts to snapshotrelease
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            SDCcc-${{ env.RELEASE_VERSION }}-${{ env.CHANGELIST }}-executable-win64.zip
+            CHANGELOG.md
+          prerelease: true
+          name: SNAPSHOT
+          body_path: CHANGELOG.md
