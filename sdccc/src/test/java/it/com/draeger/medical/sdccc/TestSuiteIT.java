@@ -138,7 +138,7 @@ public class TestSuiteIT {
 
     @SuppressFBWarnings(
         value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Known Bug when Findbugs encounters a try-with-resources-block."
+        justification = "Known bug when Findbugs encounters a try-with-resources-block."
     )
     private TestProvider getProvider() throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
