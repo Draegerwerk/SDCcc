@@ -4,37 +4,65 @@ on:
   pull_request: # Apply to all pull requests
   push: # Apply to all branches
 
+env:
+  CHANGELIST: -SNAPSHOT
+  RELEASE_VERSION: 0.0.0
+
 jobs:
   test-java-snapshot:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Run `git checkout`
       - uses: actions/checkout@v3
+
+      - name: Retrieve current version from pom
+        run: |
+          echo RELEASE_VERSION=$(cat pom.xml | grep -o -P '(?<=revision\>).*(?=\<\/revision)') >> $GITHUB_ENV
+          echo "Release version is $RELEASE_VERSION"
+          echo GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA") >> $GITHUB_ENV
+          echo "Git revision is is $GIT_HASH_SHORT"
+
+      - name: Remove SNAPSHOT suffix for release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo CHANGELIST= >> $GITHUB_ENV
+
+      - name: Add git hash to snapshot release
+        if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo CHANGELIST=${{ env.CHANGELIST }}.${{ env. GIT_HASH_SHORT }} >> $GITHUB_ENV
+
       - name: Set up JDK 11
         uses: actions/setup-java@v3
         with:
           java-version: '11'
           distribution: 'temurin'
+
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: mvn verify -Dchangelist=-SNAPSHOT -f pom.xml
+          run: mvn verify -Dchangelist=${{ env.CHANGELIST }} -f pom.xml
           working-directory: ./ #optional
           options: #optional
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: retrieve jre cache
         id: jre-cache
         uses: actions/cache@v3
         with:
           path: sdccc/target/jre
           key: jre-cache
+
       - name: Build package and download license information
         run: |
-          mvn package license:download-licenses -Dchangelist=-SNAPSHOT -DskipTests=true -f pom.xml -Pexecutable
+          mvn package license:download-licenses -Dchangelist=${{ env.CHANGELIST }} -DskipTests=true -f pom.xml -Pexecutable
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Zip
+
+      - name: Collect executable artifacts
         run: |
           mkdir sdccc/target/zip
           cp -r sdccc/target/lib sdccc/target/zip/
@@ -44,3 +72,35 @@ jobs:
           cp -r configuration sdccc/target/zip/
           cp sdccc/target/sdccc-*.exe sdccc/target/zip/
           cp README.md sdccc/target/zip/
+
+      - name: Set zip file name for release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo ZIP_FILE_NAME=SDCcc-${{ env.RELEASE_VERSION }}${{ env.CHANGELIST }}-executable-win64.zip >> $GITHUB_ENV
+
+      - name: Install zip
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: montudor/action-zip@v1
+
+      - name: Zip executable
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: sdccc/target/zip
+        run: |
+          zip -qq -r ${{ env.ZIP_FILE_NAME }} .
+
+      - name: Zip test results
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: sdccc/target/
+        run: |
+          zip -qq -r test-results.zip failsafe-reports surefire-reports checkstyle-result.xml spotbugsXml.xml
+
+      - name: Attach artifacts to snapshot
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            CHANGELOG.md
+            sdccc/target/zip/${{ env.ZIP_FILE_NAME }}
+            sdccc/target/test-results.zip
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          body_path: CHANGELOG.md
