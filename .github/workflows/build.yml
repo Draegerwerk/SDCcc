@@ -11,6 +11,8 @@ env:
 jobs:
   test-java-snapshot:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Run `git checkout`
       - uses: actions/checkout@v3
