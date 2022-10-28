@@ -1,4 +1,4 @@
-[MDPWS]
+[MDPWS]         # ISO/IEEE 11073-20702
 R0006=true
 R0008=true
 R0010=true
@@ -8,7 +8,7 @@ R0013=true
 R0014=true
 R0015=true
 
-[BICEPS]
+[BICEPS]         # ISO/IEEE 11073-10207
 R0007_0=true
 R0021=true
 R0023=true
@@ -61,7 +61,7 @@ C-62=true
 5-4-7_8=true
 5-4-7_10=true
 
-[DPWS]
+[DPWS]         # OASIS DPWS 1.1 - http://docs.oasis-open.org/ws-dd/dpws/wsdd-dpws-1.1-spec.html
 R0001=true
 R0013=true
 R0019=true
@@ -69,7 +69,7 @@ R0031=true
 R0034=true
 R0040=true
 
-[GLUE]
+[GLUE]         # ISO/IEEE 11073-20701
 13=true
 R0010_0=true
 R0011=true
