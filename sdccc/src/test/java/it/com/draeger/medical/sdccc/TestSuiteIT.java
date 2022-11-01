@@ -24,6 +24,7 @@ import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -54,6 +55,7 @@ import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
 
+
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
 import java.io.IOException;
@@ -70,6 +72,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
@@ -137,7 +140,7 @@ public class TestSuiteIT {
 
     @SuppressFBWarnings(
         value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No null check performed."
+        justification = "Known bug when Findbugs encounters a try-with-resources-block."
     )
     private TestProvider getProvider() throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
@@ -148,6 +151,7 @@ public class TestSuiteIT {
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
+            assertNotNull(mdibAsStream);
             final var providerFac = injector.getInstance(ProviderFactory.class);
             return providerFac.createProvider(mdibAsStream);
         }
