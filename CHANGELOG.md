@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - references to standards to test_configuration.toml
-
-### Added
-
 - test for biceps:5-4-7_12_0
+
+### Fixed
+- missing request bodies in glue:R0036 test
 
 ## [5.0.0] - 2022-10-27
 ### Added
