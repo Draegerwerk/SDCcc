@@ -23,7 +23,6 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,6 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
-import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.CommunicationContext;
@@ -529,18 +527,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         final String notifyToUri = this.httpServerRegistry.registerContext(
             baseURI,
             notifyToContext,
-            (inStream, outStream, communicationContext) -> {
-                synchronized (reportTestData.getSyncPoint()) {
-                    // notification
-                    reportTestData.setReportReceived(true);
-                    reportTestData.getSyncPoint().notifyAll();
-                }
-                if (reportTestData.getFailOnReceivingReport()) {
-                    throw new HttpException(
-                        HttpStatus.INTERNAL_SERVER_ERROR_500,
-                        "intentional failure for testing purposes.");
-                }
-            });
+            new FailingHttpHandler(reportTestData));
         final Subscribe subscribeBody = this.wseFactory.createSubscribe();
         final DeliveryType deliveryType = this.wseFactory.createDeliveryType();
         deliveryType.setMode("http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryModes/Push");
