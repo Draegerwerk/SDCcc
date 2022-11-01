@@ -473,7 +473,9 @@ public class InvariantAnnexAlertTestTest {
                                                      final AlertActivation activation,
                                                      final List<SystemSignalActivation> systemSignalActivations) {
         final var alertSystemState = mdibBuilder.buildAlertSystemState(handle, activation);
-        alertSystemState.setSystemSignalActivation(systemSignalActivations);
+
+        alertSystemState.getSystemSignalActivation().clear();
+        alertSystemState.getSystemSignalActivation().addAll(systemSignalActivations);
         return alertSystemState;
     }
 
@@ -518,8 +520,11 @@ public class InvariantAnnexAlertTestTest {
 
         final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
 
-        vmdAlertSystem.getRight().setSystemSignalActivation(systemSignalActivations);
-        vmdAlertSystem.getLeft().setAlertSignal(alertSignals.stream().map(Pair::getLeft).collect(Collectors.toList()));
+        vmdAlertSystem.getRight().getSystemSignalActivation().clear();
+        vmdAlertSystem.getRight().getSystemSignalActivation().addAll(systemSignalActivations);
+        vmdAlertSystem.getLeft().getAlertSignal().clear();
+        vmdAlertSystem.getLeft().getAlertSignal().addAll(
+                alertSignals.stream().map(Pair::getLeft).collect(Collectors.toList()));
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setDescriptorVersion(vmdVersion);
@@ -554,11 +559,13 @@ public class InvariantAnnexAlertTestTest {
                 AlertActivation.OFF);
             mdsThirdAlertSignal.getRight().setLocation(AlertSignalPrimaryLocation.LOC);
 
-            mdsAlertSystem.getLeft().setAlertSignal(List.of(
-                mdsAlertSignal.getLeft(),
-                mdsSecondAlertSignal.getLeft(),
-                mdsThirdAlertSignal.getLeft()));
-            mdsAlertSystem.getRight().setSystemSignalActivation(systemSignalActivations);
+            mdsAlertSystem.getLeft().getAlertSignal().clear();
+            mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(
+                    mdsAlertSignal.getLeft(),
+                    mdsSecondAlertSignal.getLeft(),
+                    mdsThirdAlertSignal.getLeft()));
+            mdsAlertSystem.getRight().getSystemSignalActivation().clear();
+            mdsAlertSystem.getRight().getSystemSignalActivation().addAll(systemSignalActivations);
             mdsDescriptor.setAlertSystem(mdsAlertSystem.getLeft());
             mdState.getState().addAll(List.of(
                 mdsAlertSystem.getRight(),

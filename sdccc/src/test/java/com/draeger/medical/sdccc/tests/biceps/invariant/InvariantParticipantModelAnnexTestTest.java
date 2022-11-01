@@ -416,8 +416,10 @@ public class InvariantParticipantModelAnnexTestTest {
         final var mdsAlertSignal = mdibBuilder.buildAlertSignal(
             MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
 
-        mdsAlertSystem.getLeft().setAlertCondition(List.of(mdsAlertCondition.getLeft()));
-        mdsAlertSystem.getLeft().setAlertSignal(List.of(mdsAlertSignal.getLeft()));
+        mdsAlertSystem.getLeft().getAlertCondition().clear();
+        mdsAlertSystem.getLeft().getAlertCondition().add(mdsAlertCondition.getLeft());
+        mdsAlertSystem.getLeft().getAlertSignal().clear();
+        mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(mdsAlertSignal.getLeft()));
 
         final var vmdAlertCondition = mdibBuilder.buildAlertCondition(
             VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
@@ -426,15 +428,19 @@ public class InvariantParticipantModelAnnexTestTest {
             VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
 
         final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
-        vmdAlertSystem.getLeft().setAlertCondition(List.of(vmdAlertCondition.getLeft()));
-        vmdAlertSystem.getLeft().setAlertSignal(List.of(vmdAlertSignal.getLeft()));
+
+        vmdAlertSystem.getLeft().getAlertCondition().clear();
+        vmdAlertSystem.getLeft().getAlertCondition().addAll(List.of(vmdAlertCondition.getLeft()));
+        vmdAlertSystem.getLeft().getAlertSignal().clear();
+        vmdAlertSystem.getLeft().getAlertSignal().addAll(List.of(vmdAlertSignal.getLeft()));
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         final var vmdOperatingJurisdiction = participantFactory.createOperatingJurisdiction();
         vmd.getRight().setOperatingJurisdiction(vmdOperatingJurisdiction);
         final var vmdApprovedJurisdictions = participantFactory.createApprovedJurisdictions();
         final var vmdApprovedJurisdiction = participantFactory.createInstanceIdentifier();
-        vmdApprovedJurisdictions.setApprovedJurisdiction(List.of(vmdApprovedJurisdiction));
+        vmdApprovedJurisdictions.getApprovedJurisdiction().clear();
+        vmdApprovedJurisdictions.getApprovedJurisdiction().addAll(List.of(vmdApprovedJurisdiction));
         vmd.getLeft().setApprovedJurisdictions(vmdApprovedJurisdictions);
         vmd.getLeft().setAlertSystem(vmdAlertSystem.getLeft());
         mdState.getState().addAll(List.of(
@@ -478,7 +484,8 @@ public class InvariantParticipantModelAnnexTestTest {
         numericMetric.getRight().setActivationState(ComponentActivation.OFF);
         numericMetric.getRight().setMetricValue(mdibBuilder.buildNumericMetricValue(BigDecimal.ONE));
 
-        channel.getLeft().setMetric(List.of(metric.getLeft(), numericMetric.getLeft()));
+        channel.getLeft().getMetric().clear();
+        channel.getLeft().getMetric().addAll(List.of(metric.getLeft(), numericMetric.getLeft()));
         mdState.getState().addAll(List.of(metric.getRight(), numericMetric.getRight()));
 
         final var setStringOperation = mdibBuilder.buildSetStringOperation(SET_STRING_OPERATION_HANDLE,
@@ -486,7 +493,8 @@ public class InvariantParticipantModelAnnexTestTest {
         final var activateOperation = mdibBuilder.buildActivateOperation(ACTIVATE_OPERATION_HANDLE,
             VMD_HANDLE, OperatingMode.EN);
         final var sco = mdibBuilder.buildSco(SCO_HANDLE);
-        sco.getLeft().setOperation(List.of(setStringOperation.getLeft(), activateOperation.getLeft()));
+        sco.getLeft().getOperation().clear();
+        sco.getLeft().getOperation().addAll(List.of(setStringOperation.getLeft(), activateOperation.getLeft()));
         sco.getRight().setActivationState(ComponentActivation.ON);
         mdState.getState().addAll(List.of(sco.getRight(), setStringOperation.getRight(), activateOperation.getRight()));
         vmd.getLeft().setSco(sco.getLeft());
@@ -496,7 +504,8 @@ public class InvariantParticipantModelAnnexTestTest {
         final var activateOperation2 = mdibBuilder.buildActivateOperation(SECOND_ACTIVATE_OPERATION_HANDLE,
             MdibBuilder.DEFAULT_MDS_HANDLE, OperatingMode.DIS);
         final var sco2 = mdibBuilder.buildSco(SECOND_SCO_HANDLE);
-        sco2.getLeft().setOperation(List.of(setStringOperation2.getLeft(), activateOperation2.getLeft()));
+        sco2.getLeft().getOperation().clear();
+        sco2.getLeft().getOperation().addAll(List.of(setStringOperation2.getLeft(), activateOperation2.getLeft()));
         sco2.getRight().setActivationState(ComponentActivation.ON);
         mdState.getState().addAll(
             List.of(sco2.getRight(), setStringOperation2.getRight(), activateOperation2.getRight()));
@@ -514,7 +523,8 @@ public class InvariantParticipantModelAnnexTestTest {
         mdsState.setOperatingJurisdiction(operatingJurisdiction);
         final var approvedJurisdictions = participantFactory.createApprovedJurisdictions();
         final var approvedJurisdiction = participantFactory.createInstanceIdentifier();
-        approvedJurisdictions.setApprovedJurisdiction(List.of(approvedJurisdiction));
+        approvedJurisdictions.getApprovedJurisdiction().clear();
+        approvedJurisdictions.getApprovedJurisdiction().add(approvedJurisdiction);
         mdsDescriptor.setApprovedJurisdictions(approvedJurisdictions);
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());

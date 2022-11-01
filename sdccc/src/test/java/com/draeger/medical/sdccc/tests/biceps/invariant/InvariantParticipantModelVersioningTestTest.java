@@ -38,6 +38,7 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -75,7 +76,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -1350,7 +1350,7 @@ public class InvariantParticipantModelVersioningTestTest {
             MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         metric.getRight().setActivationState(ComponentActivation.OFF);
         metric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("value"));
-        channel.getLeft().setMetric(List.of(metric.getLeft()));
+        channel.getLeft().getMetric().add(metric.getLeft());
         mdState.getState().add(metric.getRight());
 
         final var systemContext = mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);

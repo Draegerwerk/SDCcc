@@ -22,38 +22,62 @@
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.jvnet.jaxb2_commons/jaxb2-basics-runtime -->
-        <dependency>
-            <groupId>org.jvnet.jaxb2_commons</groupId>
-            <artifactId>jaxb2-basics</artifactId>
-            <version>${jaxbBasicsVersion}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.3.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-core -->
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>2.3.0.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl -->
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.3.2</version>
-        </dependency>
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.jvnet.jaxb2_commons/jaxb2-basics-runtime &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.jvnet.jaxb2_commons</groupId>-->
+<!--            <artifactId>jaxb2-basics</artifactId>-->
+<!--            <version>${jaxbBasicsVersion}</version>-->
+<!--        </dependency>-->
+
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>4.0.1</version>
+                <scope>runtime</scope>
+            </dependency>
+
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>jakarta.xml.bind</groupId>-->
+<!--            <artifactId>jakarta.xml.bind-api</artifactId>-->
+<!--            <version>4.0.0</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>javax.xml.bind</groupId>-->
+<!--            <artifactId>jaxb-api</artifactId>-->
+<!--            <version>2.3.1</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-core &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.sun.xml.bind</groupId>-->
+<!--            <artifactId>jaxb-core</artifactId>-->
+<!--            <version>2.3.0.1</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.sun.xml.bind</groupId>-->
+<!--            <artifactId>jaxb-impl</artifactId>-->
+<!--            <version>2.3.7</version>-->
+<!--        </dependency>-->
+
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.jvnet.jaxb2.maven2</groupId>
-                <artifactId>maven-jaxb2-plugin</artifactId>
-                <version>0.14.0</version>
+
+
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jaxb2-maven-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>soap-12</id>
@@ -61,28 +85,13 @@
                         <configuration>
                             <locale>en</locale>
                             <readOnly>true</readOnly>
-                            <episode>true</episode>
-                            <generateDirectory>${directories.generatedSources}/java</generateDirectory>
-                            <args>
-                                <arg>-npa</arg>
-                                <arg>-no-header</arg>
-                                <arg>-Xsetters</arg>
-                                <arg>-Xsetters-mode=accessor</arg>
-                                <arg>-Xcopyable</arg>
-                                <arg>-XsimpleEquals</arg>
-                                <arg>-XsimpleHashCode</arg>
-                                <arg>-XtoString</arg>
-                            </args>
-                            <plugins>
-                                <plugin>
-                                    <groupId>org.jvnet.jaxb2_commons</groupId>
-                                    <artifactId>jaxb2-basics</artifactId>
-                                    <version>${jaxbBasicsVersion}</version>
-                                </plugin>
-                            </plugins>
+<!--                            <extension>true</extension>-->
+<!--                            <arguments>-->
+<!--                                <argument>-XtoString</argument>-->
+<!--                            </arguments>-->
                         </configuration>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>xjc</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -91,7 +100,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>add-source</id>

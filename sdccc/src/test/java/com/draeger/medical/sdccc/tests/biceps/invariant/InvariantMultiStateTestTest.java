@@ -455,7 +455,8 @@ public class InvariantMultiStateTestTest {
         systemContext.getLeft().setPatientContext(patientContext.getLeft());
         systemContext.getLeft().setLocationContext(
             locationContext.getLeft());
-        systemContext.getLeft().setOperatorContext(List.of(operator1.getLeft(), operator2.getLeft()));
+        systemContext.getLeft().getOperatorContext().clear();
+        systemContext.getLeft().getOperatorContext().addAll(List.of(operator1.getLeft(), operator2.getLeft()));
 
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().addAll(List.of(systemContext.getRight(),

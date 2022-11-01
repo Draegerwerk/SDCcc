@@ -187,7 +187,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     }
 
     private void sendMessageWithReplyToHeader(final String msgId, final String replyUri)
-        throws JAXBException, SoapFaultException {
+            throws JAXBException, SoapFaultException {
         final var message = soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB,
             messageModelFactory.createGetMdib());
 

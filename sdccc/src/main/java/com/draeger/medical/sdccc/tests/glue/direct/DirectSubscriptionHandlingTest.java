@@ -35,6 +35,7 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
+import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
@@ -461,7 +462,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             .getRequestResponseClient();
 
         final EventSink eventSink =
-            eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI);
+            eventSinkFactory.createWsEventingEventSink(
+                    requestResponseClient,
+                    baseURI,
+                    getInjector().getInstance(CommunicationLog.class));
         final ListenableFuture<SubscribeResult> subscribeResult =
             eventSink.subscribe(actions, DURATION, new NotificationSink() {
                 @Override

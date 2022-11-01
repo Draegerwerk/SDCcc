@@ -11,12 +11,12 @@ import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsaddressing.model.AttributedURIType;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayOutputStream;
