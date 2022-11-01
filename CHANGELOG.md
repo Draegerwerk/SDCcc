@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - references to standards to test_configuration.toml
 
+### Fixed
+- missing request bodies in glue:R0036 test
+
 ## [5.0.0] - 2022-10-27
 ### Added
 - previously closed source code
