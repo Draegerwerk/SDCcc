@@ -51,6 +51,9 @@ import com.draeger.medical.biceps.model.participant.OperatorContextState;
 import com.draeger.medical.biceps.model.participant.PatientContextDescriptor;
 import com.draeger.medical.biceps.model.participant.PatientContextState;
 import com.draeger.medical.biceps.model.participant.PhysicalConnectorInfo;
+import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricDescriptor;
+import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricState;
+import com.draeger.medical.biceps.model.participant.SampleArrayValue;
 import com.draeger.medical.biceps.model.participant.ScoDescriptor;
 import com.draeger.medical.biceps.model.participant.ScoState;
 import com.draeger.medical.biceps.model.participant.SetStringOperationDescriptor;
@@ -66,6 +69,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
+import javax.xml.datatype.Duration;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -438,6 +442,83 @@ public class MdibBuilder {
             handle, category, availability, unit, resolution);
         final var numericMetricState = buildNumericMetricState(handle);
         return new ImmutablePair<>(numericMetricDescriptor, numericMetricState);
+    }
+
+    /**
+     * Builds a sample array value.
+     *
+     * @param samples of the sample array value
+     * @return a new sample array value
+     */
+    public SampleArrayValue buildSampleArrayValue(final List<BigDecimal> samples) {
+        final var metricValue = participantModelFactory.createSampleArrayValue();
+        metricValue.setMetricQuality(participantModelFactory.createAbstractMetricValueMetricQuality());
+        metricValue.getMetricQuality().setValidity(MeasurementValidity.INV);
+        metricValue.setSamples(samples);
+        return metricValue;
+    }
+
+    /**
+     * @param handle       for new descriptor
+     * @param category     of new descriptor
+     * @param availability of new descriptor
+     * @param unit         of new descriptor
+     * @param resolution   of new descriptor
+     * @param samplePeriod of new descriptor
+     * @return a new string metric descriptor
+     */
+    public RealTimeSampleArrayMetricDescriptor buildRealTimeSampleArrayMetricDescriptor(
+        final String handle,
+        final MetricCategory category,
+        final MetricAvailability availability,
+        final CodedValue unit,
+        final BigDecimal resolution,
+        final Duration samplePeriod
+    ) {
+        final var realTimeSampleArrayMetricDescriptor =
+            participantModelFactory.createRealTimeSampleArrayMetricDescriptor();
+        realTimeSampleArrayMetricDescriptor.setHandle(handle);
+        realTimeSampleArrayMetricDescriptor.setMetricCategory(category);
+        realTimeSampleArrayMetricDescriptor.setMetricAvailability(availability);
+        realTimeSampleArrayMetricDescriptor.setUnit(unit);
+        realTimeSampleArrayMetricDescriptor.setResolution(resolution);
+        realTimeSampleArrayMetricDescriptor.setSamplePeriod(samplePeriod);
+        return realTimeSampleArrayMetricDescriptor;
+    }
+
+    /**
+     * @param handle of descriptor for new state
+     * @return new numeric metric state
+     */
+    public RealTimeSampleArrayMetricState buildRealTimeSampleArrayMetricState(final String handle) {
+        final var realTimeSampleArrayMetricState = participantModelFactory.createRealTimeSampleArrayMetricState();
+        realTimeSampleArrayMetricState.setDescriptorHandle(handle);
+        return realTimeSampleArrayMetricState;
+    }
+
+    /**
+     * Builds a new pair of real time sample array metric descriptor and state.
+     *
+     * @param handle       for new descriptor and state
+     * @param category     of descriptor
+     * @param availability of descriptor
+     * @param unit         of descriptor
+     * @param resolution   of descriptor
+     * @param samplePeriod of descriptor
+     * @return new string metric descriptor and state
+     */
+    public Pair<RealTimeSampleArrayMetricDescriptor, RealTimeSampleArrayMetricState> buildRealTimeSampleArrayMetric(
+        final String handle,
+        final MetricCategory category,
+        final MetricAvailability availability,
+        final CodedValue unit,
+        final BigDecimal resolution,
+        final Duration samplePeriod
+    ) {
+        final var realTimeSampleArrayMetricDescriptor = buildRealTimeSampleArrayMetricDescriptor(
+            handle, category, availability, unit, resolution, samplePeriod);
+        final var realTimeSampleArrayMetricState = buildRealTimeSampleArrayMetricState(handle);
+        return new ImmutablePair<>(realTimeSampleArrayMetricDescriptor, realTimeSampleArrayMetricState);
     }
 
     /*
