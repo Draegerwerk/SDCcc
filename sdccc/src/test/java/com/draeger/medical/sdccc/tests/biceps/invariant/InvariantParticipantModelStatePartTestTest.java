@@ -43,9 +43,12 @@ import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.glue.common.ActionConstants;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.cert.CertificateException;
 import java.time.Duration;
@@ -67,6 +70,9 @@ public class InvariantParticipantModelStatePartTestTest {
     private static final String CHANNEL_HANDLE = "someChannel";
     private static final String MSRMT_METRIC_HANDLE = "someMsrmtStringMetric";
     private static final String MSRMT_METRIC_HANDLE2 = "someMsrmtStringMetric2";
+
+    private static final String RTSA_METRIC_HANDLE = "someRealTimeSampleArrayMetric";
+    private static final String RTSA_METRIC_HANDLE2 = "someRealTimeSampleArrayMetric2";
     private static final String SET_METRIC_HANDLE = "someSetStringMetric";
     private static final String SET_METRIC_HANDLE2 = "someSetStringMetric2";
     private static final String CLC_METRIC_HANDLE = "someClcStringMetric";
@@ -90,7 +96,7 @@ public class InvariantParticipantModelStatePartTestTest {
     private InvariantParticipantModelStatePartTest testClass;
     private JaxbMarshalling baseMarshalling;
     private SoapMarshalling marshalling;
-
+    private DatatypeFactory datatypeFactory;
 
     @BeforeAll
     static void setupMarshalling() {
@@ -102,7 +108,7 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     @BeforeEach
-    void setUp() throws IOException, TimeoutException {
+    void setUp() throws IOException, TimeoutException, DatatypeConfigurationException {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
@@ -127,6 +133,8 @@ public class InvariantParticipantModelStatePartTestTest {
         marshalling.startAsync().awaitRunning(DEFAULT_TIMEOUT);
 
         storage = injector.getInstance(MessageStorage.class);
+
+        datatypeFactory = DatatypeFactory.newInstance();
 
         testClass = new InvariantParticipantModelStatePartTest();
         testClass.setUp();
@@ -228,6 +236,34 @@ public class InvariantParticipantModelStatePartTestTest {
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
             BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        testClass.testRequirement54700();
+    }
+
+    /**
+     * Tests if the test passes if for each 'setMetricStatus' manipulation for metrics with category 'Msrmt' only
+     * WaveformStream messages exist that contain the expected handle and were received within the time interval
+     * of the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700GoodWaveforms() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, RTSA_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
+            Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+
+        final var waveformStream = buildWaveformStream(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, RTSA_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, waveformStream));
 
         testClass.testRequirement54700();
     }
@@ -2169,43 +2205,54 @@ public class InvariantParticipantModelStatePartTestTest {
             MetricCategory.MSRMT, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         msrmtMetric.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtOne"));
-        channel.getLeft().setMetric(List.of(msrmtMetric.getLeft()));
-        mdState.getState().add(msrmtMetric.getRight());
 
         final var msrmtMetric2 = mdibBuilder.buildStringMetric(MSRMT_METRIC_HANDLE2,
             MetricCategory.MSRMT, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         msrmtMetric2.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtTwo"));
-        channel.getLeft().setMetric(List.of(msrmtMetric2.getLeft()));
-        mdState.getState().add(msrmtMetric2.getRight());
+
+        final var rtsaMetric = mdibBuilder.buildRealTimeSampleArrayMetric(RTSA_METRIC_HANDLE, MetricCategory.MSRMT,
+            MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"), BigDecimal.ONE,
+            datatypeFactory.newDuration("P0DT0H0M30S")
+        );
+        rtsaMetric.getRight().setActivationState(ComponentActivation.OFF);
+        rtsaMetric.getRight().setMetricValue(
+            mdibBuilder.buildSampleArrayValue(List.of(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.TEN)));
+
+        final var rtsaMetric2 = mdibBuilder.buildRealTimeSampleArrayMetric(RTSA_METRIC_HANDLE2, MetricCategory.MSRMT,
+            MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"), BigDecimal.ONE,
+            datatypeFactory.newDuration("P0DT0H2M35S")
+        );
+        rtsaMetric2.getRight().setActivationState(ComponentActivation.OFF);
+        rtsaMetric2.getRight().setMetricValue(mdibBuilder.buildSampleArrayValue(
+            List.of(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ONE)));
 
         final var setMetric = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE,
             MetricCategory.SET, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         setMetric.getRight().setActivationState(ComponentActivation.OFF);
         setMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("setOne"));
-        channel.getLeft().setMetric(List.of(setMetric.getLeft()));
-        mdState.getState().add(setMetric.getRight());
 
         final var setMetric2 = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE2,
             MetricCategory.SET, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         setMetric2.getRight().setActivationState(ComponentActivation.OFF);
         setMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("setTwo"));
-        channel.getLeft().setMetric(List.of(setMetric2.getLeft()));
-        mdState.getState().add(setMetric2.getRight());
 
         final var clcMetric = mdibBuilder.buildStringMetric(CLC_METRIC_HANDLE,
             MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         clcMetric.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcOne"));
-        channel.getLeft().setMetric(List.of(clcMetric.getLeft()));
-        mdState.getState().add(clcMetric.getRight());
 
         final var clcMetric2 = mdibBuilder.buildStringMetric(CLC_METRIC_HANDLE2,
             MetricCategory.CLC, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         clcMetric2.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcTwo"));
-        channel.getLeft().setMetric(List.of(clcMetric2.getLeft()));
-        mdState.getState().add(clcMetric2.getRight());
+
+        channel.getLeft().setMetric(
+            List.of(msrmtMetric.getLeft(), msrmtMetric2.getLeft(), rtsaMetric.getLeft(), rtsaMetric2.getLeft(),
+                setMetric.getLeft(), setMetric2.getLeft(), clcMetric.getLeft(), clcMetric2.getLeft()));
+        mdState.getState().addAll(
+            List.of(msrmtMetric.getRight(), msrmtMetric2.getRight(), rtsaMetric.getRight(), rtsaMetric2.getRight(),
+                setMetric.getRight(), setMetric2.getRight(), clcMetric.getRight(), clcMetric2.getRight()));
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
@@ -2237,6 +2284,24 @@ public class InvariantParticipantModelStatePartTestTest {
         return messageBuilder.createSoapMessageWithBody(
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             report
+        );
+    }
+
+    private Envelope buildWaveformStream(final String sequenceId,
+                                         final BigInteger mdibVersion,
+                                         final BigInteger metricVersion,
+                                         final String metricHandle,
+                                         final ComponentActivation activation) {
+
+        final var metricState = mdibBuilder.buildRealTimeSampleArrayMetricState(metricHandle);
+        metricState.setStateVersion(metricVersion);
+        metricState.setActivationState(activation);
+
+        final var waveform = messageBuilder.buildWaveformStream(sequenceId, List.of(metricState));
+        waveform.setMdibVersion(mdibVersion);
+        return messageBuilder.createSoapMessageWithBody(
+            ActionConstants.ACTION_WAVEFORM_STREAM,
+            waveform
         );
     }
 }
