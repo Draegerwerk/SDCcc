@@ -19,7 +19,6 @@ import org.somda.sdc.dpws.wsdl.model.TPart;
 import org.somda.sdc.dpws.wsdl.model.TPortType;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -53,10 +52,12 @@ public class WsdlParser {
      * @return map containing one entry for each portType. PortType name is the key, value is another map for
      *         operations. The key is the operation name, value is a container holding arguments
      *         for input and output elements used by the operation, resolved to the wsdl:message parts.
-     * @throws JAXBException in case wsdl cannot be serialized
+     * @throws javax.xml.bind.JAXBException in case wsdl cannot be serialized
      */
-    public Map<QName, Map<QName, OperationArguments>> parseWsdlPortTypes(final String wsdl) throws JAXBException {
-        final var tDef = wsdlMarshalling.unmarshal(new ByteArrayInputStream(wsdl.getBytes(StandardCharsets.UTF_8)));
+    public Map<QName, Map<QName, OperationArguments>> parseWsdlPortTypes(final String wsdl)
+            throws javax.xml.bind.JAXBException {
+        final var tDef = wsdlMarshalling.unmarshal(
+                new ByteArrayInputStream(wsdl.getBytes(StandardCharsets.UTF_8)));
 
         final var targetNamespace = tDef.getTargetNamespace();
 

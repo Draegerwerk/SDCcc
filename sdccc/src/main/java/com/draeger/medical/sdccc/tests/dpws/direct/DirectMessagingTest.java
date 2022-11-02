@@ -36,7 +36,6 @@ import org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory;
 import org.somda.sdc.dpws.soap.wstransfer.WsTransferConstants;
 import org.somda.sdc.glue.common.ActionConstants;
 
-import javax.xml.bind.JAXBException;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
@@ -166,7 +165,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.DPWS_R0031)
     @TestDescription("Provokes an wsa:InvalidAddressingHeader SOAP Fault and verifies, that with an anonymous"
         + " reply endpoint the wsa:InvalidAddressingHeader SOAP Fault is not thrown.")
-    void testRequirement0031() throws JAXBException {
+    void testRequirement0031() throws javax.xml.bind.JAXBException {
         final var msgUUID = soapUtil.createRandomUuidUri();
         try {
             sendMessageWithReplyToHeader(msgUUID, SOME_REPLY_ENDPOINT);
@@ -187,7 +186,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     }
 
     private void sendMessageWithReplyToHeader(final String msgId, final String replyUri)
-            throws JAXBException, SoapFaultException {
+            throws javax.xml.bind.JAXBException, SoapFaultException {
         final var message = soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB,
             messageModelFactory.createGetMdib());
 
