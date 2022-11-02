@@ -29,7 +29,8 @@
         <jreDownloadFileName>OpenJDK17U-jre_x64_windows_hotspot_17.0.5_8.zip</jreDownloadFileName>
         <jreDownloadUrlSuffix>jdk-17.0.5%2B8/${jreDownloadFileName}</jreDownloadUrlSuffix>
         <jreDownloadUrl>${jreDownloadUrlPrefix}${jreDownloadUrlSuffix}</jreDownloadUrl>
-        <jreDownloadSha256Checksum>d25a2d44c1bd9c57d49c5e98de274cd40970ab057fe304b52eb459de4ee5d8a5</jreDownloadSha256Checksum>
+        <jreDownloadSha256Checksum>d25a2d44c1bd9c57d49c5e98de274cd40970ab057fe304b52eb459de4ee5d8a5
+        </jreDownloadSha256Checksum>
     </properties>
 
     <repositories>
@@ -191,14 +192,21 @@
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>4.0.0</version>
+            <version>${jakartaXmlBindApiVersion}</version>
         </dependency>
 
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
-            <version>4.0.1</version>
-                            <scope>runtime</scope>
+            <version>${comSunXmlBindVersion}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>${comSunXmlBindVersion}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
@@ -236,12 +244,6 @@
             <artifactId>archunit-junit5</artifactId>
             <version>0.22.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>4.0.1</version>
-            <scope>compile</scope>
         </dependency>
 
     </dependencies>
@@ -427,7 +429,8 @@
                                 <configuration>
                                     <headerType>console</headerType>
                                     <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
-                                    <outfile>${project.build.directory}/${project.artifactId}-${project.version}.exe</outfile>
+                                    <outfile>${project.build.directory}/${project.artifactId}-${project.version}.exe
+                                    </outfile>
                                     <downloadUrl>https://adoptopenjdk.net</downloadUrl>
                                     <classPath>
                                         <mainClass>com.draeger.medical.sdccc.TestSuite</mainClass>

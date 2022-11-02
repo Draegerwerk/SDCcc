@@ -15,10 +15,12 @@
     </modules>
 
     <properties>
-        <revision>5.1.0</revision>
+        <revision>6.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <execPluginVersion>3.1.0</execPluginVersion>
+        <jakartaXmlBindApiVersion>4.0.0</jakartaXmlBindApiVersion>
+        <comSunXmlBindVersion>4.0.1</comSunXmlBindVersion>
     </properties>
 
     <build>
