@@ -29,6 +29,7 @@ import org.somda.sdc.glue.provider.SdcDevice;
 import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
 import org.somda.sdc.glue.provider.plugin.SdcRequiredTypesAndScopes;
 
+import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.NetworkInterface;
@@ -57,11 +58,15 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
     TestProviderImpl(@Assisted final InputStream mdibAsStream,
                      @Named(TestSuiteConfig.PROVIDER_DEVICE_EPR) final String providerEpr,
                      @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
-                     final TestProviderUtil testProviderUtil) throws javax.xml.bind.JAXBException {
+                     final TestProviderUtil testProviderUtil) {
         this.injector = testProviderUtil.getInjector();
         final MdibXmlIo mdibXmlIo = injector.getInstance(MdibXmlIo.class);
 
-        this.mdib = mdibXmlIo.readMdib(mdibAsStream);
+        try {
+            this.mdib = mdibXmlIo.readMdib(mdibAsStream);
+        } catch (final javax.xml.bind.JAXBException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             this.networkInterface = NetworkInterface.getByInetAddress(Inet4Address.getByName(adapterAddress));
