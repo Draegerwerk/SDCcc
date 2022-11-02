@@ -29,7 +29,6 @@ import org.somda.sdc.glue.provider.SdcDevice;
 import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
 import org.somda.sdc.glue.provider.plugin.SdcRequiredTypesAndScopes;
 
-import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.NetworkInterface;
