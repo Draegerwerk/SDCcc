@@ -8,6 +8,7 @@
 package com.draeger.medical.sdccc.tests.util;
 
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
@@ -25,6 +26,8 @@ public class TestDescriptionFilter implements PostDiscoveryFilter {
 
 
     @Override
+    @SuppressFBWarnings(value = {"DCN_NULLPOINTER_EXCEPTION"},
+            justification = "intentional due to not all tests having a TestDescription")
     public FilterResult apply(final TestDescriptor object) {
         final FilterResult result;
 

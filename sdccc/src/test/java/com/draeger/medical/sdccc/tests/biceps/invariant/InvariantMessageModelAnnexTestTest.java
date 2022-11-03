@@ -52,6 +52,7 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -62,7 +63,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -220,7 +220,8 @@ public class InvariantMessageModelAnnexTestTest {
         final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
         final var mdsAlertCondition = mdibBuilder.buildAlertCondition(
             MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
-        mdsAlertSystem.getLeft().setAlertCondition(List.of(mdsAlertCondition.getLeft()));
+        mdsAlertSystem.getLeft().getAlertCondition().clear();
+        mdsAlertSystem.getLeft().getAlertCondition().add(mdsAlertCondition.getLeft());
         final var first = buildDescriptionModificationReport(
             SEQUENCE_ID,
             BigInteger.ONE,
@@ -1474,9 +1475,12 @@ public class InvariantMessageModelAnnexTestTest {
         final var mdsSecondAlertSignal = mdibBuilder.buildAlertSignal(
             MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.VIS, true, AlertActivation.OFF);
 
-        mdsAlertSystem.getLeft().setAlertCondition(List.of(mdsAlertCondition.getLeft(),
-            mdsSecondAlertCondition.getLeft()));
-        mdsAlertSystem.getLeft().setAlertSignal(List.of(mdsAlertSignal.getLeft(), mdsSecondAlertSignal.getLeft()));
+        mdsAlertSystem.getLeft().getAlertCondition().clear();
+        mdsAlertSystem.getLeft().getAlertCondition().addAll(List.of(mdsAlertCondition.getLeft(),
+                mdsSecondAlertCondition.getLeft()));
+        mdsAlertSystem.getLeft().getAlertSignal().clear();
+        mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(mdsAlertSignal.getLeft(),
+                mdsSecondAlertSignal.getLeft()));
 
         final var vmdAlertCondition = mdibBuilder.buildAlertCondition(
             VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
@@ -1486,8 +1490,11 @@ public class InvariantMessageModelAnnexTestTest {
 
         final var vmdAlertSystem =
                 mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
-        vmdAlertSystem.getLeft().setAlertCondition(List.of(vmdAlertCondition.getLeft()));
-        vmdAlertSystem.getLeft().setAlertSignal(List.of(vmdAlertSignal.getLeft()));
+
+        vmdAlertSystem.getLeft().getAlertCondition().clear();
+        vmdAlertSystem.getLeft().getAlertCondition().add(vmdAlertCondition.getLeft());
+        vmdAlertSystem.getLeft().getAlertSignal().clear();
+        vmdAlertSystem.getLeft().getAlertSignal().add(vmdAlertSignal.getLeft());
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setAlertSystem(vmdAlertSystem.getLeft());
@@ -1530,7 +1537,8 @@ public class InvariantMessageModelAnnexTestTest {
 
         systemContext.getLeft().setPatientContext(patientContext.getLeft());
         systemContext.getLeft().setLocationContext(locationContext.getLeft());
-        systemContext.getLeft().setOperatorContext(List.of(operatorContext.getLeft()));
+        systemContext.getLeft().getOperatorContext().clear();
+        systemContext.getLeft().getOperatorContext().add(operatorContext.getLeft());
 
         // metrics for c.14
         final var metric = mdibBuilder.buildStringMetric(STRING_METRIC_HANDLE,
@@ -1543,7 +1551,8 @@ public class InvariantMessageModelAnnexTestTest {
         numericMetric.getRight().setActivationState(ComponentActivation.OFF);
         numericMetric.getRight().setMetricValue(mdibBuilder.buildNumericMetricValue(BigDecimal.ONE));
 
-        channel.getLeft().setMetric(List.of(metric.getLeft(), numericMetric.getLeft()));
+        channel.getLeft().getMetric().clear();
+        channel.getLeft().getMetric().addAll(List.of(metric.getLeft(), numericMetric.getLeft()));
         mdState.getState().addAll(List.of(metric.getRight(), numericMetric.getRight()));
 
         // operations for c.15
@@ -1554,7 +1563,8 @@ public class InvariantMessageModelAnnexTestTest {
                 mdibBuilder.buildActivateOperation(ACTIVATE_OPERATION_HANDLE,
             "someTarget", OperatingMode.EN);
         final var sco = mdibBuilder.buildSco(SCO_HANDLE);
-        sco.getLeft().setOperation(List.of(setStringOperation.getLeft(), activateOperation.getLeft()));
+        sco.getLeft().getOperation().clear();
+        sco.getLeft().getOperation().addAll(List.of(setStringOperation.getLeft(), activateOperation.getLeft()));
         sco.getRight().setActivationState(ComponentActivation.ON);
         mdState.getState().addAll(List.of(sco.getRight(), setStringOperation.getRight(), activateOperation.getRight()));
 

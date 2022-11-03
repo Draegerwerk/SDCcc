@@ -262,7 +262,8 @@ public class InvariantDeviceComponentStateTestTest {
                 ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI);
         final AlertConditionState alertConditionState =
             mdibBuilder.buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.ON);
-        alertSystem.setAlertCondition(List.of(alertCondition));
+        alertSystem.getAlertCondition().clear();
+        alertSystem.getAlertCondition().add(alertCondition);
 
         final var mds = mdibBuilder.buildMds(MDS_HANDLE);
         mds.getLeft().setAlertSystem(alertSystem);
@@ -270,8 +271,10 @@ public class InvariantDeviceComponentStateTestTest {
         final var mdDescription = mdibBuilder.buildMdDescription();
         final var mdState = mdibBuilder.buildMdState();
 
-        mdDescription.setMds(List.of(mds.getLeft()));
-        mdState.setState(List.of(mds.getRight(), alertSystemState, alertConditionState));
+        mdDescription.getMds().clear();
+        mdDescription.getMds().add(mds.getLeft());
+        mdState.getState().clear();
+        mdState.getState().addAll(List.of(mds.getRight(), alertSystemState, alertConditionState));
 
         final var mdib = mdibBuilder.buildMdib(SEQUENCE_ID);
         mdib.setMdDescription(mdDescription);
@@ -287,9 +290,11 @@ public class InvariantDeviceComponentStateTestTest {
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setDescriptorVersion(BigInteger.ZERO);
         vmd.getRight().setDescriptorVersion(BigInteger.ZERO);
-        channel.getLeft().setMetric(List.of(metric.getLeft()));
+        channel.getLeft().getMetric().clear();
+        channel.getLeft().getMetric().add(metric.getLeft());
         mds.getLeft().getVmd().add(vmd.getLeft());
-        vmd.getLeft().setChannel(List.of(channel.getLeft()));
+        vmd.getLeft().getChannel().clear();
+        vmd.getLeft().getChannel().add(channel.getLeft());
         mdState.getState().add(vmd.getRight());
         mdState.getState().add(metric.getRight());
         mdState.getState().add(channel.getRight());
