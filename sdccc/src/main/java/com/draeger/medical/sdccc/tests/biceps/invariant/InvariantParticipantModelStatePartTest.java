@@ -182,10 +182,12 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     private void testRequirement547(final MetricCategory category, final ComponentActivation activation)
         throws NoTestData {
         final var successfulReportsSeen = new AtomicBoolean(false);
-        try (final var manipulations = messageStorage.getManipulationDataByParametersAndManipulation(
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())),
-            Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
+        try (final var manipulations =
+                 messageStorage.getManipulationDataByParametersAndManipulation(
+                     List.of(
+                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
+                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())),
+                     Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
             assertTestData(manipulations.areObjectsPresent(),
                 String.format(NO_SET_METRIC_STATUS_MANIPULATION, category));
             manipulations.getStream().filter(it -> it.getResult().equals(ResponseTypes.Result.RESULT_SUCCESS))
