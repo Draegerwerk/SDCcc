@@ -44,7 +44,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.glue.common.ActionConstants;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.ByteArrayInputStream;
@@ -2272,7 +2271,7 @@ public class InvariantParticipantModelStatePartTestTest {
         clcMetric2.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcTwo"));
 
-        channel.getLeft().setMetric(
+        channel.getLeft().getMetric().addAll(
             List.of(msrmtMetric.getLeft(), msrmtMetric2.getLeft(), rtsaMetric.getLeft(), rtsaMetric2.getLeft(),
                 setMetric.getLeft(), setMetric2.getLeft(), clcMetric.getLeft(), clcMetric2.getLeft()));
         mdState.getState().addAll(

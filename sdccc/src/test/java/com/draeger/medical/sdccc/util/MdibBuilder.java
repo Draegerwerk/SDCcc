@@ -454,7 +454,7 @@ public class MdibBuilder {
         final var metricValue = participantModelFactory.createSampleArrayValue();
         metricValue.setMetricQuality(participantModelFactory.createAbstractMetricValueMetricQuality());
         metricValue.getMetricQuality().setValidity(MeasurementValidity.INV);
-        metricValue.setSamples(samples);
+        metricValue.getSamples().addAll(samples);
         return metricValue;
     }
 

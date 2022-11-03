@@ -474,7 +474,7 @@ public class MessageBuilder {
     ) {
         final var waveform = messageModelFactory.createWaveformStream();
         waveform.setSequenceId(sequenceId);
-        waveform.setState(states);
+        waveform.getState().addAll(states);
         return waveform;
     }
 
