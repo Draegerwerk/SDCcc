@@ -145,7 +145,7 @@ are located in the two result XML files, *TEST-SDCcc_direct.xml* for the direct 
 for the invariant tests.
 
 ## Prerequisites for building SDCcc
-Maven 3.8.1 and Java 11 are required to build the project.
+Maven >= 3.8.1 and Java 17 are required to build the project.
 
 ## Limitations
 The test tool has the following limitations. If the DUT falls under these limitations, the test tool **cannot** be used.

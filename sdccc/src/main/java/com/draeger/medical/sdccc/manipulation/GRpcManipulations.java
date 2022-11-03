@@ -122,7 +122,19 @@ public class GRpcManipulations implements Manipulations {
             v -> fallback.setLocationDetail(locationDetail),
             BasicResponses.BasicResponse::getResult,
             BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_LOCATION_DETAIL, locationDetail.toString()))
+            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_LOCATION_DETAIL,
+                    String.format("poC=%s, "
+                                    + "room=%s, "
+                                    + "bed=%s, "
+                                    + "facility=%s, "
+                                    + "building=%s, "
+                                    + "floor=%s",
+                            locationDetail.getPoC(),
+                            locationDetail.getRoom(),
+                            locationDetail.getBed(),
+                            locationDetail.getFacility(),
+                            locationDetail.getBuilding(),
+                            locationDetail.getFloor())))
         );
     }
 

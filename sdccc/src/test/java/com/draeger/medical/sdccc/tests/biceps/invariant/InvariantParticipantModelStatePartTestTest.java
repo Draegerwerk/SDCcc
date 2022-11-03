@@ -29,6 +29,7 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;

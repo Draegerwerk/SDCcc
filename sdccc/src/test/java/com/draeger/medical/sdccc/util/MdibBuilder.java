@@ -1059,8 +1059,10 @@ public class MdibBuilder {
         final var mdDescription = buildMdDescription();
         final var mdState = buildMdState();
 
-        mdDescription.setMds(List.of(mds.getLeft()));
-        mdState.setState(List.of(mds.getRight()));
+        mdDescription.getMds().clear();
+        mdDescription.getMds().addAll(List.of(mds.getLeft()));
+        mdState.getState().clear();
+        mdState.getState().addAll(List.of(mds.getRight()));
 
         final var mdib = buildMdib(sequenceId);
         mdib.setMdDescription(mdDescription);

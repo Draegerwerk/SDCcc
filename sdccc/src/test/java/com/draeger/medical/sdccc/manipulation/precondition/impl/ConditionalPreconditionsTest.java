@@ -27,6 +27,7 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.time.Duration;
@@ -583,7 +583,8 @@ public class ConditionalPreconditionsTest {
         reportPart.getContextState().addAll(List.of(patientContextState, patientContextState2));
 
         final var report = messageBuilder.buildEpisodicContextReport("SomeSequence");
-        report.setReportPart(List.of(reportPart));
+        report.getReportPart().clear();
+        report.getReportPart().addAll(List.of(reportPart));
 
         final var message = messageBuilder.createSoapMessageWithBody(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -642,15 +643,17 @@ public class ConditionalPreconditionsTest {
             WORKFLOW_CONTEXT_STATE_HANDLE2);
 
         final var secondReportPart = messageBuilder.buildAbstractContextReportReportPart();
-        secondReportPart.setContextState(List.of(
-            locationContextState, locationContextState2,
-            ensembleContextState, ensembleContextState2,
-            meansContextState, meansContextState2,
-            operatorContextState, operatorContextState2,
-            workflowContextState, workflowContextState2
+        secondReportPart.getContextState().clear();
+        secondReportPart.getContextState().addAll(List.of(
+                locationContextState, locationContextState2,
+                ensembleContextState, ensembleContextState2,
+                meansContextState, meansContextState2,
+                operatorContextState, operatorContextState2,
+                workflowContextState, workflowContextState2
         ));
         final var secondReport = messageBuilder.buildEpisodicContextReport("SomeSequence");
-        secondReport.setReportPart(List.of(secondReportPart));
+        secondReport.getReportPart().clear();
+        secondReport.getReportPart().addAll(List.of(secondReportPart));
 
         final var secondMessage = messageBuilder.createSoapMessageWithBody(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,

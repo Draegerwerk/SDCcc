@@ -42,6 +42,7 @@ import com.draeger.medical.dpws.soap.wsdiscovery.model.ProbeMatchesType;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchType;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchesType;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.dpws.soap.SoapConstants;
@@ -49,7 +50,6 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 import org.w3c.dom.Element;
 
 import javax.inject.Inject;
-import javax.xml.bind.JAXBElement;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -143,7 +143,8 @@ public class MessageBuilder {
      */
     public Envelope createSoapMessageWithBody(final String action, final Object bodyElement) {
         final var message = createBasicSoapMessage(action);
-        message.getBody().setAny(List.of(bodyElement));
+        message.getBody().getAny().clear();
+        message.getBody().getAny().addAll(List.of(bodyElement));
         return message;
     }
 
@@ -158,7 +159,8 @@ public class MessageBuilder {
         reason.setValue(reasonText);
         reason.setLang(lang);
         final var faultReason = soapFactory.createFaultreason();
-        faultReason.setText(List.of(reason));
+        faultReason.getText().clear();
+        faultReason.getText().addAll(List.of(reason));
         final var subFaultCode = soapFactory.createSubcode();
         subFaultCode.setValue(SoapConstants.DEFAULT_SUBCODE);
         final var faultCode = soapFactory.createFaultcode();
@@ -233,7 +235,8 @@ public class MessageBuilder {
      */
     public JAXBElement<ProbeMatchesType> buildProbeMatches(final List<ProbeMatchType> match) {
         final var probeMatches = wsDiscoveryFactory.createProbeMatchesType();
-        probeMatches.setProbeMatch(match);
+        probeMatches.getProbeMatch().clear();
+        probeMatches.getProbeMatch().addAll(match);
         return wsDiscoveryFactory.createProbeMatches(probeMatches);
     }
 
@@ -325,7 +328,8 @@ public class MessageBuilder {
                                                     final List<SystemErrorReport.ReportPart> reportParts) {
         final var response = messageModelFactory.createSystemErrorReport();
         response.setSequenceId(sequenceId);
-        response.setReportPart(reportParts);
+        response.getReportPart().clear();
+        response.getReportPart().addAll(reportParts);
         return response;
     }
 

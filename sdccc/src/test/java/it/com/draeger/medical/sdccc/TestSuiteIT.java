@@ -46,7 +46,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
+import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
+import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.factory.TransportBindingFactory;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
@@ -283,8 +285,12 @@ public class TestSuiteIT {
         final var subManAddress = subMan.getSubscriptionManagerEpr().getAddress();
 
         // unsubscribe from outside the client, next renew should mark test run invalid
-        final var transportBindingFactory = client.getInjector().getInstance(TransportBindingFactory.class);
-        final var transportBinding = transportBindingFactory.createHttpBinding(subManAddress.getValue());
+        final var transportBindingFactory =
+                client.getInjector().getInstance(TransportBindingFactory.class);
+        final CommunicationLog communicationLog =
+                client.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog();
+        final var transportBinding = transportBindingFactory.createHttpBinding(subManAddress.getValue(),
+                communicationLog);
 
         final var rrClientFactory = client.getInjector().getInstance(RequestResponseClientFactory.class);
         final var requestResponseClient = rrClientFactory.createRequestResponseClient(transportBinding);
