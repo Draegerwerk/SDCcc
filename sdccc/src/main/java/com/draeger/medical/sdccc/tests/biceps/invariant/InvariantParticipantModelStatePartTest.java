@@ -186,7 +186,8 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                  messageStorage.getManipulationDataByParametersAndManipulation(
                      List.of(
                          new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
-                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())),
+                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())
+                     ),
                      Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
             assertTestData(manipulations.areObjectsPresent(),
                 String.format(NO_SET_METRIC_STATUS_MANIPULATION, category));
