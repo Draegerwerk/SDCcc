@@ -261,8 +261,8 @@ public class InvariantSdcParticipantModelBindingTestTest {
         final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
         vmdAlertCondition.getLeft().setType(mdibBuilder.buildCodedValue("alertConditionCodedValue"));
         vmdAlertSignal.getLeft().setType(mdibBuilder.buildCodedValue("alertSignalCodedValue"));
-        vmdAlertSystem.getLeft().setAlertCondition(List.of(vmdAlertCondition.getLeft()));
-        vmdAlertSystem.getLeft().setAlertSignal(List.of(vmdAlertSignal.getLeft()));
+        vmdAlertSystem.getLeft().getAlertCondition().add(vmdAlertCondition.getLeft());
+        vmdAlertSystem.getLeft().getAlertSignal().add(vmdAlertSignal.getLeft());
         mdState.getState().addAll(List.of(
             vmdAlertSystem.getRight(), vmdAlertCondition.getRight(), vmdAlertSignal.getRight()));
 
@@ -279,7 +279,7 @@ public class InvariantSdcParticipantModelBindingTestTest {
             MetricCategory.MSRMT,
             MetricAvailability.CONT,
             mdibBuilder.buildCodedValue("stringCodedValue"));
-        channel.getLeft().setMetric(List.of(metric.getLeft()));
+        channel.getLeft().getMetric().add(metric.getLeft());
         mdState.getState().addAll(List.of(channel.getRight(), metric.getRight()));
 
         final var sco = mdibBuilder.buildSco("someSco");
@@ -289,7 +289,7 @@ public class InvariantSdcParticipantModelBindingTestTest {
         final var setStringOperation = mdibBuilder.buildSetStringOperation(
             SET_STRING_OPERATION_HANDLE, STRING_METRIC_HANDLE, OperatingMode.DIS);
         setStringOperation.getLeft().setType(mdibBuilder.buildCodedValue("operationCodedValue"));
-        sco.getLeft().setOperation(List.of(setStringOperation.getLeft()));
+        sco.getLeft().getOperation().add(setStringOperation.getLeft());
         mdState.getState().add(setStringOperation.getRight());
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());

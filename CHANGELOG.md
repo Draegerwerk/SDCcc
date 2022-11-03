@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - references to standards to test_configuration.toml
+- Java 17 support
 
 ### Fixed
 - missing request bodies in glue:R0036 test

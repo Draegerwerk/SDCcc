@@ -18,7 +18,6 @@ import org.somda.sdc.glue.common.CommonConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 import org.somda.sdc.glue.provider.SdcDevice;
 
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -122,10 +121,10 @@ public class WsdlParserTest {
 
     /**
      * Tests using the method parsePortTypes to parse request-response operations.
-     * @throws JAXBException when this exception is thrown.
+     * @throws javax.xml.bind.JAXBException when this exception is thrown.
      */
     @Test
-    public void testParsePortTypesGood() throws JAXBException {
+    public void testParsePortTypesGood() throws javax.xml.bind.JAXBException {
         final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
             + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
             + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
@@ -170,10 +169,10 @@ public class WsdlParserTest {
 
     /**
      * Tests using the method parsePortTypes to parse solicit-response operations.
-     * @throws JAXBException when this exception is thrown.
+     * @throws javax.xml.bind.JAXBException when this exception is thrown.
      */
     @Test
-    public void testParsePortTypesGoodInputAndOutputSwitched() throws JAXBException {
+    public void testParsePortTypesGoodInputAndOutputSwitched() throws javax.xml.bind.JAXBException {
         final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
             + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
             + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "

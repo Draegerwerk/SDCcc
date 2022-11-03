@@ -660,8 +660,10 @@ public class InvariantAlertStateTestTest {
         vmdAlertCondition.getLeft().setDescriptorVersion(null);
         vmdAlertSignal.getLeft().setDescriptorVersion(null);
         vmdAlertSystem.getLeft().setDescriptorVersion(null);
-        vmdAlertSystem.getLeft().setAlertCondition(List.of(vmdAlertCondition.getLeft()));
-        vmdAlertSystem.getLeft().setAlertSignal(List.of(vmdAlertSignal.getLeft()));
+        vmdAlertSystem.getLeft().getAlertCondition().clear();
+        vmdAlertSystem.getLeft().getAlertCondition().addAll(List.of(vmdAlertCondition.getLeft()));
+        vmdAlertSystem.getLeft().getAlertSignal().clear();
+        vmdAlertSystem.getLeft().getAlertSignal().addAll(List.of(vmdAlertSignal.getLeft()));
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setDescriptorVersion(vmdVersion);
@@ -707,8 +709,10 @@ public class InvariantAlertStateTestTest {
                 mdState.getState().addAll(List.of(mdsSecondAlertCondition.getRight(), mdsSecondAlertSignal.getRight()));
             }
 
-            mdsAlertSystem.getLeft().setAlertCondition(listOfAlertConditions);
-            mdsAlertSystem.getLeft().setAlertSignal(listOfAlertSignals);
+            mdsAlertSystem.getLeft().getAlertCondition().clear();
+            mdsAlertSystem.getLeft().getAlertCondition().addAll(listOfAlertConditions);
+            mdsAlertSystem.getLeft().getAlertSignal().clear();
+            mdsAlertSystem.getLeft().getAlertSignal().addAll(listOfAlertSignals);
 
             mdsDescriptor.setAlertSystem(mdsAlertSystem.getLeft());
             mdState.getState().addAll(List.of(

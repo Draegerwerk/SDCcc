@@ -28,6 +28,7 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
@@ -42,7 +43,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.glue.common.ActionConstants;
 
-import javax.xml.bind.JAXBElement;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1887,28 +1887,28 @@ public class InvariantParticipantModelStatePartTestTest {
             MetricCategory.MSRMT, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         msrmtMetric.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtOne"));
-        channel.getLeft().setMetric(List.of(msrmtMetric.getLeft()));
+        channel.getLeft().getMetric().add(msrmtMetric.getLeft());
         mdState.getState().add(msrmtMetric.getRight());
 
         final var msrmtMetric2 = mdibBuilder.buildStringMetric(MSRMT_METRIC_HANDLE2,
             MetricCategory.MSRMT, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         msrmtMetric2.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtTwo"));
-        channel.getLeft().setMetric(List.of(msrmtMetric2.getLeft()));
+        channel.getLeft().getMetric().add(msrmtMetric2.getLeft());
         mdState.getState().add(msrmtMetric2.getRight());
 
         final var clcMetric = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE,
             MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         clcMetric.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcOne"));
-        channel.getLeft().setMetric(List.of(clcMetric.getLeft()));
+        channel.getLeft().getMetric().add(clcMetric.getLeft());
         mdState.getState().add(clcMetric.getRight());
 
         final var clcMetric2 = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE2,
             MetricCategory.CLC, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         clcMetric2.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcTwo"));
-        channel.getLeft().setMetric(List.of(clcMetric2.getLeft()));
+        channel.getLeft().getMetric().add(clcMetric2.getLeft());
         mdState.getState().add(clcMetric2.getRight());
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());

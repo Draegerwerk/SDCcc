@@ -32,7 +32,6 @@ import org.somda.sdc.dpws.soap.model.Fault;
 import org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants;
 import org.somda.sdc.dpws.soap.wsdiscovery.model.ObjectFactory;
 
-import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
@@ -170,7 +169,8 @@ public class DirectSecurityConsiderationsTestTest {
         when(testClient.getTargetXAddrs()).thenReturn(xAddresses);
 
         final var mockFaultMessage = mock(SoapMessage.class, Mockito.RETURNS_DEEP_STUBS);
-        final JAXBElement<Fault> mockJaxbFault = mock(JAXBElement.class, Mockito.RETURNS_DEEP_STUBS);
+        final javax.xml.bind.JAXBElement<Fault> mockJaxbFault =
+                mock(javax.xml.bind.JAXBElement.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockFaultMessage.getOriginalEnvelope().getBody().getAny().get(0))
                 .thenReturn(mockJaxbFault);
 
