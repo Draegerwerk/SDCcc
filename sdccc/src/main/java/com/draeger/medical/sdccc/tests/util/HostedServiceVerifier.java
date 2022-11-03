@@ -17,7 +17,6 @@ import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.util.HashMap;
@@ -107,7 +106,7 @@ public class HostedServiceVerifier {
                     );
                 });
                 parsedWsdls.putAll(wsdlPortTypes);
-            } catch (final JAXBException e) {
+            } catch (final javax.xml.bind.JAXBException e) {
                 LOG.debug("Could not parse WSDL for service {}", serviceId, e);
                 fail("Could not parse WSDL for service " + serviceId + ". Message: " + e.getMessage());
                 // unreachable, silence warnings

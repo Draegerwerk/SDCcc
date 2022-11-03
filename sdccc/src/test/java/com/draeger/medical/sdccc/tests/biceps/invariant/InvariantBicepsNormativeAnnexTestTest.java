@@ -372,7 +372,8 @@ public class InvariantBicepsNormativeAnnexTestTest {
 
         // localized text in mds -> type
         final var mdsType = mdibBuilder.buildCodedValue("mdsCode");
-        mdsType.setConceptDescription(List.of(
+        mdsType.getConceptDescription().clear();
+        mdsType.getConceptDescription().addAll(List.of(
                 createLocalizedText("mdsType", mdsTypeRef)
         ));
         mdsDescriptor.setType(mdsType);
@@ -412,7 +413,8 @@ public class InvariantBicepsNormativeAnnexTestTest {
         mdState.getState().add(operation.getRight());
 
         final var operationType = mdibBuilder.buildCodedValue("code");
-        operationType.setCodingSystemName(List.of(
+        operationType.getCodingSystemName().clear();
+        operationType.getCodingSystemName().addAll(List.of(
                 createLocalizedText("operationType", operationTypeRefVersion)
         ));
         operation.getLeft().setType(operationType);
@@ -426,16 +428,19 @@ public class InvariantBicepsNormativeAnnexTestTest {
         final var metadata = mdibBuilder.buildMdsDescriptorMetadata();
         mdsDescriptor.setMetaData(metadata);
 
-        metadata.setManufacturer(List.of(
+        metadata.getManufacturer().clear();
+        metadata.getManufacturer().addAll(List.of(
                 createLocalizedText("manufacturer", manufacturerRefVersion)
         ));
 
         final var udiInstanceIdentifier = mdibBuilder.buildInstanceIdentifier();
-        udiInstanceIdentifier.setIdentifierName(List.of(
+        udiInstanceIdentifier.getIdentifierName().clear();
+        udiInstanceIdentifier.getIdentifierName().add(
                 createLocalizedText("udiInstanceIdentifier", issuerRefVersion)
-        ));
+        );
         final var udi = mdibBuilder.buildMdsDescriptorMetaDataUdi("device", "human", udiInstanceIdentifier);
-        metadata.setUdi(List.of(udi));
+        metadata.getUdi().clear();
+        metadata.getUdi().add(udi);
     }
 
     void buildAlertLocalizedText(
@@ -457,10 +462,12 @@ public class InvariantBicepsNormativeAnnexTestTest {
         mdState.getState().add(alertCondition.getRight());
 
         final var alertConditionCauseInfo = mdibBuilder.buildCauseInfo();
-        alertConditionCauseInfo.setDescription(List.of(
-                createLocalizedText("alertConditionCauseInfo", alertConditionRefVersion)
-        ));
-        alertCondition.getLeft().setCauseInfo(List.of(alertConditionCauseInfo));
+
+        alertConditionCauseInfo.getDescription().clear();
+        alertConditionCauseInfo.getDescription().add(
+                createLocalizedText("alertConditionCauseInfo", alertConditionRefVersion));
+        alertCondition.getLeft().getCauseInfo().clear();
+        alertCondition.getLeft().getCauseInfo().add(alertConditionCauseInfo);
 
     }
 
@@ -471,25 +478,26 @@ public class InvariantBicepsNormativeAnnexTestTest {
             @Nullable final BigInteger physicalConnectorRefVersion) {
         // localized text in battery state -> calibration info -> calibration documentation
         final var battery = mdibBuilder.buildBattery("battery");
-        mdsDescriptor.setBattery(List.of(battery.getLeft()));
+        mdsDescriptor.getBattery().clear();
+        mdsDescriptor.getBattery().add(battery.getLeft());
         mdState.getState().add(battery.getRight());
 
         final var calibrationDocumentation = mdibBuilder.buildCalibrationInfoCalibrationDocumentation();
-        calibrationDocumentation.setDocumentation(List.of(
-                createLocalizedText("calibrationDocumentation", calibrationDocumentationRefVersion)
-        ));
+        calibrationDocumentation.getDocumentation().clear();
+        calibrationDocumentation.getDocumentation().add(
+                createLocalizedText("calibrationDocumentation", calibrationDocumentationRefVersion));
 
         final var calibrationInfo = mdibBuilder.buildCalibrationInfo();
         battery.getRight().setCalibrationInfo(calibrationInfo);
-        calibrationInfo.setCalibrationDocumentation(List.of(calibrationDocumentation));
+        calibrationInfo.getCalibrationDocumentation().clear();
+        calibrationInfo.getCalibrationDocumentation().add(calibrationDocumentation);
 
         // localized text in battery state -> physical connector -> label
         final var physicalConnector = mdibBuilder.buildPhysicalConnectorInfo();
         battery.getRight().setPhysicalConnector(physicalConnector);
 
-        physicalConnector.setLabel(List.of(
-                createLocalizedText("physicalConnector", physicalConnectorRefVersion)
-        ));
+        physicalConnector.getLabel().clear();
+        physicalConnector.getLabel().add(createLocalizedText("physicalConnector", physicalConnectorRefVersion));
     }
 
     Envelope createGetLocalizedTextResponseWithRef(@Nullable final BigInteger version) {
@@ -509,9 +517,9 @@ public class InvariantBicepsNormativeAnnexTestTest {
                 123,
                 InvocationState.FAIL
         );
-        invocationInfo.setInvocationErrorMessage(List.of(
-                createLocalizedText("invocationInfoErrorMessage", version)
-        ));
+
+        invocationInfo.getInvocationErrorMessage().clear();
+        invocationInfo.getInvocationErrorMessage().add(createLocalizedText("invocationInfoErrorMessage", version));
         final var response = messageBuilder.buildSetStringResponse("0", invocationInfo);
 
         return messageBuilder.createSoapMessageWithBody(

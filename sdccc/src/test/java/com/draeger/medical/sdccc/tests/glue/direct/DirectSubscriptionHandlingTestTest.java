@@ -34,6 +34,8 @@ import org.somda.sdc.biceps.model.participant.MdDescription;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.CommunicationLogImpl;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpHandler;
@@ -117,6 +119,7 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
+    private CommunicationLog communicationLog;
 
     private HashSet<String> subscriptionsToCancel;
     private HashSet<String> cancelledSubscriptions;
@@ -133,6 +136,7 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
+        communicationLog = mock(CommunicationLogImpl.class);
 
         // set up the injector used by sdcri
         final var clientInjector = TestClientUtil.createClientInjector(
@@ -162,6 +166,7 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(Manipulations.class).toInstance(manipulations);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
+                    bind(CommunicationLog.class).toInstance(communicationLog);
                 }
             }
         );
@@ -954,7 +959,8 @@ public class DirectSubscriptionHandlingTestTest {
         setupGetMdibResponse();
 
         final EventSink eventSink = mock(EventSink.class);
-        when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient), anyString())).thenReturn(eventSink);
+        when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient),
+                anyString(), any())).thenReturn(eventSink);
 
         when(eventSink.subscribe(anyList(), any(), any())).thenAnswer(call -> {
             final List<String> actions = call.getArgument(0);

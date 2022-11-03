@@ -39,7 +39,6 @@ import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.w3c.dom.Node;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -774,10 +773,10 @@ public class DirectWSDLTest extends InjectorTestBase {
         getService.sendRequestResponse(getMdibRequest);
     }
 
-    private JAXBElement<AttributedURIType> createMustUnderstandNode() {
+    private javax.xml.bind.JAXBElement<AttributedURIType> createMustUnderstandNode() {
         final var entry = new AttributedURIType();
         entry.setValue(MUST_UNDERSTAND_TEXT);
         entry.getOtherAttributes().put(Constants.MUST_UNDERSTAND_ATTRIBUTE, "true");
-        return new JAXBElement<>(CUSTOM_NAMESPACE, AttributedURIType.class, entry);
+        return new javax.xml.bind.JAXBElement<>(CUSTOM_NAMESPACE, AttributedURIType.class, entry);
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xjb:bindings xmlns:xjb="http://java.sun.com/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.1">
-    <xjb:bindings schemaLocation="ws-transfer-schema.xsd">
+<xjb:bindings xmlns:xjb="https://jakarta.ee/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0">
+    <xjb:bindings schemaLocation="../xsd/ws-transfer-schema.xsd">
         <!-- Put WS-Transfer elements to package com.draeger.medical.dpws.soap.wstransfer.model. -->
         <xjb:schemaBindings>
             <xjb:package name="com.draeger.medical.dpws.soap.wstransfer.model"/>
