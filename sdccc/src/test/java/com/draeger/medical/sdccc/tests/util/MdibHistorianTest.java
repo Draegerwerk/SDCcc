@@ -28,6 +28,7 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,6 @@ import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
@@ -659,7 +659,7 @@ public class MdibHistorianTest {
 
         final var operator1 = mdibBuilder.buildOperatorContextDescriptor("opDescriptor1");
         final var operator2 = mdibBuilder.buildOperatorContextDescriptor("opDescriptor2");
-        systemContext.getLeft().setOperatorContext(List.of(operator1, operator2));
+        systemContext.getLeft().getOperatorContext().addAll(List.of(operator1, operator2));
 
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().add(systemContext.getRight());

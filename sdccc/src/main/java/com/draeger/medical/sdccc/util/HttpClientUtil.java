@@ -32,7 +32,6 @@ import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 
-import javax.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +99,7 @@ public class HttpClientUtil {
                         new TransportException(new HttpException(response.getStatusLine().getStatusCode())));
                 }
             }
-        } catch (final JAXBException e) {
+        } catch (final javax.xml.bind.JAXBException e) {
             LOG.debug("Unmarshalling of a message failed: {}. Response payload:\n{}", e.getMessage(),
                 new String(bytes, StandardCharsets.UTF_8));
             LOG.trace("Unmarshalling of a message failed. ", e);

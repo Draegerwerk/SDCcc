@@ -12,6 +12,7 @@ import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.google.inject.Inject;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
@@ -31,6 +32,8 @@ public class PreconditionFilter implements PostDiscoveryFilter {
     }
 
     @Override
+    @SuppressFBWarnings(value = {"DCN_NULLPOINTER_EXCEPTION"},
+            justification = "intentional due to not all tests having a precondition")
     public FilterResult apply(final TestDescriptor object) {
         final FilterResult result;
 

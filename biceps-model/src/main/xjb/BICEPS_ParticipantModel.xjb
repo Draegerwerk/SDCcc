@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xjb:bindings xmlns:xjb="http://java.sun.com/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.1" xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc" xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant">
-	<xjb:bindings schemaLocation="BICEPS_ParticipantModel.xsd">
+<xjb:bindings xmlns:xjb="https://jakarta.ee/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xmlns:xjc="https://jakarta.ee/xml/ns/jaxb/xjc" xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant">
+	<xjb:bindings schemaLocation="../xsd/BICEPS_ParticipantModel.xsd">
 		<!-- Put Participant Model elements to package com.draeger.medical.biceps.model.participant. -->
 		<xjb:schemaBindings>
 			<xjb:package name="com.draeger.medical.biceps.model.participant"/>

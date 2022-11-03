@@ -22,6 +22,7 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
