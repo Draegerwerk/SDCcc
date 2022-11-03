@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import com.draeger.medical.biceps.model.message.AbstractMetricReport;
 import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
@@ -233,8 +234,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.ON);
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+            relatedPart, unrelatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement54700();
@@ -542,8 +545,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+            unrelatedPart, relatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5472();
@@ -825,8 +830,11 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+            relatedPart, unrelatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5474();
@@ -1109,8 +1117,14 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var unrelatedReportPart =
+            buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
+        final var relatedReportPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedReportPart2 =
+            buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+            unrelatedReportPart, relatedReportPart, unrelatedReportPart2);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement54760();
@@ -1389,8 +1403,14 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+        final var unrelatedPart =
+            buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
+        final var unrelatedPart2 =
+            buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+            relatedPart, unrelatedPart, unrelatedPart2);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5478();
@@ -1674,8 +1694,9 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement54710();
@@ -1957,8 +1978,11 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+            relatedPart, unrelatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement547120();
@@ -2260,6 +2284,32 @@ public class InvariantParticipantModelStatePartTestTest {
         return messageBuilder.createSoapMessageWithBody(
             ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
             getMdibResponse
+        );
+    }
+
+    private AbstractMetricReport.ReportPart buildMetricReportPart(final BigInteger metricVersion,
+                                                                  final String metricHandle,
+                                                                  final ComponentActivation activation) {
+        final var metricState = mdibBuilder.buildStringMetricState(metricHandle);
+        metricState.setStateVersion(metricVersion);
+        metricState.setActivationState(activation);
+
+        final var reportPart = messageBuilder.buildAbstractMetricReportReportPart();
+        reportPart.getMetricState().add(metricState);
+        return reportPart;
+    }
+
+    private Envelope buildMetricReport(final String sequenceId,
+                                       final BigInteger mdibVersion,
+                                       final AbstractMetricReport.ReportPart... parts) {
+        final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
+        report.setMdibVersion(mdibVersion);
+        for (var part : parts) {
+            report.getReportPart().add(part);
+        }
+        return messageBuilder.createSoapMessageWithBody(
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            report
         );
     }
 

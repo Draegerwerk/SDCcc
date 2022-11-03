@@ -256,8 +256,10 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         boolean present = false;
         if (report instanceof AbstractMetricReport) {
             for (var part : ((AbstractMetricReport) report).getReportPart()) {
-                present = part.getMetricState().stream()
-                    .anyMatch(state -> state.getDescriptorHandle().equals(manipulatedHandle));
+                if (part.getMetricState().stream()
+                    .anyMatch(state -> state.getDescriptorHandle().equals(manipulatedHandle))) {
+                    present = true;
+                }
             }
         } else if (report instanceof WaveformStream) {
             present = ((WaveformStream) report).getState().stream().anyMatch(it ->
