@@ -27,7 +27,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.model.message.AbstractMetricReport;
-import org.somda.sdc.biceps.model.participant.AbstractState;
+import org.somda.sdc.biceps.model.message.AbstractReport;
+import org.somda.sdc.biceps.model.message.WaveformStream;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.dpws.soap.MarshallingService;
@@ -38,7 +39,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,9 +54,12 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     public static final String NO_SUCCESSFUL_MANIPULATION =
         "No successful setMetricStatus manipulation seen, test failed.";
     public static final String NO_REPORT_IN_TIME_INTERVAL =
-        "No metric reports for %s manipulation found between %s and %s, test failed.";
+        "No metric reports or waveform streams for %s manipulation found between %s and %s, test failed.";
     public static final String NO_REPORT_WITH_EXPECTED_HANDLE =
-        "No metric reports with metric handle %s found, test failed.";
+        "No metric reports or waveform streams with metric handle %s found, test failed.";
+    public static final String NO_REPORT_WITH_EXPECTED_ACTIVATION_STATE =
+        "No metric reports or waveform streams containing the metric handle %s with the expected activation state"
+            + " %s found, test failed.";
     public static final String WRONG_ACTIVATION_STATE =
         "The manipulated activation state for metric %s should be %s but is %s";
     private static final long BUFFER = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
@@ -162,6 +165,20 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         testRequirement547(metricCategory, activationState);
     }
 
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is being"
+        + " performed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_12_0)
+    @TestDescription("For each metric with the category CLC, the device is manipulated to perform calculations and"
+        + " then it is verified that the ActivationState of the metric is set to On.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationCLCActivationStateON.class})
+    void testRequirement547120() throws NoTestData {
+        final var metricCategory = MetricCategory.CLC;
+        final var activationState = ComponentActivation.ON;
+        testRequirement547(metricCategory, activationState);
+    }
+
     private void testRequirement547(final MetricCategory category, final ComponentActivation activation)
         throws NoTestData {
         final var successfulReportsSeen = new AtomicBoolean(false);
@@ -172,10 +189,10 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                          new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())
                      ),
                      Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
-            assertTestData(manipulations.areObjectsPresent(), String.format(
-                NO_SET_METRIC_STATUS_MANIPULATION, category));
-            manipulations.getStream().filter(it -> it.getResult().equals(
-                ResponseTypes.Result.RESULT_SUCCESS)).forEachOrdered(it -> {
+            assertTestData(manipulations.areObjectsPresent(),
+                String.format(NO_SET_METRIC_STATUS_MANIPULATION, category));
+            manipulations.getStream().filter(it -> it.getResult().equals(ResponseTypes.Result.RESULT_SUCCESS))
+                .forEachOrdered(it -> {
                     successfulReportsSeen.getAndSet(true);
                     checkAssociatedReport(it, activation);
                 });
@@ -195,56 +212,95 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
             .findFirst().orElseThrow();
         try (final var relevantReports = messageStorage.getInboundMessagesByTimeIntervalAndBodyType(
             manipulationData.getStartTimestamp(), manipulationData.getFinishTimestamp() + BUFFER,
-            Constants.MSG_EPISODIC_METRIC_REPORT)) {
+            Constants.MSG_EPISODIC_METRIC_REPORT, Constants.MSG_WAVEFORM_STREAM)) {
             assertTestData(relevantReports.areObjectsPresent(),
                 String.format(NO_REPORT_IN_TIME_INTERVAL, manipulationData.getMethodName(),
                     manipulationData.getStartTimestamp(), manipulationData.getFinishTimestamp()));
 
             final var relevantReport = relevantReports.getStream().map(it -> {
-                    final Optional<AbstractMetricReport> reportOpt;
                     try {
                         final var message = marshalling.unmarshal(new ByteArrayInputStream(
                             it.getBody().getBytes(StandardCharsets.UTF_8)));
-                        reportOpt = soapUtil.getBody(message, AbstractMetricReport.class);
+                        final var metricReportOpt = soapUtil.getBody(message, AbstractMetricReport.class);
+                        if (metricReportOpt.isEmpty()) {
+                            final var waveformOpt = soapUtil.getBody(message, WaveformStream.class);
+                            return waveformOpt.orElseThrow();
+                        } else {
+                            return metricReportOpt.orElseThrow();
+                        }
                     } catch (MarshallingException e) {
                         fail("Error unmarshalling MessageContent " + e);
                         // unreachable
                         throw new RuntimeException(e);
                     }
-                    return reportOpt.orElseThrow();
                 }
-            ).filter(it -> {
-                boolean present = false;
-                for (var part : it.getReportPart()) {
-                    if (part.getMetricState().stream()
-                        .anyMatch(state -> state.getDescriptorHandle().equals(manipulatedHandle))) {
-                        present = true;
-                    }
-                }
-                return present;
-            }).findFirst();
+            ).filter(it -> isReportRelevant(it, manipulatedHandle)).findFirst();
 
             assertTrue(relevantReport.isPresent(), String.format(NO_REPORT_WITH_EXPECTED_HANDLE,
                 manipulatedHandle));
-            boolean relevantMetricPresent = false;
-            for (var part : relevantReport.orElseThrow().getReportPart()) {
-                if (part.getMetricState().stream().map(AbstractState::getDescriptorHandle)
-                    .anyMatch(it -> it.equals(manipulatedHandle))) {
-                    relevantMetricPresent = true;
-                    final var state = part.getMetricState().stream()
-                        .filter(it -> it.getDescriptorHandle().equals(manipulatedHandle)).findFirst();
-                    state.ifPresent(abstractMetricState -> Assertions.assertEquals(expectedActivationState,
-                        ImpliedValueUtil.getMetricActivation(abstractMetricState), String.format(
-                            WRONG_ACTIVATION_STATE, manipulatedHandle, expectedActivationState,
-                            ImpliedValueUtil.getMetricActivation(abstractMetricState)
-                        )));
-                }
-            }
-            assertTrue(relevantMetricPresent, String.format(NO_REPORT_WITH_EXPECTED_HANDLE, manipulatedHandle));
+
+            final var reportWithExpectedActivationStateSeen =
+                isActivationStateAsExpected(relevantReport.orElseThrow(), manipulatedHandle,
+                    expectedActivationState);
+
+            assertTrue(reportWithExpectedActivationStateSeen,
+                String.format(NO_REPORT_WITH_EXPECTED_ACTIVATION_STATE, manipulatedHandle, expectedActivationState));
         } catch (IOException | NoTestData e) {
             fail(e);
             // unreachable
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean isReportRelevant(final AbstractReport report, final String manipulatedHandle) {
+        boolean present = false;
+        if (report instanceof AbstractMetricReport) {
+            for (var part : ((AbstractMetricReport) report).getReportPart()) {
+                if (part.getMetricState().stream()
+                    .anyMatch(state -> state.getDescriptorHandle().equals(manipulatedHandle))) {
+                    present = true;
+                }
+            }
+        } else if (report instanceof WaveformStream) {
+            present = ((WaveformStream) report).getState().stream().anyMatch(it ->
+                it.getDescriptorHandle().equals(manipulatedHandle)
+            );
+        }
+        return present;
+    }
+
+    private boolean isActivationStateAsExpected(final AbstractReport report, final String manipulatedHandle,
+                                                final ComponentActivation expectedActivationState) {
+
+        final var relevantMetricPresent = new AtomicBoolean(false);
+        if (report instanceof AbstractMetricReport) {
+            final var metricReport = (AbstractMetricReport) report;
+            for (var part : metricReport.getReportPart()) {
+                final var state = part.getMetricState().stream()
+                    .filter(it -> it.getDescriptorHandle().equals(manipulatedHandle)).findFirst();
+                state.ifPresent(abstractMetricState -> {
+                    relevantMetricPresent.set(true);
+                    Assertions.assertEquals(expectedActivationState,
+                        ImpliedValueUtil.getMetricActivation(abstractMetricState), String.format(
+                            WRONG_ACTIVATION_STATE, manipulatedHandle, expectedActivationState,
+                            ImpliedValueUtil.getMetricActivation(abstractMetricState)
+                        ));
+                });
+            }
+        } else if (report instanceof WaveformStream) {
+            final var waveform = (WaveformStream) report;
+            final var state =
+                waveform.getState().stream().filter(it -> it.getDescriptorHandle().equals(manipulatedHandle))
+                    .findFirst();
+            state.ifPresent(abstractMetricState -> {
+                relevantMetricPresent.set(true);
+                Assertions.assertEquals(expectedActivationState,
+                    ImpliedValueUtil.getMetricActivation(abstractMetricState), String.format(
+                        WRONG_ACTIVATION_STATE, manipulatedHandle, expectedActivationState,
+                        ImpliedValueUtil.getMetricActivation(abstractMetricState)
+                    ));
+            });
+        }
+        return relevantMetricPresent.get();
     }
 }

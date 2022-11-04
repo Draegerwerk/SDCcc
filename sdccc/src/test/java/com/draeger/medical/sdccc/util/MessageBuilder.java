@@ -29,7 +29,9 @@ import com.draeger.medical.biceps.model.message.PeriodicContextReport;
 import com.draeger.medical.biceps.model.message.SetContextStateResponse;
 import com.draeger.medical.biceps.model.message.SetStringResponse;
 import com.draeger.medical.biceps.model.message.SystemErrorReport;
+import com.draeger.medical.biceps.model.message.WaveformStream;
 import com.draeger.medical.biceps.model.participant.CodedValue;
+import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricState;
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsaddressing.model.AttributedURIType;
 import com.draeger.medical.dpws.soap.wsaddressing.model.EndpointReferenceType;
@@ -457,6 +459,23 @@ public class MessageBuilder {
         report.setSequenceId(sequenceId);
         report.getReportPart().addAll(reportParts);
         return report;
+    }
+
+    /**
+     * Creates a new waveform stream element.
+     *
+     * @param sequenceId  of current mdib
+     * @param states to add to waveform stream
+     * @return new waveform stream
+     */
+    public WaveformStream buildWaveformStream(
+        final String sequenceId,
+        final List<RealTimeSampleArrayMetricState> states
+    ) {
+        final var waveform = messageModelFactory.createWaveformStream();
+        waveform.setSequenceId(sequenceId);
+        waveform.getState().addAll(states);
+        return waveform;
     }
 
     /**

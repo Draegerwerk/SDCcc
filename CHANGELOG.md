@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - references to standards to test_configuration.toml
 - Java 17 support
+- test for biceps:5-4-7_12_0
 
 ### Fixed
 - missing request bodies in glue:R0036 test
 - some vulnerabilities due to old dependencies
+- biceps:5-4-7 tests to check waveform streams as well
 
 ## [5.0.0] - 2022-10-27
 ### Added
