@@ -79,11 +79,10 @@
         <module name="DeclarationOrder"/>
         <module name="ParameterAssignment"/>
         <module name="DefaultComesLast"/>
-        <module name="UnnecessaryParentheses"/>
 
         <!-- configure javadoc -->
         <module name="JavadocMethod">
-            <property name="scope" value="public"/>
+            <property name="accessModifiers" value="public"/>
         </module>
         <module name="MissingJavadocMethod">
             <property name="scope" value="public"/>

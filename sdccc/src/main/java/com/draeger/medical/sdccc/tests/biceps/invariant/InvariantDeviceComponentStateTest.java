@@ -64,21 +64,21 @@ public class InvariantDeviceComponentStateTest extends InjectorTestBase {
 
     @Test
     @DisplayName("R0025_0: A SERVICE PROVIDER's pm:AbstractDeviceComponentState/@ActivationState SHALL only have "
-        + "the value \"Off\" when every activation state of the component’s descendants is inactive. "
-        + "Inactive means that every pm:AbstractDeviceComponentState/@ActivationState is \"Off\", "
-        + "every pm:AbstractAlertState/@ActivationState is \"Off\", "
-        + "every pm:AbstractMetricState/@ActivationState is \"Off\", and "
-        + "every pm:AbstractOperationState/@OperatingMode is \"NA\" (not available).")
+            + "the value \"Off\" when every activation state of the component’s descendants is inactive. "
+            + "Inactive means that every pm:AbstractDeviceComponentState/@ActivationState is \"Off\", "
+            + "every pm:AbstractAlertState/@ActivationState is \"Off\", "
+            + "every pm:AbstractMetricState/@ActivationState is \"Off\", and "
+            + "every pm:AbstractOperationState/@OperatingMode is \"NA\" (not available).")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0025_0)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and "
-        + "verifies that if a pm:AbstractDeviceComponentState has @ActivationState=OFF "
-        + "all of it’s descendants are inactive.")
+            + "verifies that if a pm:AbstractDeviceComponentState has @ActivationState=OFF "
+            + "all of it’s descendants are inactive.")
     @RequirePrecondition(manipulationPreconditions = {ManipulationPreconditions
-        .AbstractDeviceComponentStateOFFManipulation.class})
+            .AbstractDeviceComponentStateOFFManipulation.class})
     void testRequirementR00250() throws NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-            messageStorage,
-            getInjector().getInstance(TestRunObserver.class)
+                messageStorage,
+                getInjector().getInstance(TestRunObserver.class)
         );
 
         final List<String> sequenceIds;
@@ -97,59 +97,59 @@ public class InvariantDeviceComponentStateTest extends InjectorTestBase {
 
                 while (remoteMdibAccess != null) {
                     final var entities =
-                        remoteMdibAccess.findEntitiesByType(AbstractDeviceComponentDescriptor.class);
+                            remoteMdibAccess.findEntitiesByType(AbstractDeviceComponentDescriptor.class);
 
                     for (var entity : entities) {
                         if (ImpliedValueUtil.getComponentActivation(entity.getFirstState(
-                            AbstractDeviceComponentState.class).orElseThrow()) == ComponentActivation.OFF) {
+                                AbstractDeviceComponentState.class).orElseThrow()) == ComponentActivation.OFF) {
 
                             final var abstractDeviceComponentDescendants =
-                                getDescendantsByType(remoteMdibAccess, entity.getHandle(),
-                                    AbstractDeviceComponentDescriptor.class);
+                                    getDescendantsByType(remoteMdibAccess, entity.getHandle(),
+                                            AbstractDeviceComponentDescriptor.class);
                             for (var descendant : abstractDeviceComponentDescendants) {
                                 final var descendantState =
-                                    descendant.getFirstState(AbstractDeviceComponentState.class).orElseThrow();
+                                        descendant.getFirstState(AbstractDeviceComponentState.class).orElseThrow();
                                 assertEquals(ComponentActivation.OFF, ImpliedValueUtil.getComponentActivation(
-                                    descendantState), String.format("The ComponentActivation OFF was not "
-                                        + "set for the descendant with handle %s",
+                                        descendantState), String.format("The ComponentActivation OFF was not "
+                                                + "set for the descendant with handle %s",
                                         descendantState.getDescriptorHandle()));
                             }
 
                             final var abstractAlertDescendants =
-                                getDescendantsByType(remoteMdibAccess, entity.getHandle(),
-                                    AbstractAlertDescriptor.class);
+                                    getDescendantsByType(remoteMdibAccess, entity.getHandle(),
+                                            AbstractAlertDescriptor.class);
                             for (var descendant : abstractAlertDescendants) {
                                 final var descendantState =
-                                    descendant.getFirstState(AbstractAlertState.class).orElseThrow();
+                                        descendant.getFirstState(AbstractAlertState.class).orElseThrow();
                                 assertEquals(AlertActivation.OFF, descendantState.getActivationState(),
-                                    String.format("The AlertActivation OFF was not "
-                                            + "set for the descendant with handle %s",
-                                        descendantState.getDescriptorHandle()));
+                                        String.format("The AlertActivation OFF was not "
+                                                        + "set for the descendant with handle %s",
+                                                descendantState.getDescriptorHandle()));
                             }
 
                             final var abstractMetricDescendants =
-                                getDescendantsByType(remoteMdibAccess, entity.getHandle(),
-                                    AbstractMetricDescriptor.class);
+                                    getDescendantsByType(remoteMdibAccess, entity.getHandle(),
+                                            AbstractMetricDescriptor.class);
                             for (var descendant : abstractMetricDescendants) {
                                 final var descendantState =
-                                    descendant.getFirstState(AbstractMetricState.class).orElseThrow();
+                                        descendant.getFirstState(AbstractMetricState.class).orElseThrow();
                                 assertEquals(ComponentActivation.OFF, ImpliedValueUtil.getMetricActivation(
-                                    descendantState),
-                                    String.format("The ComponentActivation OFF was not "
-                                            + "set for the descendant with handle %s",
-                                        descendantState.getDescriptorHandle()));
+                                                descendantState),
+                                        String.format("The ComponentActivation OFF was not "
+                                                        + "set for the descendant with handle %s",
+                                                descendantState.getDescriptorHandle()));
                             }
 
                             final var abstractOperationDescendants =
-                                getDescendantsByType(remoteMdibAccess,
-                                    entity.getHandle(), AbstractOperationDescriptor.class);
+                                    getDescendantsByType(remoteMdibAccess,
+                                            entity.getHandle(), AbstractOperationDescriptor.class);
                             for (var descendant : abstractOperationDescendants) {
                                 final var descendantState =
-                                    descendant.getFirstState(AbstractOperationState.class).orElseThrow();
+                                        descendant.getFirstState(AbstractOperationState.class).orElseThrow();
                                 assertEquals(OperatingMode.NA, descendantState.getOperatingMode(),
-                                    String.format("The OperatingMode NA was not "
-                                            + "set for the descendant with handle %s",
-                                        descendantState.getDescriptorHandle()));
+                                        String.format("The OperatingMode NA was not "
+                                                        + "set for the descendant with handle %s",
+                                                descendantState.getDescriptorHandle()));
                             }
 
                             acceptableSequenceSeen.incrementAndGet();
@@ -163,14 +163,14 @@ public class InvariantDeviceComponentStateTest extends InjectorTestBase {
             }
         }
         assertTestData(acceptableSequenceSeen.get(),
-            "No pm:AbstractDeviceComponentState/@ActivationState had the value OFF.");
+                "No pm:AbstractDeviceComponentState/@ActivationState had the value OFF.");
     }
 
 
     private List<MdibEntity> getDescendantsByType(
-        final RemoteMdibAccess remoteMdibAccess,
-        final String entityHandle,
-        final Class<? extends AbstractDescriptor> type) {
+            final RemoteMdibAccess remoteMdibAccess,
+            final String entityHandle,
+            final Class<? extends AbstractDescriptor> type) {
 
         final List<MdibEntity> result = new ArrayList<>();
         for (MdibEntity child : remoteMdibAccess.getChildrenByType(entityHandle, type)) {

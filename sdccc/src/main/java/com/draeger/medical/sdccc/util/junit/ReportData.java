@@ -18,6 +18,11 @@ import java.util.List;
 
 /**
  * Container used for JUnit-like report format.
+ *
+ * @param testIdentifier      of the test case
+ * @param testDuration        runtime of the test case
+ * @param testExecutionResult result of the test case
+ * @param reportEntries       report entries of the test case
  */
 public record ReportData(
         TestIdentifier testIdentifier,
