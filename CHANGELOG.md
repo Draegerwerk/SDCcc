@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - references to standards to test_configuration.toml
 - support for SystemErrorReport to test case glue:R0036_0
+- Java 17 support
 
 ### Fixed
 - missing request bodies in glue:R0036 test
+- some vulnerabilities due to old dependencies
 
 ## [5.0.0] - 2022-10-27
 ### Added

@@ -16,6 +16,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.DpwsConstants;
@@ -24,8 +26,6 @@ import org.somda.sdc.dpws.soap.CommunicationContext;
 import org.somda.sdc.dpws.soap.HttpApplicationInfo;
 import org.somda.sdc.dpws.soap.TransportInfo;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,8 +34,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
-
-import static java.lang.Thread.yield;
 
 /**
  * Utility to add messages to the message storage.
@@ -64,7 +62,7 @@ public class MessageStorageUtil {
         while (true) {
             try (final var inboundMessages = messageStorage.getInboundMessages()) {
                 if (inboundMessages.getStream().count() < i) {
-                    yield();
+                    Thread.yield();
                 } else {
                     break;
                 }
@@ -85,7 +83,7 @@ public class MessageStorageUtil {
         while (true) {
             try (final var manipulations = messageStorage.getManipulationDataByManipulation(name)) {
                 if (manipulations.getStream().count() < i) {
-                    yield();
+                    Thread.yield();
                 } else {
                     break;
                 }

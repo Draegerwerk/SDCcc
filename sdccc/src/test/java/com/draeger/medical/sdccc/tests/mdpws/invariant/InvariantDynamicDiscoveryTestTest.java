@@ -21,6 +21,8 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.DpwsConstants;
 import org.somda.sdc.mdpws.common.CommonConstants;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -214,7 +214,7 @@ public class InvariantDynamicDiscoveryTestTest {
         if (mdpwsType) {
             types.add(CommonConstants.MEDICAL_DEVICE_TYPE);
         }
-        body.getValue().setTypes(types);
+        body.getValue().getTypes().addAll(types);
 
         final var soapMessage = messageBuilder.createSoapMessageWithBody(
                 WSA_ACTION_HELLO,
@@ -242,7 +242,7 @@ public class InvariantDynamicDiscoveryTestTest {
             if (mdpwsType || i != 1) {
                 types.add(CommonConstants.MEDICAL_DEVICE_TYPE);
             }
-            match.setTypes(types);
+            match.getTypes().addAll(types);
             matches.add(match);
         }
         final var body = messageBuilder.buildProbeMatches(matches);
@@ -268,7 +268,7 @@ public class InvariantDynamicDiscoveryTestTest {
         if (mdpwsType) {
             types.add(CommonConstants.MEDICAL_DEVICE_TYPE);
         }
-        match.setTypes(types);
+        match.getTypes().addAll(types);
 
         final var body = messageBuilder.buildResolveMatches(match);
 

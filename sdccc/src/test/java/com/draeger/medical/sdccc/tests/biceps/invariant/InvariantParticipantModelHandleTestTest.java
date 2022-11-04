@@ -24,6 +24,7 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,6 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -221,8 +221,8 @@ public class InvariantParticipantModelHandleTestTest {
         final var mdDescription = mdibBuilder.buildMdDescription();
         final var mdState = mdibBuilder.buildMdState();
 
-        mdDescription.setMds(List.of(mds.getLeft()));
-        mdState.setState(List.of(mds.getRight()));
+        mdDescription.getMds().add(mds.getLeft());
+        mdState.getState().add(mds.getRight());
 
         final var mdib = mdibBuilder.buildMdib(InvariantParticipantModelHandleTestTest.SEQUENCE_ID);
         mdib.setMdDescription(mdDescription);
@@ -390,12 +390,12 @@ public class InvariantParticipantModelHandleTestTest {
         final LocationContextState locationContextState = new LocationContextState();
         locationContextState.setHandle(handle);
         locationContextState.setDescriptorHandle(LOCATION_DESC_HANDLE);
-        reportPart.setContextState(List.of(locationContextState));
+        reportPart.getContextState().add(locationContextState);
 
         final List<AbstractContextReport.ReportPart> parts = List.of(reportPart);
         final var report = messageBuilder.buildEpisodicContextReport(SEQUENCE_ID);
         report.setMdibVersion(BigInteger.TWO);
-        report.setReportPart(parts);
+        report.getReportPart().addAll(parts);
         return messageBuilder.createSoapMessageWithBody(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             report

@@ -30,6 +30,7 @@ import org.somda.sdc.dpws.CommunicationLogSink;
 import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.crypto.CryptoConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
+import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.guice.DefaultDpwsModule;
 import org.somda.sdc.glue.consumer.ConsumerConfig;
 import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
@@ -77,7 +78,9 @@ public class TestClientUtil {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(CommunicationLog.class).to(CommunicationLogImpl.class).asEagerSingleton();
+                        install(new FactoryModuleBuilder()
+                                .implement(CommunicationLog.class, CommunicationLogImpl.class)
+                                .build(CommunicationLogFactory.class));
                         bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
                         bind(TestRunObserver.class).toInstance(testRunObserver);
                     }
