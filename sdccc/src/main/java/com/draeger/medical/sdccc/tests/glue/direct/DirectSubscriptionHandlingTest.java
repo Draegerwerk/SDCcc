@@ -123,7 +123,9 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.adapterAddress = getInjector().getInstance(
             Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS))
         );
-        this.commLog = testClient.getInjector().getInstance(CommunicationLog.class);
+        this.commLog = testClient.getInjector().getInstance(CommunicationLogFactory.class)
+                                               .createCommunicationLog();
+
     }
 
     @Test

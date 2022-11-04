@@ -147,7 +147,6 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
-                    bind(CommunicationLog.class).toInstance(communicationLog);
                 }
             }
         );
