@@ -140,7 +140,6 @@ public class InvariantDynamicDiscoveryTestTest {
      */
     @Test
     public void testR0008BadDpwsDeviceMissing() throws Exception {
-        // CHECKSTYLE.OFF: MagicNumber
         for (int i = 0; i < 3; i++) {
             tearDown();
             setUp();
@@ -151,7 +150,6 @@ public class InvariantDynamicDiscoveryTestTest {
 
             assertThrows(AssertionError.class, testClass::testRequirement0008);
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -161,7 +159,6 @@ public class InvariantDynamicDiscoveryTestTest {
      */
     @Test
     public void testR0008BadMdpwsMedicalDeviceMissing() throws Exception {
-        // CHECKSTYLE.OFF: MagicNumber
         for (int i = 0; i < 3; i++) {
             tearDown();
             setUp();
@@ -172,7 +169,6 @@ public class InvariantDynamicDiscoveryTestTest {
 
             assertThrows(AssertionError.class, testClass::testRequirement0008);
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     @Test

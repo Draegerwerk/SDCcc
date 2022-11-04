@@ -98,14 +98,12 @@ public class ConditionalPreconditions {
             throw new PreconditionException(
                     "An error occurred while trying to retrieve description modification report messages from storage",
                     e);
-            // CHECKSTYLE.OFF: IllegalCatch
             // there is no other way to retrieve the exception from the stream scope
         } catch (final RuntimeException e) {
             throw new PreconditionException(
                     "An error occurred while trying to process description modification report messages from storage",
                     e);
         }
-        // CHECKSTYLE.ON: IllegalCatch
     }
 
     private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger)
@@ -460,14 +458,12 @@ public class ConditionalPreconditions {
                 throw new PreconditionException(
                         "An error occurred while trying to retrieve description modification report messages from storage",
                         e);
-                // CHECKSTYLE.OFF: IllegalCatch
                 // there is no other way to retrieve the exception from the stream scope
             } catch (final RuntimeException e) {
                 throw new PreconditionException(
                         "An error occurred while trying to process description modification report messages from storage",
                         e);
             }
-            // CHECKSTYLE.ON: IllegalCatch
             return enoughContextStatesSeen();
         }
 

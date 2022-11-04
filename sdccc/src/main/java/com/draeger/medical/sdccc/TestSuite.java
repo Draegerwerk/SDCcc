@@ -221,7 +221,6 @@ public class TestSuite {
         // flush all data so preconditions evaluate most current data
         injector.getInstance(MessageStorage.class).flush();
 
-        // CHECKSTYLE.OFF: IllegalCatch
         final var preconditions = injector.getInstance(PreconditionRegistry.class);
         try {
             preconditions.runPreconditions();
@@ -230,7 +229,6 @@ public class TestSuite {
             LOG.error("Error occurred while running preconditions", e);
             testRunObserver.invalidateTestRun("Error occurred while running preconditions", e);
         }
-        // CHECKSTYLE.ON: IllegalCatch
     }
 
     private long phase2(
@@ -469,9 +467,7 @@ public class TestSuite {
             printVerdict(exitCode, testRunDir, injector);
 
             injector.getInstance(MessageStorage.class).close();
-            // CHECKSTYLE.OFF: IllegalCatch
         } catch (final RuntimeException | Error e) {
-            // CHECKSTYLE.ON: IllegalCatch
 
             LOG.error("Unchecked exception during cleanup", e);
             printVerdict(1, testRunDir, injector);
@@ -586,9 +582,7 @@ public class TestSuite {
             } else {
                 TestSuite.exit(1, injector, testRunDir);
             }
-            // CHECKSTYLE.OFF: IllegalCatch
         } catch (final RuntimeException | Error e) {
-            // CHECKSTYLE.ON: IllegalCatch
 
             LOG.error("Unchecked exception while setting up or running the TestSuite", e);
             TestSuite.exit(1, injector, testRunDir);

@@ -306,7 +306,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessages(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "inbound_body";
@@ -355,7 +354,6 @@ public class TestMessageStorage {
                 assertEquals(1, inboundMessages.getStream().count());
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -366,7 +364,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetOutboundMessages(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "outbound_body";
@@ -415,7 +412,6 @@ public class TestMessageStorage {
                 assertEquals(1, outboundMessages.getStream().count());
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -440,7 +436,6 @@ public class TestMessageStorage {
                         null,
                         Collections.singletonList(CertificateUtil.getDummyCert())));
 
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var expected = String.format(BASE_MESSAGE_STRING, "action1", "expected_body");
@@ -521,7 +516,6 @@ public class TestMessageStorage {
                 }
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -546,7 +540,6 @@ public class TestMessageStorage {
                         null,
                         Collections.singletonList(CertificateUtil.getDummyCert())));
 
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var expected = String.format(BASE_MESSAGE_STRING, "action1", "expected_body");
@@ -647,7 +640,6 @@ public class TestMessageStorage {
                 }
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -658,7 +650,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundHttpMessages(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(5, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
@@ -720,7 +711,6 @@ public class TestMessageStorage {
                 }
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -733,7 +723,6 @@ public class TestMessageStorage {
     @Test
     public void testGetOutboundHttpMessagesByBodyTypeAndHeaders(@TempDir final File dir)
             throws IOException, CertificateException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
@@ -809,7 +798,6 @@ public class TestMessageStorage {
                 }
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -820,7 +808,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessagesByBodyType(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
@@ -938,7 +925,6 @@ public class TestMessageStorage {
                 }
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -949,7 +935,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationData(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
@@ -984,7 +969,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testMessageStorageFlushNotInDeadlock(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "inbound_body";
@@ -1063,7 +1047,6 @@ public class TestMessageStorage {
                 assertEquals(1, manipulationData.getStream().count());
             }
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -1074,7 +1057,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessagesByTimeIntervalAndBodyType(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
@@ -1166,7 +1148,6 @@ public class TestMessageStorage {
                     assertEquals(3, inboundMessages.getStream().count());
                 }
             }
-            // CHECKSTYLE.ON: MagicNumber
         }
     }
 
@@ -1178,7 +1159,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationDataByManipulation(@TempDir final File dir) throws IOException {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
@@ -1231,7 +1211,6 @@ public class TestMessageStorage {
                     });
                 }
             }
-            // CHECKSTYLE.ON: MagicNumber
         }
     }
 
@@ -1243,7 +1222,6 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationDataByParametersAndManipulation(@TempDir final File dir) throws Exception {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
@@ -1320,7 +1298,6 @@ public class TestMessageStorage {
                     assertEquals(2, count.get(), "Two matching manipulation should've been retrieved from storage.");
                 }
             }
-            // CHECKSTYLE.ON: MagicNumber
         }
     }
 
@@ -1333,7 +1310,6 @@ public class TestMessageStorage {
     @Test
     public void testGetManipulationDataByParametersAndManipulationOneParameter(@TempDir final File dir)
             throws Exception {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
@@ -1407,7 +1383,6 @@ public class TestMessageStorage {
                     assertEquals(1, count.get());
                 }
             }
-            // CHECKSTYLE.ON: MagicNumber
         }
     }
 
@@ -1421,7 +1396,6 @@ public class TestMessageStorage {
     @Test
     public void testGetManipulationDataByParametersAndManipulationEmptyParameters(@TempDir final File dir)
             throws Exception {
-        // CHECKSTYLE.OFF: MagicNumber
         try (final MessageStorage messageStorage =
                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
@@ -1475,7 +1449,6 @@ public class TestMessageStorage {
                                     methodName1));
                 }
             }
-            // CHECKSTYLE.ON: MagicNumber
         }
     }
 

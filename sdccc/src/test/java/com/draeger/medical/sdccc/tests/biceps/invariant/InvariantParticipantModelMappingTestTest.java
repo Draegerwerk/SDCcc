@@ -286,7 +286,6 @@ public class InvariantParticipantModelMappingTestTest {
                 sequenceId, mdibVersion, mds, vmd, channel, modificationType, false, false);
     }
 
-    // CHECKSTYLE.OFF: ParameterNumber
     Envelope buildDescriptionModificationReport(
             final String sequenceId,
             final @Nullable BigInteger mdibVersion,
@@ -347,7 +346,6 @@ public class InvariantParticipantModelMappingTestTest {
         report.setMdibVersion(mdibVersion);
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
-    // CHECKSTYLE.ON: ParameterNumber
 
     Pair<VmdDescriptor, ChannelState> buildBrokenNameSchemaChannel(
             final String channelHandel, final BigInteger channelVersion) {

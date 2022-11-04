@@ -338,9 +338,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockManipulations, times(1)).getRemovableDescriptors();
-        // CHECKSTYLE.OFF: MagicNumber
         verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
-        // CHECKSTYLE.ON: MagicNumber
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
         assertEquals(
@@ -446,9 +444,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockManipulations, times(1)).getRemovableDescriptors();
-        // CHECKSTYLE.OFF: MagicNumber
         verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
-        // CHECKSTYLE.ON: MagicNumber
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
         assertEquals(
@@ -1024,7 +1020,6 @@ public class ConditionalPreconditionsTest {
         }
     }
 
-    // CHECKSTYLE.OFF: JavaNCSS
     void associateAllContextStatesSetup() {
         // create mock patient context state
         when(mockPatientContextState.getDescriptorHandle()).thenReturn(PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
@@ -1185,7 +1180,6 @@ public class ConditionalPreconditionsTest {
                 .values()
                 .forEach(Set::clear);
     }
-    // CHECKSTYLE.ON: JavaNCSS
 
     private void setHandlesAndAssociation(
             final AbstractContextState state, final String descriptorHandle, final String handle) {

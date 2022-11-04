@@ -137,9 +137,7 @@ public class MessageGeneratingUtilTest {
         verifySentRefs(sentMessages.get(0), List.of(ref2));
         verifySentRefs(sentMessages.get(1), List.of(ref1));
         verifySentRefs(sentMessages.get(2), List.of(ref1, ref2));
-        // CHECKSTYLE.OFF: MagicNumber
         verifySentRefs(sentMessages.get(3), Collections.emptyList());
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**

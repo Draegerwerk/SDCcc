@@ -18,14 +18,12 @@ import org.somda.sdc.dpws.CommunicationLog;
 /**
  * Used for building database query criteria.
  */
-// CHECKSTYLE.OFF: TypeName
 @SuppressFBWarnings(
         value = {"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"},
         justification = "This is a commonly made design choice for persistence meta models.")
 @StaticMetamodel(MessageContent.class)
 public final class MessageContent_ {
 
-    // CHECKSTYLE.OFF: VisibilityModifier
     public static volatile SingularAttribute<MessageContent, Long> incId;
     public static volatile SingularAttribute<MessageContent, String> body;
     public static volatile ListAttribute<MessageContent, X509Certificate> certs;
@@ -42,8 +40,6 @@ public final class MessageContent_ {
     public static volatile SingularAttribute<MessageContent, String> scheme;
     public static volatile SingularAttribute<MessageContent, String> uuid;
     public static volatile SingularAttribute<MessageContent, Boolean> isSOAP;
-    // CHECKSTYLE.ON: VisibilityModifier
 
     private MessageContent_() {}
 }
-// CHECKSTYLE.ON: TypeName

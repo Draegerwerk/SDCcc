@@ -396,7 +396,6 @@ public class InvariantParticipantModelAnnexTestTest {
         return new ImmutablePair<>(desc, state);
     }
 
-    // CHECKSTYLE.OFF: NCSS, disabled to setup larger mdib
     private Envelope buildMdib(final String sequenceId) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
@@ -540,7 +539,6 @@ public class InvariantParticipantModelAnnexTestTest {
         return messageBuilder.createSoapMessageWithBody(
                 ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
-    // CHECKSTYLE.ON: NCSS
 
     @SafeVarargs
     final Envelope buildDescriptionModificationReport(

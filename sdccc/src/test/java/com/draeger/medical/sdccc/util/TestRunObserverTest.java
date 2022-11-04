@@ -102,8 +102,6 @@ public class TestRunObserverTest {
         assertTrue(obs.getReasons().contains(reason1));
         assertTrue(obs.getReasons().contains(reason2));
         assertTrue(obs.getReasons().contains(reason3.getMessage()));
-        // CHECKSTYLE.OFF: MagicNumber
         assertEquals(3, obs.getReasons().size());
-        // CHECKSTYLE.ON: MagicNumber
     }
 }

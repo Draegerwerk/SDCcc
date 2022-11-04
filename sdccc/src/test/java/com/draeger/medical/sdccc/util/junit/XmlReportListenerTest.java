@@ -159,9 +159,7 @@ class XmlReportListenerTest {
         assertEquals(1, argumentCaptor.getAllValues().size());
 
         final List<ReportData> capturedValue = argumentCaptor.getValue();
-        // CHECKSTYLE.OFF: MagicNumber
         assertEquals(3, capturedValue.size());
-        // CHECKSTYLE.ON: MagicNumber
 
         {
             final var receivedTest = capturedValue.get(0);

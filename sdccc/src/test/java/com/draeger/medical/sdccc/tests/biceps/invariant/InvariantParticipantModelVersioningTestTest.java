@@ -1617,7 +1617,6 @@ public class InvariantParticipantModelVersioningTestTest {
                 null);
     }
 
-    // CHECKSTYLE.OFF: ParameterNumber
     Envelope buildDescriptionModificationReport(
             final String sequenceId,
             final @Nullable BigInteger mdibVersion,
@@ -1685,7 +1684,6 @@ public class InvariantParticipantModelVersioningTestTest {
         report.setMdibVersion(mdibVersion);
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
-    // CHECKSTYLE.ON: ParameterNumber
 
     Envelope buildEpisodicContextReport(
             final String sequenceId,

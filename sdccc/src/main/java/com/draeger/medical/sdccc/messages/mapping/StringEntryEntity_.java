@@ -14,19 +14,16 @@ import javax.persistence.metamodel.StaticMetamodel;
 /**
  * Used for building database query criteria.
  */
-// CHECKSTYLE.OFF: TypeName
 @SuppressFBWarnings(
         value = {"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"},
         justification = "This is a commonly made design choice for persistence meta models.")
 @StaticMetamodel(MessageContent.class)
 public final class StringEntryEntity_ {
 
-    // CHECKSTYLE.OFF: VisibilityModifier
     public static volatile SingularAttribute<StringEntryEntity, Long> incId;
     public static volatile SingularAttribute<StringEntryEntity, String> entryKey;
     public static volatile SingularAttribute<StringEntryEntity, String> entryValue;
     public static volatile SingularAttribute<StringEntryEntity, MessageContent> messageContent;
-    // CHECKSTYLE.ON: VisibilityModifier
 
     private StringEntryEntity_() {}
 }

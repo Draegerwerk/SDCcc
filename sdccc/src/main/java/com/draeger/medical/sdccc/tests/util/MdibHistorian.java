@@ -271,9 +271,7 @@ public class MdibHistorian {
                                     report::getMdibVersion,
                                     () -> report.getClass().getSimpleName());
                             reportProcessor.processReport(report);
-                            // CHECKSTYLE.OFF: IllegalCatch
                         } catch (final Exception e) {
-                            // CHECKSTYLE.ON: IllegalCatch
                             fail(e);
                         }
                         return storage;

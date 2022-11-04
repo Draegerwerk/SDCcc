@@ -309,7 +309,6 @@ public class MessageStorage implements AutoCloseable {
                 manipulationInfo.getID());
     }
 
-    @SuppressWarnings("checkstyle:IllegalCatch")
     protected Charset determineCharsetFromMessage(final Message message) {
         // Note: charset can be determined from (in the order of precedence)
         //       1. HTTP Header

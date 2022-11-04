@@ -403,8 +403,6 @@ public class MessageGeneratingUtil {
      *     <li>GetLocalizedText without any arguments, querying all texts in all languages</li>
      * </ol>
      */
-    // CHECKSTYLE.OFF: ReturnCount
-    // Reason: Refactoring only hurts readability.
     public void getLocalizedTexts() {
         final var localizationService = getLocalizationService(client);
         if (localizationService.isEmpty()) {
@@ -452,7 +450,6 @@ public class MessageGeneratingUtil {
             testRunObserver.invalidateTestRun("Could not send GetLocalizedText request to DUT", e);
         }
     }
-    // CHECKSTYLE.ON: ReturnCount
 
     /**
      * Sends a GetSupportedLanguages message to the DUT.

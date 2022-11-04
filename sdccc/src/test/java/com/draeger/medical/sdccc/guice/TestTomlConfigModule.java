@@ -46,9 +46,7 @@ public class TestTomlConfigModule {
             final ArgumentCaptor<Class<Object>> classCaptor = ArgumentCaptor.forClass(Class.class);
             final ArgumentCaptor<Object> objectCaptor = ArgumentCaptor.forClass(Object.class);
 
-            // CHECKSTYLE.OFF: MagicNumber
             verify(configModule, times(6)).bind(keyCaptor.capture(), classCaptor.capture(), objectCaptor.capture());
-            // CHECKSTYLE.ON: MagicNumber
 
             final var capturedKeys = keyCaptor.getAllValues();
             final var capuredClasses = classCaptor.getAllValues();

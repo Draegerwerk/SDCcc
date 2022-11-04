@@ -119,9 +119,7 @@ public class SslMetadata extends AbstractIdleService implements Service {
 
     private static KeyPair generateKeyPair() throws NoSuchAlgorithmException {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        // CHECKSTYLE.OFF: MagicNumber
         keyPairGenerator.initialize(1024);
-        // CHECKSTYLE.ON: MagicNumber
         return keyPairGenerator.generateKeyPair();
     }
 

@@ -517,7 +517,6 @@ public class InvariantMultiStateTestTest {
                 ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
-    // CHECKSTYLE.OFF: ParameterNumber
     Envelope buildDescriptionModificationReport(
             final String sequenceId,
             final @Nullable BigInteger mdibVersion,
@@ -597,8 +596,6 @@ public class InvariantMultiStateTestTest {
         report.setMdibVersion(mdibVersion);
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
-
-    // CHECKSTYLE.ON: ParameterNumber
 
     Envelope buildEpisodicContextReport(
             final String sequenceId,

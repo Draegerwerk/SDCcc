@@ -148,7 +148,6 @@ public class XmlReportWriterTest {
     }
 
     private void createTestCases() throws NoSuchMethodException, ClassNotFoundException {
-        // CHECKSTYLE.OFF: MagicNumber
         for (int i = 0; i < 10; i++) {
             final String uniqueId = UNIQUE_ID_PREFIX + i + "]";
 
@@ -195,7 +194,6 @@ public class XmlReportWriterTest {
                     testExecutionResult,
                     List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))));
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
