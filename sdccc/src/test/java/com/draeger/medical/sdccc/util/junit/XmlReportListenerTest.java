@@ -80,7 +80,7 @@ class XmlReportListenerTest {
         assertEquals(1, capturedValue.size());
 
         final var receivedTest = capturedValue.get(0);
-        assertEquals(TestExecutionResult.Status.FAILED, receivedTest.getTestExecutionResult().getStatus());
+        assertEquals(TestExecutionResult.Status.FAILED, receivedTest.testExecutionResult().getStatus());
     }
 
 
@@ -149,17 +149,17 @@ class XmlReportListenerTest {
 
         {
             final var receivedTest = capturedValue.get(0);
-            assertEquals(TestExecutionResult.Status.SUCCESSFUL, receivedTest.getTestExecutionResult().getStatus());
+            assertEquals(TestExecutionResult.Status.SUCCESSFUL, receivedTest.testExecutionResult().getStatus());
         }
         {
             final var receivedTest = capturedValue.get(1);
-            assertEquals(TestExecutionResult.Status.FAILED, receivedTest.getTestExecutionResult().getStatus());
-            assertEquals(assertionError, receivedTest.getTestExecutionResult().getThrowable().orElseThrow());
+            assertEquals(TestExecutionResult.Status.FAILED, receivedTest.testExecutionResult().getStatus());
+            assertEquals(assertionError, receivedTest.testExecutionResult().getThrowable().orElseThrow());
         }
         {
             final var receivedTest = capturedValue.get(2);
-            assertEquals(TestExecutionResult.Status.FAILED, receivedTest.getTestExecutionResult().getStatus());
-            assertEquals(genericError, receivedTest.getTestExecutionResult().getThrowable().orElseThrow());
+            assertEquals(TestExecutionResult.Status.FAILED, receivedTest.testExecutionResult().getStatus());
+            assertEquals(genericError, receivedTest.testExecutionResult().getThrowable().orElseThrow());
         }
     }
 }

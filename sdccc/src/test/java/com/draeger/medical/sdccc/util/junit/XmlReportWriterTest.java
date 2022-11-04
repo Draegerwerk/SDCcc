@@ -94,9 +94,9 @@ public class XmlReportWriterTest {
     private Map<String, TestExecutionResult> errorTests;
 
     protected static TestDescriptor createMockedTestDescriptor(
-        final String uniqueId, final String displayName, @Nullable final TestSource source,
-        final Set<TestTag> tags, final TestDescriptor.Type type,
-        @Nullable final TestDescriptor parent, final String legacyReportingName
+            final String uniqueId, final String displayName, @Nullable final TestSource source,
+            final Set<TestTag> tags, final TestDescriptor.Type type,
+            @Nullable final TestDescriptor parent, final String legacyReportingName
     ) {
 
         final Optional<TestSource> src = Optional.ofNullable(source);
@@ -117,7 +117,7 @@ public class XmlReportWriterTest {
 
     TestExecutionResult createFailedTest(final TestDescriptor test) {
         final var result = TestExecutionResult.failed(
-            new AssertionError(String.format("Assertion for %s failed", test.getUniqueId().toString()))
+                new AssertionError(String.format("Assertion for %s failed", test.getUniqueId().toString()))
         );
         failedTests.put(test.getUniqueId().toString(), result);
         return result;
@@ -125,7 +125,7 @@ public class XmlReportWriterTest {
 
     TestExecutionResult createErrorTest(final TestDescriptor test) {
         final var result = TestExecutionResult.failed(
-            new RuntimeException("Other exception occurred")
+                new RuntimeException("Other exception occurred")
         );
         errorTests.put(test.getUniqueId().toString(), result);
         return result;
@@ -157,8 +157,8 @@ public class XmlReportWriterTest {
 
             final Set<TestTag> tags = new HashSet<>();
             final TestDescriptor child = createMockedTestDescriptor(
-                uniqueId, DEFAULT_DISPLAY_NAME + " " + i, src, tags,
-                TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + i
+                    uniqueId, DEFAULT_DISPLAY_NAME + " " + i, src, tags,
+                    TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + i
             );
 
             stringToIdentifier.put(uniqueId, child);
@@ -187,10 +187,10 @@ public class XmlReportWriterTest {
             }
 
             data.add(new ReportData(
-                TestIdentifier.from(child),
-                Duration.ofSeconds(i),
-                testExecutionResult,
-                List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))
+                    TestIdentifier.from(child),
+                    Duration.ofSeconds(i),
+                    testExecutionResult,
+                    List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))
             ));
         }
         // CHECKSTYLE.ON: MagicNumber
@@ -231,9 +231,9 @@ public class XmlReportWriterTest {
             assertNotNull(value.uniqueId);
 
             final var testCaseData = data.stream()
-                .filter(it -> value.uniqueId.equals(it.getTestIdentifier().getUniqueId()))
-                .findFirst()
-                .orElseThrow();
+                    .filter(it -> value.uniqueId.equals(it.testIdentifier().getUniqueId()))
+                    .findFirst()
+                    .orElseThrow();
 
             assertNotNull(value.testDescription);
             assertFalse(value.testDescription.isBlank());
@@ -243,25 +243,25 @@ public class XmlReportWriterTest {
             assertFalse(value.testIdentifier.isBlank());
             assertEquals(MOCK_METHOD_DESCRIPTION, value.testDescription);
 
-            assertEquals(testCaseData.getTestIdentifier().getDisplayName(), value.getDisplayName());
-            assertEquals(testCaseData.getTestIdentifier().getUniqueId(), value.getUniqueId());
-            assertEquals(testCaseData.getTestIdentifier().getLegacyReportingName(), value.getName());
+            assertEquals(testCaseData.testIdentifier().getDisplayName(), value.displayName());
+            assertEquals(testCaseData.testIdentifier().getUniqueId(), value.uniqueId());
+            assertEquals(testCaseData.testIdentifier().getLegacyReportingName(), value.name());
 
-            for (ReportEntry reportEntry : testCaseData.getReportEntries()) {
+            for (ReportEntry reportEntry : testCaseData.reportEntries()) {
                 assertTrue(
-                    value.getSystemOut().contains(reportEntry.toString()),
-                    String.format("%s does not occur in %s", reportEntry, value.getMessage())
+                        value.systemOut().contains(reportEntry.toString()),
+                        String.format("%s does not occur in %s", reportEntry, value.message())
                 );
             }
 
-            assertNotNull(testCaseData.getTestDuration());
+            assertNotNull(testCaseData.testDuration());
             assertEquals(
-                String.valueOf(testCaseData.getTestDuration().toSeconds()),
-                value.getTime().split("\\.")[0]
+                    String.valueOf(testCaseData.testDuration().toSeconds()),
+                    value.time().split("\\.")[0]
             );
             assertEquals(
-                String.valueOf(testCaseData.getTestDuration().toMillisPart()),
-                value.getTime().split("\\.")[1]
+                    String.valueOf(testCaseData.testDuration().toMillisPart()),
+                    value.time().split("\\.")[1]
             );
 
             // verify remaining attributes match
@@ -295,8 +295,8 @@ public class XmlReportWriterTest {
         final TestSource src = MethodSource.from(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         final TestDescriptor child = createMockedTestDescriptor(
-            uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
-            TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
+                uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
+                TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
         );
 
         stringToIdentifier.put(uniqueId, child);
@@ -304,10 +304,10 @@ public class XmlReportWriterTest {
         doReturn(mockMethod).when(classUtil).getMethod(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         data.add(new ReportData(
-            TestIdentifier.from(child),
-            Duration.ofSeconds(1),
-            TestExecutionResult.successful(),
-            Collections.emptyList()
+                TestIdentifier.from(child),
+                Duration.ofSeconds(1),
+                TestExecutionResult.successful(),
+                Collections.emptyList()
         ));
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -317,12 +317,12 @@ public class XmlReportWriterTest {
 
             final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
             final var error = assertThrows(XMLStreamException.class,
-                () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
-                "XmlReportWriter accepted test case without TestDescription annotation"
+                    () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
+                    "XmlReportWriter accepted test case without TestDescription annotation"
             );
             final var expectedMessage = String.format(
-                XmlReportWriter.MISSING_ANNOTATION_TEXT,
-                uniqueId, annotationClass.getSimpleName()
+                    XmlReportWriter.MISSING_ANNOTATION_TEXT,
+                    uniqueId, annotationClass.getSimpleName()
             );
             assertTrue(error.getMessage().contains(expectedMessage));
         }
@@ -344,17 +344,17 @@ public class XmlReportWriterTest {
         final TestSource src = MethodSource.from(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         final TestDescriptor child = createMockedTestDescriptor(
-            uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
-            TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
+                uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
+                TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
         );
 
         stringToIdentifier.put(uniqueId, child);
 
         data.add(new ReportData(
-            TestIdentifier.from(child),
-            Duration.ofSeconds(1),
-            TestExecutionResult.successful(),
-            Collections.emptyList()
+                TestIdentifier.from(child),
+                Duration.ofSeconds(1),
+                TestExecutionResult.successful(),
+                Collections.emptyList()
         ));
 
         final var mockMethod = this.getClass().getDeclaredMethod("mockMethodNoIdentifier");
@@ -367,12 +367,12 @@ public class XmlReportWriterTest {
 
             final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
             final var error = assertThrows(XMLStreamException.class,
-                () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
-                "XmlReportWriter accepted test case without TestIdentifier annotation"
+                    () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
+                    "XmlReportWriter accepted test case without TestIdentifier annotation"
             );
             final var expectedMessage = String.format(
-                XmlReportWriter.MISSING_ANNOTATION_TEXT,
-                uniqueId, annotationClass.getSimpleName()
+                    XmlReportWriter.MISSING_ANNOTATION_TEXT,
+                    uniqueId, annotationClass.getSimpleName()
             );
             assertTrue(error.getMessage().contains(expectedMessage));
         }
@@ -420,8 +420,8 @@ public class XmlReportWriterTest {
         final var tests = testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
 
         final var invalidTestRunTest = tests.stream()
-            .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
-            .findFirst();
+                .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
+                .findFirst();
 
         assertTrue(invalidTestRunTest.isPresent());
     }
@@ -468,8 +468,8 @@ public class XmlReportWriterTest {
         final var tests = testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
 
         final var invalidTestRunTest = tests.stream()
-            .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
-            .findFirst();
+                .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
+                .findFirst();
 
         assertTrue(invalidTestRunTest.isEmpty());
     }
@@ -529,8 +529,8 @@ public class XmlReportWriterTest {
             } else if (UNIQUE_ID.equals(childNodeName)) {
                 uniqueId = nephew.getTextContent();
             } else if ("skipped".equals(childNodeName)
-                || "error".equals(childNodeName)
-                || "failure".equals(childNodeName)) {
+                    || "error".equals(childNodeName)
+                    || "failure".equals(childNodeName)) {
                 failureType = childNodeName;
                 textContent = nephew.getTextContent();
                 final var messageAttribute = nephew.getAttributes().getNamedItem("message");
@@ -541,9 +541,9 @@ public class XmlReportWriterTest {
         }
 
         final TestContainer tc = new TestContainer(
-            systemOut, displayName, uniqueId,
-            message, textContent, tags, testDescription, failureType, testIdentifier,
-            name, time
+                systemOut, displayName, uniqueId,
+                message, textContent, tags, testDescription, failureType, testIdentifier,
+                name, time
         );
         testCases.put(uniqueId, tc);
     }
@@ -579,78 +579,16 @@ public class XmlReportWriterTest {
 
     }
 
-    static class TestContainer {
-        private final String systemOut;
-        private final String displayName;
-        private final String uniqueId;
-        private final String message;
-        private final String tags;
-        private final String testDescription;
-        private final String failureType;
-        private final String textContent;
-        private final String testIdentifier;
-        private final String name;
-        private final String time;
-
-        TestContainer(final String systemOut, final String displayName, final String uniqueId,
-                      final String message, final String textContent, final String tags,
-                      final String testDescription, @Nullable final String failureType,
-                      final String testIdentifier, final String name, final String time) {
-            this.systemOut = systemOut;
-            this.displayName = displayName;
-            this.uniqueId = uniqueId;
-            this.message = message;
-            this.tags = tags;
-            this.testDescription = testDescription;
-            this.failureType = failureType;
-            this.textContent = textContent;
-            this.testIdentifier = testIdentifier;
-            this.name = name;
-            this.time = time;
-        }
-
-        public String getSystemOut() {
-            return systemOut;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getUniqueId() {
-            return uniqueId;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getTags() {
-            return tags;
-        }
-
-        public String getTestDescription() {
-            return testDescription;
-        }
-
-        public String getFailureType() {
-            return failureType;
-        }
-
-        public String getTextContent() {
-            return textContent;
-        }
-
-        public String getTestIdentifier() {
-            return testIdentifier;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getTime() {
-            return time;
-        }
+    record TestContainer(String systemOut,
+                         String displayName,
+                         String uniqueId,
+                         String message,
+                         String textContent,
+                         String tags,
+                         String testDescription,
+                         @Nullable String failureType,
+                         String testIdentifier,
+                         String name,
+                         String time) {
     }
 }

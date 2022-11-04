@@ -112,18 +112,18 @@ public class XmlReportWriter {
 
     private long countFailures() {
         return reportData.stream()
-            .filter(it -> it.getTestExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
+            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
             .filter(XmlReportWriter::isFailure)
             .count();
     }
 
     private long countErrors() {
         return reportData.stream()
-            .filter(it -> it.getTestExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
+            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
             .filter(it -> !isFailure(it))
             .count()
             + reportData.stream()
-            .filter(it -> it.getTestExecutionResult().getStatus() == TestExecutionResult.Status.ABORTED)
+            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.ABORTED)
             .count();
     }
 
@@ -132,9 +132,9 @@ public class XmlReportWriter {
     }
 
     private static boolean isFailure(final ReportData reportDatum) {
-        return reportDatum.getTestExecutionResult().getStatus() == TestExecutionResult.Status.FAILED
-            && reportDatum.getTestExecutionResult().getThrowable().isPresent()
-            && reportDatum.getTestExecutionResult().getThrowable().orElseThrow() instanceof AssertionError;
+        return reportDatum.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED
+            && reportDatum.testExecutionResult().getThrowable().isPresent()
+            && reportDatum.testExecutionResult().getThrowable().orElseThrow() instanceof AssertionError;
     }
 
     private void writeProperties(final XMLStreamWriter xmlWriter)
@@ -161,18 +161,18 @@ public class XmlReportWriter {
             xmlWriter.writeStartElement("testcase");
             xmlWriter.writeAttribute("name", getTestName(reportDatum));
             xmlWriter.writeAttribute("classname", getTestClassName(reportDatum));
-            if (reportDatum.getTestDuration() != null) {
-                xmlWriter.writeAttribute("time", formatDuration(reportDatum.getTestDuration()));
+            if (reportDatum.testDuration() != null) {
+                xmlWriter.writeAttribute("time", formatDuration(reportDatum.testDuration()));
             }
             writeNewLine(xmlWriter);
 
             // if failure or error, write it
             writeFailureOrError(xmlWriter, reportDatum);
 
-            if (!reportDatum.getReportEntries().isEmpty()) {
+            if (!reportDatum.reportEntries().isEmpty()) {
                 xmlWriter.writeStartElement("system-out");
 
-                final var transformedData = reportDatum.getReportEntries()
+                final var transformedData = reportDatum.reportEntries()
                     .stream()
                     .map(ReportEntry::toString)
                     .collect(Collectors.joining("\n"));
@@ -183,7 +183,7 @@ public class XmlReportWriter {
             }
 
             xmlWriter.writeStartElement("display-name");
-            xmlWriter.writeCData(reportDatum.getTestIdentifier().getDisplayName());
+            xmlWriter.writeCData(reportDatum.testIdentifier().getDisplayName());
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
@@ -193,7 +193,7 @@ public class XmlReportWriter {
             writeNewLine(xmlWriter);
 
             xmlWriter.writeStartElement("unique-id");
-            xmlWriter.writeCData(reportDatum.getTestIdentifier().getUniqueId());
+            xmlWriter.writeCData(reportDatum.testIdentifier().getUniqueId());
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
@@ -259,13 +259,13 @@ public class XmlReportWriter {
 
     private static void writeFailureOrError(final XMLStreamWriter xmlWriter, final ReportData reportDatum)
         throws XMLStreamException {
-        if (reportDatum.getTestExecutionResult().getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
+        if (reportDatum.testExecutionResult().getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
             return;
         }
 
         xmlWriter.writeStartElement(isFailure(reportDatum) ? "failure" : "error");
-        if (reportDatum.getTestExecutionResult().getThrowable().isPresent()) {
-            final var err = reportDatum.getTestExecutionResult().getThrowable().orElseThrow();
+        if (reportDatum.testExecutionResult().getThrowable().isPresent()) {
+            final var err = reportDatum.testExecutionResult().getThrowable().orElseThrow();
             if (err.getMessage() != null) {
                 xmlWriter.writeAttribute("message", err.getMessage());
             }
@@ -277,12 +277,12 @@ public class XmlReportWriter {
     }
 
     private static String getTestName(final ReportData reportDatum) {
-        return reportDatum.getTestIdentifier().getLegacyReportingName();
+        return reportDatum.testIdentifier().getLegacyReportingName();
     }
 
     private static String getTestClassName(final ReportData reportDatum) throws XMLStreamException {
         // add content from TestIdentifier annotation if present
-        final var testIdentifier = reportDatum.getTestIdentifier();
+        final var testIdentifier = reportDatum.testIdentifier();
         if (testIdentifier.getSource().isPresent()) {
             final var src = testIdentifier.getSource().orElseThrow();
             if (src instanceof MethodSource) {
@@ -309,7 +309,7 @@ public class XmlReportWriter {
         final Class<T> annotationClass,
         final ReportData reportDatum
     ) throws XMLStreamException {
-        final var testIdentifier = reportDatum.getTestIdentifier();
+        final var testIdentifier = reportDatum.testIdentifier();
         if (testIdentifier.getSource().isPresent()) {
             final var src = testIdentifier.getSource().orElseThrow();
             if (src instanceof MethodSource) {
