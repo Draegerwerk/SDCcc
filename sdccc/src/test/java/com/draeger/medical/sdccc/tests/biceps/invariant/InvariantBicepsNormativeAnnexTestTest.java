@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.InvocationState;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.AlertConditionKind;
@@ -27,6 +31,10 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
@@ -34,15 +42,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantBicepsNormativeAnnexTest}.
@@ -69,14 +68,12 @@ public class InvariantBicepsNormativeAnnexTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(mockClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
+            }
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -116,24 +113,13 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createGetLocalizedTextResponseWithRef(BigInteger.ONE)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createGetLocalizedTextResponseWithRef(BigInteger.ONE));
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createSetStringResponseWithRef(BigInteger.ONE)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSetStringResponseWithRef(BigInteger.ONE));
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createSystemErrorReportWithRef(BigInteger.ONE)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSystemErrorReportWithRef(BigInteger.ONE));
 
         testClass.testRequirement5006();
     }
@@ -154,9 +140,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
 
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
@@ -177,9 +161,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -199,9 +181,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -221,9 +201,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         null,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -243,9 +221,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         null,
                         BigInteger.ZERO,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -265,9 +241,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         null,
-                        BigInteger.ZERO
-                )
-        );
+                        BigInteger.ZERO));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -287,9 +261,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
                         BigInteger.ZERO,
                         BigInteger.ZERO,
                         BigInteger.ZERO,
-                        null
-                )
-        );
+                        null));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -300,10 +272,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
      */
     @Test
     public void testRequirement5006Bad7() throws Exception {
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createGetLocalizedTextResponseWithRef(null)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createGetLocalizedTextResponseWithRef(null));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -315,10 +284,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
      */
     @Test
     public void testRequirement5006Bad8() throws Exception {
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createSetStringResponseWithRef(null)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSetStringResponseWithRef(null));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -330,10 +296,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
      */
     @Test
     public void testRequirement5006Bad9() throws Exception {
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createSystemErrorReportWithRef(null)
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSystemErrorReportWithRef(null));
         assertThrows(AssertionError.class, testClass::testRequirement5006);
     }
 
@@ -346,10 +309,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
      */
     @Test
     public void testRequirement5006BadNoDataInMessage() throws Exception {
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage,
-                createSystemErrorReportNoRef()
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSystemErrorReportNoRef());
         assertThrows(NoTestData.class, testClass::testRequirement5006);
     }
 
@@ -363,8 +323,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
             @Nullable final BigInteger metadataRef1,
             @Nullable final BigInteger metadataRef2,
             @Nullable final BigInteger batteryRef1,
-            @Nullable final BigInteger batteryRef2
-    ) {
+            @Nullable final BigInteger batteryRef2) {
         final var mdib = mdibBuilder.buildMinimalMdib();
 
         final var mdState = mdib.getMdState();
@@ -373,9 +332,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
         // localized text in mds -> type
         final var mdsType = mdibBuilder.buildCodedValue("mdsCode");
         mdsType.getConceptDescription().clear();
-        mdsType.getConceptDescription().addAll(List.of(
-                createLocalizedText("mdsType", mdsTypeRef)
-        ));
+        mdsType.getConceptDescription().addAll(List.of(createLocalizedText("mdsType", mdsTypeRef)));
         mdsDescriptor.setType(mdsType);
 
         // alert condition localized text
@@ -394,9 +351,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-                getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     void buildScoLocalizedText(
@@ -414,9 +369,9 @@ public class InvariantBicepsNormativeAnnexTestTest {
 
         final var operationType = mdibBuilder.buildCodedValue("code");
         operationType.getCodingSystemName().clear();
-        operationType.getCodingSystemName().addAll(List.of(
-                createLocalizedText("operationType", operationTypeRefVersion)
-        ));
+        operationType
+                .getCodingSystemName()
+                .addAll(List.of(createLocalizedText("operationType", operationTypeRefVersion)));
         operation.getLeft().setType(operationType);
     }
 
@@ -429,15 +384,11 @@ public class InvariantBicepsNormativeAnnexTestTest {
         mdsDescriptor.setMetaData(metadata);
 
         metadata.getManufacturer().clear();
-        metadata.getManufacturer().addAll(List.of(
-                createLocalizedText("manufacturer", manufacturerRefVersion)
-        ));
+        metadata.getManufacturer().addAll(List.of(createLocalizedText("manufacturer", manufacturerRefVersion)));
 
         final var udiInstanceIdentifier = mdibBuilder.buildInstanceIdentifier();
         udiInstanceIdentifier.getIdentifierName().clear();
-        udiInstanceIdentifier.getIdentifierName().add(
-                createLocalizedText("udiInstanceIdentifier", issuerRefVersion)
-        );
+        udiInstanceIdentifier.getIdentifierName().add(createLocalizedText("udiInstanceIdentifier", issuerRefVersion));
         final var udi = mdibBuilder.buildMdsDescriptorMetaDataUdi("device", "human", udiInstanceIdentifier);
         metadata.getUdi().clear();
         metadata.getUdi().add(udi);
@@ -455,20 +406,18 @@ public class InvariantBicepsNormativeAnnexTestTest {
         mdState.getState().add(alertSystem.getRight());
 
         final var alertCondition = mdibBuilder.buildAlertCondition(
-                "ac0", AlertConditionKind.OTH,
-                AlertConditionPriority.NONE, alertActivation
-        );
+                "ac0", AlertConditionKind.OTH, AlertConditionPriority.NONE, alertActivation);
         alertSystem.getLeft().getAlertCondition().add(alertCondition.getLeft());
         mdState.getState().add(alertCondition.getRight());
 
         final var alertConditionCauseInfo = mdibBuilder.buildCauseInfo();
 
         alertConditionCauseInfo.getDescription().clear();
-        alertConditionCauseInfo.getDescription().add(
-                createLocalizedText("alertConditionCauseInfo", alertConditionRefVersion));
+        alertConditionCauseInfo
+                .getDescription()
+                .add(createLocalizedText("alertConditionCauseInfo", alertConditionRefVersion));
         alertCondition.getLeft().getCauseInfo().clear();
         alertCondition.getLeft().getCauseInfo().add(alertConditionCauseInfo);
-
     }
 
     void buildBatteryLocalizedText(
@@ -484,8 +433,9 @@ public class InvariantBicepsNormativeAnnexTestTest {
 
         final var calibrationDocumentation = mdibBuilder.buildCalibrationInfoCalibrationDocumentation();
         calibrationDocumentation.getDocumentation().clear();
-        calibrationDocumentation.getDocumentation().add(
-                createLocalizedText("calibrationDocumentation", calibrationDocumentationRefVersion));
+        calibrationDocumentation
+                .getDocumentation()
+                .add(createLocalizedText("calibrationDocumentation", calibrationDocumentationRefVersion));
 
         final var calibrationInfo = mdibBuilder.buildCalibrationInfo();
         battery.getRight().setCalibrationInfo(calibrationInfo);
@@ -502,46 +452,32 @@ public class InvariantBicepsNormativeAnnexTestTest {
 
     Envelope createGetLocalizedTextResponseWithRef(@Nullable final BigInteger version) {
         final var response = messageBuilder.buildGetLocalizedTextResponse("0");
-        response.getText().add(
-                createLocalizedText("someLocalizedText", version)
-        );
+        response.getText().add(createLocalizedText("someLocalizedText", version));
 
         return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_LOCALIZED_TEXT),
-                response
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_LOCALIZED_TEXT), response);
     }
 
     Envelope createSetStringResponseWithRef(@Nullable final BigInteger version) {
-        final var invocationInfo = messageBuilder.buildInvocationInfo(
-                123,
-                InvocationState.FAIL
-        );
+        final var invocationInfo = messageBuilder.buildInvocationInfo(123, InvocationState.FAIL);
 
         invocationInfo.getInvocationErrorMessage().clear();
         invocationInfo.getInvocationErrorMessage().add(createLocalizedText("invocationInfoErrorMessage", version));
         final var response = messageBuilder.buildSetStringResponse("0", invocationInfo);
 
         return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.getResponseAction(ActionConstants.ACTION_SET_STRING),
-                response
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_SET_STRING), response);
     }
 
     Envelope createSystemErrorReportWithRef(@Nullable final BigInteger version) {
         final var errorCode = mdibBuilder.buildCodedValue("errorcode");
         final var reportPart = messageBuilder.buildSystemErrorReportReportPart(errorCode);
 
-        reportPart.setErrorInfo(createLocalizedText(
-                "errorInfo", version
-        ));
+        reportPart.setErrorInfo(createLocalizedText("errorInfo", version));
 
         final var response = messageBuilder.buildSystemErrorReport("0", List.of(reportPart));
 
-        return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.ACTION_SYSTEM_ERROR_REPORT,
-                response
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_SYSTEM_ERROR_REPORT, response);
     }
 
     Envelope createSystemErrorReportNoRef() {
@@ -549,10 +485,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
         final var reportPart = messageBuilder.buildSystemErrorReportReportPart(errorCode);
         final var response = messageBuilder.buildSystemErrorReport("0", List.of(reportPart));
 
-        return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.ACTION_SYSTEM_ERROR_REPORT,
-                response
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_SYSTEM_ERROR_REPORT, response);
     }
 
     LocalizedText createLocalizedText(final String ref, @Nullable final BigInteger version) {

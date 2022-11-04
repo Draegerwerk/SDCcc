@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.DescriptionModificationReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationType;
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
@@ -34,6 +40,12 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,19 +55,6 @@ import org.somda.sdc.biceps.provider.preprocessing.HandleDuplicatedException;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantMultiStateTest}.
@@ -103,14 +102,12 @@ public class InvariantMultiStateTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
         InjectorTestBase.setInjector(injector);
 
         final var riInjector = TestClientUtil.createClientInjector();
@@ -151,50 +148,55 @@ public class InvariantMultiStateTestTest {
         final var initial = buildMdib(SEQUENCE_ID, false);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE),
-            null, null
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE),
+                null,
+                null);
 
         final var secondUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.TWO,
-            buildMds(MDS_HANDLE, BigInteger.TWO),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            null, null
-        );
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildMds(MDS_HANDLE, BigInteger.TWO),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                null,
+                null);
 
         final var three = BigInteger.valueOf(3);
         final var thirdUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, three,
-            buildMds(MDS_HANDLE, three),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
-            null,
-            buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            null
-        );
+                SEQUENCE_ID,
+                three,
+                buildMds(MDS_HANDLE, three),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
+                null,
+                buildLocationContext(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                null);
 
         final var fourth = BigInteger.valueOf(4);
         final var fourthUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, fourth,
-            buildMds(MDS_HANDLE, fourth),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, fourth),
-            null,
-            null,
-            buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO)
-        );
+                SEQUENCE_ID,
+                fourth,
+                buildMds(MDS_HANDLE, fourth),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, fourth),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO));
 
         final var fifth = BigInteger.valueOf(4);
         final var fifthUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, fifth,
-            buildMds(MDS_HANDLE, fifth),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, fifth),
-            null,
-            null,
-            buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO)
-        );
+                SEQUENCE_ID,
+                fifth,
+                buildMds(MDS_HANDLE, fifth),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, fifth),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -214,60 +216,66 @@ public class InvariantMultiStateTestTest {
         final var initial = buildMdib(SEQUENCE_ID, false);
 
         final var patientUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
-            null, null
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
+                null,
+                null);
 
         final var newSequenceInitial = buildMdib(SEQUENCE_ID2, false);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID2, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
-            null, null
-        );
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
+                null,
+                null);
 
         final var secondUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID2, BigInteger.TWO,
-            buildMds(MDS_HANDLE, BigInteger.TWO),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            null, null
-        );
+                SEQUENCE_ID2,
+                BigInteger.TWO,
+                buildMds(MDS_HANDLE, BigInteger.TWO),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                null,
+                null);
 
         final var three = BigInteger.valueOf(3);
         final var thirdUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID2, three,
-            buildMds(MDS_HANDLE, three),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
-            null,
-            buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            null
-        );
+                SEQUENCE_ID2,
+                three,
+                buildMds(MDS_HANDLE, three),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
+                null,
+                buildLocationContext(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                null);
 
         final var fourth = BigInteger.valueOf(4);
         final var fourthUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID2, fourth,
-            buildMds(MDS_HANDLE, fourth),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, fourth),
-            null,
-            null,
-            buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO)
-        );
+                SEQUENCE_ID2,
+                fourth,
+                buildMds(MDS_HANDLE, fourth),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, fourth),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO));
 
         final var fifth = BigInteger.valueOf(4);
         final var fifthUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID2, fifth,
-            buildMds(MDS_HANDLE, fifth),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, fifth),
-            null,
-            null,
-            buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO)
-        );
+                SEQUENCE_ID2,
+                fifth,
+                buildMds(MDS_HANDLE, fifth),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, fifth),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, patientUpdate);
@@ -292,20 +300,22 @@ public class InvariantMultiStateTestTest {
         final var initial = buildMdibWithoutContextStates(SEQUENCE_ID);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE),
-            buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.ONE)
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE),
+                buildLocationContext(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.ONE));
 
         final var secondUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.TWO,
-            buildMds(MDS_HANDLE, BigInteger.TWO),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO)
-        );
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildMds(MDS_HANDLE, BigInteger.TWO),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                buildLocationContext(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -322,31 +332,34 @@ public class InvariantMultiStateTestTest {
         final var initial = buildMdib(SEQUENCE_ID, false);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
-            buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
-            null, null
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.ONE),
+                buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE2, BigInteger.ONE),
+                null,
+                null);
 
         final var secondUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.TWO,
-            buildMds(MDS_HANDLE, BigInteger.TWO),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
-            null,
-            buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
-            null
-        );
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildMds(MDS_HANDLE, BigInteger.TWO),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, BigInteger.TWO),
+                null,
+                buildLocationContext(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2, BigInteger.TWO),
+                null);
 
         final var three = BigInteger.valueOf(3);
         final var thirdUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, three,
-            buildMds(MDS_HANDLE, three),
-            buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
-            null,
-            null,
-            buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO)
-        );
+                SEQUENCE_ID,
+                three,
+                buildMds(MDS_HANDLE, three),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, three),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -377,9 +390,11 @@ public class InvariantMultiStateTestTest {
         final var initial = buildMdib(SEQUENCE_ID, false);
 
         final var firstUpdate = buildEpisodicContextReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            LOCATION_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            BigInteger.ONE);
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                BigInteger.ONE);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -396,18 +411,21 @@ public class InvariantMultiStateTestTest {
     @Test
     public void testRequirementR0097BadDuplicateContextStateHandle() throws Exception {
         final var operator1 = mdibBuilder.buildOperatorContextState(
-            OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE);
+                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE);
         final var operator2 = mdibBuilder.buildOperatorContextState(
-            OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE);
+                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE);
 
         final var initial = buildMdib(SEQUENCE_ID, false);
 
         final var firstUpdate = buildEpisodicContextReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE,
-            BigInteger.ONE);
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                PATIENT_CONTEXT_STATE_HANDLE,
+                BigInteger.ONE);
 
-        final var firstMod = (EpisodicContextReport) firstUpdate.getBody().getAny().get(0);
+        final var firstMod =
+                (EpisodicContextReport) firstUpdate.getBody().getAny().get(0);
         firstMod.getReportPart().get(0).getContextState().add(operator1);
         firstMod.getReportPart().get(0).getContextState().add(operator2);
 
@@ -420,9 +438,7 @@ public class InvariantMultiStateTestTest {
     /*
      * build mdib with configurable handles
      */
-    Envelope buildMdib(
-        final String sequenceId,
-        final boolean broken) {
+    Envelope buildMdib(final String sequenceId, final boolean broken) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -431,68 +447,65 @@ public class InvariantMultiStateTestTest {
         final Pair<PatientContextDescriptor, PatientContextState> patientContext;
         if (broken) {
             patientContext = mdibBuilder.buildPatientContext(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
+                    PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
         } else {
-            patientContext = mdibBuilder.buildPatientContext(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_STATE_HANDLE);
+            patientContext =
+                    mdibBuilder.buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE);
         }
         patientContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
 
-        final Pair<LocationContextDescriptor, LocationContextState> locationContext = mdibBuilder.buildLocationContext(
-            LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE);
+        final Pair<LocationContextDescriptor, LocationContextState> locationContext =
+                mdibBuilder.buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE);
         locationContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
 
-        final var operator1 = mdibBuilder
-            .buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE3);
+        final var operator1 =
+                mdibBuilder.buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE3);
         operator1.getRight().setContextAssociation(ContextAssociation.ASSOC);
-        final var operator2 = mdibBuilder
-            .buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE4);
+        final var operator2 =
+                mdibBuilder.buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE4);
         operator2.getRight().setContextAssociation(ContextAssociation.ASSOC);
 
         final var systemContext = mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);
         systemContext.getLeft().setPatientContext(patientContext.getLeft());
-        systemContext.getLeft().setLocationContext(
-            locationContext.getLeft());
+        systemContext.getLeft().setLocationContext(locationContext.getLeft());
         systemContext.getLeft().getOperatorContext().clear();
         systemContext.getLeft().getOperatorContext().addAll(List.of(operator1.getLeft(), operator2.getLeft()));
 
         mdsDescriptor.setSystemContext(systemContext.getLeft());
-        mdState.getState().addAll(List.of(systemContext.getRight(),
-            patientContext.getRight(), locationContext.getRight(),
-            operator1.getRight(), operator2.getRight()));
+        mdState.getState()
+                .addAll(List.of(
+                        systemContext.getRight(),
+                        patientContext.getRight(),
+                        locationContext.getRight(),
+                        operator1.getRight(),
+                        operator2.getRight()));
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     /*
      * build mdib with configurable handles
      */
-    Envelope buildMdibWithoutContextStates(
-        final String sequenceId) {
+    Envelope buildMdibWithoutContextStates(final String sequenceId) {
 
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
         final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
 
-        final var patientContextDescriptor = mdibBuilder.buildPatientContextDescriptor(
-            PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
+        final var patientContextDescriptor =
+                mdibBuilder.buildPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
 
-        final var locationContextDescriptor = mdibBuilder.buildLocationContextDescriptor(
-            LOCATION_CONTEXT_DESCRIPTOR_HANDLE);
+        final var locationContextDescriptor =
+                mdibBuilder.buildLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE);
 
         final var systemContext = mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);
         systemContext.getLeft().setPatientContext(patientContextDescriptor);
-        systemContext.getLeft().setLocationContext(
-            locationContextDescriptor);
+        systemContext.getLeft().setLocationContext(locationContextDescriptor);
 
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().addAll(List.of(systemContext.getRight()));
@@ -501,20 +514,18 @@ public class InvariantMultiStateTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     // CHECKSTYLE.OFF: ParameterNumber
     Envelope buildDescriptionModificationReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final @Nullable Pair<MdsDescriptor, MdsState> mds,
-        final @Nullable Pair<SystemContextDescriptor, SystemContextState> systemContext,
-        final @Nullable Pair<PatientContextDescriptor, PatientContextState> patientContext,
-        final @Nullable Pair<LocationContextDescriptor, LocationContextState> locationContext,
-        final @Nullable Pair<OperatorContextDescriptor, OperatorContextState> operatorContext) {
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final @Nullable Pair<MdsDescriptor, MdsState> mds,
+            final @Nullable Pair<SystemContextDescriptor, SystemContextState> systemContext,
+            final @Nullable Pair<PatientContextDescriptor, PatientContextState> patientContext,
+            final @Nullable Pair<LocationContextDescriptor, LocationContextState> locationContext,
+            final @Nullable Pair<OperatorContextDescriptor, OperatorContextState> operatorContext) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.UPT);
 
@@ -551,19 +562,16 @@ public class InvariantMultiStateTestTest {
         parts = List.of(reportPart);
         final var report = messageBuilder.buildDescriptionModificationReport(sequenceId, parts);
         report.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
 
     Envelope buildDescriptionModificationReport(
-        final String sequenceId,
-        final BigInteger mdibVersion,
-        final Pair<MdsDescriptor, MdsState> mds,
-        final Pair<SystemContextDescriptor, SystemContextState> systemContext,
-        final Pair<PatientContextDescriptor, PatientContextState> patientContext,
-        final Pair<LocationContextDescriptor, LocationContextState> locationContext) {
+            final String sequenceId,
+            final BigInteger mdibVersion,
+            final Pair<MdsDescriptor, MdsState> mds,
+            final Pair<SystemContextDescriptor, SystemContextState> systemContext,
+            final Pair<PatientContextDescriptor, PatientContextState> patientContext,
+            final Pair<LocationContextDescriptor, LocationContextState> locationContext) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.UPT);
 
@@ -571,30 +579,33 @@ public class InvariantMultiStateTestTest {
         systemContext.getLeft().setLocationContext(locationContext.getLeft());
         mds.getLeft().setSystemContext(systemContext.getLeft());
 
-        reportPart.getDescriptor().addAll(
-            List.of(patientContext.getLeft(), locationContext.getLeft(), systemContext.getLeft(), mds.getLeft()));
-        reportPart.getState().addAll(
-            List.of(systemContext.getRight(), patientContext.getRight(), locationContext.getRight(), mds.getRight()));
+        reportPart
+                .getDescriptor()
+                .addAll(List.of(
+                        patientContext.getLeft(), locationContext.getLeft(), systemContext.getLeft(), mds.getLeft()));
+        reportPart
+                .getState()
+                .addAll(List.of(
+                        systemContext.getRight(),
+                        patientContext.getRight(),
+                        locationContext.getRight(),
+                        mds.getRight()));
 
         final List<DescriptionModificationReport.ReportPart> parts;
         parts = List.of(reportPart);
         final var report = messageBuilder.buildDescriptionModificationReport(sequenceId, parts);
         report.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
 
     // CHECKSTYLE.ON: ParameterNumber
 
     Envelope buildEpisodicContextReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final String descriptorHandle,
-        final String stateHandle,
-        final @Nullable BigInteger stateVersion
-    ) {
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final String descriptorHandle,
+            final String stateHandle,
+            final @Nullable BigInteger stateVersion) {
         final var report = messageBuilder.buildEpisodicContextReport(sequenceId);
 
         final var locationContextState = mdibBuilder.buildLocationContextState(descriptorHandle, stateHandle);
@@ -605,15 +616,13 @@ public class InvariantMultiStateTestTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 
-    Pair<PatientContextDescriptor, PatientContextState> buildPatientContext(final String patientContextHandle,
-                                                                            final String patientContextStateHandle,
-                                                                            final BigInteger patientContextVersion) {
+    Pair<PatientContextDescriptor, PatientContextState> buildPatientContext(
+            final String patientContextHandle,
+            final String patientContextStateHandle,
+            final BigInteger patientContextVersion) {
         final var patientContext = mdibBuilder.buildPatientContext(patientContextHandle, patientContextStateHandle);
         patientContext.getLeft().setDescriptorVersion(patientContextVersion);
         patientContext.getRight().setDescriptorVersion(patientContextVersion);
@@ -622,9 +631,9 @@ public class InvariantMultiStateTestTest {
     }
 
     Pair<LocationContextDescriptor, LocationContextState> buildLocationContext(
-        final String locationContextHandle,
-        final String locationContextStateHandle,
-        final BigInteger locationContextVersion) {
+            final String locationContextHandle,
+            final String locationContextStateHandle,
+            final BigInteger locationContextVersion) {
         final var locationContext = mdibBuilder.buildLocationContext(locationContextHandle, locationContextStateHandle);
         locationContext.getLeft().setDescriptorVersion(locationContextVersion);
         locationContext.getRight().setDescriptorVersion(locationContextVersion);
@@ -633,19 +642,18 @@ public class InvariantMultiStateTestTest {
     }
 
     Pair<OperatorContextDescriptor, OperatorContextState> buildOperatorContext(
-        final String operatorContextHandle,
-        final String operatorContextStateHandle,
-        final BigInteger operatorContextVersion) {
-        final var operatorContext = mdibBuilder
-            .buildOperatorContext(operatorContextHandle, operatorContextStateHandle);
+            final String operatorContextHandle,
+            final String operatorContextStateHandle,
+            final BigInteger operatorContextVersion) {
+        final var operatorContext = mdibBuilder.buildOperatorContext(operatorContextHandle, operatorContextStateHandle);
         operatorContext.getLeft().setDescriptorVersion(operatorContextVersion);
         operatorContext.getRight().setDescriptorVersion(operatorContextVersion);
         operatorContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
         return operatorContext;
     }
 
-    Pair<SystemContextDescriptor, SystemContextState> buildSystemContext(final String systemContextHandle,
-                                                                         final BigInteger systemContextVersion) {
+    Pair<SystemContextDescriptor, SystemContextState> buildSystemContext(
+            final String systemContextHandle, final BigInteger systemContextVersion) {
         final var systemContext = mdibBuilder.buildSystemContext(systemContextHandle);
         systemContext.getLeft().setDescriptorVersion(systemContextVersion);
         systemContext.getRight().setDescriptorVersion(systemContextVersion);

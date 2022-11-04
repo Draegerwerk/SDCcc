@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,22 +20,16 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.somda.sdc.dpws.soap.exception.TransportException;
-import org.somda.sdc.dpws.wsdl.WsdlRetriever;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.somda.sdc.dpws.soap.exception.TransportException;
+import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 
 /**
  * Unit tests for MDPWS:R0014.
@@ -45,25 +44,21 @@ public class DirectWSDLR0014Test {
         final TestClient mockClient = mock(TestClient.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockClient.isClientRunning()).thenReturn(true);
         mockRetriever = mock(WsdlRetriever.class);
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(mockClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         // setup the injector used by sdcri
-        final var clientInjector = TestClientUtil.createClientInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(WsdlRetriever.class).toInstance(mockRetriever);
-                    }
-                }
-        );
+        final var clientInjector = TestClientUtil.createClientInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(WsdlRetriever.class).toInstance(mockRetriever);
+            }
+        });
         when(mockClient.getInjector()).thenReturn(clientInjector);
 
         testClass = new DirectWSDLTest();
@@ -87,12 +82,11 @@ public class DirectWSDLR0014Test {
     @Test
     @SuppressFBWarnings(
             value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
+            justification = "No unnecessary null check.")
     public void testRequirement0014Good() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0014_Good.xml")) {
+        try (final var messageStream =
+                DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0014_Good.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "ecivres";
@@ -109,12 +103,11 @@ public class DirectWSDLR0014Test {
     @Test
     @SuppressFBWarnings(
             value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
+            justification = "No unnecessary null check.")
     public void testRequirement0014Bad() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0014_Bad.xml")) {
+        try (final var messageStream =
+                DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0014_Bad.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -122,5 +115,4 @@ public class DirectWSDLR0014Test {
         when(mockRetriever.retrieveWsdls(any())).thenReturn(Map.of(serviceName, List.of(message)));
         assertThrows(AssertionError.class, testClass::testRequirementR0014);
     }
-
 }

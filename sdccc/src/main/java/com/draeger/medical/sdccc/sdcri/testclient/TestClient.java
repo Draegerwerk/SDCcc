@@ -8,17 +8,16 @@
 package com.draeger.medical.sdccc.sdcri.testclient;
 
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 import org.somda.sdc.dpws.client.Client;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 import org.somda.sdc.glue.consumer.SdcRemoteDevicesConnector;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 /**
  * An SDC consumer used for testing.
@@ -75,5 +74,4 @@ public interface TestClient {
     List<String> getTargetXAddrs();
 
     Injector getInjector();
-
 }

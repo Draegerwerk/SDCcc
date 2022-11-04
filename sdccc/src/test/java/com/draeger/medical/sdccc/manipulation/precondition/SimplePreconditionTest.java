@@ -7,15 +7,14 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition;
 
-import com.google.inject.Injector;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
+
+import com.google.inject.Injector;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for the {@linkplain SimplePrecondition}.
@@ -58,5 +57,4 @@ public class SimplePreconditionTest {
 
         assertTrue(manipulationCalled.get());
     }
-
 }

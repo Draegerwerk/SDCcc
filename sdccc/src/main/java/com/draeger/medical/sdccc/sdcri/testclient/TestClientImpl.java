@@ -18,6 +18,17 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.dpws.DpwsFramework;
@@ -35,18 +46,6 @@ import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 import org.somda.sdc.glue.consumer.SdcRemoteDevicesConnector;
 import org.somda.sdc.glue.consumer.WatchdogObserver;
 import org.somda.sdc.glue.consumer.event.WatchdogMessage;
-
-import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * SDCri consumer used to test SDC providers.
@@ -81,10 +80,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
      * @param testRunObserver observer for invalidating test runs on unexpected errors
      */
     @Inject
-    public TestClientImpl(@Named(TestSuiteConfig.CONSUMER_DEVICE_EPR) final String targetDevicePr,
-                          @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
-                          final TestClientUtil testClientUtil,
-                          final TestRunObserver testRunObserver) {
+    public TestClientImpl(
+            @Named(TestSuiteConfig.CONSUMER_DEVICE_EPR) final String targetDevicePr,
+            @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
+            final TestClientUtil testClientUtil,
+            final TestRunObserver testRunObserver) {
         this.injector = testClientUtil.getInjector();
         this.client = injector.getInstance(Client.class);
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
@@ -101,9 +101,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
         if (this.networkInterface == null) {
             LOG.error(
-                "Error while setting network interface, adapter for address {} seems unavailable",
-                adapterAddress
-            );
+                    "Error while setting network interface, adapter for address {} seems unavailable", adapterAddress);
             throw new RuntimeException("Error while setting network interface, adapter seems unavailable");
         }
 
@@ -150,9 +148,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         final SettableFuture<List<String>> xAddrs = SettableFuture.create();
         final DiscoveryObserver obs = new DiscoveryObserver() {
             @SuppressFBWarnings(
-                value = {"UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"},
-                justification = "This is not uncallable"
-            )
+                    value = {"UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"},
+                    justification = "This is not uncallable")
             @Subscribe
             void deviceFound(final ProbedDeviceFoundMessage message) {
                 final DiscoveredDevice payload = message.getPayload();
@@ -194,11 +191,9 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         final ListenableFuture<SdcRemoteDevice> remoteDeviceFuture;
         sdcRemoteDevice = null;
         try {
-            remoteDeviceFuture = connector
-                .connect(
+            remoteDeviceFuture = connector.connect(
                     hostingServiceProxy,
-                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS)
-                );
+                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS));
             sdcRemoteDevice = remoteDeviceFuture.get(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
         } catch (final PrerequisitesException | InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Couldn't attach to remote mdib and subscriptions for {}", targetEpr, e);
@@ -259,10 +254,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         LOG.info("Watchdog detected disconnect from provider.");
         if (shouldBeConnected.get()) {
             testRunObserver.invalidateTestRun(String.format(
-                "Lost connection to device %s. Reason: %s",
-                watchdogMessage.getPayload(),
-                watchdogMessage.getReason().getMessage()
-            ));
+                    "Lost connection to device %s. Reason: %s",
+                    watchdogMessage.getPayload(), watchdogMessage.getReason().getMessage()));
             try {
                 disconnect();
             } catch (TimeoutException e) {

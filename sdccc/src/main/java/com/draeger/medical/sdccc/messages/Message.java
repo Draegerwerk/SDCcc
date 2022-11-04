@@ -10,16 +10,15 @@ package com.draeger.medical.sdccc.messages;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.somda.sdc.dpws.CommunicationLog;
-import org.somda.sdc.dpws.soap.CommunicationContext;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.soap.CommunicationContext;
 
 /**
  * Message object used for storage purposes.
@@ -46,7 +45,8 @@ public class Message extends OutputStream implements DatabaseEntry {
     private UUID id;
 
     @Inject
-    Message(@Assisted final CommunicationLog.Direction direction,
+    Message(
+            @Assisted final CommunicationLog.Direction direction,
             @Assisted final CommunicationLog.MessageType messageType,
             @Assisted final CommunicationContext communicationContext,
             final MessageStorage messageStorage) {
@@ -94,16 +94,15 @@ public class Message extends OutputStream implements DatabaseEntry {
     @Override
     public String toString() {
         return "Message{"
-            + ", direction=" + direction
-            + ", timestamp=" + timestamp
-            + ", nanoTimestamp=" + nanoTimestamp
-            + '}';
+                + ", direction=" + direction
+                + ", timestamp=" + timestamp
+                + ", nanoTimestamp=" + nanoTimestamp
+                + '}';
     }
 
     @SuppressFBWarnings(
-        value = {"EI_EXPOSE_REP"},
-        justification = "it doesn't matter, the field might as well be public."
-    )
+            value = {"EI_EXPOSE_REP"},
+            justification = "it doesn't matter, the field might as well be public.")
     public byte[] getFinalMemory() {
         return finalMemory;
     }

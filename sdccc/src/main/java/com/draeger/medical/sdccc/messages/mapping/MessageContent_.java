@@ -8,14 +8,12 @@
 package com.draeger.medical.sdccc.messages.mapping;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.somda.sdc.dpws.CommunicationLog;
-
+import java.security.cert.X509Certificate;
 import javax.persistence.metamodel.ListAttribute;
 import javax.persistence.metamodel.SetAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.StaticMetamodel;
-import java.security.cert.X509Certificate;
-
+import org.somda.sdc.dpws.CommunicationLog;
 
 /**
  * Used for building database query criteria.
@@ -47,6 +45,5 @@ public final class MessageContent_ {
     // CHECKSTYLE.ON: VisibilityModifier
 
     private MessageContent_() {}
-
 }
 // CHECKSTYLE.ON: TypeName

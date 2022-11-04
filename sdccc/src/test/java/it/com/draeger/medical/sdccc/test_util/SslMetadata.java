@@ -9,6 +9,25 @@ package it.com.draeger.medical.sdccc.test_util;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -31,26 +50,6 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 
-import javax.annotation.Nullable;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
 /**
  * SSL metadata used for crypto in integration tests.
  *
@@ -60,6 +59,7 @@ import java.util.Optional;
 public class SslMetadata extends AbstractIdleService implements Service {
     @Nullable
     private KeySet serverKeySet;
+
     @Nullable
     private KeySet clientKeySet;
 
@@ -72,11 +72,9 @@ public class SslMetadata extends AbstractIdleService implements Service {
     }
 
     @Override
-    protected void startUp() throws
-            NoSuchAlgorithmException,
-            CertificateException,
-            KeyStoreException,
-            IOException, OperatorCreationException {
+    protected void startUp()
+            throws NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException,
+                    OperatorCreationException {
 
         Security.addProvider(new BouncyCastleProvider());
 
@@ -96,12 +94,10 @@ public class SslMetadata extends AbstractIdleService implements Service {
 
         final KeyStore serverKeyStore = createKeyStore(
                 serverAlias, serverKeyPair.getPrivate(),
-                commonPassword, Collections.singletonList(serverCert)
-        );
+                commonPassword, Collections.singletonList(serverCert));
         final KeyStore clientKeyStore = createKeyStore(
                 clientAlias, clientKeyPair.getPrivate(),
-                commonPassword, Collections.singletonList(clientCert)
-        );
+                commonPassword, Collections.singletonList(clientCert));
 
         final KeyStore serverTrustStore = createTrustStore(serverAlias, commonPassword, clientCert, serverCert);
         final KeyStore clientTrustStore = createTrustStore(clientAlias, commonPassword, serverCert, clientCert);
@@ -111,9 +107,7 @@ public class SslMetadata extends AbstractIdleService implements Service {
     }
 
     @Override
-    protected void shutDown() {
-
-    }
+    protected void shutDown() {}
 
     public KeySet getServerKeySet() {
         return serverKeySet;
@@ -131,10 +125,11 @@ public class SslMetadata extends AbstractIdleService implements Service {
         return keyPairGenerator.generateKeyPair();
     }
 
-    private static KeyStore createKeyStore(final String alias,
-                                           final PrivateKey privateKey,
-                                           final String password,
-                                           final List<X509Certificate> certificateChain)
+    private static KeyStore createKeyStore(
+            final String alias,
+            final PrivateKey privateKey,
+            final String password,
+            final List<X509Certificate> certificateChain)
             throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
 
         final KeyStore keyStore = KeyStore.getInstance("jks");
@@ -145,27 +140,25 @@ public class SslMetadata extends AbstractIdleService implements Service {
         return keyStore;
     }
 
-    private static KeyStore createTrustStore(final String alias,
-                                             final String password,
-                                             final X509Certificate... trustedCertificates)
+    private static KeyStore createTrustStore(
+            final String alias, final String password, final X509Certificate... trustedCertificates)
             throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
 
         final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(null, password.toCharArray());
         var i = 0;
-        for (var cert: trustedCertificates) {
+        for (var cert : trustedCertificates) {
             keyStore.setCertificateEntry(alias + i++, cert);
         }
         return keyStore;
     }
 
     private static X509Certificate generateCertificate(
-            final String issuer,
-            final KeyPair keyPair,
-            final ExtendedKeyUsage extendedKeyUsage
-    ) throws OperatorCreationException, IOException, CertificateException {
+            final String issuer, final KeyPair keyPair, final ExtendedKeyUsage extendedKeyUsage)
+            throws OperatorCreationException, IOException, CertificateException {
 
-        final SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
+        final SubjectPublicKeyInfo subPubKeyInfo =
+                SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
         final AlgorithmIdentifier sigAlgId =
                 new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WithRSAEncryption");
         final AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
@@ -180,22 +173,15 @@ public class SslMetadata extends AbstractIdleService implements Service {
                 new Date(System.currentTimeMillis() - 500000),
                 new Date(System.currentTimeMillis() + 500000),
                 new X500Name("CN=" + issuer),
-                subPubKeyInfo
-        );
+                subPubKeyInfo);
 
         certGen.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
         certGen.addExtension(
-                Extension.keyUsage,
-                true,
-                new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment)
-        );
+                Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
         certGen.addExtension(
                 Extension.subjectAlternativeName,
                 false,
-                new GeneralNames(
-                        new GeneralName(GeneralName.rfc822Name, "janlukas.deichmann@draeger.com")
-                )
-        );
+                new GeneralNames(new GeneralName(GeneralName.rfc822Name, "janlukas.deichmann@draeger.com")));
         certGen.addExtension(Extension.extendedKeyUsage, true, extendedKeyUsage);
 
         final var certificateHolder = certGen.build(sigGen);
@@ -259,8 +245,11 @@ public class SslMetadata extends AbstractIdleService implements Service {
          * @param trustStore         truststore
          * @param trustStorePassword truststore password
          */
-        public KeySet(final KeyStore keyStore, final String keyStorePassword, final KeyStore trustStore,
-                      final String trustStorePassword) {
+        public KeySet(
+                final KeyStore keyStore,
+                final String keyStorePassword,
+                final KeyStore trustStore,
+                final String trustStorePassword) {
             this.keyStore = keyStore;
             this.keyStorePassword = keyStorePassword;
             this.trustStore = trustStore;
@@ -289,9 +278,8 @@ public class SslMetadata extends AbstractIdleService implements Service {
         private final KeySet keySet;
         private final byte[] finalTrustStoreBytes;
 
-        private MyCryptoSettings(final byte[] finalKeyStoreBytes,
-                                final KeySet keySet,
-                                final byte[] finalTrustStoreBytes) {
+        private MyCryptoSettings(
+                final byte[] finalKeyStoreBytes, final KeySet keySet, final byte[] finalTrustStoreBytes) {
             this.finalKeyStoreBytes = finalKeyStoreBytes;
             this.keySet = keySet;
             this.finalTrustStoreBytes = finalTrustStoreBytes;

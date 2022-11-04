@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.messages.mapping;
 
 import com.draeger.medical.t2iapi.ResponseTypes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import javax.persistence.metamodel.ListAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.StaticMetamodel;
@@ -19,8 +18,8 @@ import javax.persistence.metamodel.StaticMetamodel;
  */
 // CHECKSTYLE.OFF: TypeName
 @SuppressFBWarnings(
-    value = {"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"},
-    justification = "This is a commonly made design choice for persistence meta models.")
+        value = {"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"},
+        justification = "This is a commonly made design choice for persistence meta models.")
 @StaticMetamodel(ManipulationData.class)
 public final class ManipulationData_ {
     // CHECKSTYLE.OFF: VisibilityModifier
@@ -33,7 +32,6 @@ public final class ManipulationData_ {
     public static volatile SingularAttribute<ManipulationData, String> uuid;
     // CHECKSTYLE.ON: VisibilityModifier
 
-    private ManipulationData_() {
-    }
+    private ManipulationData_() {}
 }
 // CHECKSTYLE.ON: TypeName

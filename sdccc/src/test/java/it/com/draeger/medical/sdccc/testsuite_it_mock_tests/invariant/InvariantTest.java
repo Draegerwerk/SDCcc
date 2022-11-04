@@ -7,15 +7,15 @@
 
 package it.com.draeger.medical.sdccc.testsuite_it_mock_tests.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Mock invariant tests.
@@ -37,5 +37,4 @@ public class InvariantTest extends InjectorTestBase {
     void testIsFailing() {
         fail("Intended failure");
     }
-
 }

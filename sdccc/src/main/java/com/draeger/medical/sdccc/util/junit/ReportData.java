@@ -7,14 +7,12 @@
 
 package com.draeger.medical.sdccc.util.junit;
 
+import java.time.Duration;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.launcher.TestIdentifier;
-
-import javax.annotation.Nullable;
-import java.time.Duration;
-import java.util.List;
-
 
 /**
  * Container used for JUnit-like report format.
@@ -28,5 +26,4 @@ public record ReportData(
         TestIdentifier testIdentifier,
         @Nullable Duration testDuration,
         TestExecutionResult testExecutionResult,
-        List<ReportEntry> reportEntries) {
-}
+        List<ReportEntry> reportEntries) {}

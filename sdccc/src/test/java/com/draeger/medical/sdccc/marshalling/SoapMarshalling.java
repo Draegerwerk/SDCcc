@@ -15,17 +15,6 @@ import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.xml.sax.SAXException;
-
-import javax.inject.Named;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +22,16 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import javax.inject.Named;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.xml.sax.SAXException;
 
 /**
  * Utility for marshalling classes to XML.
@@ -58,17 +57,15 @@ public class SoapMarshalling {
     private static final String PKG_PM = BICEPS_BASE + "participant";
     private static final String PKG_MSG = BICEPS_BASE + "message";
 
-    private static final String SCHEMA_SOAP = "xml.xsd:wsdl-1.1-schema.xsd"
-            + ":soap-1.2-schema.xsd";
+    private static final String SCHEMA_SOAP = "xml.xsd:wsdl-1.1-schema.xsd" + ":soap-1.2-schema.xsd";
     private static final String SCHEMA_WSA = "ws-addressing-1.0-schema.xsd";
     private static final String SCHEMA_WSD = "ws-discovery-1.1-schema.xsd";
     private static final String SCHEMA_WSE = "ws-eventing-schema.xsd";
     private static final String SCHEMA_MEX = "ws-metadataexchange-schema.xsd";
     private static final String SCHEMA_WST = "ws-transfer-schema.xsd";
     private static final String SCHEMA_DPWS = "wsdd-dpws-1.1-schema.xsd";
-    private static final String SCHEMA_BICEPS = "ExtensionPoint.xsd"
-            + ":BICEPS_ParticipantModel.xsd"
-            + ":BICEPS_MessageModel.xsd";
+    private static final String SCHEMA_BICEPS =
+            "ExtensionPoint.xsd" + ":BICEPS_ParticipantModel.xsd" + ":BICEPS_MessageModel.xsd";
 
     private static final String PKG_DELIM = ":";
     private static final String SCHEMA_DELIM = ":";
@@ -87,11 +84,8 @@ public class SoapMarshalling {
     @Inject
     public SoapMarshalling(@Named(MarshallingConfig.VALIDATE_SOAP_MESSAGES) final boolean validateMessages)
             throws ParserConfigurationException, SAXException, IOException {
-        final var packageList = List.of(
-                PKG_EXT, PKG_PM, PKG_MSG, PKG_SOAP,
-                PKG_DPWS, PKG_WSA, PKG_WSD, PKG_WSE,
-                PKG_WST, PKG_MEX
-        );
+        final var packageList =
+                List.of(PKG_EXT, PKG_PM, PKG_MSG, PKG_SOAP, PKG_DPWS, PKG_WSA, PKG_WSD, PKG_WSE, PKG_WST, PKG_MEX);
         final String contextPackages = String.join(PKG_DELIM, packageList);
 
         try {
@@ -103,9 +97,14 @@ public class SoapMarshalling {
 
         if (validateMessages) {
             final var schemaList = List.of(
-                    SCHEMA_SOAP, SCHEMA_WSA, SCHEMA_WSD, SCHEMA_WSE, SCHEMA_MEX,
-                    SCHEMA_WST, SCHEMA_DPWS, SCHEMA_BICEPS
-            );
+                    SCHEMA_SOAP,
+                    SCHEMA_WSA,
+                    SCHEMA_WSD,
+                    SCHEMA_WSE,
+                    SCHEMA_MEX,
+                    SCHEMA_WST,
+                    SCHEMA_DPWS,
+                    SCHEMA_BICEPS);
             final var schemas = String.join(SCHEMA_DELIM, schemaList);
 
             schema = generateTopLevelSchema(schemas);
@@ -158,7 +157,8 @@ public class SoapMarshalling {
             final var schemaUrl = classLoader.getResource(path);
             if (schemaUrl == null) {
                 LOG.error("Could not find schema for resource: {}", path);
-                throw new IOException(String.format("Could not find schema for resource while loading in %s: %s",
+                throw new IOException(String.format(
+                        "Could not find schema for resource while loading in %s: %s",
                         SoapMarshalling.class.getSimpleName(), path));
             }
             final var targetNamespace = resolveTargetNamespace(schemaUrl);
@@ -167,8 +167,8 @@ public class SoapMarshalling {
         }
         stringBuilder.append(topLevelSchemaEnd);
         final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        return schemaFactory.newSchema(new StreamSource(new ByteArrayInputStream(stringBuilder.toString()
-                .getBytes(StandardCharsets.UTF_8))));
+        return schemaFactory.newSchema(new StreamSource(
+                new ByteArrayInputStream(stringBuilder.toString().getBytes(StandardCharsets.UTF_8))));
     }
 
     private String resolveTargetNamespace(final URL url)

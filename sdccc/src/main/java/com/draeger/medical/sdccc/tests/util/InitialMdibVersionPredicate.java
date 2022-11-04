@@ -7,10 +7,9 @@
 
 package com.draeger.medical.sdccc.tests.util;
 
-import org.somda.sdc.biceps.model.message.AbstractReport;
-
 import java.math.BigInteger;
 import java.util.function.Predicate;
+import org.somda.sdc.biceps.model.message.AbstractReport;
 
 /**
  * Predicate to filter reports based on the provided initial mdib version.

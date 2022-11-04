@@ -8,20 +8,19 @@
 package com.draeger.medical.sdccc.guice;
 
 import com.draeger.medical.sdccc.util.Constants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
-import org.tomlj.Toml;
-import org.tomlj.TomlArray;
-import org.tomlj.TomlParseResult;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
+import org.tomlj.Toml;
+import org.tomlj.TomlArray;
+import org.tomlj.TomlParseResult;
 
 /**
  * Configuration module which maps a .toml file into an {@linkplain AbstractConfigurationModule}.
@@ -56,8 +55,6 @@ public class TomlConfigParser {
                 }
             }
         });
-
-
     }
 
     /**
@@ -84,7 +81,7 @@ public class TomlConfigParser {
     }
 
     private void parseKey(final AbstractConfigurationModule module, final TomlParseResult result, final String key)
-        throws IOException {
+            throws IOException {
         // verify key has value
         if (result.get(key) == null) {
             LOG.warn("Empty key {}", key);
@@ -122,7 +119,7 @@ public class TomlConfigParser {
     }
 
     private void parseArray(final AbstractConfigurationModule module, final TomlArray value, final String key)
-        throws IOException {
+            throws IOException {
         if (value.containsStrings()) {
             LOG.debug("Binding String array {} to {}", key, value);
             final var resultArray = new String[value.size()];
@@ -159,8 +156,11 @@ public class TomlConfigParser {
      * @param value        the value to bind
      * @param <T>          the type of the value
      */
-    private <T> void bind(final AbstractConfigurationModule configModule, final String name, final Class<T> dataType,
-                          @Nullable final T value) {
+    private <T> void bind(
+            final AbstractConfigurationModule configModule,
+            final String name,
+            final Class<T> dataType,
+            @Nullable final T value) {
         configModule.bind(name, dataType, value);
     }
 }

@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.DescriptionModificationReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationType;
 import com.draeger.medical.biceps.model.participant.ChannelDescriptor;
@@ -28,6 +33,13 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
@@ -37,19 +49,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantParticipantModelMappingTest}.
@@ -85,14 +84,12 @@ public class InvariantParticipantModelMappingTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
         InjectorTestBase.setInjector(injector);
 
         riInjector = TestClientUtil.createClientInjector();
@@ -138,8 +135,7 @@ public class InvariantParticipantModelMappingTestTest {
         final var initial = buildMdib(true, null, BigInteger.ZERO);
 
         final var firstUpdate = buildEpisodicContextReport(
-            SEQUENCE_ID, BigInteger.ONE, PATIENT_CONTEXT_DESCRIPTOR_HANDLE, patHandle1, null
-        );
+                SEQUENCE_ID, BigInteger.ONE, PATIENT_CONTEXT_DESCRIPTOR_HANDLE, patHandle1, null);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -158,26 +154,29 @@ public class InvariantParticipantModelMappingTestTest {
         final var initial = buildMdib(true, null, BigInteger.ZERO);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildVmd(VMD_HANDLE, BigInteger.ONE),
-            buildChannel(CHANNEL_HANDLE, BigInteger.ONE), null
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildVmd(VMD_HANDLE, BigInteger.ONE),
+                buildChannel(CHANNEL_HANDLE, BigInteger.ONE),
+                null);
         final var secondUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.TWO,
-            buildMds(MDS_HANDLE, BigInteger.TWO),
-            buildVmd(VMD_HANDLE, BigInteger.TWO),
-            buildChannel(CHANNEL_HANDLE, BigInteger.ONE),
-            null, true, false
-        );
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildMds(MDS_HANDLE, BigInteger.TWO),
+                buildVmd(VMD_HANDLE, BigInteger.TWO),
+                buildChannel(CHANNEL_HANDLE, BigInteger.ONE),
+                null,
+                true,
+                false);
         final var three = BigInteger.valueOf(3);
         final var thirdUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, three,
-            buildMds(MDS_HANDLE, three),
-            buildVmd(VMD_HANDLE, three),
-            buildChannel(CHANNEL_HANDLE, BigInteger.TWO),
-            null
-        );
+                SEQUENCE_ID,
+                three,
+                buildMds(MDS_HANDLE, three),
+                buildVmd(VMD_HANDLE, three),
+                buildChannel(CHANNEL_HANDLE, BigInteger.TWO),
+                null);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -197,12 +196,14 @@ public class InvariantParticipantModelMappingTestTest {
         final var initial = buildMdib(true, null, BigInteger.ZERO);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildVmd(VMD_HANDLE, BigInteger.ONE),
-            buildChannel(CHANNEL_HANDLE, BigInteger.ONE),
-            null, false, true
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildVmd(VMD_HANDLE, BigInteger.ONE),
+                buildChannel(CHANNEL_HANDLE, BigInteger.ONE),
+                null,
+                false,
+                true);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -220,12 +221,12 @@ public class InvariantParticipantModelMappingTestTest {
         final var initial = buildMdib(true, null, BigInteger.ZERO);
 
         final var firstUpdate = buildDescriptionModificationReport(
-            SEQUENCE_ID, BigInteger.ONE,
-            buildMds(MDS_HANDLE, BigInteger.ONE),
-            buildVmd(VMD_HANDLE, BigInteger.ONE),
-            buildBrokenDescriptorHandleChannel(CHANNEL_HANDLE, NONEXISTENT_CHANNEL_HANDLE, BigInteger.ONE),
-            null
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildMds(MDS_HANDLE, BigInteger.ONE),
+                buildVmd(VMD_HANDLE, BigInteger.ONE),
+                buildBrokenDescriptorHandleChannel(CHANNEL_HANDLE, NONEXISTENT_CHANNEL_HANDLE, BigInteger.ONE),
+                null);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -235,9 +236,9 @@ public class InvariantParticipantModelMappingTestTest {
     }
 
     Envelope buildMdib(
-        final boolean includeChannel,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion) {
+            final boolean includeChannel,
+            final @Nullable BigInteger vmdVersion,
+            final @Nullable BigInteger mdsVersion) {
         return buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, includeChannel, vmdVersion, mdsVersion);
     }
 
@@ -245,10 +246,10 @@ public class InvariantParticipantModelMappingTestTest {
      * build mdib with configurable handles
      */
     Envelope buildMdib(
-        final String sequenceId,
-        final boolean includeChannel,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion) {
+            final String sequenceId,
+            final boolean includeChannel,
+            final @Nullable BigInteger vmdVersion,
+            final @Nullable BigInteger mdsVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -271,32 +272,30 @@ public class InvariantParticipantModelMappingTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
-    Envelope buildDescriptionModificationReport(final String sequenceId,
-                                                final @Nullable BigInteger mdibVersion,
-                                                final @Nullable Pair<MdsDescriptor, MdsState> mds,
-                                                final @Nullable Pair<VmdDescriptor, VmdState> vmd,
-                                                final @Nullable Pair<ChannelDescriptor, ChannelState> channel,
-                                                final @Nullable DescriptionModificationType modificationType) {
+    Envelope buildDescriptionModificationReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final @Nullable Pair<MdsDescriptor, MdsState> mds,
+            final @Nullable Pair<VmdDescriptor, VmdState> vmd,
+            final @Nullable Pair<ChannelDescriptor, ChannelState> channel,
+            final @Nullable DescriptionModificationType modificationType) {
         return buildDescriptionModificationReport(
-            sequenceId, mdibVersion, mds, vmd,
-            channel, modificationType, false, false
-        );
+                sequenceId, mdibVersion, mds, vmd, channel, modificationType, false, false);
     }
 
     // CHECKSTYLE.OFF: ParameterNumber
-    Envelope buildDescriptionModificationReport(final String sequenceId,
-                                                final @Nullable BigInteger mdibVersion,
-                                                final @Nullable Pair<MdsDescriptor, MdsState> mds,
-                                                final @Nullable Pair<VmdDescriptor, VmdState> vmd,
-                                                final @Nullable Pair<ChannelDescriptor, ChannelState> channel,
-                                                final @Nullable DescriptionModificationType modificationType,
-                                                final boolean deleteChannel,
-                                                final boolean brokenChannel) {
+    Envelope buildDescriptionModificationReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final @Nullable Pair<MdsDescriptor, MdsState> mds,
+            final @Nullable Pair<VmdDescriptor, VmdState> vmd,
+            final @Nullable Pair<ChannelDescriptor, ChannelState> channel,
+            final @Nullable DescriptionModificationType modificationType,
+            final boolean deleteChannel,
+            final boolean brokenChannel) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(Objects.requireNonNullElse(modificationType, DescriptionModificationType.UPT));
 
@@ -304,7 +303,7 @@ public class InvariantParticipantModelMappingTestTest {
 
         if (channel != null && brokenChannel) {
             final var channelBrokenNameScheme = buildBrokenNameSchemaChannel(
-                CHANNEL_HANDLE, channel.getLeft().getDescriptorVersion());
+                    CHANNEL_HANDLE, channel.getLeft().getDescriptorVersion());
             if (deleteChannel) {
                 deletePart = messageBuilder.buildDescriptionModificationReportReportPart();
                 deletePart.setModificationType(DescriptionModificationType.DEL);
@@ -346,15 +345,12 @@ public class InvariantParticipantModelMappingTestTest {
         }
         final var report = messageBuilder.buildDescriptionModificationReport(sequenceId, parts);
         report.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
     // CHECKSTYLE.ON: ParameterNumber
 
-    Pair<VmdDescriptor, ChannelState> buildBrokenNameSchemaChannel(final String channelHandel,
-                                                                   final BigInteger channelVersion) {
+    Pair<VmdDescriptor, ChannelState> buildBrokenNameSchemaChannel(
+            final String channelHandel, final BigInteger channelVersion) {
         final var vmdDescriptor = mdibBuilder.buildVmdDescriptor(channelHandel);
         final var channelState = mdibBuilder.buildChannelState(channelHandel);
         final Pair<VmdDescriptor, ChannelState> channel = new ImmutablePair<>(vmdDescriptor, channelState);
@@ -364,7 +360,7 @@ public class InvariantParticipantModelMappingTestTest {
     }
 
     Pair<ChannelDescriptor, ChannelState> buildBrokenDescriptorHandleChannel(
-        final String channelDescriptorHandel, final String channelStateHandle, final BigInteger channelVersion) {
+            final String channelDescriptorHandel, final String channelStateHandle, final BigInteger channelVersion) {
         final var channelDescriptor = mdibBuilder.buildChannelDescriptor(channelDescriptorHandel);
         final var channelState = mdibBuilder.buildChannelState(channelStateHandle);
         final Pair<ChannelDescriptor, ChannelState> channel = new ImmutablePair<>(channelDescriptor, channelState);
@@ -395,12 +391,11 @@ public class InvariantParticipantModelMappingTestTest {
     }
 
     Envelope buildEpisodicContextReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final String descriptorHandle,
-        final String stateHandle,
-        final @Nullable BigInteger stateVersion
-    ) {
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final String descriptorHandle,
+            final String stateHandle,
+            final @Nullable BigInteger stateVersion) {
         final var report = messageBuilder.buildEpisodicContextReport(sequenceId);
 
         final var patientContextState = mdibBuilder.buildPatientContextState(descriptorHandle, stateHandle);
@@ -411,9 +406,6 @@ public class InvariantParticipantModelMappingTestTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 }

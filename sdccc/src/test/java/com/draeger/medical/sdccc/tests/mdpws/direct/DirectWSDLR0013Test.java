@@ -7,6 +7,14 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,6 +23,12 @@ import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import org.apache.http.client.HttpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,21 +47,6 @@ import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 import org.somda.sdc.glue.provider.SdcDevice;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for MDPWS:R0013.
@@ -74,29 +73,25 @@ public class DirectWSDLR0013Test {
         mockClientUtil = mock(HttpClientUtil.class);
         mockWsdlRetriever = mock(WsdlRetriever.class);
 
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(testClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         final var mockFactory = mock(ApacheTransportBindingFactoryImpl.class);
         when(mockFactory.getClient()).thenReturn(mockHttpClient);
         // setup the injector used by sdcri
-        final var clientInjector = TestClientUtil.createClientInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(ApacheTransportBindingFactoryImpl.class).toInstance(mockFactory);
-                        bind(HttpClientUtil.class).toInstance(mockClientUtil);
-                        bind(WsdlRetriever.class).toInstance(mockWsdlRetriever);
-                    }
-                }
-        );
+        final var clientInjector = TestClientUtil.createClientInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(ApacheTransportBindingFactoryImpl.class).toInstance(mockFactory);
+                bind(HttpClientUtil.class).toInstance(mockClientUtil);
+                bind(WsdlRetriever.class).toInstance(mockWsdlRetriever);
+            }
+        });
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         soapUtil = testClient.getInjector().getInstance(SoapUtil.class);
@@ -107,7 +102,6 @@ public class DirectWSDLR0013Test {
 
         jaxbMarshalling.startAsync().awaitRunning(MAX_WAIT);
         wsdlMarshalling.startAsync().awaitRunning(MAX_WAIT);
-
 
         testClass = new DirectWSDLTest();
         testClass.setUp();
@@ -125,8 +119,9 @@ public class DirectWSDLR0013Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No null check performed.")
+    @SuppressFBWarnings(
+            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
+            justification = "No null check performed.")
     public void testRequirementR0013Good() throws Exception {
         final var mockFault = mock(SoapFaultException.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockFault.getFault().getCode().getValue())
@@ -135,18 +130,17 @@ public class DirectWSDLR0013Test {
                 .thenReturn(SoapConstants.SENDER);
 
         final var getMdibResponse = soapUtil.createMessage(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            messageFactory.createGetMdibResponse()
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
+                messageFactory.createGetMdibResponse());
 
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(mockGetService.sendRequestResponse(any()))
-            .thenReturn(getMdibResponse) // first request is valid, give valid response
-            .thenThrow(mockFault);
+                .thenReturn(getMdibResponse) // first request is valid, give valid response
+                .thenThrow(mockFault);
         final var getServiceName = "get";
         when(testClient.getHostingServiceProxy().getHostedServices())
-            .thenReturn(Map.of(getServiceName, mockGetService));
+                .thenReturn(Map.of(getServiceName, mockGetService));
 
         // load SDCri wsdl for GetService
         final var wsdlPath = "wsdl/IEEE11073-20701-HighPriority-Services.wsdl";
@@ -155,9 +149,7 @@ public class DirectWSDLR0013Test {
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
-        when(mockWsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of(
-            getServiceName, List.of(wsdl)
-        ));
+        when(mockWsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of(getServiceName, List.of(wsdl)));
 
         when(mockClientUtil.postMessage(any(), any(), any())).thenThrow(mockFault);
 
@@ -178,8 +170,7 @@ public class DirectWSDLR0013Test {
     public void testRequirementR0013AllBadNoFault() throws Exception {
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
         when(mockClientUtil.postMessage(any(), any(), any())).thenReturn(mock(SoapMessage.class));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013All);
@@ -198,8 +189,7 @@ public class DirectWSDLR0013Test {
 
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
         when(mockClientUtil.postMessage(any(), any(), any())).thenThrow(mockFault);
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013All);
@@ -216,8 +206,7 @@ public class DirectWSDLR0013Test {
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(mockGetService.sendRequestResponse(any())).thenReturn(mock(SoapMessage.class));
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013MustUnderstandSender);
         assertTrue(error.getMessage().contains(DirectWSDLTest.NO_FAULT_TEMPLATE));
@@ -236,8 +225,7 @@ public class DirectWSDLR0013Test {
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(mockGetService.sendRequestResponse(any())).thenThrow(mockFault);
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013MustUnderstandSender);
         assertTrue(error.getMessage().contains(DirectWSDLTest.WRONG_FAULT_TEMPLATE));
@@ -253,8 +241,7 @@ public class DirectWSDLR0013Test {
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(mockGetService.sendRequestResponse(any())).thenReturn(mock(SoapMessage.class));
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013Sender);
         assertTrue(error.getMessage().contains(DirectWSDLTest.NO_FAULT_TEMPLATE));
@@ -273,11 +260,9 @@ public class DirectWSDLR0013Test {
         final var mockGetService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockGetService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(mockGetService.sendRequestResponse(any())).thenThrow(mockFault);
-        when(testClient.getHostingServiceProxy().getHostedServices())
-                .thenReturn(Map.of("get", mockGetService));
+        when(testClient.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("get", mockGetService));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0013Sender);
         assertTrue(error.getMessage().contains(DirectWSDLTest.WRONG_FAULT_TEMPLATE));
     }
-
 }

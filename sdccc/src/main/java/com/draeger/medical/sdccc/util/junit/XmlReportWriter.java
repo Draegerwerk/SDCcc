@@ -12,17 +12,6 @@ import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtil;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.TestIdentifier;
-
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
@@ -31,6 +20,16 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.TestIdentifier;
 
 /**
  * Writer which produces a minimal JUnit compatible output XML.
@@ -55,17 +54,17 @@ public class XmlReportWriter {
      * @param testRunObserver observer which contains information on validity of test run
      */
     @AssistedInject
-    XmlReportWriter(@Assisted final List<ReportData> reportData,
-                    final ClassUtil classUtil,
-                    final TestRunObserver testRunObserver) {
+    XmlReportWriter(
+            @Assisted final List<ReportData> reportData,
+            final ClassUtil classUtil,
+            final TestRunObserver testRunObserver) {
         this.reportData = reportData;
         this.testRunObserver = testRunObserver;
         this.classUtil = classUtil;
     }
 
-
     protected void writeXmlReport(final Path reportsDir, final String xmlReportName, final Duration duration)
-        throws XMLStreamException, IOException {
+            throws XMLStreamException, IOException {
 
         final Path xmlFile = reportsDir.resolve("TEST-" + xmlReportName + ".xml");
 
@@ -76,8 +75,7 @@ public class XmlReportWriter {
         }
     }
 
-    protected void writeXmlReport(final XMLStreamWriter xmlWriter, final Duration duration)
-        throws XMLStreamException {
+    protected void writeXmlReport(final XMLStreamWriter xmlWriter, final Duration duration) throws XMLStreamException {
 
         xmlWriter.writeStartDocument("UTF-8", "1.0");
         writeNewLine(xmlWriter);
@@ -93,8 +91,7 @@ public class XmlReportWriter {
         xmlWriter.writeEndDocument();
     }
 
-    private void writeTestSuite(final XMLStreamWriter xmlWriter, final Duration duration)
-        throws XMLStreamException {
+    private void writeTestSuite(final XMLStreamWriter xmlWriter, final Duration duration) throws XMLStreamException {
 
         xmlWriter.writeStartElement("testsuite");
         xmlWriter.writeAttribute("name", "SDCcc Test Run");
@@ -112,19 +109,19 @@ public class XmlReportWriter {
 
     private long countFailures() {
         return reportData.stream()
-            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
-            .filter(XmlReportWriter::isFailure)
-            .count();
+                .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
+                .filter(XmlReportWriter::isFailure)
+                .count();
     }
 
     private long countErrors() {
         return reportData.stream()
-            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
-            .filter(it -> !isFailure(it))
-            .count()
-            + reportData.stream()
-            .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.ABORTED)
-            .count();
+                        .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED)
+                        .filter(it -> !isFailure(it))
+                        .count()
+                + reportData.stream()
+                        .filter(it -> it.testExecutionResult().getStatus() == TestExecutionResult.Status.ABORTED)
+                        .count();
     }
 
     private static void writeNewLine(final XMLStreamWriter xmlWriter) throws XMLStreamException {
@@ -133,12 +130,11 @@ public class XmlReportWriter {
 
     private static boolean isFailure(final ReportData reportDatum) {
         return reportDatum.testExecutionResult().getStatus() == TestExecutionResult.Status.FAILED
-            && reportDatum.testExecutionResult().getThrowable().isPresent()
-            && reportDatum.testExecutionResult().getThrowable().orElseThrow() instanceof AssertionError;
+                && reportDatum.testExecutionResult().getThrowable().isPresent()
+                && reportDatum.testExecutionResult().getThrowable().orElseThrow() instanceof AssertionError;
     }
 
-    private void writeProperties(final XMLStreamWriter xmlWriter)
-        throws XMLStreamException {
+    private void writeProperties(final XMLStreamWriter xmlWriter) throws XMLStreamException {
 
         xmlWriter.writeStartElement("properties");
 
@@ -153,9 +149,7 @@ public class XmlReportWriter {
         writeNewLine(xmlWriter);
     }
 
-
-    private void writeTestResults(final XMLStreamWriter xmlWriter)
-        throws XMLStreamException {
+    private void writeTestResults(final XMLStreamWriter xmlWriter) throws XMLStreamException {
 
         for (final ReportData reportDatum : this.reportData) {
             xmlWriter.writeStartElement("testcase");
@@ -172,10 +166,9 @@ public class XmlReportWriter {
             if (!reportDatum.reportEntries().isEmpty()) {
                 xmlWriter.writeStartElement("system-out");
 
-                final var transformedData = reportDatum.reportEntries()
-                    .stream()
-                    .map(ReportEntry::toString)
-                    .collect(Collectors.joining("\n"));
+                final var transformedData = reportDatum.reportEntries().stream()
+                        .map(ReportEntry::toString)
+                        .collect(Collectors.joining("\n"));
 
                 xmlWriter.writeCData(transformedData);
                 xmlWriter.writeEndElement();
@@ -213,8 +206,7 @@ public class XmlReportWriter {
      * @param xmlWriter to write the test case into
      * @throws XMLStreamException on xml writing errors
      */
-    private void writeInvalidTestRunTestCase(final XMLStreamWriter xmlWriter)
-        throws XMLStreamException {
+    private void writeInvalidTestRunTestCase(final XMLStreamWriter xmlWriter) throws XMLStreamException {
         if (testRunObserver.isInvalid()) {
             xmlWriter.writeStartElement("testcase");
             xmlWriter.writeAttribute("name", INVALID_TEST_RUN_TEST_NAME);
@@ -226,9 +218,8 @@ public class XmlReportWriter {
             xmlWriter.writeAttribute("message", "SDCcc test run was marked as invalid");
             xmlWriter.writeAttribute("type", "InvalidTestRun");
             xmlWriter.writeCData(String.format(
-                "SDCcc test run was marked as invalid for the following reasons:%s",
-                String.join("\n- ", testRunObserver.getReasons())
-            ));
+                    "SDCcc test run was marked as invalid for the following reasons:%s",
+                    String.join("\n- ", testRunObserver.getReasons())));
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
@@ -258,7 +249,7 @@ public class XmlReportWriter {
     }
 
     private static void writeFailureOrError(final XMLStreamWriter xmlWriter, final ReportData reportDatum)
-        throws XMLStreamException {
+            throws XMLStreamException {
         if (reportDatum.testExecutionResult().getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
             return;
         }
@@ -290,8 +281,7 @@ public class XmlReportWriter {
             }
         }
         throw new XMLStreamException(
-            String.format("Could not determine class name for %s", testIdentifier.getUniqueId())
-        );
+                String.format("Could not determine class name for %s", testIdentifier.getUniqueId()));
     }
 
     private String getTestDescription(final ReportData reportDatum) throws XMLStreamException {
@@ -299,16 +289,12 @@ public class XmlReportWriter {
     }
 
     private String getSDCccTestIdentifier(final ReportData reportDatum) throws XMLStreamException {
-        return getAnnotationValue(
-            com.draeger.medical.sdccc.tests.annotations.TestIdentifier.class,
-            reportDatum
-        ).value();
+        return getAnnotationValue(com.draeger.medical.sdccc.tests.annotations.TestIdentifier.class, reportDatum)
+                .value();
     }
 
-    private <T extends Annotation> T getAnnotationValue(
-        final Class<T> annotationClass,
-        final ReportData reportDatum
-    ) throws XMLStreamException {
+    private <T extends Annotation> T getAnnotationValue(final Class<T> annotationClass, final ReportData reportDatum)
+            throws XMLStreamException {
         final var testIdentifier = reportDatum.testIdentifier();
         if (testIdentifier.getSource().isPresent()) {
             final var src = testIdentifier.getSource().orElseThrow();
@@ -316,16 +302,13 @@ public class XmlReportWriter {
                 return getAnnotationFromMethodSource(annotationClass, (MethodSource) src, testIdentifier);
             }
         }
-        throw new XMLStreamException(String.format(
-            MISSING_ANNOTATION_TEXT, testIdentifier.getUniqueId(), annotationClass.getSimpleName()
-        ));
+        throw new XMLStreamException(
+                String.format(MISSING_ANNOTATION_TEXT, testIdentifier.getUniqueId(), annotationClass.getSimpleName()));
     }
 
     private <T extends Annotation> T getAnnotationFromMethodSource(
-        final Class<T> annotation,
-        final MethodSource src,
-        final TestIdentifier testIdentifier
-    ) throws XMLStreamException {
+            final Class<T> annotation, final MethodSource src, final TestIdentifier testIdentifier)
+            throws XMLStreamException {
         final var className = src.getClassName();
         final var methodName = src.getMethodName();
         try {
@@ -336,15 +319,13 @@ public class XmlReportWriter {
             }
         } catch (final ClassNotFoundException | NoSuchMethodException e) {
             LOG.error(
-                "Error while retrieving {} annotation content from method {}",
-                annotation.getSimpleName(),
-                methodName, e
-            );
+                    "Error while retrieving {} annotation content from method {}",
+                    annotation.getSimpleName(),
+                    methodName,
+                    e);
             throw new XMLStreamException(e);
         }
-        throw new XMLStreamException(String.format(
-            MISSING_ANNOTATION_TEXT,
-            testIdentifier.getUniqueId(), annotation.getSimpleName()
-        ));
+        throw new XMLStreamException(
+                String.format(MISSING_ANNOTATION_TEXT, testIdentifier.getUniqueId(), annotation.getSimpleName()));
     }
 }

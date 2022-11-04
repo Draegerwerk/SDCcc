@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.dpws.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsaddressing.model.ObjectFactory;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
@@ -21,18 +25,13 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import java.io.IOException;
-import java.time.Duration;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the DPWS {@linkplain InvariantMessagingTest}.
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
 public class InvariantMessagingTestTest {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
     private static final String INVALID_ADDRESSING_HEADER_REASON =
-        "A header representing a Message Addressing Property is not valid and the message cannot be processed";
+            "A header representing a Message Addressing Property is not valid and the message cannot be processed";
     private static final String UNSPECIFIED_MESSAGE = "http://www.w3.org/2005/08/addressing/unspecified";
     private static MessageStorageUtil messageStorageUtil;
     private static MessageBuilder messageBuilder;
@@ -65,20 +64,17 @@ public class InvariantMessagingTestTest {
         when(mockClient.isClientRunning()).thenReturn(true);
         testClient = mockClient;
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
         // setup the injector used by sdcri
-        final var clientInjector = TestClientUtil.createClientInjector(
-        );
+        final var clientInjector = TestClientUtil.createClientInjector();
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         wsaFactory = clientInjector.getInstance(com.draeger.medical.dpws.soap.wsaddressing.model.ObjectFactory.class);
@@ -169,14 +165,12 @@ public class InvariantMessagingTestTest {
         final var body = messageBuilder.buildGetMdibResponse("someSequence");
         body.setMdib(mdib);
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            body
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), body);
     }
 
     Envelope buildGoodResponseWithRelatesTo() {
         final var message = messageBuilder.createBasicSoapMessage(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB));
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB));
         final var relatesTo = messageBuilder.createRelatesToType(UNSPECIFIED_MESSAGE);
         relatesTo.setRelationshipType("wsa:Reply");
 
@@ -187,8 +181,9 @@ public class InvariantMessagingTestTest {
 
     Envelope buildFaultResponseWithRelatesTo() {
         final var faultMsg = buildFaultResponseWithoutRelatesTo();
-        faultMsg.getHeader().getAny().add(
-            wsaFactory.createRelatesTo(messageBuilder.createRelatesToType(UNSPECIFIED_MESSAGE)));
+        faultMsg.getHeader()
+                .getAny()
+                .add(wsaFactory.createRelatesTo(messageBuilder.createRelatesToType(UNSPECIFIED_MESSAGE)));
         return faultMsg;
     }
 
@@ -196,4 +191,3 @@ public class InvariantMessagingTestTest {
         return messageBuilder.createFaultResponse(INVALID_ADDRESSING_HEADER_REASON, "");
     }
 }
-

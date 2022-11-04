@@ -7,6 +7,17 @@
 
 package it.com.draeger.medical.sdccc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.TestSuite;
 import com.draeger.medical.sdccc.configuration.DefaultEnabledTestConfig;
 import com.draeger.medical.sdccc.configuration.DefaultTestSuiteConfig;
@@ -34,6 +45,19 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.com.draeger.medical.sdccc.test_util.SslMetadata;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import javax.net.ssl.HttpsURLConnection;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -54,32 +78,6 @@ import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
-
-
-import javax.net.ssl.HttpsURLConnection;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * SDCcc system test.
@@ -106,26 +104,21 @@ public class TestSuiteIT {
     private TestProvider testProvider;
 
     private static Injector createInjector(final AbstractModule... override) {
-        return Guice.createInjector(
-            Modules.override(
-                new DefaultTestSuiteModule(),
-                new DefaultTestSuiteConfig(),
-                new DefaultEnabledTestConfig()
-            ).with(override)
-        );
+        return Guice.createInjector(Modules.override(
+                        new DefaultTestSuiteModule(), new DefaultTestSuiteConfig(), new DefaultEnabledTestConfig())
+                .with(override));
     }
 
-    private static Injector createTestSuiteITInjector(final CryptoSettings cryptoSettings,
-                                                      final Boolean failingTests,
-                                                      final AbstractModule... override)
-        throws IOException {
+    private static Injector createTestSuiteITInjector(
+            final CryptoSettings cryptoSettings, final Boolean failingTests, final AbstractModule... override)
+            throws IOException {
         final var tempDir = Files.createTempDirectory("SDCccIT_TestSuiteIT");
         tempDir.toFile().deleteOnExit();
 
         LOG.info("Creating injector for epr {}", DUT_EPR);
 
         return createInjector(
-            ArrayUtils.addAll(override, new MockConfiguration(cryptoSettings, tempDir, failingTests)));
+                ArrayUtils.addAll(override, new MockConfiguration(cryptoSettings, tempDir, failingTests)));
     }
 
     private static String getLoopbackName() {
@@ -139,9 +132,8 @@ public class TestSuiteIT {
     }
 
     @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Known bug when Findbugs encounters a try-with-resources-block."
-    )
+            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
+            justification = "Known bug when Findbugs encounters a try-with-resources-block.")
     private TestProvider getProvider() throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
         assert providerCert != null;
@@ -157,8 +149,8 @@ public class TestSuiteIT {
         }
     }
 
-    private Injector getConsumerInjector(final boolean failingTests,
-                                         final AbstractModule... override) throws IOException {
+    private Injector getConsumerInjector(final boolean failingTests, final AbstractModule... override)
+            throws IOException {
 
         final var consumerCert = SSL_METADATA.getClientKeySet();
         assert consumerCert != null;
@@ -208,9 +200,8 @@ public class TestSuiteIT {
         // no invalidation is allowed in the test run
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
-            testRunObserver.isInvalid(),
-            "TestRunObserver had unexpected failures: " + testRunObserver.getReasons()
-        );
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
     }
 
     /**
@@ -285,20 +276,17 @@ public class TestSuiteIT {
         final var subManAddress = subMan.getSubscriptionManagerEpr().getAddress();
 
         // unsubscribe from outside the client, next renew should mark test run invalid
-        final var transportBindingFactory =
-                client.getInjector().getInstance(TransportBindingFactory.class);
+        final var transportBindingFactory = client.getInjector().getInstance(TransportBindingFactory.class);
         final CommunicationLog communicationLog =
                 client.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog();
-        final var transportBinding = transportBindingFactory.createHttpBinding(subManAddress.getValue(),
-                communicationLog);
+        final var transportBinding =
+                transportBindingFactory.createHttpBinding(subManAddress.getValue(), communicationLog);
 
         final var rrClientFactory = client.getInjector().getInstance(RequestResponseClientFactory.class);
         final var requestResponseClient = rrClientFactory.createRequestResponseClient(transportBinding);
 
-        final var unsubscribe = soapUtil.createMessage(
-            WsEventingConstants.WSA_ACTION_UNSUBSCRIBE,
-            wseFactory.createUnsubscribe()
-        );
+        final var unsubscribe =
+                soapUtil.createMessage(WsEventingConstants.WSA_ACTION_UNSUBSCRIBE, wseFactory.createUnsubscribe());
         unsubscribe.getWsAddressingHeader().setTo(subManAddress);
 
         LOG.info("Unsubscribing for address {}", subManAddress.getValue());
@@ -338,7 +326,8 @@ public class TestSuiteIT {
         final var activeSubs = testProvider.getActiveSubscriptions();
         assertEquals(1, activeSubs.size(), "Expected only one active subscription");
 
-        final var subManTimeout = activeSubs.values().stream().findFirst().orElseThrow().getExpiresTimeout();
+        final var subManTimeout =
+                activeSubs.values().stream().findFirst().orElseThrow().getExpiresTimeout();
 
         client.disconnect();
 
@@ -352,9 +341,8 @@ public class TestSuiteIT {
         // test run should not be marked invalid, as disconnect was intentional
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
-            testRunObserver.isInvalid(),
-            "TestRunObserver had unexpected failures: " + testRunObserver.getReasons()
-        );
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
     }
 
     /**
@@ -381,9 +369,8 @@ public class TestSuiteIT {
         // no invalidation is allowed in the test run
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
-            testRunObserver.isInvalid(),
-            "TestRunObserver had unexpected failures: " + testRunObserver.getReasons()
-        );
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
     }
 
     private static final class MockConfiguration extends AbstractConfigurationModule {
@@ -412,18 +399,13 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
 
             bind(HibernateConfig.class).to(HibernateConfigInMemoryImpl.class).in(Singleton.class);
-            install(
-                new FactoryModuleBuilder()
+            install(new FactoryModuleBuilder()
                     .implement(TestProvider.class, TestProviderImpl.class)
-                    .build(ProviderFactory.class)
-            );
+                    .build(ProviderFactory.class));
 
-            bind(TestSuiteConfig.SDC_TEST_DIRECTORIES,
-                String[].class,
-                new String[]{
-                    "it.com.draeger.medical.sdccc.testsuite_it_mock_tests",
-                }
-            );
+            bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, new String[] {
+                "it.com.draeger.medical.sdccc.testsuite_it_mock_tests",
+            });
 
             bind(TestRunConfig.TEST_RUN_DIR, File.class, tempDir.toFile());
 
@@ -433,8 +415,6 @@ public class TestSuiteIT {
 
             bind(Identifiers.DIRECT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
             bind(Identifiers.INVARIANT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
-
         }
     }
-
 }

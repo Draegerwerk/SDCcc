@@ -24,7 +24,8 @@ public interface MessageFactory {
      * @param communicationContext context containing transport and application information
      * @return a new {@linkplain Message} instance
      */
-    Message create(@Assisted CommunicationLog.Direction direction,
-                   @Assisted CommunicationLog.MessageType messageType,
-                   @Assisted CommunicationContext communicationContext);
+    Message create(
+            @Assisted CommunicationLog.Direction direction,
+            @Assisted CommunicationLog.MessageType messageType,
+            @Assisted CommunicationContext communicationContext);
 }

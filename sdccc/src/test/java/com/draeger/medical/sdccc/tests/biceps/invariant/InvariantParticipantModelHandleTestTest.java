@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.AbstractContextReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationType;
@@ -25,6 +31,12 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,19 +47,6 @@ import org.somda.sdc.biceps.provider.preprocessing.HandleDuplicatedException;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantParticipantModelHandleTest}.
@@ -66,8 +65,8 @@ public class InvariantParticipantModelHandleTestTest {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
     private static final int LOWER_BOUND = 0x21;
     private static final int UPPER_BOUND = 0x7E;
-    private static final String ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE = "contextState handle '%s' is "
-        + "not unique in Mdib version MdibVersion";
+    private static final String ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE =
+            "contextState handle '%s' is " + "not unique in Mdib version MdibVersion";
     private static MessageStorageUtil messageStorageUtil;
     private static MdibBuilder mdibBuilder;
     private static MessageBuilder messageBuilder;
@@ -75,7 +74,6 @@ public class InvariantParticipantModelHandleTestTest {
     private JaxbMarshalling riBaseMarshalling;
     private SoapMarshalling riMarshalling;
     private MessageStorage storage;
-
 
     @BeforeAll
     static void setupMarshalling() {
@@ -90,14 +88,12 @@ public class InvariantParticipantModelHandleTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
         InjectorTestBase.setInjector(injector);
 
         final var riInjector = TestClientUtil.createClientInjector();
@@ -144,9 +140,7 @@ public class InvariantParticipantModelHandleTestTest {
         final var locationStateHandle = locationHandleBuilder.reverse().toString();
 
         final var message = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, locationDescHandle, locationStateHandle
-        );
+                MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE, SYSTEM_CONTEXT_HANDLE, locationDescHandle, locationStateHandle);
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
         testClass.testRequirementR0105();
     }
@@ -159,9 +153,12 @@ public class InvariantParticipantModelHandleTestTest {
         final var locationDescHandle = "l̶̲̤ͅo̥̖c͟a̟̙͚t͍̮i̺̫o͕̝̤̯̼n͓̹̘̯͎ͅs̶̭̟͇͖͈̞";
 
         final var message = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, locationDescHandle, LOCATION_STATE_HANDLE
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                CHANNEL_HANDLE,
+                SYSTEM_CONTEXT_HANDLE,
+                locationDescHandle,
+                LOCATION_STATE_HANDLE);
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
         assertThrows(AssertionError.class, testClass::testRequirementR0105);
     }
@@ -174,9 +171,12 @@ public class InvariantParticipantModelHandleTestTest {
         final var locationStateHandle = "loçat͞io̴n͟1̸";
 
         final var message = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, LOCATION_DESC_HANDLE, locationStateHandle
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                CHANNEL_HANDLE,
+                SYSTEM_CONTEXT_HANDLE,
+                LOCATION_DESC_HANDLE,
+                locationStateHandle);
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
         assertThrows(AssertionError.class, testClass::testRequirementR0105);
     }
@@ -209,13 +209,12 @@ public class InvariantParticipantModelHandleTestTest {
      * build mdib with configurable handles
      */
     Envelope buildMdib(
-        final String mdsHandle,
-        final String vmdHandle,
-        final String channelHandle,
-        final String systemContextHandle,
-        final String locationDescriptorHandle,
-        final String locationStateHandle
-    ) {
+            final String mdsHandle,
+            final String vmdHandle,
+            final String channelHandle,
+            final String systemContextHandle,
+            final String locationDescriptorHandle,
+            final String locationStateHandle) {
         final var mds = mdibBuilder.buildMds(mdsHandle);
 
         final var mdDescription = mdibBuilder.buildMdDescription();
@@ -235,8 +234,7 @@ public class InvariantParticipantModelHandleTestTest {
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().add(systemContext.getRight());
 
-        final var locationContext =
-            mdibBuilder.buildLocationContext(locationDescriptorHandle, locationStateHandle);
+        final var locationContext = mdibBuilder.buildLocationContext(locationDescriptorHandle, locationStateHandle);
         systemContext.getLeft().setLocationContext(locationContext.getLeft());
         mdState.getState().add(locationContext.getRight());
 
@@ -254,9 +252,7 @@ public class InvariantParticipantModelHandleTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     /**
@@ -274,14 +270,14 @@ public class InvariantParticipantModelHandleTestTest {
     public void testR0007UniqueHandles() throws NoTestData, IOException, JAXBException {
 
         final var mdib = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, LOCATION_DESC_HANDLE, LOCATION_STATE_HANDLE
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                CHANNEL_HANDLE,
+                SYSTEM_CONTEXT_HANDLE,
+                LOCATION_DESC_HANDLE,
+                LOCATION_STATE_HANDLE);
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage,
-            mdib
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
         testClass.testRequirementR0007();
     }
 
@@ -291,26 +287,19 @@ public class InvariantParticipantModelHandleTestTest {
     @Test
     public void testR0007DescriptionModificationReportsIntroducingDuplicateHandles() throws IOException, JAXBException {
         final var mdib = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, LOCATION_DESC_HANDLE, LOCATION_STATE_HANDLE
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                CHANNEL_HANDLE,
+                SYSTEM_CONTEXT_HANDLE,
+                LOCATION_DESC_HANDLE,
+                LOCATION_STATE_HANDLE);
         final var deleteOp = buildDescriptionModificationReport(
-            BigInteger.ONE, BigInteger.ONE, BigInteger.ZERO,
-            true, BigInteger.ONE, BigInteger.ZERO
-        );
+                BigInteger.ONE, BigInteger.ONE, BigInteger.ZERO, true, BigInteger.ONE, BigInteger.ZERO);
         final var insertOp = buildDescriptionModificationReport(
-            BigInteger.TWO, BigInteger.TWO, BigInteger.ONE,
-            false, BigInteger.TWO, BigInteger.ONE
-        );
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage, mdib
-        );
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage, deleteOp
-        );
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage, insertOp
-        );
+                BigInteger.TWO, BigInteger.TWO, BigInteger.ONE, false, BigInteger.TWO, BigInteger.ONE);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, deleteOp);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, insertOp);
 
         final AssertionFailedError afe = assertThrows(AssertionFailedError.class, testClass::testRequirementR0007);
         assertTrue(afe.getCause() instanceof RuntimeException);
@@ -325,29 +314,27 @@ public class InvariantParticipantModelHandleTestTest {
     @Test
     public void testR0007ContextReportsIntroducingDuplicateHandles() throws IOException, JAXBException {
         final var initialMdib = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, LOCATION_DESC_HANDLE, LOCATION_STATE_HANDLE
-        );
-        final var firstReport = buildContextReport(
-            VMD_HANDLE
-        );
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage, initialMdib
-        );
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage, firstReport
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                CHANNEL_HANDLE,
+                SYSTEM_CONTEXT_HANDLE,
+                LOCATION_DESC_HANDLE,
+                LOCATION_STATE_HANDLE);
+        final var firstReport = buildContextReport(VMD_HANDLE);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initialMdib);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, firstReport);
 
         final AssertionFailedError afe = assertThrows(AssertionFailedError.class, testClass::testRequirementR0007);
         assertTrue(afe.getMessage().startsWith(String.format(ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE, "someVmd")));
     }
 
-    Envelope buildDescriptionModificationReport(final @Nullable BigInteger mdibVersion,
-                                                final @Nullable BigInteger vmdVersion,
-                                                final BigInteger channelVersion,
-                                                final boolean deleteChannel,
-                                                final @Nullable BigInteger vmdStateVersion,
-                                                final @Nullable BigInteger channelStateVersion) {
+    Envelope buildDescriptionModificationReport(
+            final @Nullable BigInteger mdibVersion,
+            final @Nullable BigInteger vmdVersion,
+            final BigInteger channelVersion,
+            final boolean deleteChannel,
+            final @Nullable BigInteger vmdStateVersion,
+            final @Nullable BigInteger channelStateVersion) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.UPT);
         final DescriptionModificationReport.ReportPart modificationPart;
@@ -379,10 +366,7 @@ public class InvariantParticipantModelHandleTestTest {
         parts = List.of(reportPart, modificationPart);
         final var report = messageBuilder.buildDescriptionModificationReport(SEQUENCE_ID, parts);
         report.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
 
     Envelope buildContextReport(final String handle) {
@@ -396,10 +380,7 @@ public class InvariantParticipantModelHandleTestTest {
         final var report = messageBuilder.buildEpisodicContextReport(SEQUENCE_ID);
         report.setMdibVersion(BigInteger.TWO);
         report.getReportPart().addAll(parts);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 
     /**
@@ -410,19 +391,20 @@ public class InvariantParticipantModelHandleTestTest {
 
         // channelHandle and systemHandle are the same
         final var mdib = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, NON_UNIQUE_HANDLE,
-            NON_UNIQUE_HANDLE, LOCATION_DESC_HANDLE, LOCATION_STATE_HANDLE
-        );
+                MDS_HANDLE,
+                VMD_HANDLE,
+                NON_UNIQUE_HANDLE,
+                NON_UNIQUE_HANDLE,
+                LOCATION_DESC_HANDLE,
+                LOCATION_STATE_HANDLE);
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage,
-            mdib
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
 
         final RuntimeException exception = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
         assertTrue(exception.getMessage().contains(NON_UNIQUE_HANDLE));
-        assertTrue(exception.getCause() instanceof HandleDuplicatedException, "Wrong kind of Exception: "
-            + exception.getCause());
+        assertTrue(
+                exception.getCause() instanceof HandleDuplicatedException,
+                "Wrong kind of Exception: " + exception.getCause());
     }
 
     /**
@@ -433,14 +415,9 @@ public class InvariantParticipantModelHandleTestTest {
 
         // locationDescHandle and locationStateHandle are the same
         final var mdib = buildMdib(
-            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE,
-            SYSTEM_CONTEXT_HANDLE, NON_UNIQUE_HANDLE, NON_UNIQUE_HANDLE
-        );
+                MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE, SYSTEM_CONTEXT_HANDLE, NON_UNIQUE_HANDLE, NON_UNIQUE_HANDLE);
 
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage,
-            mdib
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
 
         final RuntimeException rte = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
         assertTrue(rte.getMessage().contains(NON_UNIQUE_HANDLE));

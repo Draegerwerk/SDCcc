@@ -7,6 +7,14 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_HELLO;
+import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_PROBE_MATCHES;
+import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_RESOLVE_MATCHES;
+
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ProbeMatchType;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ProbeMatchesType;
@@ -23,26 +31,17 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.xml.namespace.QName;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.DpwsConstants;
 import org.somda.sdc.mdpws.common.CommonConstants;
-
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_HELLO;
-import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_PROBE_MATCHES;
-import static org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants.WSA_ACTION_RESOLVE_MATCHES;
 
 /**
  * Unit test for the MDPWS {@linkplain InvariantDynamicDiscoveryTest}.
@@ -67,14 +66,12 @@ public class InvariantDynamicDiscoveryTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(mockClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
+            }
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -117,11 +114,8 @@ public class InvariantDynamicDiscoveryTestTest {
     @Test
     public void testR0008BadMissingOneMessage() throws Exception {
 
-        final var testMessages = Set.of(
-                buildHello(true, true),
-                buildProbeMatches(true, true),
-                buildResolveMatches(true, true)
-        );
+        final var testMessages =
+                Set.of(buildHello(true, true), buildProbeMatches(true, true), buildResolveMatches(true, true));
 
         // generate all sets with one missing message
         final var testSets = Sets.powerSet(testMessages).stream()
@@ -190,8 +184,8 @@ public class InvariantDynamicDiscoveryTestTest {
         final var numberOfMatches = 3;
 
         final var proxyProbeMatch = buildProbeMatches(true, true, numberOfMatches);
-        final JAXBElement<ProbeMatchesType> matches =
-                (JAXBElement<ProbeMatchesType>) proxyProbeMatch.getBody().getAny().get(0);
+        final JAXBElement<ProbeMatchesType> matches = (JAXBElement<ProbeMatchesType>)
+                proxyProbeMatch.getBody().getAny().get(0);
         assertNotNull(matches);
 
         // remove one type from the last entry
@@ -216,10 +210,7 @@ public class InvariantDynamicDiscoveryTestTest {
         }
         body.getValue().getTypes().addAll(types);
 
-        final var soapMessage = messageBuilder.createSoapMessageWithBody(
-                WSA_ACTION_HELLO,
-                body
-        );
+        final var soapMessage = messageBuilder.createSoapMessageWithBody(WSA_ACTION_HELLO, body);
 
         messageBuilder.setMessageTo(soapMessage, "urn:docs-oasis-open-org:ws-dd:ns:discovery:2009:01");
         return soapMessage;
@@ -247,10 +238,7 @@ public class InvariantDynamicDiscoveryTestTest {
         }
         final var body = messageBuilder.buildProbeMatches(matches);
 
-        final var soapMessage = messageBuilder.createSoapMessageWithBody(
-                WSA_ACTION_PROBE_MATCHES,
-                body
-        );
+        final var soapMessage = messageBuilder.createSoapMessageWithBody(WSA_ACTION_PROBE_MATCHES, body);
 
         messageBuilder.setMessageTo(soapMessage, "http://other.place");
         messageBuilder.setMessageRelatesTo(soapMessage, "ftp://frofro");
@@ -272,10 +260,7 @@ public class InvariantDynamicDiscoveryTestTest {
 
         final var body = messageBuilder.buildResolveMatches(match);
 
-        final var soapMessage = messageBuilder.createSoapMessageWithBody(
-                WSA_ACTION_RESOLVE_MATCHES,
-                body
-        );
+        final var soapMessage = messageBuilder.createSoapMessageWithBody(WSA_ACTION_RESOLVE_MATCHES, body);
 
         messageBuilder.setMessageTo(soapMessage, "http://other.place");
         messageBuilder.setMessageRelatesTo(soapMessage, "ftp://frofro");

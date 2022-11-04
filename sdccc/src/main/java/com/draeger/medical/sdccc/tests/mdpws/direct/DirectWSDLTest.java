@@ -7,6 +7,19 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static com.draeger.medical.sdccc.util.Constants.dpws;
+import static com.draeger.medical.sdccc.util.Constants.mdpws;
+import static com.draeger.medical.sdccc.util.Constants.wsdl;
+import static com.draeger.medical.sdccc.util.Constants.wsp;
+import static com.draeger.medical.sdccc.util.Constants.wsu;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -19,6 +32,12 @@ import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.XPathExtractor;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javax.xml.namespace.QName;
+import javax.xml.xpath.XPathExpressionException;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,26 +58,6 @@ import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.w3c.dom.Node;
 
-import javax.xml.namespace.QName;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import static com.draeger.medical.sdccc.util.Constants.dpws;
-import static com.draeger.medical.sdccc.util.Constants.mdpws;
-import static com.draeger.medical.sdccc.util.Constants.wsdl;
-import static com.draeger.medical.sdccc.util.Constants.wsp;
-import static com.draeger.medical.sdccc.util.Constants.wsu;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 /**
  * MDPWS WSDL tests (ch. 6.2).
  */
@@ -68,8 +67,8 @@ public class DirectWSDLTest extends InjectorTestBase {
     protected static final String NO_FAULT_TEMPLATE = "A soap fault was expected in response to message with ";
     protected static final String WRONG_FAULT_TEMPLATE = " was expected in response to invalid message";
     protected static final String UNKNOWN_ACTION = "https://www.example.com/action-have-fault-consequences";
-    protected static final String DUPLICATE_PORT_TYPE_TEMPLATE = "portType was defined in multiple WSDLs for"
-        + " one service. Cannot determine which is correct.";
+    protected static final String DUPLICATE_PORT_TYPE_TEMPLATE =
+            "portType was defined in multiple WSDLs for" + " one service. Cannot determine which is correct.";
 
     private static final Logger LOG = LogManager.getLogger();
 
@@ -84,7 +83,9 @@ public class DirectWSDLTest extends InjectorTestBase {
     @BeforeEach
     void setUp() {
         client = getInjector().getInstance(TestClient.class);
-        httpClient = client.getInjector().getInstance(ApacheTransportBindingFactoryImpl.class).getClient();
+        httpClient = client.getInjector()
+                .getInstance(ApacheTransportBindingFactoryImpl.class)
+                .getClient();
         soapUtil = client.getInjector().getInstance(SoapUtil.class);
         messageModelFactory = client.getInjector().getInstance(ObjectFactory.class);
         httpClientUtil = client.getInjector().getInstance(HttpClientUtil.class);
@@ -94,8 +95,7 @@ public class DirectWSDLTest extends InjectorTestBase {
 
     @Test
     @TestIdentifier(EnabledTestConfig.MDPWS_R0012)
-    @TestDescription(
-        "Sends a message triggering each fault to the DUT and evaluates whether"
+    @TestDescription("Sends a message triggering each fault to the DUT and evaluates whether"
             + " the correct faults were send as response."
             + " First it verifies that the GetService endpoint provided by the DUT only provides SDC services"
             + " which are described correctly in the WSDL. Unknown services or incorrect portTypes in the "
@@ -105,10 +105,9 @@ public class DirectWSDLTest extends InjectorTestBase {
             + " VersionMismatch is triggered by a GetMdib message where the Envelope namespace is wrong."
             + " MustUnderstand is triggered by a GetMdib message with a custom header element set"
             + " to mustUnderstand. Additionally sends one GetMdib message without malformation to"
-            + " ensure the DUT doesn't just fault all the time."
-    )
+            + " ensure the DUT doesn't just fault all the time.")
     void testRequirementR0012()
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
         // verify the hosted service for GetService is matching the SDC Glue services.
         hostedServiceVerifier.verifyHostedService(MessageGeneratingUtil.getGetService(client));
 
@@ -122,67 +121,46 @@ public class DirectWSDLTest extends InjectorTestBase {
 
     void testRequirementR0012SenderBodyMismatch() {
         final var senderFault = assertThrows(
-            SoapFaultException.class, () -> sendSenderFaultActionBodyMismatch(client),
-            NO_FAULT_TEMPLATE + "wrong body"
-        );
+                SoapFaultException.class,
+                () -> sendSenderFaultActionBodyMismatch(client),
+                NO_FAULT_TEMPLATE + "wrong body");
         final var faultCode = senderFault.getFault().getCode().getValue();
         LOG.debug("R0012: Sender fault message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.SENDER, faultCode,
-            "Sender fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.SENDER, faultCode, "Sender fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0012SenderBodyEmpty() {
         final var senderFault = assertThrows(
-            SoapFaultException.class, () -> sendSenderFaultEmptyBody(client),
-            NO_FAULT_TEMPLATE + "empty body"
-        );
+                SoapFaultException.class, () -> sendSenderFaultEmptyBody(client), NO_FAULT_TEMPLATE + "empty body");
         final var faultCode = senderFault.getFault().getCode().getValue();
         LOG.debug("R0012: Sender fault message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.SENDER, faultCode,
-            "Sender fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.SENDER, faultCode, "Sender fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0012SenderActionUnknown() {
         final var senderFault = assertThrows(
-            SoapFaultException.class, () -> sendSenderFaultUnknownAction(client),
-            NO_FAULT_TEMPLATE + "unknown action " + UNKNOWN_ACTION
-        );
+                SoapFaultException.class,
+                () -> sendSenderFaultUnknownAction(client),
+                NO_FAULT_TEMPLATE + "unknown action " + UNKNOWN_ACTION);
         final var faultCode = senderFault.getFault().getCode().getValue();
         LOG.debug("R0012: Sender fault message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.SENDER, faultCode,
-            "Sender fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.SENDER, faultCode, "Sender fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0012VersionMismatch() {
         final var versionMismatch = assertThrows(
-            SoapFaultException.class, () -> sendVersionMismatch(client),
-            NO_FAULT_TEMPLATE + "VersionMismatch"
-        );
+                SoapFaultException.class, () -> sendVersionMismatch(client), NO_FAULT_TEMPLATE + "VersionMismatch");
         final var faultCode = versionMismatch.getFault().getCode().getValue();
         LOG.debug("R0012: VersionMismatch message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.VERSION_MISMATCH, faultCode,
-            "VersionMismatch fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.VERSION_MISMATCH, faultCode, "VersionMismatch fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0012MustUnderstand() {
         final var mustUnderstand = assertThrows(
-            SoapFaultException.class, () -> sendMustUnderstand(client),
-            NO_FAULT_TEMPLATE + "MustUnderstand"
-        );
+                SoapFaultException.class, () -> sendMustUnderstand(client), NO_FAULT_TEMPLATE + "MustUnderstand");
         final var faultCode = mustUnderstand.getFault().getCode().getValue();
         LOG.debug("R0012: MustUnderstand message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.MUST_UNDERSTAND, faultCode,
-            "MustUnderstand fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.MUST_UNDERSTAND, faultCode, "MustUnderstand fault" + WRONG_FAULT_TEMPLATE);
     }
 
     /*
@@ -235,8 +213,7 @@ public class DirectWSDLTest extends InjectorTestBase {
      */
     @Test
     @TestIdentifier(EnabledTestConfig.MDPWS_R0013)
-    @TestDescription(
-        " First it verifies that the GetService endpoint provided by the DUT only provides SDC services"
+    @TestDescription(" First it verifies that the GetService endpoint provided by the DUT only provides SDC services"
             + " which are described correctly in the WSDL. Unknown services or incorrect portTypes in the "
             + " WSDLs will fail."
             + " Then it sends three messages to the DUT:"
@@ -244,10 +221,9 @@ public class DirectWSDLTest extends InjectorTestBase {
             + " a message containing errors for a MustUnderstand and a sender fault and"
             + " a message containing only an error for a sender fault."
             + " Additionally sends one GetMdib message without malformation to"
-            + " ensure the DUT doesn't just fault all the time."
-    )
+            + " ensure the DUT doesn't just fault all the time.")
     void testRequirementR0013()
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
         hostedServiceVerifier.verifyHostedService(MessageGeneratingUtil.getGetService(client));
 
         testSendGetMdibNoFault();
@@ -258,44 +234,32 @@ public class DirectWSDLTest extends InjectorTestBase {
 
     void testRequirementR0013All() {
         final var versionMismatch = assertThrows(
-            SoapFaultException.class, () -> sendMessageAllFaults(client),
-            NO_FAULT_TEMPLATE + "errors for VersionMismatch, MustUnderstand and Sender faults"
-        );
+                SoapFaultException.class,
+                () -> sendMessageAllFaults(client),
+                NO_FAULT_TEMPLATE + "errors for VersionMismatch, MustUnderstand and Sender faults");
         final var faultCode = versionMismatch.getFault().getCode().getValue();
         LOG.debug("R0012: All message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.VERSION_MISMATCH, faultCode,
-            "VersionMismatch fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.VERSION_MISMATCH, faultCode, "VersionMismatch fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0013MustUnderstandSender() {
         final var mustUnderstand = assertThrows(
-            SoapFaultException.class, () -> sendMustUnderstand(
-                client,
-                messageModelFactory.createGetMdDescription()
-            ),
-            NO_FAULT_TEMPLATE + "MustUnderstand"
-        );
+                SoapFaultException.class,
+                () -> sendMustUnderstand(client, messageModelFactory.createGetMdDescription()),
+                NO_FAULT_TEMPLATE + "MustUnderstand");
         final var faultCode = mustUnderstand.getFault().getCode().getValue();
         LOG.debug("R0013: MustUnderstand message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.MUST_UNDERSTAND, faultCode,
-            "MustUnderstand fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.MUST_UNDERSTAND, faultCode, "MustUnderstand fault" + WRONG_FAULT_TEMPLATE);
     }
 
     void testRequirementR0013Sender() {
         final var senderFault = assertThrows(
-            SoapFaultException.class, () -> sendSenderFaultActionBodyMismatch(client),
-            NO_FAULT_TEMPLATE + "wrong body"
-        );
+                SoapFaultException.class,
+                () -> sendSenderFaultActionBodyMismatch(client),
+                NO_FAULT_TEMPLATE + "wrong body");
         final var faultCode = senderFault.getFault().getCode().getValue();
         LOG.debug("R0013: Sender fault message fault was: {}", faultCode);
-        assertEquals(
-            SoapConstants.SENDER, faultCode,
-            "Sender fault" + WRONG_FAULT_TEMPLATE
-        );
+        assertEquals(SoapConstants.SENDER, faultCode, "Sender fault" + WRONG_FAULT_TEMPLATE);
     }
 
     @Test
@@ -317,16 +281,15 @@ public class DirectWSDLTest extends InjectorTestBase {
                 assertTestData(portTypes, "no portTypes in WSDL for service " + service);
 
                 portTypes.forEach(portType -> {
-                    final var discoveryType = portType.getAttributes().getNamedItemNS(
-                        Constants.DPWS_DISCOVERY_TYPE.getNamespaceURI(),
-                        Constants.DPWS_DISCOVERY_TYPE.getLocalPart()
-                    );
+                    final var discoveryType = portType.getAttributes()
+                            .getNamedItemNS(
+                                    Constants.DPWS_DISCOVERY_TYPE.getNamespaceURI(),
+                                    Constants.DPWS_DISCOVERY_TYPE.getLocalPart());
                     final var name = portType.getAttributes().getNamedItem("name");
                     assertNotNull(
-                        discoveryType,
-                        "Service " + service + " did not include the dpws:DiscoveryType"
-                            + " in its WSDL portType " + name
-                    );
+                            discoveryType,
+                            "Service " + service + " did not include the dpws:DiscoveryType" + " in its WSDL portType "
+                                    + name);
                 });
             }
         }
@@ -335,8 +298,8 @@ public class DirectWSDLTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.MDPWS_R0010)
     @TestDescription("Verifies that a policy containing the dpws:Profile is attached to a wsdl:binding with the"
-        + " wsp:Optional attribute set to true and also not attached to a wsdl:portType, as it is explicitly"
-        + " forbidden. Ports are not used and therefore not checked.")
+            + " wsp:Optional attribute set to true and also not attached to a wsdl:portType, as it is explicitly"
+            + " forbidden. Ports are not used and therefore not checked.")
     void testRequirementR0010() throws IOException, TransportException, NoTestData {
         final Map<String, List<String>> wsdlMap = wsdlRetriever.retrieveWsdls(client.getHostingServiceProxy());
         LOG.debug("R0010: Retrieved WSDLs for {}", wsdlMap.values());
@@ -349,8 +312,8 @@ public class DirectWSDLTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.MDPWS_R0011)
     @TestDescription("Verifies that a policy containing the mdpws:Profile is attached to a wsdl:binding with the"
-        + " wsp:Optional attribute set to true and also not attached to a wsdl:portType, as it is explicitly "
-        + " forbidden. Ports are not used and therefore not checked.")
+            + " wsp:Optional attribute set to true and also not attached to a wsdl:portType, as it is explicitly "
+            + " forbidden. Ports are not used and therefore not checked.")
     void testRequirementR0011() throws IOException, TransportException, NoTestData {
         final Map<String, List<String>> wsdlMap = wsdlRetriever.retrieveWsdls(client.getHostingServiceProxy());
         LOG.debug("R0010: Retrieved WSDLs for {}", wsdlMap.values());
@@ -368,7 +331,6 @@ public class DirectWSDLTest extends InjectorTestBase {
         final String portTypeQuery = "//" + wsdl("portType");
         final var portTypeExtractor = new XPathExtractor(portTypeQuery);
 
-
         for (final Map.Entry<String, List<String>> entry : wsdlMap.entrySet()) {
             final String serviceName = entry.getKey();
             final List<String> wsdlList = entry.getValue();
@@ -381,13 +343,13 @@ public class DirectWSDLTest extends InjectorTestBase {
                     bindings = bindingExtractor.extractFrom(wsdl);
                 } catch (final XPathExpressionException e) {
                     LOG.error(
-                        "Unexpected error occurred while extracting bindings from wsdl of service {}: {}",
-                        serviceName, e.getMessage()
-                    );
+                            "Unexpected error occurred while extracting bindings from wsdl of service {}: {}",
+                            serviceName,
+                            e.getMessage());
                     LOG.debug(
-                        "Unexpected error occurred while extracting bindings from wsdl of service {}",
-                        serviceName, e
-                    );
+                            "Unexpected error occurred while extracting bindings from wsdl of service {}",
+                            serviceName,
+                            e);
                     fail("Unexpected error occurred while extracting bindings from wsdl", e);
                 }
 
@@ -404,13 +366,13 @@ public class DirectWSDLTest extends InjectorTestBase {
                     portTypes = portTypeExtractor.extractFrom(wsdl);
                 } catch (final XPathExpressionException e) {
                     LOG.error(
-                        "Unexpected error occurred while extracting portType from wsdl of service {}: {}",
-                        serviceName, e.getMessage()
-                    );
+                            "Unexpected error occurred while extracting portType from wsdl of service {}: {}",
+                            serviceName,
+                            e.getMessage());
                     LOG.debug(
-                        "Unexpected error occurred while extracting portType from wsdl of service {}",
-                        serviceName, e
-                    );
+                            "Unexpected error occurred while extracting portType from wsdl of service {}",
+                            serviceName,
+                            e);
                     fail("Unexpected error occurred while extracting portType from wsdl", e);
                 }
 
@@ -420,7 +382,6 @@ public class DirectWSDLTest extends InjectorTestBase {
                 for (final Node portType : portTypes) {
                     validatePortType(portType, profileAssertion, serviceName);
                 }
-
             }
         }
     }
@@ -429,24 +390,20 @@ public class DirectWSDLTest extends InjectorTestBase {
         final var bindingName = binding.getAttributes().getNamedItem("name");
 
         assertTrue(
-            hasAssertionAttachedTo(binding, profileAssertion, serviceName),
-            String.format(
-                "Service %s binding %s has no wsp:Policy attached for %s, this is not allowed",
-                serviceName, bindingName, profileAssertion
-            )
-        );
+                hasAssertionAttachedTo(binding, profileAssertion, serviceName),
+                String.format(
+                        "Service %s binding %s has no wsp:Policy attached for %s, this is not allowed",
+                        serviceName, bindingName, profileAssertion));
     }
 
     void validatePortType(final Node portType, final String profileAssertion, final String serviceName) {
         final var portTypeName = portType.getAttributes().getNamedItem("name");
 
         assertFalse(
-            hasAssertionAttachedTo(portType, profileAssertion, serviceName),
-            String.format(
-                "Service %s portType %s has wsp:Policy attached for %s, this is not allowed",
-                serviceName, portTypeName, profileAssertion
-            )
-        );
+                hasAssertionAttachedTo(portType, profileAssertion, serviceName),
+                String.format(
+                        "Service %s portType %s has wsp:Policy attached for %s, this is not allowed",
+                        serviceName, portTypeName, profileAssertion));
     }
 
     boolean hasAssertionAttachedTo(final Node node, final String profileAssertion, final String serviceName) {
@@ -465,14 +422,8 @@ public class DirectWSDLTest extends InjectorTestBase {
                 result = true;
             }
         } catch (final XPathExpressionException e) {
-            LOG.error(
-                "Unexpected error while extracting policy from service {}: {}",
-                serviceName, e.getMessage()
-            );
-            LOG.debug(
-                "Unexpected error while extracting policy from service {}",
-                serviceName, e
-            );
+            LOG.error("Unexpected error while extracting policy from service {}: {}", serviceName, e.getMessage());
+            LOG.debug("Unexpected error while extracting policy from service {}", serviceName, e);
             fail("Unexpected error while extracting policy from service " + serviceName, e);
         }
 
@@ -485,15 +436,12 @@ public class DirectWSDLTest extends InjectorTestBase {
         // wsp:PolicyURIs are currently unsupported and must fail (see https://github.com/Draegerwerk/SDCcc/issues/4)
         final Node policyURIs = node.getAttributes().getNamedItemNS(Constants.WSP_NAMESPACE, Constants.WSP_POLICY_URIS);
         assertNull(
-            policyURIs,
-            Constants.WSP_POLICY_URIS + " element attached to node, these are currently unsupported."
-        );
+                policyURIs, Constants.WSP_POLICY_URIS + " element attached to node, these are currently unsupported.");
         return result;
     }
 
     private boolean hasAssertionAttachedToPolicyReference(
-        final String profileAssertion, final Node node, final String serviceName
-    ) {
+            final String profileAssertion, final Node node, final String serviceName) {
         final String policyReferencePath = ".//" + wsp("PolicyReference[@URI]");
         final var policyReferencePathExtractor = new XPathExtractor(policyReferencePath);
 
@@ -504,13 +452,10 @@ public class DirectWSDLTest extends InjectorTestBase {
             references = policyReferencePathExtractor.extractFrom(node);
         } catch (final XPathExpressionException e) {
             LOG.error(
-                "Unexpected error while extracting policy reference from service {}: {}",
-                serviceName, e.getMessage()
-            );
-            LOG.debug(
-                "Unexpected error while extracting policy reference from service {}",
-                serviceName, e
-            );
+                    "Unexpected error while extracting policy reference from service {}: {}",
+                    serviceName,
+                    e.getMessage());
+            LOG.debug("Unexpected error while extracting policy reference from service {}", serviceName, e);
             fail("Unexpected error while extracting policy reference from service " + serviceName, e);
         }
 
@@ -533,9 +478,7 @@ public class DirectWSDLTest extends InjectorTestBase {
             }
 
             final var referencedPolicyPath =
-                "//" + wsp("Policy")
-                    + "[@" + wsu("Id") + "='" + uri + "']/"
-                    + profileAssertion;
+                    "//" + wsp("Policy") + "[@" + wsu("Id") + "='" + uri + "']/" + profileAssertion;
             final var assertionPathId = referencedPolicyPath + "[@" + wsp("Optional") + "='true']";
             final var assertionPathIdExtractor = new XPathExtractor(assertionPathId);
 
@@ -547,13 +490,10 @@ public class DirectWSDLTest extends InjectorTestBase {
                 }
             } catch (final XPathExpressionException e) {
                 LOG.error(
-                    "Unexpected error while extracting policy reference from service {}: {}",
-                    serviceName, e.getMessage()
-                );
-                LOG.debug(
-                    "Unexpected error while extracting policy reference from service {}",
-                    serviceName, e
-                );
+                        "Unexpected error while extracting policy reference from service {}: {}",
+                        serviceName,
+                        e.getMessage());
+                LOG.debug("Unexpected error while extracting policy reference from service {}", serviceName, e);
                 fail("Unexpected error while extracting policy reference from service " + serviceName, e);
             }
         }
@@ -572,24 +512,20 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     void testSendGetMdibNoFault()
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
         final var getServiceOpt = MessageGeneratingUtil.getGetService(client);
         if (getServiceOpt.isEmpty()) {
             fail("No get service present");
         }
-        final var getMdibRequest = soapUtil.createMessage(
-            ActionConstants.ACTION_GET_MDIB,
-            messageModelFactory.createGetMdib()
-        );
+        final var getMdibRequest =
+                soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB, messageModelFactory.createGetMdib());
         final SoapMessage response;
         try {
             response = getServiceOpt.orElseThrow().sendRequestResponse(getMdibRequest);
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             LOG.error("An unexpected error occurred while trying to send a GetMdib request without malformation.", e);
-            fail(
-                "An unexpected error occurred while trying to send a GetMdib request without malformation."
-                    + " Message: " + e.getMessage()
-            );
+            fail("An unexpected error occurred while trying to send a GetMdib request without malformation."
+                    + " Message: " + e.getMessage());
             // unreachable, silence warnings
             throw e;
         }
@@ -608,9 +544,8 @@ public class DirectWSDLTest extends InjectorTestBase {
      *                            This will hinder the response from being sent.
      */
     @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No unnecessary null check."
-    )
+            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
+            justification = "No unnecessary null check.")
     protected void sendMessageAllFaults(final TestClient testClient) throws SoapFaultException, TransportException {
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
@@ -641,16 +576,14 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     protected void sendSenderFaultActionBodyMismatch(final TestClient testClient)
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
             fail("No get service present");
         }
-        final var getMdibRequest = soapUtil.createMessage(
-            ActionConstants.ACTION_GET_MDIB,
-            messageModelFactory.createGetMdDescription()
-        );
+        final var getMdibRequest =
+                soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB, messageModelFactory.createGetMdDescription());
         getServiceOpt.orElseThrow().sendRequestResponse(getMdibRequest);
     }
 
@@ -665,7 +598,7 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     protected void sendSenderFaultEmptyBody(final TestClient testClient)
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
@@ -686,7 +619,7 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     protected void sendSenderFaultUnknownAction(final TestClient testClient)
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
@@ -705,9 +638,8 @@ public class DirectWSDLTest extends InjectorTestBase {
      *                            This will hinder the response from being sent.
      */
     @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No unnecessary null check."
-    )
+            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
+            justification = "No unnecessary null check.")
     protected void sendVersionMismatch(final TestClient testClient) throws SoapFaultException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
@@ -716,8 +648,8 @@ public class DirectWSDLTest extends InjectorTestBase {
         }
 
         byte[] message = null;
-        try (final var msgStream = DirectWSDLTest.class
-            .getResourceAsStream("DirectWSDLTest/GetMdibVersionMismatch.xml")) {
+        try (final var msgStream =
+                DirectWSDLTest.class.getResourceAsStream("DirectWSDLTest/GetMdibVersionMismatch.xml")) {
             assertNotNull(msgStream);
             message = msgStream.readAllBytes();
         } catch (final IOException e) {
@@ -728,7 +660,6 @@ public class DirectWSDLTest extends InjectorTestBase {
 
         httpClientUtil.postMessage(httpClient, getAddress, message);
     }
-
 
     /**
      * Sends a GetMdib request with a custom soap header entry set to MustUnderstand.
@@ -741,7 +672,7 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     protected void sendMustUnderstand(final TestClient testClient)
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
         sendMustUnderstand(testClient, messageModelFactory.createGetMdib());
     }
 
@@ -757,17 +688,14 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws InterceptorException if one of the interceptors pops up with an error.
      */
     protected void sendMustUnderstand(final TestClient testClient, final Object messageBody)
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
             fail("No get service present");
         }
         final var getService = getServiceOpt.orElseThrow();
-        final var getMdibRequest = soapUtil.createMessage(
-            ActionConstants.ACTION_GET_MDIB,
-            messageBody
-        );
+        final var getMdibRequest = soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB, messageBody);
         final var mustUnderstandNode = createMustUnderstandNode();
         getMdibRequest.getOriginalEnvelope().getHeader().getAny().add(mustUnderstandNode);
         getService.sendRequestResponse(getMdibRequest);

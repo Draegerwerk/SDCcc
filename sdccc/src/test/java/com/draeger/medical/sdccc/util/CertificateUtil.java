@@ -13,7 +13,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-
 /**
  * Utility which provides test related functionality for certificates.
  */
