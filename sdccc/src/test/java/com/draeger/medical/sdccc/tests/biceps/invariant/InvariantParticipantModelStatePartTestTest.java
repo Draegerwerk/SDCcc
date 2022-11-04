@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import com.draeger.medical.biceps.model.message.AbstractMetricReport;
 import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
@@ -43,9 +44,12 @@ import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.glue.common.ActionConstants;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.cert.CertificateException;
 import java.time.Duration;
@@ -67,8 +71,13 @@ public class InvariantParticipantModelStatePartTestTest {
     private static final String CHANNEL_HANDLE = "someChannel";
     private static final String MSRMT_METRIC_HANDLE = "someMsrmtStringMetric";
     private static final String MSRMT_METRIC_HANDLE2 = "someMsrmtStringMetric2";
+
+    private static final String RTSA_METRIC_HANDLE = "someRealTimeSampleArrayMetric";
+    private static final String RTSA_METRIC_HANDLE2 = "someRealTimeSampleArrayMetric2";
     private static final String SET_METRIC_HANDLE = "someSetStringMetric";
     private static final String SET_METRIC_HANDLE2 = "someSetStringMetric2";
+    private static final String CLC_METRIC_HANDLE = "someClcStringMetric";
+    private static final String CLC_METRIC_HANDLE2 = "someClcStringMetric2";
     private static final String SEQUENCE_ID = MdibBuilder.DEFAULT_SEQUENCE_ID;
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
@@ -88,7 +97,7 @@ public class InvariantParticipantModelStatePartTestTest {
     private InvariantParticipantModelStatePartTest testClass;
     private JaxbMarshalling baseMarshalling;
     private SoapMarshalling marshalling;
-
+    private DatatypeFactory datatypeFactory;
 
     @BeforeAll
     static void setupMarshalling() {
@@ -100,7 +109,7 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     @BeforeEach
-    void setUp() throws IOException, TimeoutException {
+    void setUp() throws IOException, TimeoutException, DatatypeConfigurationException {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
@@ -125,6 +134,8 @@ public class InvariantParticipantModelStatePartTestTest {
         marshalling.startAsync().awaitRunning(DEFAULT_TIMEOUT);
 
         storage = injector.getInstance(MessageStorage.class);
+
+        datatypeFactory = DatatypeFactory.newInstance();
 
         testClass = new InvariantParticipantModelStatePartTest();
         testClass.setUp();
@@ -223,9 +234,39 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.ON);
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+            relatedPart, unrelatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        testClass.testRequirement54700();
+    }
+
+    /**
+     * Tests if the test passes if for each 'setMetricStatus' manipulation for metrics with category 'Msrmt' only
+     * WaveformStream messages exist that contain the expected handle and were received within the time interval
+     * of the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700GoodWaveforms() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, RTSA_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
+            Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+
+        final var waveformStream = buildWaveformStream(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, RTSA_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, waveformStream));
 
         testClass.testRequirement54700();
     }
@@ -504,8 +545,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+            unrelatedPart, relatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5472();
@@ -787,8 +830,11 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+            relatedPart, unrelatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5474();
@@ -1043,7 +1089,7 @@ public class InvariantParticipantModelStatePartTestTest {
             BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
-        // no manipulation with category msrmt in storage
+        // no manipulation with category set in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54760);
         assertTrue(error.getMessage().contains(
             String.format(InvariantParticipantModelStatePartTest.NO_SET_METRIC_STATUS_MANIPULATION,
@@ -1071,8 +1117,14 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var unrelatedReportPart =
+            buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
+        final var relatedReportPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedReportPart2 =
+            buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+            unrelatedReportPart, relatedReportPart, unrelatedReportPart2);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement54760();
@@ -1351,8 +1403,14 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+        final var unrelatedPart =
+            buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
+        final var unrelatedPart2 =
+            buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+
         final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+            relatedPart, unrelatedPart, unrelatedPart2);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement5478();
@@ -1636,8 +1694,9 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
             Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
 
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         testClass.testRequirement54710();
@@ -1833,6 +1892,289 @@ public class InvariantParticipantModelStatePartTestTest {
         assertThrows(AssertionError.class, testClass::testRequirement54710);
     }
 
+    /**
+     * Tests whether no test data fails the test.
+     */
+    @Test
+    public void testRequirement547120NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirement547120);
+    }
+
+    /**
+     * Tests whether the test fails when no manipulation data with ResponseTypes.Result.RESULT_SUCCESS is in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120NoSuccessfulManipulation() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        // add manipulation data with result fail
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, ResponseTypes.Result.RESULT_FAIL,
+            Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(NoTestData.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
+    }
+
+    /**
+     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120BadWrongMetricCategory() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        // no manipulation with category clc in storage
+        final var error = assertThrows(NoTestData.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage().contains(
+            String.format(InvariantParticipantModelStatePartTest.NO_SET_METRIC_STATUS_MANIPULATION,
+                MetricCategory.CLC)));
+    }
+
+    /**
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
+     * and is in the time interval of the manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120Good() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
+            Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            relatedPart, unrelatedPart);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        testClass.testRequirement547120();
+    }
+
+    /**
+     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
+     * data with category 'Clc'.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120GoodOverlappingTimeInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH,
+            ResponseTypes.Result.RESULT_SUCCESS, Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+        final List<Pair<String, String>> parameters2 = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START2, TIMESTAMP_FINISH2,
+            ResponseTypes.Result.RESULT_SUCCESS, Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters2);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+        final var metricReport2 = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+
+        testClass.testRequirement547120();
+    }
+
+    /**
+     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120BadNoMetricReportFollowingManipulation() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // this metric report is not in the time interval of the setMetricStatus manipulation
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getCause() instanceof NoTestData);
+        assertTrue(error.getCause().getMessage().contains(
+            String.format(InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL, methodName,
+                TIMESTAMP_START, TIMESTAMP_FINISH)));
+    }
+
+    /**
+     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120NoReportsWithExpectedHandle() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result,
+            Constants.MANIPULATION_NAME_SET_METRIC_STATUS, parameters);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage().contains(
+            String.format(InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
+     * following metric report.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120BadWrongActivationInFollowingReport() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // activation state should be on
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage().contains(String.format(
+            InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE, CLC_METRIC_HANDLE,
+            ComponentActivation.ON, ComponentActivation.OFF)));
+    }
+
+    /**
+     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120GoodMultipleReportsInInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // good report in time interval
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        // should not fail the test, since the first report in the time interval is relevant for the test
+        final var metricReport2 = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+
+        testClass.testRequirement547120();
+    }
+
+    /**
+     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
+     * report that would pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120BadMultipleReportsInInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
+            new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
+                ComponentActivation.ON.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        final var metricReport2 = buildMetricReport(SEQUENCE_ID, BigInteger.ONE,
+            BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+
+        // the first report in the time interval has the wrong activation state
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
+
+        assertThrows(AssertionError.class, testClass::testRequirement547120);
+    }
+
     private Message buildTestMessage(final long timestamp, final Envelope envelope) throws Exception {
         final var message = mock(Message.class);
         when(message.getDirection()).thenReturn(CommunicationLog.Direction.INBOUND);
@@ -1887,29 +2229,54 @@ public class InvariantParticipantModelStatePartTestTest {
             MetricCategory.MSRMT, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         msrmtMetric.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtOne"));
-        channel.getLeft().getMetric().add(msrmtMetric.getLeft());
-        mdState.getState().add(msrmtMetric.getRight());
 
         final var msrmtMetric2 = mdibBuilder.buildStringMetric(MSRMT_METRIC_HANDLE2,
             MetricCategory.MSRMT, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         msrmtMetric2.getRight().setActivationState(ComponentActivation.OFF);
         msrmtMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("msrmtTwo"));
-        channel.getLeft().getMetric().add(msrmtMetric2.getLeft());
-        mdState.getState().add(msrmtMetric2.getRight());
 
-        final var clcMetric = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE,
+        final var rtsaMetric = mdibBuilder.buildRealTimeSampleArrayMetric(RTSA_METRIC_HANDLE, MetricCategory.MSRMT,
+            MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"), BigDecimal.ONE,
+            datatypeFactory.newDuration("P0DT0H0M30S")
+        );
+        rtsaMetric.getRight().setActivationState(ComponentActivation.OFF);
+        rtsaMetric.getRight().setMetricValue(
+            mdibBuilder.buildSampleArrayValue(List.of(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.TEN)));
+
+        final var rtsaMetric2 = mdibBuilder.buildRealTimeSampleArrayMetric(RTSA_METRIC_HANDLE2, MetricCategory.MSRMT,
+            MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"), BigDecimal.ONE,
+            datatypeFactory.newDuration("P0DT0H2M35S")
+        );
+        rtsaMetric2.getRight().setActivationState(ComponentActivation.OFF);
+        rtsaMetric2.getRight().setMetricValue(mdibBuilder.buildSampleArrayValue(
+            List.of(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ONE)));
+
+        final var setMetric = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE,
+            MetricCategory.SET, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
+        setMetric.getRight().setActivationState(ComponentActivation.OFF);
+        setMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("setOne"));
+
+        final var setMetric2 = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE2,
+            MetricCategory.SET, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
+        setMetric2.getRight().setActivationState(ComponentActivation.OFF);
+        setMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("setTwo"));
+
+        final var clcMetric = mdibBuilder.buildStringMetric(CLC_METRIC_HANDLE,
             MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         clcMetric.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcOne"));
-        channel.getLeft().getMetric().add(clcMetric.getLeft());
-        mdState.getState().add(clcMetric.getRight());
 
-        final var clcMetric2 = mdibBuilder.buildStringMetric(SET_METRIC_HANDLE2,
+        final var clcMetric2 = mdibBuilder.buildStringMetric(CLC_METRIC_HANDLE2,
             MetricCategory.CLC, MetricAvailability.CONT, mdibBuilder.buildCodedValue("def"));
         clcMetric2.getRight().setActivationState(ComponentActivation.OFF);
         clcMetric2.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("clcTwo"));
-        channel.getLeft().getMetric().add(clcMetric2.getLeft());
-        mdState.getState().add(clcMetric2.getRight());
+
+        channel.getLeft().getMetric().addAll(
+            List.of(msrmtMetric.getLeft(), msrmtMetric2.getLeft(), rtsaMetric.getLeft(), rtsaMetric2.getLeft(),
+                setMetric.getLeft(), setMetric2.getLeft(), clcMetric.getLeft(), clcMetric2.getLeft()));
+        mdState.getState().addAll(
+            List.of(msrmtMetric.getRight(), msrmtMetric2.getRight(), rtsaMetric.getRight(), rtsaMetric2.getRight(),
+                setMetric.getRight(), setMetric2.getRight(), clcMetric.getRight(), clcMetric2.getRight()));
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
@@ -1917,6 +2284,32 @@ public class InvariantParticipantModelStatePartTestTest {
         return messageBuilder.createSoapMessageWithBody(
             ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
             getMdibResponse
+        );
+    }
+
+    private AbstractMetricReport.ReportPart buildMetricReportPart(final BigInteger metricVersion,
+                                                                  final String metricHandle,
+                                                                  final ComponentActivation activation) {
+        final var metricState = mdibBuilder.buildStringMetricState(metricHandle);
+        metricState.setStateVersion(metricVersion);
+        metricState.setActivationState(activation);
+
+        final var reportPart = messageBuilder.buildAbstractMetricReportReportPart();
+        reportPart.getMetricState().add(metricState);
+        return reportPart;
+    }
+
+    private Envelope buildMetricReport(final String sequenceId,
+                                       final BigInteger mdibVersion,
+                                       final AbstractMetricReport.ReportPart... parts) {
+        final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
+        report.setMdibVersion(mdibVersion);
+        for (var part : parts) {
+            report.getReportPart().add(part);
+        }
+        return messageBuilder.createSoapMessageWithBody(
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            report
         );
     }
 
@@ -1941,6 +2334,24 @@ public class InvariantParticipantModelStatePartTestTest {
         return messageBuilder.createSoapMessageWithBody(
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             report
+        );
+    }
+
+    private Envelope buildWaveformStream(final String sequenceId,
+                                         final BigInteger mdibVersion,
+                                         final BigInteger metricVersion,
+                                         final String metricHandle,
+                                         final ComponentActivation activation) {
+
+        final var metricState = mdibBuilder.buildRealTimeSampleArrayMetricState(metricHandle);
+        metricState.setStateVersion(metricVersion);
+        metricState.setActivationState(activation);
+
+        final var waveform = messageBuilder.buildWaveformStream(sequenceId, List.of(metricState));
+        waveform.setMdibVersion(mdibVersion);
+        return messageBuilder.createSoapMessageWithBody(
+            ActionConstants.ACTION_WAVEFORM_STREAM,
+            waveform
         );
     }
 }
