@@ -34,6 +34,7 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
+import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
@@ -104,6 +105,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     private WsAddressingUtil wsaUtil;
     private WsEventingEventSinkFactory eventSinkFactory;
     private String adapterAddress;
+    private CommunicationLog commLog;
 
     @BeforeEach
     void setUp() {
@@ -121,6 +123,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.adapterAddress = getInjector().getInstance(
             Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS))
         );
+        this.commLog = testClient.getInjector().getInstance(CommunicationLog.class);
     }
 
     @Test
@@ -573,7 +576,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                 reportTestData.setSubscription(
                     new SubscribeResult(determineSubscriptionIdForAction(action), responseBody.getExpires()));
                 final EventSink eventSink =
-                    eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI);
+                    eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI, commLog);
                 reportTestData.setEventSink(eventSink);
 
             }
