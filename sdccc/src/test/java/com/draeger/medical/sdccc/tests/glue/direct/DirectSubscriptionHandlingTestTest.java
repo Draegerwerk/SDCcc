@@ -151,7 +151,8 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
-                    bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier")).toInstance(frameworkIdentifier);
+                    bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier"))
+                        .toInstance(frameworkIdentifier);
                     bind(CommunicationLogSink.class).toInstance(communicationLogSink);
                     install(new FactoryModuleBuilder()
                         .implement(CommunicationLog.class, CommunicationLogImpl.class)
