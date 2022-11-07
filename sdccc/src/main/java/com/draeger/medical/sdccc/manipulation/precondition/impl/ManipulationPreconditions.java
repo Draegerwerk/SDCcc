@@ -1167,4 +1167,29 @@ public class ManipulationPreconditions {
         }
     }
 
+    /**
+     * Sets the activation state for every metric with category 'Clc' to 'On' and then the status to 'calculation
+     * not being performed and is de-initialized,' to trigger an activation state change to 'Off'.
+     */
+    public static class MetricStatusManipulationCLCActivationStateOFF extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationCLCActivationStateOFF.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationCLCActivationStateOFF() {
+            super(MetricStatusManipulationCLCActivationStateOFF::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.CLC;
+            final var activationState = ComponentActivation.OFF;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
 }
