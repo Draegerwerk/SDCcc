@@ -18,6 +18,8 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +38,8 @@ import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.CommunicationLogImpl;
+import org.somda.sdc.dpws.CommunicationLogSink;
+import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpHandler;
@@ -95,6 +99,7 @@ public class DirectSubscriptionHandlingTestTest {
     public static final long DEFAULT_DURATION_IN_SECONDS = 60 * 60 * 24L;
     public static final int INSIGNIFICANT_DELAY_IN_SECONDS = 3;
     public static final int SIGNIFICANT_DELAY_IN_SECONDS = 6;
+    public static final String frameworkIdentifier = "frameworkIdentifier";
 
     private static final java.time.Duration MAX_WAIT = java.time.Duration.ofSeconds(10);
     private static final String LOW_PRIORITY_WSDL = "wsdl/IEEE11073-20701-LowPriority-Services.wsdl";
@@ -119,7 +124,6 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
-    private CommunicationLog communicationLog;
 
     private HashSet<String> subscriptionsToCancel;
     private HashSet<String> cancelledSubscriptions;
@@ -136,7 +140,7 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
-        communicationLog = mock(CommunicationLogImpl.class);
+        final var communicationLogSink = mock(CommunicationLogSink.class);
 
         // set up the injector used by sdcri
         final var clientInjector = TestClientUtil.createClientInjector(
@@ -147,6 +151,11 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
+                    bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier")).toInstance(frameworkIdentifier);
+                    bind(CommunicationLogSink.class).toInstance(communicationLogSink);
+                    install(new FactoryModuleBuilder()
+                        .implement(CommunicationLog.class, CommunicationLogImpl.class)
+                        .build(CommunicationLogFactory.class));
                 }
             }
         );
@@ -166,7 +175,6 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(Manipulations.class).toInstance(manipulations);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
-                    bind(CommunicationLog.class).toInstance(communicationLog);
                 }
             }
         );
