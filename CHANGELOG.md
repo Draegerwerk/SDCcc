@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - references to standards to test_configuration.toml
 - Java 17 support
 - test for biceps:5-4-7_12_0
+- test for biceps:5-4-7_16
 
 ### Fixed
 - missing request bodies in glue:R0036 test
