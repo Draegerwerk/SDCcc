@@ -12,7 +12,9 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
+import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.XPathExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,4 +75,22 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
             }
         }
     }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.GLUE_813)
+    @TestDescription("Ensures that the DUT provides a DescriptionEventService in the GetMetadataResponse "
+        + "and verifies the description event service endpoint provided by the DUT is conforming with SDC Glue "
+        + "Annex B and only implements SDC services. "
+        + "Note that this test case is only applicable to PoC Medical Devices that are extendable by removable subsystems.")
+    void testRequirement813() {
+
+        // 1. check presence of DescriptionEventService
+        final var hostedServiceProxy = MessageGeneratingUtil.getDescriptionEventService(client);
+        assertTrue(hostedServiceProxy.isPresent());
+
+        // 2. validate in WSDL
+        final HostedServiceVerifier verifier = new HostedServiceVerifier(client);
+        verifier.verifyHostedService(hostedServiceProxy);
+    }
+
 }
