@@ -34,6 +34,7 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
+import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
@@ -42,6 +43,7 @@ import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
+import org.somda.sdc.dpws.soap.exception.MalformedSoapMessageException;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
@@ -56,11 +58,13 @@ import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
 import org.somda.sdc.dpws.soap.wseventing.model.DeliveryType;
 import org.somda.sdc.dpws.soap.wseventing.model.FilterType;
 import org.somda.sdc.dpws.soap.wseventing.model.Subscribe;
+import org.somda.sdc.dpws.soap.wseventing.model.SubscribeResponse;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
 import javax.xml.namespace.QName;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -101,6 +105,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     private WsAddressingUtil wsaUtil;
     private WsEventingEventSinkFactory eventSinkFactory;
     private String adapterAddress;
+    private CommunicationLog commLog;
 
     @BeforeEach
     void setUp() {
@@ -118,6 +123,9 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.adapterAddress = getInjector().getInstance(
             Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS))
         );
+        this.commLog = testClient.getInjector().getInstance(CommunicationLogFactory.class)
+                                               .createCommunicationLog();
+
     }
 
     @Test
@@ -174,11 +182,14 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     }
 
     @Test
-    @TestIdentifier(EnabledTestConfig.GLUE_R0036)
-    @TestDescription("Subscribes to all Reports, checks that all Subscriptions are active, then triggers"
-        + " an EpisodicContextReport and intentionally fails to receive it. Afterwards, it checks that all"
-        + " Subscriptions have been cancelled by the provider.")
-    void testRequirementR0036() throws InterruptedException {
+    @TestIdentifier(EnabledTestConfig.GLUE_R0036_0)
+    @DisplayName("An SDC SERVICE PROVIDER SHALL terminate a subscription if the delivery of one MESSAGE"
+        + " related to that subscription failed.")
+    @TestDescription("Subscribes to all Reports, checks that all Subscriptions are active, then"
+        + " triggers an EpisodicContextReport and intentionally fails to receive it. Afterwards,"
+        + " it checks that the Subscription to the EpisodicContextReport has been cancelled by"
+        + " the provider while all other subscriptions are still active.")
+    void testRequirementR00360() throws InterruptedException {
 
         // preparation
         final LocationContextState locationContext = getOrCreateLocationContextState();
@@ -205,8 +216,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                 }
                 manipulations.setLocationDetail(locationDetail);
             });
-        final List<ReportTestData> reports = List.of(
-            triggerableReport,
+        final List<ReportTestData> otherReports = List.of(
             new ReportTestData(
                 WsdlConstants.OPERATION_OPERATION_INVOKED_REPORT,
                 ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
@@ -293,6 +303,9 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     // does not need to be triggered in this test.
                 })
         );
+        final List<ReportTestData> reports = new ArrayList<>();
+        reports.add(triggerableReport);
+        reports.addAll(otherReports);
 
         subscribeToAllReports(reports);
 
@@ -300,7 +313,18 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
         triggerReportAndIntentionallyFailReceivingIt(triggerableReport);
 
-        checkThatAllSubscriptionsAreCancelled(reports);
+        checkThatSubscriptionsHaveBeenCancelled(List.of(triggerableReport));
+        checkThatOtherSubscriptionsHaveNotBeenCancelled(otherReports);
+    }
+
+    private void checkThatOtherSubscriptionsHaveNotBeenCancelled(final List<ReportTestData> reports) {
+        for (ReportTestData report : reports) {
+            if (report.getSubscription() != null) {
+                final Duration status = getSubscriptionStatus(report);
+                assertNotNull(status, "Subscription for report " + report.getReportName()
+                    + " has been unexpectedly cancelled.");
+            }
+        }
     }
 
     private void subscribeToAllReports(final List<ReportTestData> reports) {
@@ -344,7 +368,8 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         syncPoint.wait(millis, (int) nanos);
     }
 
-    private void checkThatAllSubscriptionsAreCancelled(final List<ReportTestData> reports) throws InterruptedException {
+    private void checkThatSubscriptionsHaveBeenCancelled(final List<ReportTestData> reports)
+        throws InterruptedException {
         final long timeoutWaitingForCancellations = System.nanoTime() + TIMEOUT_NANOS;
         final HashSet<ReportTestData> uncancelledSubscriptions = new HashSet<>(reports);
         while (!uncancelledSubscriptions.isEmpty() && System.nanoTime() < timeoutWaitingForCancellations) {
@@ -360,7 +385,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                 .map(ReportTestData::getReportName)
                 .collect(Collectors.toList());
             fail("Reports " + String.join(", ", subscriptions) + " have not been cancelled by the provider"
-                + " although they should have been according to glue:R0036.");
+                + " although they should have been according to glue:R0036_0.");
         }
     }
 
@@ -545,10 +570,32 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             soapResponse = requestResponseClient.sendRequestResponse(subscribeRequest);
             if (soapResponse.isFault()) {
                 throw new RuntimeException("Could not subscribe to " + reportName + ".");
+            } else {
+                final SubscribeResponse responseBody = soapUtil
+                    .getBody(soapResponse, SubscribeResponse.class)
+                    .orElseThrow(() -> new MalformedSoapMessageException("Cannot read WS-Eventing Subscribe response"));
+
+                reportTestData.setSubscription(
+                    new SubscribeResult(determineSubscriptionIdForAction(action), responseBody.getExpires()));
+                final EventSink eventSink =
+                    eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI, commLog);
+                reportTestData.setEventSink(eventSink);
+
             }
         } catch (SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             fail("encountered Exception while subscribing to " + reportName, e);
         }
+    }
+
+    /**
+     * Determine SubscriptionId for a report with the given action.
+     * This method exists so a test case can override it and set the subscriptionId
+     * according to its needs.
+     * @param action the name of the report for which the context suffix should be determined.
+     * @return the context suffix.
+     */
+    public String determineSubscriptionIdForAction(final String action) {
+        return UUID.randomUUID().toString();
     }
 
     private String getLocalBaseURI() {

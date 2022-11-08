@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for biceps:5-4-7_12_0
 - test for biceps:5-4-7_14
 
+### Changed
+- updated test case for glue:R0036 to glue:R0036_0
+
 ### Fixed
 - missing request bodies in glue:R0036 test
 - some vulnerabilities due to old dependencies
