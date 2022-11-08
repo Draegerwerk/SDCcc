@@ -71,7 +71,6 @@ public class InvariantParticipantModelStatePartTestTest {
     private static final String CHANNEL_HANDLE = "someChannel";
     private static final String MSRMT_METRIC_HANDLE = "someMsrmtStringMetric";
     private static final String MSRMT_METRIC_HANDLE2 = "someMsrmtStringMetric2";
-
     private static final String RTSA_METRIC_HANDLE = "someRealTimeSampleArrayMetric";
     private static final String RTSA_METRIC_HANDLE2 = "someRealTimeSampleArrayMetric2";
     private static final String SET_METRIC_HANDLE = "someSetStringMetric";
