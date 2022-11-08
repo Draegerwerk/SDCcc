@@ -21,7 +21,6 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.Constants;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -83,9 +82,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010GoodPolicy() throws Exception {
         final String message;
         try (final var messageStream =
@@ -104,9 +100,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010GoodPolicyReference() throws Exception {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
@@ -125,9 +118,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010BadNoPolicy() throws Exception {
         final String message;
         try (final var messageStream =
@@ -146,9 +136,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010BadMissingPolicy() throws Exception {
         final String message;
         try (final var messageStream =
@@ -167,9 +154,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010BadPolicyInPortType() throws Exception {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
@@ -188,9 +172,6 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0010BadPolicyURIsInPortType() throws Exception {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(

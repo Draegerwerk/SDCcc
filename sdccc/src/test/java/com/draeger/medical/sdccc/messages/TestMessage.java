@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.draeger.medical.sdccc.util.XPathExtractor;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,9 +84,6 @@ public class TestMessage {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     public void testBigListOfNaughtyStrings() throws Exception {
 
         final CommunicationContext mockContext = mock(CommunicationContext.class, RETURNS_DEEP_STUBS);

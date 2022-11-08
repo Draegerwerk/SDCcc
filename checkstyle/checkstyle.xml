@@ -5,27 +5,15 @@
 <module name="Checker">
     <property name="severity" value="error"/>
 
-    <module name="SuppressWarningsFilter"/>
-
     <!-- forbid tabs -->
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>
     </module>
-    <module name="LineLength">
-        <property name="max" value="120"/>
-    </module>
 
     <module name="JavadocPackage"/>
+    <module name="NewlineAtEndOfFile"/>
 
     <module name="TreeWalker">
-        <!-- allows disabling checkstyle for certain expressions-->
-        <module name="SuppressionCommentFilter">
-            <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
-            <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
-            <property name="checkFormat" value="$1"/>
-        </module>
-
-        <module name="SuppressWarningsHolder"/>
         <property name="tabWidth" value="4"/>
         <module name="AvoidStarImport"/>
         <module name="ConstantName"/>
@@ -34,7 +22,6 @@
         <module name="PackageName"/>
         <module name="ParameterName"/>
         <module name="StaticVariableName"/>
-        <module name="TypeName"/>
         <module name="LocalVariableName"/>
         <module name="ClassTypeParameterName">
             <property name="format" value="^[A-Z]+$"/>
@@ -44,11 +31,6 @@
         </module>
         <module name="EmptyBlock"/>
 
-        <module name="ParameterNumber">
-            <property name="tokens" value="METHOD_DEF"/>
-        </module>
-        <!-- No public members allowed -->
-        <module name="VisibilityModifier"/>
         <module name="ArrayTrailingComma"/>
         <module name="CovariantEquals"/>
         <module name="EqualsAvoidNull"/>
@@ -66,14 +48,10 @@
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
         <module name="StringLiteralEquality"/>
-        <module name="NestedIfDepth">
-            <property name="max" value="1"/>
-        </module>
         <module name="NestedTryDepth">
             <property name="max" value="1"/>
         </module>
         <module name="NoClone"/>
-        <module name="IllegalCatch"/>
         <module name="IllegalThrows"/>
         <module name="PackageDeclaration"/>
         <module name="DeclarationOrder"/>
@@ -100,40 +78,18 @@
 
         <module name="EmptyForIteratorPad"/>
         <module name="MethodParamPad"/>
-        <module name="NoWhitespaceAfter"/>
-        <module name="NoWhitespaceBefore"/>
-        <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
-        <module name="WhitespaceAfter"/>
-        <module name="WhitespaceAround">
-            <property name="allowEmptyConstructors" value="true"/>
-        </module>
         <module name="EmptyCatchBlock"/>
         <module name="UnusedImports"/>
         <module name="RedundantImport"/>
         <module name="IllegalImport"/>
-
-        <module name="ImportOrder">
-            <property name="groups" value="*,javax,java"/>
-            <property name="ordered" value="true"/>
-            <property name="separated" value="true"/>
-            <property name="option" value="bottom"/>
-            <property name="sortStaticImportsAlphabetically" value="true"/>
-        </module>
-        <module name="SuppressionXpathSingleFilter">
-            <property name="checks" value="ImportOrder"/>
-            <property name="message" value="^'java\..*'.*"/>
-        </module>
 
         <module name="FinalClass"/>
 
         <module name="MissingDeprecated"/>
         <module name="MissingOverride"/>
         <module name="PackageAnnotation"/>
-
-        <module name="LeftCurly"/>
-        <module name="RightCurly"/>
 
         <module name="HideUtilityClassConstructor"/>
         <module name="InnerTypeLast"/>
@@ -148,9 +104,7 @@
         <module name="ExplicitInitialization"/>
         <module name="FallThrough"/>
         <module name="FinalLocalVariable"/>
-        <module name="MagicNumber"/>
 
-<!--    <module name="MultipleStringLiterals"/> this can be useful in some cases, but in most cases it is not-->
         <module name="MultipleVariableDeclarations"/>
 
         <module name="NoClone"/>
@@ -165,7 +119,6 @@
 
         <module name="RequireThis"/>
 
-        <module name="ReturnCount"/>
         <module name="SuperClone"/>
         <module name="SuperFinalize"/>
 
@@ -180,22 +133,12 @@
         <module name="InvalidJavadocPosition"/>
         <module name="JavadocBlockTagLocation"/>
         <module name="JavadocContentLocationCheck"/>
-        <module name="JavadocMissingWhitespaceAfterAsterisk"/>
 
-        <module name="JavadocTagContinuationIndentation"/>
         <module name="MissingJavadocPackage"/>
 
-        <module name="JavaNCSS"/>
-
-        <module name="NPathComplexity"/>
         <module name="ArrayTypeStyle"/>
 
-        <module name="CommentsIndentation"/>
         <module name="FinalParameters"/>
-
-        <module name="Indentation"/>
-
-<!--    <module name="NewlineAtEndOfFile"/> broken -->
 
         <module name="OuterTypeFilename"/>
         <module name="UncommentedMain">
@@ -212,29 +155,13 @@
 
         <module name="LambdaParameterName"/>
 
-        <module name="AnonInnerLength"/>
-
         <module name="OuterTypeNumber"/>
 
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
         </module>
 
-        <module name="GenericWhitespace"/>
-
-        <module name="SeparatorWrap">
-            <property name="id" value="SeparatorWrapDot"/>
-            <property name="tokens" value="DOT"/>
-            <property name="option" value="nl"/>
-        </module>
-        <module name="SeparatorWrap">
-            <property name="id" value="SeparatorWrapComma"/>
-            <property name="tokens" value="COMMA"/>
-            <property name="option" value="EOL"/>
-        </module>
-
         <module name="SingleSpaceSeparator"/>
-
 
     </module>
 </module>

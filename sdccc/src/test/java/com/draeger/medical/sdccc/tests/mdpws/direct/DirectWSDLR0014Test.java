@@ -19,7 +19,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -80,9 +79,6 @@ public class DirectWSDLR0014Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0014Good() throws Exception {
         final String message;
         try (final var messageStream =
@@ -101,9 +97,6 @@ public class DirectWSDLR0014Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     public void testRequirement0014Bad() throws Exception {
         final String message;
         try (final var messageStream =

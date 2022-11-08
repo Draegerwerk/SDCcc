@@ -15,7 +15,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -33,9 +32,6 @@ public class TestTomlConfigModule {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     public void testLoadValidConfig() throws Exception {
         try (final var resource = this.getClass().getResourceAsStream("valid_config.toml")) {
             final var configModule = mock(AbstractConfigurationModule.class);

@@ -502,7 +502,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return result;
     }
 
-    @SuppressWarnings("SameParameterValue")
     private void subscribeToReportWithTheAbilityToFail(
             final String baseURI,
             final String reportName,

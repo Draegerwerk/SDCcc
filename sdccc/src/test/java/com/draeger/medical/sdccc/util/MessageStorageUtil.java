@@ -15,7 +15,6 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
@@ -100,9 +99,6 @@ public class MessageStorageUtil {
      * @param context        message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs when using try-with-resources, no null check.")
     public void addMessage(
             final MessageStorage storage,
             final InputStream resourceStream,
@@ -127,9 +123,6 @@ public class MessageStorageUtil {
      * @param context       message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs when using try-with-resources, no null check.")
     public void addMessage(
             final MessageStorage storage,
             final JAXBElement<Envelope> soapMessage,
@@ -153,9 +146,6 @@ public class MessageStorageUtil {
      * @param context       message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs when using try-with-resources, no null check.")
     public void addMessage(
             final MessageStorage storage,
             final Envelope soapMessage,

@@ -10,7 +10,6 @@ package com.draeger.medical.sdccc.util;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,9 +61,6 @@ public class HttpClientUtil {
      * @throws TransportException on transport exceptions (http, ..)
      * @throws SoapFaultException on soap fault responses
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check.")
     public SoapMessage postMessage(final HttpClient client, final String endpoint, final byte[] message)
             throws TransportException, SoapFaultException {
 

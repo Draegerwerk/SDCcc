@@ -23,7 +23,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -333,9 +332,6 @@ public class DirectServiceModelTestTest {
         when(mockHostingService.getHostedServices()).thenReturn(map);
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();

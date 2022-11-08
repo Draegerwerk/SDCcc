@@ -22,7 +22,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -119,9 +118,6 @@ public class DirectWSDLR0013Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     public void testRequirementR0013Good() throws Exception {
         final var mockFault = mock(SoapFaultException.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockFault.getFault().getCode().getValue())

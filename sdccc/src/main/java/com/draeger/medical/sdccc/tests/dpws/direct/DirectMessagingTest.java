@@ -20,7 +20,6 @@ import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import org.apache.http.HttpResponse;
@@ -235,9 +234,6 @@ public class DirectMessagingTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.DPWS_R0034)
     @TestDescription("Verifies that a transmitted SOAP message and the response uses SOAP 1.2 Envelopes,"
             + " containing the correct namespace, an Envelope element and a Body element.")
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs, when using try for resources.")
     void testRequirement0034() {
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {

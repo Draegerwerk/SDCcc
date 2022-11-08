@@ -15,7 +15,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,9 +38,6 @@ public class LoggingOutputStreamTest {
      * @throws Exception on any exception.
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     public void testBigListOfNaughtyStrings() throws Exception {
 
         final var logger = mock(Logger.class, Mockito.RETURNS_DEEP_STUBS);

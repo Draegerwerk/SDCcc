@@ -25,7 +25,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -216,9 +215,6 @@ public class MessageStorage implements AutoCloseable {
      *
      * @param message to add to the database
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     public void addMessage(final DatabaseEntry message) {
         this.closeLock.lock();
         try {
@@ -791,9 +787,6 @@ public class MessageStorage implements AutoCloseable {
         this.flush(messageList, false, null);
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     private void flush(
             final List<DatabaseEntry> messageList,
             final boolean await,
@@ -851,9 +844,6 @@ public class MessageStorage implements AutoCloseable {
         }
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     private CriteriaQuery<String> buildCriteria(final Class<? extends DatabaseEntry> entryClass, final String id) {
         final CriteriaQuery<String> criteria;
         try (final Session session = sessionFactory.openSession()) {
@@ -895,9 +885,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundMessages() throws IOException {
 
         if (this.closed.get()) {
@@ -930,9 +917,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all outbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getOutboundMessages() throws IOException {
 
         if (this.closed.get()) {
@@ -969,9 +953,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundSoapMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -1029,9 +1010,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundSoapResponseMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -1092,9 +1070,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching outgoing {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getOutboundHttpMessagesByBodyTypeAndHeaders(
             final List<QName> bodyTypes, final List<AbstractMap.SimpleImmutableEntry<String, String>> headers)
             throws IOException {
@@ -1169,9 +1144,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundHttpMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -1216,9 +1188,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundMessagesByBodyType(final QName... bodyTypes) throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
@@ -1264,9 +1233,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationData() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_MANIPULATION_DATA_BY_MANIPULATION);
@@ -1307,9 +1273,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundMessagesByTimeIntervalAndBodyType(
             final long startTimestamp, final long finishTimestamp, final QName... reportTypes) throws IOException {
         if (this.closed.get()) {
@@ -1362,9 +1325,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationDataByManipulation(final String... manipulationNames)
             throws IOException {
         if (this.closed.get()) {
@@ -1410,9 +1370,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationDataByParametersAndManipulation(
             final List<Pair<String, String>> parameters, final String manipulationName) throws IOException {
         if (this.closed.get()) {
@@ -1515,9 +1472,6 @@ public class MessageStorage implements AutoCloseable {
                 .stream();
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "it is a bug in 'spotbugs' when using try with resources.")
     private void transmit(final List<DatabaseEntry> results) {
         try (final Session session = sessionFactory.openSession()) {
             final Transaction transaction = session.beginTransaction();

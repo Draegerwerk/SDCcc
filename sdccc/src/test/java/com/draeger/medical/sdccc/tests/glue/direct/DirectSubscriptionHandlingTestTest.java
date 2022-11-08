@@ -32,7 +32,6 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -298,9 +297,6 @@ public class DirectSubscriptionHandlingTestTest {
         when(mockHostingService.getHostedServices()).thenReturn(hostedServices);
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
@@ -769,10 +765,6 @@ public class DirectSubscriptionHandlingTestTest {
         }
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "False positive, caused by a disagreement between Spotbugs and JLS."
-                    + "See https://github.com/spotbugs/spotbugs/issues/1338")
     private void setupTestScenarioForR0036(final boolean hasLocationContextState) throws Exception {
         final Map<String, HostedServiceProxy> hostedServices = new HashMap<>();
 

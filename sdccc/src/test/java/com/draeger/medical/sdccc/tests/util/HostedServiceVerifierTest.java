@@ -21,7 +21,6 @@ import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -383,9 +382,6 @@ public class HostedServiceVerifierTest {
         }
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();

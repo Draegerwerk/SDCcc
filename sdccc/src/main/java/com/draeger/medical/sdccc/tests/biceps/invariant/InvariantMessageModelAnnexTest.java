@@ -28,7 +28,6 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -268,9 +267,6 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " seen during the test run and compares the descriptor version from each state with the descriptor version"
             + " of their descriptor.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationCrtPrecondition.class})
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs, when using try with resources.")
     void testRequirementR5051() throws NoTestData, IOException {
         try (final var messages =
                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {

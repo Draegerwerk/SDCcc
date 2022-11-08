@@ -21,7 +21,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -268,9 +267,6 @@ public class DirectDiscoveryBindingTestTest {
         assertThrows(AssertionError.class, testClass::testRequirementR0042);
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath, final boolean classpath) throws IOException {
         final String wsdl;
         if (classpath) {

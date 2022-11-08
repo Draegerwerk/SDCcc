@@ -41,7 +41,6 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.com.draeger.medical.sdccc.test_util.SslMetadata;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
@@ -131,9 +130,6 @@ public class TestSuiteIT {
         return loopbackAdapter.getName();
     }
 
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "Known bug when Findbugs encounters a try-with-resources-block.")
     private TestProvider getProvider() throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
         assert providerCert != null;

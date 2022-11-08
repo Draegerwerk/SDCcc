@@ -31,7 +31,6 @@ import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.XPathExtractor;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -543,9 +542,6 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws TransportException if transport-related exceptions come up during processing.
      *                            This will hinder the response from being sent.
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     protected void sendMessageAllFaults(final TestClient testClient) throws SoapFaultException, TransportException {
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
@@ -637,9 +633,6 @@ public class DirectWSDLTest extends InjectorTestBase {
      * @throws TransportException if transport-related exceptions come up during processing.
      *                            This will hinder the response from being sent.
      */
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check.")
     protected void sendVersionMismatch(final TestClient testClient) throws SoapFaultException, TransportException {
 
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
