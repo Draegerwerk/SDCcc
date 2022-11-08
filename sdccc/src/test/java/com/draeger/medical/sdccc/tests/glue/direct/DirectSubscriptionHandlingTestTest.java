@@ -99,7 +99,7 @@ public class DirectSubscriptionHandlingTestTest {
     public static final long DEFAULT_DURATION_IN_SECONDS = 60 * 60 * 24L;
     public static final int INSIGNIFICANT_DELAY_IN_SECONDS = 3;
     public static final int SIGNIFICANT_DELAY_IN_SECONDS = 6;
-    public static final String frameworkIdentifier = "frameworkIdentifier";
+    public static final String FRAMEWORK_IDENTIFIER = "frameworkIdentifier";
 
     private static final java.time.Duration MAX_WAIT = java.time.Duration.ofSeconds(10);
     private static final String LOW_PRIORITY_WSDL = "wsdl/IEEE11073-20701-LowPriority-Services.wsdl";
@@ -152,7 +152,7 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
                     bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier"))
-                        .toInstance(frameworkIdentifier);
+                        .toInstance(FRAMEWORK_IDENTIFIER);
                     bind(CommunicationLogSink.class).toInstance(communicationLogSink);
                     install(new FactoryModuleBuilder()
                         .implement(CommunicationLog.class, CommunicationLogImpl.class)
