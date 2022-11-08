@@ -18,6 +18,7 @@
         <sdcriVersion>2.1.0-20221018.121941-19</sdcriVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <spotbugsVersion>4.7.3</spotbugsVersion>
+        <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
         <bouncyCastleVersion>1.67</bouncyCastleVersion>
 
         <!-- name of the directory inside the archive -->
