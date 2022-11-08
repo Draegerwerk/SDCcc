@@ -1160,8 +1160,7 @@ public class ManipulationPreconditions {
      */
     public static class MetricStatusManipulationCLCActivationStateSTNDBY extends ManipulationPrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(
-            MetricStatusManipulationCLCActivationStateSTNDBY.class);
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationCLCActivationStateSTNDBY.class);
 
         /**
          * Creates a metric status precondition.
@@ -1180,5 +1179,4 @@ public class ManipulationPreconditions {
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
         }
     }
-
 }
