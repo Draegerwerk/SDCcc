@@ -14,6 +14,12 @@ import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.Injector;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -41,41 +47,41 @@ import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 /**
  * A collection of manipulation preconditions.
  */
 public class ManipulationPreconditions {
 
-    private static boolean manipulateMetricStatus(final Injector injector, final Logger log,
-                                                  final MetricCategory metricCategory,
-                                                  final ComponentActivation activationState,
-                                                  final ComponentActivation startingActivationState) {
+    private static boolean manipulateMetricStatus(
+            final Injector injector,
+            final Logger log,
+            final MetricCategory metricCategory,
+            final ComponentActivation activationState,
+            final ComponentActivation startingActivationState) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
-        final var metricEntities = testClient.getSdcRemoteDevice()
-            .getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
+        final var metricEntities =
+                testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
         for (var entity : metricEntities) {
             final var metricDescriptor = entity.getDescriptor(AbstractMetricDescriptor.class);
             final var category = metricDescriptor.orElseThrow().getMetricCategory();
             if (category.equals(metricCategory)) {
-                final var metricState = entity.getStates(AbstractMetricState.class).get(0);
+                final var metricState =
+                        entity.getStates(AbstractMetricState.class).get(0);
                 final var handle = metricState.getDescriptorHandle();
                 final var resultStartingActivationState =
-                    manipulations.setComponentActivation(handle, startingActivationState);
+                        manipulations.setComponentActivation(handle, startingActivationState);
                 // change activation state to something other than expected result to ensure the transition
                 if (resultStartingActivationState != ResponseTypes.Result.RESULT_SUCCESS) {
-                    log.debug("Manipulating the activation state to {} was {} for metric state with handle {}."
-                            + " This needs to be successful, to ensure that the metric is set to {} after performing"
-                            + " the setMetricStatus manipulation.",
-                        startingActivationState, resultStartingActivationState, handle, activationState);
+                    log.debug(
+                            "Manipulating the activation state to {} was {} for metric state with handle {}."
+                                    + " This needs to be successful, to ensure that the metric is set to {} after performing"
+                                    + " the setMetricStatus manipulation.",
+                            startingActivationState,
+                            resultStartingActivationState,
+                            handle,
+                            activationState);
                     return false;
                 }
                 final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
@@ -84,8 +90,8 @@ public class ManipulationPreconditions {
             }
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS)
-            && !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-            && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
     }
 
     /**
@@ -121,41 +127,36 @@ public class ManipulationPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var patientContextEntities = mdibAccess
-                .findEntitiesByType(PatientContextDescriptor.class);
+            final var patientContextEntities = mdibAccess.findEntitiesByType(PatientContextDescriptor.class);
 
             LOG.info("Associating new patients for {} handle(s)", patientContextEntities.size());
             boolean noEmptyStateEncountered = true;
             for (MdibEntity patientContextEntity : patientContextEntities) {
                 // store previously existing handles for comparison
                 final var originalStates = patientContextEntity.getStates(PatientContextState.class).stream()
-                    .map(AbstractMultiState::getHandle)
-                    .collect(Collectors.toSet());
+                        .map(AbstractMultiState::getHandle)
+                        .collect(Collectors.toSet());
                 // associate first new patient
                 var newStateHandle = associateNewPatientForHandle(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    patientContextEntity.getHandle(),
-                    originalStates
-                );
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        patientContextEntity.getHandle(),
+                        originalStates);
 
                 // associate another one if the first one worked out
                 if (newStateHandle.isPresent()) {
                     // add new state to known states
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewPatientForHandle(
-                        testClient.getSdcRemoteDevice(),
-                        manipulations,
-                        patientContextEntity.getHandle(),
-                        originalStates
-                    );
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            patientContextEntity.getHandle(),
+                            originalStates);
                 }
 
                 if (newStateHandle.isEmpty()) {
                     testRunObserver.invalidateTestRun(String.format(
-                        "Associating a new patient for handle %s failed",
-                        patientContextEntity.getHandle()
-                    ));
+                            "Associating a new patient for handle %s failed", patientContextEntity.getHandle()));
                     noEmptyStateEncountered = false;
                 }
             }
@@ -173,10 +174,10 @@ public class ManipulationPreconditions {
          * @return handle of new valid state, or empty
          */
         static Optional<String> associateNewPatientForHandle(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final Collection<String> previousStateHandles) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final Collection<String> previousStateHandles) {
             LOG.debug("Associating new patient for handle {}", handle);
             var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
             if (stateHandle.isEmpty()) {
@@ -184,9 +185,8 @@ public class ManipulationPreconditions {
                 return Optional.empty();
             }
             LOG.debug("New patient created, state handle is {}", stateHandle.orElseThrow());
-            final var validState = verifyStatePresentAndAssociated(
-                device, handle, stateHandle.orElseThrow(), previousStateHandles
-            );
+            final var validState =
+                    verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
@@ -207,10 +207,10 @@ public class ManipulationPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndAssociated(
-            final SdcRemoteDevice device,
-            final String descriptorHandle,
-            final String stateHandle,
-            final Collection<String> previousStateHandles) {
+                final SdcRemoteDevice device,
+                final String descriptorHandle,
+                final String stateHandle,
+                final Collection<String> previousStateHandles) {
             final var contextStateOpt = device.getMdibAccess().getState(stateHandle, PatientContextState.class);
 
             if (contextStateOpt.isEmpty()) {
@@ -236,7 +236,7 @@ public class ManipulationPreconditions {
     public static class AbstractDeviceComponentStateOFFManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG =
-            LogManager.getLogger(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.class);
+                LogManager.getLogger(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.class);
 
         /**
          * Creates a AbstractDeviceComponentStateOFFManipulation precondition.
@@ -263,18 +263,18 @@ public class ManipulationPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var abstractDeviceComponentEntities = mdibAccess
-                .findEntitiesByType(AbstractDeviceComponentDescriptor.class);
-
+            final var abstractDeviceComponentEntities =
+                    mdibAccess.findEntitiesByType(AbstractDeviceComponentDescriptor.class);
 
             boolean atLeastOneSuccessful = false;
             boolean noFailure = true;
             for (MdibEntity abstractDeviceComponentEntity : abstractDeviceComponentEntities) {
-                final var state = abstractDeviceComponentEntity.getFirstState(AbstractDeviceComponentState.class)
-                    .orElseThrow();
+                final var state = abstractDeviceComponentEntity
+                        .getFirstState(AbstractDeviceComponentState.class)
+                        .orElseThrow();
 
                 final ResponseTypes.Result result =
-                    manipulations.setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF);
+                        manipulations.setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF);
 
                 switch (result) {
                     case RESULT_NOT_SUPPORTED:
@@ -324,41 +324,36 @@ public class ManipulationPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var locationContextEntities = mdibAccess
-                .findEntitiesByType(LocationContextDescriptor.class);
+            final var locationContextEntities = mdibAccess.findEntitiesByType(LocationContextDescriptor.class);
 
             LOG.info("Associating new locations for {} handle(s)", locationContextEntities.size());
             boolean noEmptyStateEncountered = true;
             for (MdibEntity locationContextEntity : locationContextEntities) {
                 // store previously existing handles for comparison
                 final var originalStates = locationContextEntity.getStates(LocationContextState.class).stream()
-                    .map(AbstractMultiState::getHandle)
-                    .collect(Collectors.toSet());
+                        .map(AbstractMultiState::getHandle)
+                        .collect(Collectors.toSet());
                 // associate first new location
                 var newStateHandle = associateNewLocationForHandle(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    locationContextEntity.getHandle(),
-                    originalStates
-                );
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        locationContextEntity.getHandle(),
+                        originalStates);
 
                 // associate another one if the first one worked out
                 if (newStateHandle.isPresent()) {
                     // add new state to known states
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewLocationForHandle(
-                        testClient.getSdcRemoteDevice(),
-                        manipulations,
-                        locationContextEntity.getHandle(),
-                        originalStates
-                    );
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            locationContextEntity.getHandle(),
+                            originalStates);
                 }
 
                 if (newStateHandle.isEmpty()) {
                     testRunObserver.invalidateTestRun(String.format(
-                        "Associating a new location for handle %s failed",
-                        locationContextEntity.getHandle()
-                    ));
+                            "Associating a new location for handle %s failed", locationContextEntity.getHandle()));
                     noEmptyStateEncountered = false;
                 }
             }
@@ -375,10 +370,10 @@ public class ManipulationPreconditions {
          * @return handle of new valid state, or empty
          */
         static Optional<String> associateNewLocationForHandle(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final Collection<String> previousStateHandles) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final Collection<String> previousStateHandles) {
             LOG.debug("Associating new location for handle {}", handle);
             var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
             if (stateHandle.isEmpty()) {
@@ -386,9 +381,8 @@ public class ManipulationPreconditions {
                 return Optional.empty();
             }
             LOG.debug("New location created, state handle is {}", stateHandle.orElseThrow());
-            final var validState = verifyStatePresentAndAssociated(
-                device, handle, stateHandle.orElseThrow(), previousStateHandles
-            );
+            final var validState =
+                    verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
@@ -409,10 +403,10 @@ public class ManipulationPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndAssociated(
-            final SdcRemoteDevice device,
-            final String descriptorHandle,
-            final String stateHandle,
-            final Collection<String> previousStateHandles) {
+                final SdcRemoteDevice device,
+                final String descriptorHandle,
+                final String stateHandle,
+                final Collection<String> previousStateHandles) {
             final var contextStateOpt = device.getMdibAccess().getState(stateHandle, LocationContextState.class);
 
             if (contextStateOpt.isEmpty()) {
@@ -465,40 +459,35 @@ public class ManipulationPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var alertSystemEntities = mdibAccess
-                .findEntitiesByType(AlertSystemDescriptor.class);
+            final var alertSystemEntities = mdibAccess.findEntitiesByType(AlertSystemDescriptor.class);
             LOG.info("Changing activation state for alert systems for {} handle(s)", alertSystemEntities.size());
             boolean noFailedActivationState = true;
             final var manipulationResults = new HashSet<ResponseTypes.Result>();
             for (MdibEntity alertSystemEntity : alertSystemEntities) {
                 // change activation state to On
                 manipulationResults.add(changeAlertActivationState(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    alertSystemEntity.getHandle(),
-                    AlertActivation.ON
-                ));
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        alertSystemEntity.getHandle(),
+                        AlertActivation.ON));
                 // change activation state to Psd
                 manipulationResults.add(changeAlertActivationState(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    alertSystemEntity.getHandle(),
-                    AlertActivation.PSD
-                ));
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        alertSystemEntity.getHandle(),
+                        AlertActivation.PSD));
 
                 // change activation state to Off
                 manipulationResults.add(changeAlertActivationState(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    alertSystemEntity.getHandle(),
-                    AlertActivation.OFF
-                ));
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        alertSystemEntity.getHandle(),
+                        AlertActivation.OFF));
                 if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                    || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
+                        || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
                     testRunObserver.invalidateTestRun(String.format(
-                        "Setting the activation state for alert system with handle %s failed",
-                        alertSystemEntity.getHandle()
-                    ));
+                            "Setting the activation state for alert system with handle %s failed",
+                            alertSystemEntity.getHandle()));
                     noFailedActivationState = false;
                 }
             }
@@ -515,10 +504,10 @@ public class ManipulationPreconditions {
          * @return the result of the manipulation
          */
         static ResponseTypes.Result changeAlertActivationState(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final AlertActivation activationState) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final AlertActivation activationState) {
             LOG.debug("Setting the activation state {} for handle {}", activationState, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activationState);
             if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
@@ -539,17 +528,16 @@ public class ManipulationPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndAlertSet(
-            final SdcRemoteDevice device,
-            final String stateHandle,
-            final AlertActivation activationState) {
+                final SdcRemoteDevice device, final String stateHandle, final AlertActivation activationState) {
             final var alertSystemStateOpt = device.getMdibAccess().getState(stateHandle, AlertSystemState.class);
 
             if (alertSystemStateOpt.isEmpty()) {
                 return false;
             }
             final var alertSystemState = alertSystemStateOpt.orElseThrow();
-            LOG.debug("verifyStatePresentAndAlertSet: The AlertSystemState for the given handle found. {}",
-                alertSystemState);
+            LOG.debug(
+                    "verifyStatePresentAndAlertSet: The AlertSystemState for the given handle found. {}",
+                    alertSystemState);
 
             final boolean valid = activationState.equals(alertSystemState.getActivationState());
             LOG.info("Validity for {} after activation state is set check: {}", stateHandle, valid);
@@ -589,10 +577,10 @@ public class ManipulationPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var alertConditionEntities = mdibAccess
-                .findEntitiesByType(AlertConditionDescriptor.class);
-            LOG.info("Changing the presence attribute for alert condition states for {} handle(s)",
-                alertConditionEntities.size());
+            final var alertConditionEntities = mdibAccess.findEntitiesByType(AlertConditionDescriptor.class);
+            LOG.info(
+                    "Changing the presence attribute for alert condition states for {} handle(s)",
+                    alertConditionEntities.size());
 
             boolean manipulationSuccessful = false;
             for (MdibEntity alertConditionEntity : alertConditionEntities) {
@@ -600,20 +588,15 @@ public class ManipulationPreconditions {
                 final var parentHandle = alertConditionEntity.getParent().orElseThrow();
                 // set the alert activation of the alert condition and the parent alert system to off, to see if they
                 // turn on, when presence of the alert condition is true
-                final var alertConditionStateResult =
-                    changeActivationState(testClient.getSdcRemoteDevice(), manipulations, handle, AlertActivation.OFF);
-                final var alertSystemStateResult =
-                    changeActivationState(testClient.getSdcRemoteDevice(), manipulations, parentHandle,
-                        AlertActivation.OFF);
-                final var presenceTrueResult = changePresence(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    handle,
-                    true
-                );
+                final var alertConditionStateResult = changeActivationState(
+                        testClient.getSdcRemoteDevice(), manipulations, handle, AlertActivation.OFF);
+                final var alertSystemStateResult = changeActivationState(
+                        testClient.getSdcRemoteDevice(), manipulations, parentHandle, AlertActivation.OFF);
+                final var presenceTrueResult =
+                        changePresence(testClient.getSdcRemoteDevice(), manipulations, handle, true);
                 if (alertConditionStateResult == ResponseTypes.Result.RESULT_SUCCESS
-                    && alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
-                    && presenceTrueResult == ResponseTypes.Result.RESULT_SUCCESS) {
+                        && alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                        && presenceTrueResult == ResponseTypes.Result.RESULT_SUCCESS) {
                     manipulationSuccessful = true;
                 }
             }
@@ -630,10 +613,10 @@ public class ManipulationPreconditions {
          * @return the result of the manipulation
          */
         static ResponseTypes.Result changePresence(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final boolean presence) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final boolean presence) {
             LOG.debug("Setting the presence attribute {} for handle {}", presence, handle);
             var manipulationResult = manipulations.setAlertConditionPresence(handle, presence);
             if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
@@ -654,10 +637,11 @@ public class ManipulationPreconditions {
          * @param activation    the alert activation attribute to set
          * @return the result of the manipulation
          */
-        static ResponseTypes.Result changeActivationState(final SdcRemoteDevice device,
-                                                          final Manipulations manipulations,
-                                                          final String handle,
-                                                          final AlertActivation activation) {
+        static ResponseTypes.Result changeActivationState(
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final AlertActivation activation) {
             LOG.debug("Setting the activation state {} for handle {}", activation, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activation);
             if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
@@ -679,17 +663,16 @@ public class ManipulationPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndPresenceSet(
-            final SdcRemoteDevice device,
-            final String stateHandle,
-            final boolean presence) {
+                final SdcRemoteDevice device, final String stateHandle, final boolean presence) {
             final var alertConditionStateOpt = device.getMdibAccess().getState(stateHandle, AlertConditionState.class);
 
             if (alertConditionStateOpt.isEmpty()) {
                 return false;
             }
             final var alertConditionState = alertConditionStateOpt.orElseThrow();
-            LOG.debug("verifyStatePresentAndPresenceSet: The alert condition state for the given handle found. {}",
-                alertConditionState);
+            LOG.debug(
+                    "verifyStatePresentAndPresenceSet: The alert condition state for the given handle found. {}",
+                    alertConditionState);
 
             final var valid = ImpliedValueUtil.isPresence(alertConditionState);
             LOG.info("Validity for {} after presence attribute is set check: {}", stateHandle, valid);
@@ -704,23 +687,22 @@ public class ManipulationPreconditions {
          * @param activation  the expected alert activation attribute value
          * @return true if valid, false otherwise
          */
-        static boolean verifyStatePresentAndActivationState(final SdcRemoteDevice device,
-                                                            final String stateHandle,
-                                                            final AlertActivation activation) {
+        static boolean verifyStatePresentAndActivationState(
+                final SdcRemoteDevice device, final String stateHandle, final AlertActivation activation) {
             final var abstractAlertStateOptional =
-                device.getMdibAccess().getState(stateHandle, AbstractAlertState.class);
+                    device.getMdibAccess().getState(stateHandle, AbstractAlertState.class);
 
             if (abstractAlertStateOptional.isEmpty()) {
                 return false;
             }
             final var abstractAlertState = abstractAlertStateOptional.orElseThrow();
-            LOG.debug("verifyStatePresentAndActivationState: The alert state for the given handle found. {}",
-                abstractAlertState);
+            LOG.debug(
+                    "verifyStatePresentAndActivationState: The alert state for the given handle found. {}",
+                    abstractAlertState);
 
             final boolean valid = activation.equals(abstractAlertState.getActivationState());
             LOG.info("Validity for {} after activation state is set check: {}", stateHandle, valid);
             return valid;
-
         }
     }
 
@@ -747,43 +729,59 @@ public class ManipulationPreconditions {
             final var testClient = injector.getInstance(TestClient.class);
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testRunObserver = injector.getInstance(TestRunObserver.class);
-            final var alertSystemEntities = testClient.getSdcRemoteDevice()
-                .getMdibAccess().findEntitiesByType(AlertSystemDescriptor.class);
-            LOG.info("Changing the system signal activation for alert system states for {} handle(s)",
-                alertSystemEntities.size());
+            final var alertSystemEntities =
+                    testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AlertSystemDescriptor.class);
+            LOG.info(
+                    "Changing the system signal activation for alert system states for {} handle(s)",
+                    alertSystemEntities.size());
             for (MdibEntity alertSystemEntity : alertSystemEntities) {
 
-                var systemSignalActivation = setSystemSignalActivation(testClient.getSdcRemoteDevice(),
-                    manipulations, alertSystemEntity.getHandle(), AlertSignalManifestation.AUD,
-                    getChildAlertSignalsForManifestation(alertSystemEntity, testClient.getSdcRemoteDevice(),
-                        AlertSignalManifestation.AUD), testRunObserver);
+                var systemSignalActivation = setSystemSignalActivation(
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        alertSystemEntity.getHandle(),
+                        AlertSignalManifestation.AUD,
+                        getChildAlertSignalsForManifestation(
+                                alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.AUD),
+                        testRunObserver);
 
                 if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(testClient.getSdcRemoteDevice(), manipulations,
-                        alertSystemEntity.getHandle(), AlertSignalManifestation.VIS,
-                        getChildAlertSignalsForManifestation(alertSystemEntity, testClient.getSdcRemoteDevice(),
-                            AlertSignalManifestation.VIS), testRunObserver);
+                    systemSignalActivation = setSystemSignalActivation(
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            alertSystemEntity.getHandle(),
+                            AlertSignalManifestation.VIS,
+                            getChildAlertSignalsForManifestation(
+                                    alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.VIS),
+                            testRunObserver);
                 }
 
                 if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(testClient.getSdcRemoteDevice(), manipulations,
-                        alertSystemEntity.getHandle(), AlertSignalManifestation.TAN,
-                        getChildAlertSignalsForManifestation(alertSystemEntity, testClient.getSdcRemoteDevice(),
-                            AlertSignalManifestation.TAN), testRunObserver);
+                    systemSignalActivation = setSystemSignalActivation(
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            alertSystemEntity.getHandle(),
+                            AlertSignalManifestation.TAN,
+                            getChildAlertSignalsForManifestation(
+                                    alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.TAN),
+                            testRunObserver);
                 }
 
                 if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(testClient.getSdcRemoteDevice(), manipulations,
-                        alertSystemEntity.getHandle(), AlertSignalManifestation.OTH,
-                        getChildAlertSignalsForManifestation(alertSystemEntity, testClient.getSdcRemoteDevice(),
-                            AlertSignalManifestation.OTH), testRunObserver);
+                    systemSignalActivation = setSystemSignalActivation(
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            alertSystemEntity.getHandle(),
+                            AlertSignalManifestation.OTH,
+                            getChildAlertSignalsForManifestation(
+                                    alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.OTH),
+                            testRunObserver);
                 }
 
                 if (!systemSignalActivation) {
                     testRunObserver.invalidateTestRun(String.format(
-                        "Setting the system signal activation for alert system state with handle %s failed",
-                        alertSystemEntity.getHandle()
-                    ));
+                            "Setting the system signal activation for alert system state with handle %s failed",
+                            alertSystemEntity.getHandle()));
                     return false;
                 }
             }
@@ -799,17 +797,17 @@ public class ManipulationPreconditions {
          * @return the alert signals with the given manifestation of the alert system
          */
         static List<AlertSignalState> getChildAlertSignalsForManifestation(
-            final MdibEntity entity,
-            final SdcRemoteDevice sdcRemoteDevice,
-            final AlertSignalManifestation manifestation) {
+                final MdibEntity entity,
+                final SdcRemoteDevice sdcRemoteDevice,
+                final AlertSignalManifestation manifestation) {
             final var childAlertSignals = new ArrayList<AlertSignalState>();
             for (var childHandle : entity.getChildren()) {
-                final var childAlertSignal = sdcRemoteDevice.getMdibAccess().getDescriptor(childHandle,
-                    AlertSignalDescriptor.class);
+                final var childAlertSignal =
+                        sdcRemoteDevice.getMdibAccess().getDescriptor(childHandle, AlertSignalDescriptor.class);
                 if (childAlertSignal.isPresent()
-                    && childAlertSignal.orElseThrow().getManifestation().equals(manifestation)) {
-                    final var childAlertSignalState = sdcRemoteDevice.getMdibAccess()
-                        .getState(childHandle, AlertSignalState.class);
+                        && childAlertSignal.orElseThrow().getManifestation().equals(manifestation)) {
+                    final var childAlertSignalState =
+                            sdcRemoteDevice.getMdibAccess().getState(childHandle, AlertSignalState.class);
                     childAlertSignalState.ifPresent(childAlertSignals::add);
                 }
             }
@@ -828,46 +826,30 @@ public class ManipulationPreconditions {
          * @param testRunObserver   to register unexpected failures during test run
          * @return true if successful, false otherwise
          */
-        static boolean setSystemSignalActivation(final SdcRemoteDevice sdcRemoteDevice,
-                                                 final Manipulations manipulations, final String handle,
-                                                 final AlertSignalManifestation manifestation,
-                                                 final List<AlertSignalState> childAlertSignals,
-                                                 final TestRunObserver testRunObserver) {
+        static boolean setSystemSignalActivation(
+                final SdcRemoteDevice sdcRemoteDevice,
+                final Manipulations manipulations,
+                final String handle,
+                final AlertSignalManifestation manifestation,
+                final List<AlertSignalState> childAlertSignals,
+                final TestRunObserver testRunObserver) {
             // change alert activation attribute to ON
             final var manipulationResults = new HashSet<ResponseTypes.Result>();
             manipulationResults.add(changeAlertActivation(
-                sdcRemoteDevice,
-                manipulations,
-                handle,
-                manifestation,
-                AlertActivation.ON,
-                childAlertSignals
-            ));
+                    sdcRemoteDevice, manipulations, handle, manifestation, AlertActivation.ON, childAlertSignals));
 
             // change alert activation attribute to PSD
             manipulationResults.add(changeAlertActivation(
-                sdcRemoteDevice,
-                manipulations,
-                handle,
-                manifestation,
-                AlertActivation.PSD,
-                childAlertSignals));
+                    sdcRemoteDevice, manipulations, handle, manifestation, AlertActivation.PSD, childAlertSignals));
 
             // change alert activation attribute to OFF
             manipulationResults.add(changeAlertActivation(
-                sdcRemoteDevice,
-                manipulations,
-                handle,
-                manifestation,
-                AlertActivation.OFF,
-                childAlertSignals));
+                    sdcRemoteDevice, manipulations, handle, manifestation, AlertActivation.OFF, childAlertSignals));
 
             if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
+                    || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
                 testRunObserver.invalidateTestRun(String.format(
-                    "Setting the system signal activation for alert system state with handle %s failed",
-                    handle
-                ));
+                        "Setting the system signal activation for alert system state with handle %s failed", handle));
                 return false;
             }
             return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
@@ -886,39 +868,39 @@ public class ManipulationPreconditions {
          * @return the result of the manipulation
          */
         static ResponseTypes.Result changeAlertActivation(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final AlertSignalManifestation manifestation,
-            final AlertActivation activation,
-            final List<AlertSignalState> childAlertSignals) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final AlertSignalManifestation manifestation,
+                final AlertActivation activation,
+                final List<AlertSignalState> childAlertSignals) {
 
             LOG.debug("Setting the system signal activation attribute {} for handle {}", activation, handle);
 
             var manipulationResult = manipulations.setSystemSignalActivation(handle, manifestation, activation);
             if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS
-                && manipulationResult != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
-                LOG.error("Setting the system signal activation attribute {} for handle {} failed",
-                    activation, handle);
+                    && manipulationResult != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
+                LOG.error("Setting the system signal activation attribute {} for handle {} failed", activation, handle);
             }
 
             if (manipulationResult == ResponseTypes.Result.RESULT_SUCCESS
-                && !verifySystemSignalActivationPresent(device, handle, manifestation, activation)) {
+                    && !verifySystemSignalActivationPresent(device, handle, manifestation, activation)) {
                 LOG.error("Validation for alert system state {} failed", handle);
                 manipulationResult = ResponseTypes.Result.RESULT_FAIL;
             }
 
             for (var child : childAlertSignals) {
-                final var childActivation = manipulations.setAlertActivation(
-                    child.getDescriptorHandle(), activation);
+                final var childActivation = manipulations.setAlertActivation(child.getDescriptorHandle(), activation);
                 if (childActivation != ResponseTypes.Result.RESULT_SUCCESS
-                    && childActivation != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
-                    LOG.error("Setting the activation attribute {} for handle {} failed", activation,
-                        child.getDescriptorHandle());
+                        && childActivation != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
+                    LOG.error(
+                            "Setting the activation attribute {} for handle {} failed",
+                            activation,
+                            child.getDescriptorHandle());
                     manipulationResult = ResponseTypes.Result.RESULT_FAIL;
                 }
                 if (childActivation == ResponseTypes.Result.RESULT_SUCCESS
-                    && !verifyStatePresentAndActivationSet(device, handle, activation)) {
+                        && !verifyStatePresentAndActivationSet(device, handle, activation)) {
                     LOG.error("Validation for alert signal state {} failed", handle);
                     manipulationResult = ResponseTypes.Result.RESULT_FAIL;
                 }
@@ -937,22 +919,28 @@ public class ManipulationPreconditions {
          * @param activation    of the system signal activation
          * @return true if valid, false otherwise
          */
-        static boolean verifySystemSignalActivationPresent(final SdcRemoteDevice device,
-                                                           final String handle,
-                                                           final AlertSignalManifestation manifestation,
-                                                           final AlertActivation activation) {
+        static boolean verifySystemSignalActivationPresent(
+                final SdcRemoteDevice device,
+                final String handle,
+                final AlertSignalManifestation manifestation,
+                final AlertActivation activation) {
             final var alertSystemStateOpt = device.getMdibAccess().getState(handle, AlertSystemState.class);
 
             if (alertSystemStateOpt.isEmpty()) {
                 return false;
             }
             final var alertSystemState = alertSystemStateOpt.orElseThrow();
-            LOG.debug("verifySystemSignalActivationPresent: The alert system state for the given handle found. {}",
-                alertSystemState);
+            LOG.debug(
+                    "verifySystemSignalActivationPresent: The alert system state for the given handle found. {}",
+                    alertSystemState);
 
-            final var valid = alertSystemState.getSystemSignalActivation().stream().filter(systemSignalActivation ->
-                    systemSignalActivation.getManifestation().equals(manifestation)).collect(Collectors.toList())
-                .stream().anyMatch(systemSignalActivation -> systemSignalActivation.getState().equals(activation));
+            final var valid = alertSystemState.getSystemSignalActivation().stream()
+                    .filter(systemSignalActivation ->
+                            systemSignalActivation.getManifestation().equals(manifestation))
+                    .collect(Collectors.toList())
+                    .stream()
+                    .anyMatch(systemSignalActivation ->
+                            systemSignalActivation.getState().equals(activation));
             LOG.info("Validity for {} after system signal activation attribute is set check: {}", handle, valid);
             return valid;
         }
@@ -967,16 +955,15 @@ public class ManipulationPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndActivationSet(
-            final SdcRemoteDevice device,
-            final String stateHandle,
-            final AlertActivation activation) {
+                final SdcRemoteDevice device, final String stateHandle, final AlertActivation activation) {
             final var alertSignalStateOpt = device.getMdibAccess().getState(stateHandle, AlertSignalState.class);
             if (alertSignalStateOpt.isEmpty()) {
                 return false;
             }
             final var alertSignalState = alertSignalStateOpt.orElseThrow();
-            LOG.debug("verifyStatePresentAndActivationSet: The alert signal state for the given handle found. {}",
-                alertSignalState);
+            LOG.debug(
+                    "verifyStatePresentAndActivationSet: The alert signal state for the given handle found. {}",
+                    alertSignalState);
 
             final var valid = alertSignalState.getActivationState().equals(activation);
             LOG.info("Validity for {} after activation state is set check: {}", stateHandle, valid);
@@ -1016,8 +1003,8 @@ public class ManipulationPreconditions {
      */
     public static class MetricStatusManipulationMSRMTActivationStateSTNDBY extends ManipulationPrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(
-            MetricStatusManipulationMSRMTActivationStateSTNDBY.class);
+        private static final Logger LOG =
+                LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateSTNDBY.class);
 
         /**
          * Creates a metric status precondition.
@@ -1173,8 +1160,7 @@ public class ManipulationPreconditions {
      */
     public static class MetricStatusManipulationCLCActivationStateSTNDBY extends ManipulationPrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(
-            MetricStatusManipulationCLCActivationStateSTNDBY.class);
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationCLCActivationStateSTNDBY.class);
 
         /**
          * Creates a metric status precondition.
