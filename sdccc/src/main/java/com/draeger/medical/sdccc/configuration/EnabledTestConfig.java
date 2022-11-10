@@ -72,6 +72,7 @@ public final class EnabledTestConfig {
     public static final String BICEPS_547_10 = BICEPS + "5-4-7_10";
     public static final String BICEPS_547_12_0 = BICEPS + "5-4-7_12_0";
     public static final String BICEPS_547_14 = BICEPS + "5-4-7_14";
+    public static final String BICEPS_547_16 = BICEPS + "5-4-7_16";
 
     // MDPWS
     private static final String MDPWS = "MDPWS.";
@@ -101,7 +102,7 @@ public final class EnabledTestConfig {
     public static final String GLUE_R0012_0_0 = GLUE + "R0012_0_0";
     public static final String GLUE_R0013 = GLUE + "R0013";
     public static final String GLUE_R0034_0 = GLUE + "R0034_0";
-    public static final String GLUE_R0036_0 = GLUE + "R0036_0";
+    public static final String GLUE_R0036 = GLUE + "R0036";
     public static final String GLUE_R0042_0 = GLUE + "R0042_0";
     public static final String GLUE_R0072 = GLUE + "R0072";
     public static final String GLUE_R0080 = GLUE + "R0080";

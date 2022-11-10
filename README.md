@@ -199,6 +199,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | 5-4-7_10        | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_12_0      | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_14        | SetComponentActivation, SetMetricStatus                     |
+| 5-4-7_16        | SetComponentActivation, SetMetricStatus                     |
 
 [MDPWS]
 
@@ -210,7 +211,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 
 | **Requirement** | **T2IAPI Manipulation** |
 |-----------------|-------------------------|
-| R0036_0         | SetLocationDetail       |
+| R0036           | SetLocationDetail       |
 
 
 ## Notices

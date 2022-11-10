@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Java 17 support
 - test for biceps:5-4-7_12_0
 - test for biceps:5-4-7_14
+- test for biceps:5-4-7_16
 - test for glue:8-1-3
 
 ### Changed

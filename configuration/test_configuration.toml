@@ -62,6 +62,7 @@ C-62=true
 5-4-7_10=true
 5-4-7_12_0=true
 5-4-7_14=true
+5-4-7_16=true
 
 [DPWS]         # OASIS DPWS 1.1 - http://docs.oasis-open.org/ws-dd/dpws/wsdd-dpws-1.1-spec.html
 R0001=true
@@ -79,7 +80,7 @@ R0011=true
 R0012_0_0=true
 R0013=true
 R0034_0=true
-R0036_0=true
+R0036=true
 R0042_0=true
 R0072=true
 R0080=true
