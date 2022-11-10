@@ -287,7 +287,6 @@ public class DirectWSDLServiceDescriptionsTestTest {
 
         HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
-        HostedServiceProxy descriptionEventServiceProxy = mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
         when(hostingServiceProxy.getHostedServices()).thenReturn(
             Map.of());
 
