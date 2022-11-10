@@ -10,7 +10,11 @@ package com.draeger.medical.sdccc.util;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -32,12 +36,6 @@ import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-
 /**
  * Utility for use with apache {@linkplain HttpClient} instances.
  */
@@ -48,8 +46,7 @@ public class HttpClientUtil {
     private final SoapMarshalling marshalling;
 
     @Inject
-    HttpClientUtil(final SoapUtil soapUtil,
-                   final SoapMarshalling marshalling) {
+    HttpClientUtil(final SoapUtil soapUtil, final SoapMarshalling marshalling) {
         this.soapUtil = soapUtil;
         this.marshalling = marshalling;
     }
@@ -64,12 +61,8 @@ public class HttpClientUtil {
      * @throws TransportException on transport exceptions (http, ..)
      * @throws SoapFaultException on soap fault responses
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No null check."
-    )
     public SoapMessage postMessage(final HttpClient client, final String endpoint, final byte[] message)
-        throws TransportException, SoapFaultException {
+            throws TransportException, SoapFaultException {
 
         final HttpResponse response = postMessageWithHttpResponse(client, endpoint, message);
         final HttpEntity entity = response.getEntity();
@@ -80,32 +73,37 @@ public class HttpClientUtil {
         } catch (final IOException e) {
             LOG.error("Couldn't read response", e);
             bytes = new byte[0];
-
         }
 
         try (final InputStream inputStream = new ByteArrayInputStream(bytes)) {
             if (inputStream.available() > 0) {
                 final SoapMessage msg = soapUtil.createMessage(marshalling.unmarshal(inputStream));
                 if (msg.isFault()) {
-                    throw new SoapFaultException(msg, new HttpException(response.getStatusLine().getStatusCode()));
+                    throw new SoapFaultException(
+                            msg, new HttpException(response.getStatusLine().getStatusCode()));
                 }
 
                 return msg;
             } else {
                 // >= 300 status code is trouble
                 if (response.getStatusLine().getStatusCode() >= Constants.HTTP_MULTIPLE_CHOICES) {
-                    throw new TransportBindingException(String.format(
-                        "Endpoint was not able to process request. HTTP status code: %s", response.getStatusLine()),
-                        new TransportException(new HttpException(response.getStatusLine().getStatusCode())));
+                    throw new TransportBindingException(
+                            String.format(
+                                    "Endpoint was not able to process request. HTTP status code: %s",
+                                    response.getStatusLine()),
+                            new TransportException(
+                                    new HttpException(response.getStatusLine().getStatusCode())));
                 }
             }
         } catch (final javax.xml.bind.JAXBException e) {
-            LOG.debug("Unmarshalling of a message failed: {}. Response payload:\n{}", e.getMessage(),
-                new String(bytes, StandardCharsets.UTF_8));
+            LOG.debug(
+                    "Unmarshalling of a message failed: {}. Response payload:\n{}",
+                    e.getMessage(),
+                    new String(bytes, StandardCharsets.UTF_8));
             LOG.trace("Unmarshalling of a message failed. ", e);
-            throw new TransportBindingException(String
-                .format("Receiving of a response failed due to unmarshalling problem: %s", e.getMessage()),
-                new MarshallingException(e));
+            throw new TransportBindingException(
+                    String.format("Receiving of a response failed due to unmarshalling problem: %s", e.getMessage()),
+                    new MarshallingException(e));
         } catch (final IOException e) {
             LOG.debug("Error occurred while processing response: {}", e.getMessage());
             LOG.trace("Error occurred while processing response", e);
@@ -131,8 +129,7 @@ public class HttpClientUtil {
      * @throws TransportException on transport exceptions (http, ..)
      */
     public HttpResponse postMessageWithHttpResponse(
-        final HttpClient client, final String endpoint, final byte[] message)
-        throws TransportException {
+            final HttpClient client, final String endpoint, final byte[] message) throws TransportException {
 
         final HttpPost post = new HttpPost(endpoint);
         post.setHeader(HttpHeaders.ACCEPT, SoapConstants.MEDIA_TYPE_SOAP);
@@ -154,7 +151,7 @@ public class HttpClientUtil {
     }
 
     private HttpResponse executeRequest(final HttpClient client, final HttpRequestBase request, final String endpoint)
-        throws TransportException {
+            throws TransportException {
         try {
             return client.execute(request);
         } catch (final SocketException e) {

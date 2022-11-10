@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,6 +21,13 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -47,21 +60,6 @@ import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.common.WsdlConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 
 /**
  * Unit test for the BICEPS {@linkplain DirectParticipantModelServiceOperationsTest}.
@@ -103,36 +101,47 @@ public class DirectParticipantModelServiceOperationsTestTest {
 
         getMdStateResponse = mock(GetMdStateResponse.class, RETURNS_DEEP_STUBS);
         final var messageGeneratingUtil = mock(MessageGeneratingUtil.class, RETURNS_DEEP_STUBS);
-        when(messageGeneratingUtil.getMdState(
-            any()).getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(getMdStateResponse);
+        when(messageGeneratingUtil
+                        .getMdState(any())
+                        .getOriginalEnvelope()
+                        .getBody()
+                        .getAny()
+                        .get(0))
+                .thenReturn(getMdStateResponse);
 
         getContextStatesResponse = mock(GetContextStatesResponse.class, RETURNS_DEEP_STUBS);
-        when(messageGeneratingUtil.getContextStates().getOriginalEnvelope().getBody().getAny().get(0))
-            .thenReturn(getContextStatesResponse);
-        when(messageGeneratingUtil.getContextStates(
-            any()).getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(getContextStatesResponse);
-
+        when(messageGeneratingUtil
+                        .getContextStates()
+                        .getOriginalEnvelope()
+                        .getBody()
+                        .getAny()
+                        .get(0))
+                .thenReturn(getContextStatesResponse);
+        when(messageGeneratingUtil
+                        .getContextStates(any())
+                        .getOriginalEnvelope()
+                        .getBody()
+                        .getAny()
+                        .get(0))
+                .thenReturn(getContextStatesResponse);
 
         final var clientInjector = TestClientUtil.createClientInjector();
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         mdibBuilder = clientInjector.getInstance(ObjectFactory.class);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                    bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+                bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
         testClass = new DirectParticipantModelServiceOperationsTest();
         testClass.setUp();
-
 
         final int size = 3;
         allStates = new ArrayList<>(size);
@@ -225,7 +234,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5042NoTestData() {
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any())).thenReturn(List.of());
+        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of());
 
         assertThrows(NoTestData.class, testClass::testRequirementR5042);
     }
@@ -239,8 +249,10 @@ public class DirectParticipantModelServiceOperationsTestTest {
         mdsDescriptor0.setHandle("mds0");
         final MdsDescriptor mdsDescriptor1 = new MdsDescriptor();
         mdsDescriptor1.setHandle("mds1");
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any())
-            .stream().map(any()).collect(any())).thenReturn(List.of(mdsDescriptor0, mdsDescriptor1));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream()
+                        .map(any())
+                        .collect(any()))
+                .thenReturn(List.of(mdsDescriptor0, mdsDescriptor1));
 
         assertThrows(AssertionError.class, testClass::testRequirementR5042);
     }
@@ -254,8 +266,10 @@ public class DirectParticipantModelServiceOperationsTestTest {
     public void testRequirementR5042Good() throws NoTestData {
         final MdsDescriptor mdsDescriptor = new MdsDescriptor();
         mdsDescriptor.setHandle("mds");
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream().map(any())
-            .collect(any())).thenReturn(List.of(mdsDescriptor));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream()
+                        .map(any())
+                        .collect(any()))
+                .thenReturn(List.of(mdsDescriptor));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
         when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
@@ -270,15 +284,16 @@ public class DirectParticipantModelServiceOperationsTestTest {
     public void testRequirementR5042Bad() {
         final MdsDescriptor mdsDescriptor = new MdsDescriptor();
         mdsDescriptor.setHandle("mds");
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream().map(any())
-            .collect(any())).thenReturn(List.of(mdsDescriptor));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream()
+                        .map(any())
+                        .collect(any()))
+                .thenReturn(List.of(mdsDescriptor));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
         when(getContextStatesResponse.getContextState()).thenReturn(List.of(allContextStates.get(1)));
 
         assertThrows(AssertionError.class, testClass::testRequirementR5042);
     }
-
 
     /**
      * Tests whether returning all context states on a get context state request without handle ref causes the
@@ -288,31 +303,42 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039Good() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var locationContextState = createLocationContextState(LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var ensembleContextState = createEnsembleContextState(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var meansContextState = createMeansContextState(MEANS_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var operatorContextState = createOperatorContextState(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var locationContextState = createLocationContextState(
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE, NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var ensembleContextState = createEnsembleContextState(
+                ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var meansContextState = createMeansContextState(
+                MEANS_CONTEXT_DESCRIPTOR_HANDLE, NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var operatorContextState = createOperatorContextState(
+                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(List.of(patientContextState,
-            locationContextState, ensembleContextState, meansContextState, operatorContextState, workflowContextState));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
+                .thenReturn(List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState,
+                        workflowContextState));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
-            createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
-            createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
-            createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
-            createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
-            createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), List.of(patientContextState,
-                locationContextState, ensembleContextState, meansContextState, operatorContextState,
-                workflowContextState));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
+                createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
+                createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
+                createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
+                createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE),
+                List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState,
+                        workflowContextState));
 
         testClass.testRequirementR5039();
     }
@@ -325,16 +351,20 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039GoodNotAllContextsPresent() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
-            .thenReturn(List.of(patientContextState));
+                .thenReturn(List.of(patientContextState));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE), null,
-            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            List.of(patientContextState));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                null,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                List.of(patientContextState));
 
         testClass.testRequirementR5039();
     }
@@ -347,24 +377,27 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039GoodMultipleContextStates() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var locationContextState = createLocationContextState(LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState2 = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var locationContextState = createLocationContextState(
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE, NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState2 = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(List.of(patientContextState,
-            locationContextState, workflowContextState, workflowContextState2));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
+                .thenReturn(List.of(
+                        patientContextState, locationContextState, workflowContextState, workflowContextState2));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
-            createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
-            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE),
-            List.of(patientContextState, locationContextState, workflowContextState, workflowContextState2));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE),
+                List.of(patientContextState, locationContextState, workflowContextState, workflowContextState2));
 
         testClass.testRequirementR5039();
     }
@@ -377,24 +410,28 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039GoodMultipleContextDescriptors() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var locationContextState = createLocationContextState(LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState2 = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE2,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var locationContextState = createLocationContextState(
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE, NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState2 = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE2, NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(List.of(patientContextState,
-            locationContextState, workflowContextState, workflowContextState2));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
+                .thenReturn(List.of(
+                        patientContextState, locationContextState, workflowContextState, workflowContextState2));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
-            createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
-            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE2),
-            List.of(patientContextState, locationContextState, workflowContextState, workflowContextState2));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                createWorkflowContextDescriptor(
+                        WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE2),
+                List.of(patientContextState, locationContextState, workflowContextState, workflowContextState2));
 
         testClass.testRequirementR5039();
     }
@@ -407,30 +444,41 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039BadContextStatesMissing() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var locationContextState = createLocationContextState(LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var ensembleContextState = createEnsembleContextState(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var meansContextState = createMeansContextState(MEANS_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var operatorContextState = createOperatorContextState(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var locationContextState = createLocationContextState(
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE, NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var ensembleContextState = createEnsembleContextState(
+                ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var meansContextState = createMeansContextState(
+                MEANS_CONTEXT_DESCRIPTOR_HANDLE, NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var operatorContextState = createOperatorContextState(
+                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(List.of(patientContextState,
-            locationContextState, ensembleContextState, meansContextState, operatorContextState, workflowContextState));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
+                .thenReturn(List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState,
+                        workflowContextState));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
-            createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
-            createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
-            createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
-            createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
-            createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), List.of(patientContextState,
-                locationContextState, ensembleContextState, meansContextState, operatorContextState));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
+                createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
+                createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
+                createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
+                createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE),
+                List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState));
 
         assertThrows(AssertionError.class, testClass::testRequirementR5039);
     }
@@ -443,46 +491,57 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5039BadCorrectAmountDifferentStates() throws Exception {
-        final var patientContextState = createPatientContextState(PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var locationContextState = createLocationContextState(LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var ensembleContextState = createEnsembleContextState(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var meansContextState = createMeansContextState(MEANS_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var operatorContextState = createOperatorContextState(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
-        final var workflowContextState2 = createWorkflowContextState(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE,
-            NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
+        final var patientContextState = createPatientContextState(
+                PATIENT_CONTEXT_DESCRIPTOR_HANDLE, NEW_PATIENT_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var locationContextState = createLocationContextState(
+                LOCATION_CONTEXT_DESCRIPTOR_HANDLE, NEW_LOCATION_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var ensembleContextState = createEnsembleContextState(
+                ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, NEW_ENSEMBLE_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var meansContextState = createMeansContextState(
+                MEANS_CONTEXT_DESCRIPTOR_HANDLE, NEW_MEANS_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var operatorContextState = createOperatorContextState(
+                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, NEW_OPERATOR_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE, ContextAssociation.ASSOC);
+        final var workflowContextState2 = createWorkflowContextState(
+                WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, NEW_WORKFLOW_CONTEXT_STATE_HANDLE2, ContextAssociation.ASSOC);
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(List.of(patientContextState,
-            locationContextState, ensembleContextState, meansContextState, operatorContextState, workflowContextState));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates())
+                .thenReturn(List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState,
+                        workflowContextState));
 
         testSetupR5039(
-            createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
-            createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
-            createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
-            createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
-            createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
-            createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), List.of(patientContextState,
-                locationContextState, ensembleContextState, meansContextState, operatorContextState,
-                workflowContextState2));
+                createPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                createLocationContextDescriptor(LOCATION_CONTEXT_DESCRIPTOR_HANDLE),
+                createEnsembleContextDescriptor(ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE),
+                createMeansContextDescriptor(MEANS_CONTEXT_DESCRIPTOR_HANDLE),
+                createOperatorContextDescriptor(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE),
+                createWorkflowContextDescriptor(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE),
+                List.of(
+                        patientContextState,
+                        locationContextState,
+                        ensembleContextState,
+                        meansContextState,
+                        operatorContextState,
+                        workflowContextState2));
 
         assertThrows(AssertionError.class, testClass::testRequirementR5039);
     }
 
-    private void testSetupR5039(final @Nullable PatientContextDescriptor patientContextDescriptor,
-                                final @Nullable LocationContextDescriptor locationContextDescriptor,
-                                final List<EnsembleContextDescriptor> ensembleContextDescriptor,
-                                final List<MeansContextDescriptor> meansContextDescriptor,
-                                final List<OperatorContextDescriptor> operatorContextDescriptor,
-                                final List<WorkflowContextDescriptor> workflowContextDescriptor,
-                                final List<AbstractContextState> contextStates
-    )
-        throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
+    private void testSetupR5039(
+            final @Nullable PatientContextDescriptor patientContextDescriptor,
+            final @Nullable LocationContextDescriptor locationContextDescriptor,
+            final List<EnsembleContextDescriptor> ensembleContextDescriptor,
+            final List<MeansContextDescriptor> meansContextDescriptor,
+            final List<OperatorContextDescriptor> operatorContextDescriptor,
+            final List<WorkflowContextDescriptor> workflowContextDescriptor,
+            final List<AbstractContextState> contextStates)
+            throws InterceptorException, SoapFaultException, MarshallingException, TransportException {
         final var systemContext = mock(SystemContextDescriptor.class);
         when(systemContext.getPatientContext()).thenReturn(patientContextDescriptor);
         when(systemContext.getLocationContext()).thenReturn(locationContextDescriptor);
@@ -517,7 +576,7 @@ public class DirectParticipantModelServiceOperationsTestTest {
     @Test
     public void testRequirementC62Good() {
         when(testClient.getSdcRemoteDevice().getMdibAccess().getStatesByType(AbstractState.class))
-            .thenReturn(allStates);
+                .thenReturn(allStates);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
         when(getMdStateResponse.getMdState().getState()).thenReturn(allStates);
@@ -531,7 +590,7 @@ public class DirectParticipantModelServiceOperationsTestTest {
     @Test
     public void testRequirementC62Bad() {
         when(testClient.getSdcRemoteDevice().getMdibAccess().getStatesByType(AbstractState.class))
-            .thenReturn(allStates);
+                .thenReturn(allStates);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
         when(getMdStateResponse.getMdState().getState()).thenReturn(List.of());
@@ -545,11 +604,11 @@ public class DirectParticipantModelServiceOperationsTestTest {
     @Test
     public void testRequirementC62Bad2() {
         when(testClient.getSdcRemoteDevice().getMdibAccess().getStatesByType(AbstractState.class))
-            .thenReturn(allStates);
+                .thenReturn(allStates);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
         final var castedContexts =
-            allContextStates.stream().map(state -> (AbstractState) state).collect(Collectors.toList());
+                allContextStates.stream().map(state -> (AbstractState) state).collect(Collectors.toList());
         when(getMdStateResponse.getMdState().getState()).thenReturn(castedContexts);
 
         assertThrows(AssertionError.class, testClass::testRequirementC62);
@@ -561,9 +620,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptor;
     }
 
-    private PatientContextState createPatientContextState(final String descriptorHandle,
-                                                          final String stateHandle,
-                                                          final ContextAssociation association) {
+    private PatientContextState createPatientContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createPatientContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);
@@ -577,9 +635,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptor;
     }
 
-    private LocationContextState createLocationContextState(final String descriptorHandle,
-                                                            final String stateHandle,
-                                                            final ContextAssociation association) {
+    private LocationContextState createLocationContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createLocationContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);
@@ -597,9 +654,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptors;
     }
 
-    private EnsembleContextState createEnsembleContextState(final String descriptorHandle,
-                                                            final String stateHandle,
-                                                            final ContextAssociation association) {
+    private EnsembleContextState createEnsembleContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createEnsembleContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);
@@ -617,9 +673,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptors;
     }
 
-    private MeansContextState createMeansContextState(final String descriptorHandle,
-                                                      final String stateHandle,
-                                                      final ContextAssociation association) {
+    private MeansContextState createMeansContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createMeansContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);
@@ -637,9 +692,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptors;
     }
 
-    private OperatorContextState createOperatorContextState(final String descriptorHandle,
-                                                            final String stateHandle,
-                                                            final ContextAssociation association) {
+    private OperatorContextState createOperatorContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createOperatorContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);
@@ -657,9 +711,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
         return descriptors;
     }
 
-    private WorkflowContextState createWorkflowContextState(final String descriptorHandle,
-                                                            final String stateHandle,
-                                                            final ContextAssociation association) {
+    private WorkflowContextState createWorkflowContextState(
+            final String descriptorHandle, final String stateHandle, final ContextAssociation association) {
         final var state = mdibBuilder.createWorkflowContextState();
         state.setDescriptorHandle(descriptorHandle);
         state.setHandle(stateHandle);

@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.manipulation.guice;
 
 import com.draeger.medical.sdccc.manipulation.UserInteraction;
 import com.google.inject.assistedinject.Assisted;
-
 import java.io.InputStream;
 
 /**

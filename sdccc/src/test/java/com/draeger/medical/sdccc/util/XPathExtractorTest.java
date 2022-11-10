@@ -7,13 +7,12 @@
 
 package com.draeger.medical.sdccc.util;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import javax.xml.xpath.XPathExpressionException;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import javax.xml.xpath.XPathExpressionException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for the {@linkplain XPathExtractor}.
@@ -49,13 +48,11 @@ public class XPathExtractorTest {
                 + "</f:table>";
 
         final var extractor = new XPathExtractor(
-                "//*[local-name()='width' and namespace-uri()='https://www.w3schools.com/furniture']"
-        );
+                "//*[local-name()='width' and namespace-uri()='https://www.w3schools.com/furniture']");
 
         final var result = extractor.extractFrom(message);
 
         assertEquals(1, result.size());
         assertEquals("80", result.stream().findFirst().orElseThrow().getTextContent());
     }
-
 }

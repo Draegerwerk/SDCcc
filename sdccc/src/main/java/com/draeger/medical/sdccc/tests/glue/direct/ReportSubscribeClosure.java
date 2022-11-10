@@ -20,5 +20,4 @@ public interface ReportSubscribeClosure {
      * @return SubscribeResult of the subscription.
      */
     SubscribeResult subscribe(ReportTestData report);
-
 }

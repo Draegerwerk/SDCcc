@@ -109,4 +109,3 @@ public final class EnabledTestConfig {
 
     private EnabledTestConfig() {}
 }
-

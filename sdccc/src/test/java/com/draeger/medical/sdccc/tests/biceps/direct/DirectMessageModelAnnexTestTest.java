@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -16,6 +22,11 @@ import com.draeger.medical.sdccc.util.MdibBuilder;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -29,18 +40,6 @@ import org.somda.sdc.biceps.model.participant.VmdDescriptor;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
 import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain DirectMessageModelAnnexTest}.
@@ -66,15 +65,13 @@ public class DirectMessageModelAnnexTestTest {
         final var clientInjector = TestClientUtil.createClientInjector();
         when(testClient.getInjector()).thenReturn(clientInjector);
         messageGeneratingUtil = mock(MessageGeneratingUtil.class, RETURNS_DEEP_STUBS);
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                    bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+                bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -92,8 +89,7 @@ public class DirectMessageModelAnnexTestTest {
      */
     @Test
     public void testRequirementC55NoTestData() {
-        when(mockDevice.getMdibAccess().findEntitiesByType(MdsDescriptor.class))
-            .thenReturn(Collections.emptyList());
+        when(mockDevice.getMdibAccess().findEntitiesByType(MdsDescriptor.class)).thenReturn(Collections.emptyList());
 
         assertThrows(NoTestData.class, testClass::testRequirementC55);
     }
@@ -108,13 +104,16 @@ public class DirectMessageModelAnnexTestTest {
     public void testRequirementC55Good() throws Exception {
         setupMockDevice(true);
         final var one = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
         final var two = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         final var three = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         final var four = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
 
         testClass.testRequirementC55();
     }
@@ -126,13 +125,16 @@ public class DirectMessageModelAnnexTestTest {
     public void testRequirementC55BadNoChildElements() {
         setupMockDevice(false);
         final var one = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
         final var two = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         final var three = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         final var four = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
 
         assertThrows(AssertionError.class, testClass::testRequirementC55);
     }
@@ -148,9 +150,12 @@ public class DirectMessageModelAnnexTestTest {
         final var two = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         final var three = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         final var four = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
 
         assertThrows(AssertionError.class, testClass::testRequirementC55);
     }
@@ -163,14 +168,17 @@ public class DirectMessageModelAnnexTestTest {
     public void testRequirementC55BadMdsMissingWhenHandleInHandleRef() {
         setupMockDevice(true);
         final var one = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
         // wrong mds in response, first mds expected
         final var two = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         final var three = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         final var four = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
         assertThrows(AssertionError.class, testClass::testRequirementC55);
     }
 
@@ -182,14 +190,17 @@ public class DirectMessageModelAnnexTestTest {
     public void testRequirementC55BadWrongMdsReturnedOnChildHandleRef() {
         setupMockDevice(true);
         final var one = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
         final var two = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         // second mds is the only mds with children, second mds expected
         final var three = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         final var four = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
 
         assertThrows(AssertionError.class, testClass::testRequirementC55);
     }
@@ -202,20 +213,23 @@ public class DirectMessageModelAnnexTestTest {
     public void testRequirementC55BadNoMatchingDescriptor() {
         setupMockDevice(true);
         final var one = buildGetMdDescriptionResponse(
-            List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
+                List.of(MdibBuilder.DEFAULT_MDS_HANDLE, SECOND_MDS_HANDLE, THIRD_MDS_HANDLE));
         final var two = buildGetMdDescriptionResponse(List.of(MdibBuilder.DEFAULT_MDS_HANDLE));
         final var three = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
         // not the expected mds included in response
         final var four = buildGetMdDescriptionResponse(List.of(SECOND_MDS_HANDLE));
-        when(messageGeneratingUtil.getMdDescription(
-            any())).thenReturn(one).thenReturn(two).thenReturn(three).thenReturn(four);
+        when(messageGeneratingUtil.getMdDescription(any()))
+                .thenReturn(one)
+                .thenReturn(two)
+                .thenReturn(three)
+                .thenReturn(four);
 
         assertThrows(AssertionError.class, testClass::testRequirementC55);
     }
 
     private SoapMessage buildGetMdDescriptionResponse(final List<String> mdsHandles) {
         final var mockMdsList = new ArrayList<MdsDescriptor>();
-        for (var handle: mdsHandles) {
+        for (var handle : mdsHandles) {
             final var mockMds = mock(MdsDescriptor.class);
             when(mockMds.getHandle()).thenReturn(handle);
             mockMdsList.add(mockMds);
@@ -252,9 +266,9 @@ public class DirectMessageModelAnnexTestTest {
             when(mockDevice.getMdibAccess().getEntity(any())).thenReturn(Optional.of(vmdEntity));
         }
         when(mockDevice.getMdibAccess().findEntitiesByType(MdsDescriptor.class))
-            .thenReturn(List.of(firstMdsEntity, secondMdsEntity, thirdMdsEntity));
+                .thenReturn(List.of(firstMdsEntity, secondMdsEntity, thirdMdsEntity));
         allEntities.addAll(List.of(firstMdsEntity, secondMdsEntity, thirdMdsEntity));
         when(mockDevice.getMdibAccess().findEntitiesByType(AbstractDescriptor.class))
-            .thenReturn(allEntities);
+                .thenReturn(allEntities);
     }
 }

@@ -7,14 +7,6 @@
 
 package com.draeger.medical.sdccc.guice;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
-
-import java.io.IOException;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
  * Tests for the toml configuration loader.
@@ -34,8 +32,6 @@ public class TestTomlConfigModule {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No null check performed.")
     public void testLoadValidConfig() throws Exception {
         try (final var resource = this.getClass().getResourceAsStream("valid_config.toml")) {
             final var configModule = mock(AbstractConfigurationModule.class);
@@ -46,10 +42,7 @@ public class TestTomlConfigModule {
             final ArgumentCaptor<Class<Object>> classCaptor = ArgumentCaptor.forClass(Class.class);
             final ArgumentCaptor<Object> objectCaptor = ArgumentCaptor.forClass(Object.class);
 
-            // CHECKSTYLE.OFF: MagicNumber
-            verify(configModule, times(6)).bind(keyCaptor.capture(),
-                    classCaptor.capture(), objectCaptor.capture());
-            // CHECKSTYLE.ON: MagicNumber
+            verify(configModule, times(6)).bind(keyCaptor.capture(), classCaptor.capture(), objectCaptor.capture());
 
             final var capturedKeys = keyCaptor.getAllValues();
             final var capuredClasses = classCaptor.getAllValues();
@@ -57,31 +50,49 @@ public class TestTomlConfigModule {
 
             // verify simple types
             verifyBinding(
-                    TestKeyClass.STRING_VALUE, String.class.getTypeName(), "String",
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.STRING_VALUE,
+                    String.class.getTypeName(),
+                    "String",
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
             verifyBinding(
-                    TestKeyClass.BOOLEAN_VALUE, Boolean.class.getTypeName(), true,
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.BOOLEAN_VALUE,
+                    Boolean.class.getTypeName(),
+                    true,
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
             verifyBinding(
-                    TestKeyClass.FLOAT_VALUE, Double.class.getTypeName(), 1.0,
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.FLOAT_VALUE,
+                    Double.class.getTypeName(),
+                    1.0,
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
 
             // verify array types
             verifyArrayBinding(
-                    TestKeyClass.STRING_ARRAY, String[].class.getTypeName(), new String[]{"String1", "String2"},
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.STRING_ARRAY,
+                    String[].class.getTypeName(),
+                    new String[] {"String1", "String2"},
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
             verifyArrayBinding(
-                    TestKeyClass.BOOLEAN_ARRAY, Boolean[].class.getTypeName(), new Boolean[]{true, false},
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.BOOLEAN_ARRAY,
+                    Boolean[].class.getTypeName(),
+                    new Boolean[] {true, false},
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
             verifyArrayBinding(
-                    TestKeyClass.FLOAT_ARRAY, Double[].class.getTypeName(), new Double[]{-1.0, 1.0},
-                    capturedKeys, capuredClasses, capturedValues
-            );
+                    TestKeyClass.FLOAT_ARRAY,
+                    Double[].class.getTypeName(),
+                    new Double[] {-1.0, 1.0},
+                    capturedKeys,
+                    capuredClasses,
+                    capturedValues);
         }
     }
 
@@ -111,8 +122,13 @@ public class TestTomlConfigModule {
         }
     }
 
-    void verifyBinding(final String expectedKey, final String expectedType, final Object expectedValue,
-                       final List<String> key, final List<Class<Object>> keyType, final List<Object> value) {
+    void verifyBinding(
+            final String expectedKey,
+            final String expectedType,
+            final Object expectedValue,
+            final List<String> key,
+            final List<Class<Object>> keyType,
+            final List<Object> value) {
 
         assertTrue(key.contains(expectedKey));
         // find key position
@@ -123,9 +139,13 @@ public class TestTomlConfigModule {
         assertEquals(expectedValue, value.get(idx));
     }
 
-    void verifyArrayBinding(final String expectedKey, final String expectedType, final Object[] expectedValue,
-                            final List<String> key, final List<Class<Object>> keyType, final List<Object> value
-    ) {
+    void verifyArrayBinding(
+            final String expectedKey,
+            final String expectedType,
+            final Object[] expectedValue,
+            final List<String> key,
+            final List<Class<Object>> keyType,
+            final List<Object> value) {
 
         assertTrue(key.contains(expectedKey));
         // find key position
@@ -151,7 +171,5 @@ public class TestTomlConfigModule {
         public static final String STRING_ARRAY = PRIVATE_ARRAYS + "StringArrayValue";
         public static final String BOOLEAN_ARRAY = PRIVATE_ARRAYS + "BoolArrayValue";
         public static final String FLOAT_ARRAY = PRIVATE_ARRAYS + "FloatArrayValue";
-
     }
-
 }

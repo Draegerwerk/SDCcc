@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
 import org.somda.sdc.common.guice.DefaultCommonConfigModule;
@@ -31,8 +32,6 @@ import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
 import org.somda.sdc.glue.guice.DefaultGlueModule;
 import org.somda.sdc.glue.guice.GlueDpwsConfigModule;
 
-import javax.net.ssl.HostnameVerifier;
-
 /**
  * Utility for a {@linkplain TestProvider} instance.
  */
@@ -46,42 +45,39 @@ public class TestProviderUtil {
      * @param communicationLogMessageStorage connector to the {@linkplain MessageStorage} to write to
      */
     @Inject
-    public TestProviderUtil(final CryptoSettings cryptoSettings,
-                            final CommunicationLogMessageStorage communicationLogMessageStorage) {
+    public TestProviderUtil(
+            final CryptoSettings cryptoSettings, final CommunicationLogMessageStorage communicationLogMessageStorage) {
         injector = Guice.createInjector(Modules.override(
-            new DefaultCommonConfigModule(),
-            new DefaultGlueModule(),
-            new DefaultGlueConfigModule(),
-            new DefaultBicepsModule(),
-            new DefaultBicepsConfigModule(),
-            new DefaultCommonModule(),
-            new DefaultDpwsModule(),
-            new GlueDpwsConfigModule() {
-                @Override
-                protected void customConfigure() {
-                    super.customConfigure();
-                    bind(CryptoConfig.CRYPTO_SETTINGS,
-                        CryptoSettings.class,
-                        cryptoSettings
-                    );
-                    bind(CryptoConfig.CRYPTO_DEVICE_HOSTNAME_VERIFIER,
-                        HostnameVerifier.class,
-                        (hostname, session) -> true);
-                    bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
-                    bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
-                }
-            }
-        ).with(new AbstractModule() {
-            @Override
-            protected void configure() {
-                super.configure();
-                install(new FactoryModuleBuilder()
-                        .implement(CommunicationLog.class, CommunicationLogImpl.class)
-                        .build(CommunicationLogFactory.class));
-                bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
-
-            }
-        }));
+                        new DefaultCommonConfigModule(),
+                        new DefaultGlueModule(),
+                        new DefaultGlueConfigModule(),
+                        new DefaultBicepsModule(),
+                        new DefaultBicepsConfigModule(),
+                        new DefaultCommonModule(),
+                        new DefaultDpwsModule(),
+                        new GlueDpwsConfigModule() {
+                            @Override
+                            protected void customConfigure() {
+                                super.customConfigure();
+                                bind(CryptoConfig.CRYPTO_SETTINGS, CryptoSettings.class, cryptoSettings);
+                                bind(
+                                        CryptoConfig.CRYPTO_DEVICE_HOSTNAME_VERIFIER,
+                                        HostnameVerifier.class,
+                                        (hostname, session) -> true);
+                                bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
+                                bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
+                            }
+                        })
+                .with(new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        super.configure();
+                        install(new FactoryModuleBuilder()
+                                .implement(CommunicationLog.class, CommunicationLogImpl.class)
+                                .build(CommunicationLogFactory.class));
+                        bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
+                    }
+                }));
     }
 
     /**

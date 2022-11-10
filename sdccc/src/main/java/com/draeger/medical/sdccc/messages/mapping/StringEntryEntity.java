@@ -7,15 +7,13 @@
 
 package com.draeger.medical.sdccc.messages.mapping;
 
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * POJO for persisting headers.
@@ -39,8 +37,7 @@ public class StringEntryEntity {
     /**
      * This will be used by hibernate when creating the POJO from database entries.
      */
-    public StringEntryEntity() {
-    }
+    public StringEntryEntity() {}
 
     /**
      * This will be used when creating the POJO before loading it into the database.

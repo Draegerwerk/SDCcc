@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -20,53 +26,45 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * Unit test for the MDPWS {@linkplain InvariantSOAPOverHTTPTest}.
  */
 public class InvariantSOAPOverHTTPTestTest {
     private static final String MESSAGE_TEMPLATE = "<?xml version='1.0' encoding='UTF-8'?>%n"
-        + "<s12:Envelope xmlns:ns0=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\"%n"
-        + "              xmlns:s12=\"http://www.w3.org/2003/05/soap-envelope\"%n"
-        + "              xmlns:wsa=\"http://www.w3.org/2005/08/addressing\">%n"
-        + "    <s12:Header>%n"
-        + "        <wsa:To>urn:uuid:2e39c722-a565-449c-8a1b-d800d9g7bfd7</wsa:To>%n"
-        + "        <wsa:Action>http://standards.ieee.org/downloads/11073/11073-20701-2018/"
-        + "LocalizationService/GetLocalizedTextResponse</wsa:Action>%n"
-        + "        <wsa:MessageID>urn:uuid:2e39c722-a565-449c-8a1b-00ee00ee00ee</wsa:MessageID>%n"
-        + "        <wsa:RelatesTo>urn:uuid:2e39c722-a565-449c-8a1b-00ff00ff00ff</wsa:RelatesTo>%n"
-        + "    </s12:Header>%n"
-        + "    <s12:Body>%n"
-        + "        <ns0:GetLocalizedTextResponse SequenceId=\"27\">%n"
-        + "            <ns0:Text>%n"
-        + "                This is some nice text. Mh, I like it pretty much."
-        + " It's my favourite text of all the texts.%s%n"
-        + "            </ns0:Text>%n"
-        + "        </ns0:GetLocalizedTextResponse>%n"
-        + "    </s12:Body>%n"
-        + "</s12:Envelope>%n";
+            + "<s12:Envelope xmlns:ns0=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\"%n"
+            + "              xmlns:s12=\"http://www.w3.org/2003/05/soap-envelope\"%n"
+            + "              xmlns:wsa=\"http://www.w3.org/2005/08/addressing\">%n"
+            + "    <s12:Header>%n"
+            + "        <wsa:To>urn:uuid:2e39c722-a565-449c-8a1b-d800d9g7bfd7</wsa:To>%n"
+            + "        <wsa:Action>http://standards.ieee.org/downloads/11073/11073-20701-2018/"
+            + "LocalizationService/GetLocalizedTextResponse</wsa:Action>%n"
+            + "        <wsa:MessageID>urn:uuid:2e39c722-a565-449c-8a1b-00ee00ee00ee</wsa:MessageID>%n"
+            + "        <wsa:RelatesTo>urn:uuid:2e39c722-a565-449c-8a1b-00ff00ff00ff</wsa:RelatesTo>%n"
+            + "    </s12:Header>%n"
+            + "    <s12:Body>%n"
+            + "        <ns0:GetLocalizedTextResponse SequenceId=\"27\">%n"
+            + "            <ns0:Text>%n"
+            + "                This is some nice text. Mh, I like it pretty much."
+            + " It's my favourite text of all the texts.%s%n"
+            + "            </ns0:Text>%n"
+            + "        </ns0:GetLocalizedTextResponse>%n"
+            + "    </s12:Body>%n"
+            + "</s12:Envelope>%n";
 
     private static MessageStorageUtil messageStorageUtil;
     private MessageStorage storage;
     private InvariantSOAPOverHTTPTest testClass;
     private Injector injector;
-
 
     private static String getMessageOfSize(final int size) {
         final var empty = String.format(MESSAGE_TEMPLATE, "");
@@ -91,14 +89,12 @@ public class InvariantSOAPOverHTTPTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -199,12 +195,7 @@ public class InvariantSOAPOverHTTPTestTest {
 
         final var maxSizeMessage = getMessageOfSize(Constants.MAX_LARGE_ENVELOPE_SIZE);
         final var maxSizeStream = new ByteArrayInputStream(maxSizeMessage.getBytes(StandardCharsets.UTF_8));
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage,
-            maxSizeStream,
-            Collections.emptyList(),
-            headers
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, maxSizeStream, Collections.emptyList(), headers);
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirement0006);
         assertTrue(error.getMessage().contains(Constants.HTTP_MULTIPART_PREFIX));
@@ -230,12 +221,7 @@ public class InvariantSOAPOverHTTPTestTest {
 
         final var maxSizeMessage = getMessageOfSize(Constants.MAX_LARGE_ENVELOPE_SIZE);
         final var maxSizeStream = new ByteArrayInputStream(maxSizeMessage.getBytes(StandardCharsets.UTF_8));
-        messageStorageUtil.addInboundSecureHttpMessage(
-            storage,
-            maxSizeStream,
-            Collections.emptyList(),
-            headers
-        );
+        messageStorageUtil.addInboundSecureHttpMessage(storage, maxSizeStream, Collections.emptyList(), headers);
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirement0006);
         assertTrue(error.getMessage().contains(HttpHeaders.CONTENT_TYPE));
@@ -281,5 +267,4 @@ public class InvariantSOAPOverHTTPTestTest {
         final var error = assertThrows(AssertionError.class, testClass::testRequirement0006);
         assertTrue(error.getMessage().contains(HttpHeaders.CONTENT_TYPE));
     }
-
 }

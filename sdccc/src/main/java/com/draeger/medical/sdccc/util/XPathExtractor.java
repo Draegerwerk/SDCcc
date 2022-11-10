@@ -7,7 +7,20 @@
 
 package com.draeger.medical.sdccc.util;
 
+import static com.draeger.medical.sdccc.util.Constants.NAMESPACES;
+
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,21 +31,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import static com.draeger.medical.sdccc.util.Constants.NAMESPACES;
-
 
 /**
  * Utility to extract nodes from messages matching a given XPath expression.
@@ -101,12 +99,10 @@ public class XPathExtractor {
             throw new XPathExpressionException(e);
         }
 
-        final NodeList nl = (NodeList) xpath
-                .compile(query)
-                .evaluate(document.getDocumentElement(), XPathConstants.NODESET);
+        final NodeList nl =
+                (NodeList) xpath.compile(query).evaluate(document.getDocumentElement(), XPathConstants.NODESET);
         return convert(nl);
     }
-
 
     /**
      * Converts a NodeList instance into an actual list for convenience.

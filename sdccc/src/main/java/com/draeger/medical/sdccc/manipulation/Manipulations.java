@@ -8,6 +8,9 @@
 package com.draeger.medical.sdccc.manipulation;
 
 import com.draeger.medical.t2iapi.ResponseTypes;
+import java.util.List;
+import java.util.Optional;
+import javax.xml.namespace.QName;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
@@ -15,10 +18,6 @@ import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.MeasurementValidity;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
-
-import javax.xml.namespace.QName;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Defines all available manipulations which can be applied to a device.
@@ -96,9 +95,8 @@ public interface Manipulations {
      * @param activation    the activation state
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setSystemSignalActivation(String handle,
-                                            AlertSignalManifestation manifestation,
-                                            AlertActivation activation);
+    ResponseTypes.Result setSystemSignalActivation(
+            String handle, AlertSignalManifestation manifestation, AlertActivation activation);
 
     /**
      * Set the activation state of an component or metric.
@@ -116,8 +114,7 @@ public interface Manipulations {
      * @param validity new validity attribute to set
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setMetricQualityValidity(String handle,
-                                           MeasurementValidity validity);
+    ResponseTypes.Result setMetricQualityValidity(String handle, MeasurementValidity validity);
 
     /**
      * Set the metric to a specific state to trigger the setting of the ActivationState.
@@ -128,7 +125,6 @@ public interface Manipulations {
      * @return the result of the manipulation
      */
     ResponseTypes.Result setMetricStatus(String handle, MetricCategory category, ComponentActivation activation);
-
 
     /**
      * Trigger a descriptor update for the provided descriptor handle.

@@ -7,17 +7,15 @@
 
 package com.draeger.medical.sdccc.configuration;
 
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import javax.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
  * Configuration module, that creates a directory for the test run results and binds its file representation.

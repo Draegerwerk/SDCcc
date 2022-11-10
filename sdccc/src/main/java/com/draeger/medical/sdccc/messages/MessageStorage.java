@@ -25,33 +25,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.io.input.BOMInputStream;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.somda.sdc.dpws.CommunicationLog;
-import org.somda.sdc.dpws.soap.ApplicationInfo;
-import org.somda.sdc.dpws.soap.CommunicationContext;
-import org.somda.sdc.dpws.soap.HttpApplicationInfo;
-import org.somda.sdc.dpws.soap.SoapConstants;
-import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -78,6 +51,31 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.soap.ApplicationInfo;
+import org.somda.sdc.dpws.soap.CommunicationContext;
+import org.somda.sdc.dpws.soap.HttpApplicationInfo;
+import org.somda.sdc.dpws.soap.SoapConstants;
+import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
 /**
  * Storage for incoming and outgoing messages.
@@ -91,36 +89,41 @@ public class MessageStorage implements AutoCloseable {
     // Prefixes of XML declarations according to Appendix F.1 of the XML Standard
     private static final int XML_DECLARATION_PREFIX_LENGTH = 4;
     private static final Map<byte[], Charset> XML_DECLARATION_PREFIXES = Map.of(
-        new byte[]{0x00, 0x00, 0x00, 0x3C}, Charset.forName("UTF-32BE"),
-        new byte[]{0x3C, 0x00, 0x00, 0x00}, Charset.forName("UTF-32LE"),
-        new byte[]{0x00, 0x3C, 0x00, 0x3F}, StandardCharsets.UTF_16BE,
-        new byte[]{0x3C, 0x00, 0x3F, 0x00}, StandardCharsets.UTF_16LE,
-        new byte[]{0x3C, 0x3F, 0x78, 0x6D}, StandardCharsets.US_ASCII,  // any ASCII-compatible charset
-        // AFAIK, all charsets of the EBCDIC family have common bit-patterns for the characters used
-        // in the XML declaration. Hence, any of them could be used to decode the declaration. However,
-        // only 'ebcdic-international-500+euro' was tested in this respect and hence it is used as a
-        // placeholder for 'any EBCDIC charset'.
-        new byte[]{0x4C, 0x6F, (byte) 0xA7, (byte) 0x94}, Charset.forName("ebcdic-international-500+euro")
-    );
+            new byte[] {0x00, 0x00, 0x00, 0x3C},
+            Charset.forName("UTF-32BE"),
+            new byte[] {0x3C, 0x00, 0x00, 0x00},
+            Charset.forName("UTF-32LE"),
+            new byte[] {0x00, 0x3C, 0x00, 0x3F},
+            StandardCharsets.UTF_16BE,
+            new byte[] {0x3C, 0x00, 0x3F, 0x00},
+            StandardCharsets.UTF_16LE,
+            new byte[] {0x3C, 0x3F, 0x78, 0x6D},
+            StandardCharsets.US_ASCII, // any ASCII-compatible charset
+            // AFAIK, all charsets of the EBCDIC family have common bit-patterns for the characters used
+            // in the XML declaration. Hence, any of them could be used to decode the declaration. However,
+            // only 'ebcdic-international-500+euro' was tested in this respect and hence it is used as a
+            // placeholder for 'any EBCDIC charset'.
+            new byte[] {0x4C, 0x6F, (byte) 0xA7, (byte) 0x94},
+            Charset.forName("ebcdic-international-500+euro"));
     private static final List<String> SDC_MIME_TYPES = List.of("application/soap+xml", "application/xml");
 
     private static final String HTTP_HEADER_NAME_CONTENT_TYPE = "content-type";
     private static final String CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE =
-        "createMessageStream called on closed storage";
+            "createMessageStream called on closed storage";
     private static final String GET_INBOUND_MESSAGES_CALLED_ON_CLOSED_STORAGE =
-        "getInboundMessages called on closed storage";
+            "getInboundMessages called on closed storage";
     private static final String GET_OUTBOUND_MESSAGES_CALLED_ON_CLOSED_STORAGE =
-        "getOutboundMessages called on closed storage";
+            "getOutboundMessages called on closed storage";
     private static final String GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE =
-        "getInboundSoapMessages called on closed storage";
+            "getInboundSoapMessages called on closed storage";
     private static final String GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE =
-        "getInboundMessagesByBodyType called on closed storage";
+            "getInboundMessagesByBodyType called on closed storage";
     private static final String GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE =
-        "getInboundMessagesByTimeInterval called on closed storage";
+            "getInboundMessagesByTimeInterval called on closed storage";
     private static final String GET_MANIPULATION_DATA_BY_MANIPULATION =
-        "getManipulationDataByManipulation called on closed storage";
-    private static final String INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS = "MessageID=%s: Inconsistent charset"
-        + " declaration: %s, but %s";
+            "getManipulationDataByManipulation called on closed storage";
+    private static final String INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS =
+            "MessageID=%s: Inconsistent charset" + " declaration: %s, but %s";
     private static final String HTTP_HEADER_ORIGIN = "HTTP Header states '%s'";
     private static final String BOM_ORIGIN = "Unicode Byte Order Mark for %s found";
     private static final String XML_DECLARATION_ORIGIN = "XML Declaration states '%s'";
@@ -128,9 +131,9 @@ public class MessageStorage implements AutoCloseable {
 
     private final Pattern charsetPattern = Pattern.compile(".*;\\s*charset\\s*=\\s*([^;]*).*");
     private final Pattern encodingFromXmlDeclarationPatternDoubleQuotes =
-        Pattern.compile(".*<\\?.*encoding\\s*=\\s*\"([^\"]*)\".*\\?>.*", Pattern.DOTALL);
+            Pattern.compile(".*<\\?.*encoding\\s*=\\s*\"([^\"]*)\".*\\?>.*", Pattern.DOTALL);
     private final Pattern encodingFromXmlDeclarationPatternSingleQuotes =
-        Pattern.compile(".*<\\?.*encoding\\s*=\\s*'([^']*)'.*\\?>.*", Pattern.DOTALL);
+            Pattern.compile(".*<\\?.*encoding\\s*=\\s*'([^']*)'.*\\?>.*", Pattern.DOTALL);
 
     private final MessageFactory messageFactory;
 
@@ -156,18 +159,17 @@ public class MessageStorage implements AutoCloseable {
     private final TestRunObserver testRunObserver;
 
     @Inject
-    MessageStorage(@Named(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE) final int blockingQueueSize,
-                   final MessageFactory messageFactory,
-                   final HibernateConfig configuration,
-                   final TestRunObserver testRunObserver) {
+    MessageStorage(
+            @Named(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE) final int blockingQueueSize,
+            final MessageFactory messageFactory,
+            final HibernateConfig configuration,
+            final TestRunObserver testRunObserver) {
         this.messageFactory = messageFactory;
         this.testRunObserver = testRunObserver;
         this.closed = new AtomicBoolean();
         this.blockingQueueSize = blockingQueueSize;
 
-        this.actionExtractor = new XPathExtractor(
-            String.format("//%s:Action", WsAddressingConstants.NAMESPACE_PREFIX)
-        );
+        this.actionExtractor = new XPathExtractor(String.format("//%s:Action", WsAddressingConstants.NAMESPACE_PREFIX));
 
         this.configuration = configuration;
         this.sessionFactory = this.configuration.getConfiguration().buildSessionFactory();
@@ -186,10 +188,9 @@ public class MessageStorage implements AutoCloseable {
         }
 
         LOG.info(
-            "Logical processor count is {}. Will use {} database interaction threads.",
-            logicalProcessorCount,
-            logicalProcessorsToUse
-        );
+                "Logical processor count is {}. Will use {} database interaction threads.",
+                logicalProcessorCount,
+                logicalProcessorsToUse);
 
         // database interaction threads plus the main flush functions caller thread
         this.flushBarrier = new CyclicBarrier(logicalProcessorsToUse + 1);
@@ -214,9 +215,6 @@ public class MessageStorage implements AutoCloseable {
      *
      * @param message to add to the database
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
     public void addMessage(final DatabaseEntry message) {
         this.closeLock.lock();
         try {
@@ -255,23 +253,22 @@ public class MessageStorage implements AutoCloseable {
             isSOAP = processMessageBody(body, actions, bodyElements);
         }
         return new MessageContent(
-            body,
-            message.getCommunicationContext(),
-            message.getDirection(),
-            message.getMessageType(),
-            message.getTimestamp(),
-            message.getNanoTimestamp(),
-            actions,
-            bodyElements,
-            message.getID(),
-            isSOAP);
+                body,
+                message.getCommunicationContext(),
+                message.getDirection(),
+                message.getMessageType(),
+                message.getTimestamp(),
+                message.getNanoTimestamp(),
+                actions,
+                bodyElements,
+                message.getID(),
+                isSOAP);
     }
 
     private boolean processMessageBody(final String body, final Set<String> actions, final Set<String> bodyElements) {
         var isSOAP = false;
         try {
-            final XMLEventReader reader =
-                this.getXmlInputFactory().createXMLEventReader(new StringReader(body));
+            final XMLEventReader reader = this.getXmlInputFactory().createXMLEventReader(new StringReader(body));
 
             while (reader.hasNext()) {
                 final XMLEvent nextEvent = reader.nextEvent();
@@ -279,44 +276,35 @@ public class MessageStorage implements AutoCloseable {
                 if (nextEvent.isStartElement()) {
                     final StartElement startElement = nextEvent.asStartElement();
                     if (startElement.getName().getLocalPart().equals("Action")
-                        &&
-                        startElement.getName().getNamespaceURI().equals(WsAddressingConstants.NAMESPACE)
-                    ) {
+                            && startElement.getName().getNamespaceURI().equals(WsAddressingConstants.NAMESPACE)) {
                         handleActionEvent(actions, reader);
-                    } else if (
-                        startElement.getName().getLocalPart().equals("Body")
-                            &&
-                            startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)
-                    ) {
+                    } else if (startElement.getName().getLocalPart().equals("Body")
+                            && startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)) {
                         handleSoapBodyEvent(bodyElements, reader);
-                    } else if (
-                        startElement.getName().getLocalPart().equals("Envelope")
-                            &&
-                            startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)
-                    ) {
+                    } else if (startElement.getName().getLocalPart().equals("Envelope")
+                            && startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)) {
                         isSOAP = true;
                     }
                 }
             }
         } catch (final XMLStreamException e) {
-            LOG.trace("unable to extract action or body from message content, "
-                + "this is expected for invalid messages", e);
+            LOG.trace(
+                    "unable to extract action or body from message content, " + "this is expected for invalid messages",
+                    e);
         }
         return isSOAP;
     }
 
     private ManipulationData convertManipulationInfoToManipulationData(final ManipulationInfo manipulationInfo) {
         return new ManipulationData(
-            manipulationInfo.getStartTimestamp(),
-            manipulationInfo.getFinishTimestamp(),
-            manipulationInfo.getResult(),
-            manipulationInfo.getMethodName(),
-            manipulationInfo.getParameter(),
-            manipulationInfo.getID()
-        );
+                manipulationInfo.getStartTimestamp(),
+                manipulationInfo.getFinishTimestamp(),
+                manipulationInfo.getResult(),
+                manipulationInfo.getMethodName(),
+                manipulationInfo.getParameter(),
+                manipulationInfo.getID());
     }
 
-    @SuppressWarnings("checkstyle:IllegalCatch")
     protected Charset determineCharsetFromMessage(final Message message) {
         // Note: charset can be determined from (in the order of precedence)
         //       1. HTTP Header
@@ -332,20 +320,18 @@ public class MessageStorage implements AutoCloseable {
             final Charset charsetFromXmlDeclaration = determineCharsetFromXmlDeclaration(message);
 
             checkFullCharsetConsistency(
-                charsetFromHttpHeader,
-                charsetFromUnicodeByteOrderMark,
-                charsetFromXmlDeclaration,
-                (String originA, String valueA,
-                 String originB, String valueB) -> this.testRunObserver.invalidateTestRun(
-                    String.format(INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
-                        message.getID(),
-                        String.format(originA, valueA),
-                        String.format(originB, valueB)))
-            );
+                    charsetFromHttpHeader,
+                    charsetFromUnicodeByteOrderMark,
+                    charsetFromXmlDeclaration,
+                    (String originA, String valueA, String originB, String valueB) ->
+                            this.testRunObserver.invalidateTestRun(String.format(
+                                    INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
+                                    message.getID(),
+                                    String.format(originA, valueA),
+                                    String.format(originB, valueB))));
 
-            final Charset charset = chooseMessageCharset(charsetFromHttpHeader,
-                charsetFromUnicodeByteOrderMark,
-                charsetFromXmlDeclaration);
+            final Charset charset = chooseMessageCharset(
+                    charsetFromHttpHeader, charsetFromUnicodeByteOrderMark, charsetFromXmlDeclaration);
 
             checkMimeType(message);
 
@@ -356,9 +342,10 @@ public class MessageStorage implements AutoCloseable {
                 } else if (charset.equals(charsetFromXmlDeclaration)) {
                     charsetWithOrigin = String.format("'%s' in XML Declaration", charset);
                 }
-                this.testRunObserver.invalidateTestRun(
-                    String.format("Encountered a message whose encoding is declared to be %s. This violates"
-                        + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8.", charsetWithOrigin));
+                this.testRunObserver.invalidateTestRun(String.format(
+                        "Encountered a message whose encoding is declared to be %s. This violates"
+                                + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8.",
+                        charsetWithOrigin));
             }
 
             return charset;
@@ -368,9 +355,10 @@ public class MessageStorage implements AutoCloseable {
         }
     }
 
-    private Charset chooseMessageCharset(@Nullable final Charset charsetFromHttpHeader,
-                                         @Nullable final Charset charsetFromUnicodeByteOrderMark,
-                                         @Nullable final Charset charsetFromXmlDeclaration) {
+    private Charset chooseMessageCharset(
+            @Nullable final Charset charsetFromHttpHeader,
+            @Nullable final Charset charsetFromUnicodeByteOrderMark,
+            @Nullable final Charset charsetFromXmlDeclaration) {
         final Charset charset;
         if (charsetFromHttpHeader != null) {
             charset = charsetFromHttpHeader;
@@ -384,9 +372,9 @@ public class MessageStorage implements AutoCloseable {
                     charset = charsetFromXmlDeclaration;
                 } else {
                     this.testRunObserver.invalidateTestRun("Message encoding could not be determined."
-                        + " Please ensure that all Messages send by the Device under Test declare their encoding"
-                        + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
-                        + " as mandated by the XML Standard.");
+                            + " Please ensure that all Messages send by the Device under Test declare their encoding"
+                            + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
+                            + " as mandated by the XML Standard.");
                     charset = StandardCharsets.UTF_8;
                 }
             }
@@ -395,42 +383,45 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private void checkFullCharsetConsistency(
-        @Nullable final Charset charsetFromHttpHeader,
-        @Nullable final Charset charsetFromUnicodeByteOrderMark,
-        @Nullable final Charset charsetFromXmlDeclaration,
-        final InconsistencyReport report) {
+            @Nullable final Charset charsetFromHttpHeader,
+            @Nullable final Charset charsetFromUnicodeByteOrderMark,
+            @Nullable final Charset charsetFromXmlDeclaration,
+            final InconsistencyReport report) {
 
         if (charsetFromHttpHeader != null) {
             if (charsetFromUnicodeByteOrderMark != null
-                && !charsetFromUnicodeByteOrderMark.equals(charsetFromHttpHeader)) {
-                report.report(HTTP_HEADER_ORIGIN,
-                    charsetFromHttpHeader.toString(),
-                    BOM_ORIGIN,
-                    charsetFromUnicodeByteOrderMark.toString());
-            } else if (charsetFromXmlDeclaration != null
-                && !charsetFromXmlDeclaration.equals(charsetFromHttpHeader)) {
-                report.report(HTTP_HEADER_ORIGIN,
-                    charsetFromHttpHeader.toString(),
-                    XML_DECLARATION_ORIGIN,
-                    charsetFromXmlDeclaration.toString());
+                    && !charsetFromUnicodeByteOrderMark.equals(charsetFromHttpHeader)) {
+                report.report(
+                        HTTP_HEADER_ORIGIN,
+                        charsetFromHttpHeader.toString(),
+                        BOM_ORIGIN,
+                        charsetFromUnicodeByteOrderMark.toString());
+            } else if (charsetFromXmlDeclaration != null && !charsetFromXmlDeclaration.equals(charsetFromHttpHeader)) {
+                report.report(
+                        HTTP_HEADER_ORIGIN,
+                        charsetFromHttpHeader.toString(),
+                        XML_DECLARATION_ORIGIN,
+                        charsetFromXmlDeclaration.toString());
             }
         } else {
             if (charsetFromXmlDeclaration != null
-                && charsetFromUnicodeByteOrderMark != null
-                && !charsetFromUnicodeByteOrderMark.equals(charsetFromXmlDeclaration)) {
-                report.report(BOM_ORIGIN,
-                    charsetFromUnicodeByteOrderMark.toString(),
-                    XML_DECLARATION_ORIGIN,
-                    charsetFromXmlDeclaration.toString());
+                    && charsetFromUnicodeByteOrderMark != null
+                    && !charsetFromUnicodeByteOrderMark.equals(charsetFromXmlDeclaration)) {
+                report.report(
+                        BOM_ORIGIN,
+                        charsetFromUnicodeByteOrderMark.toString(),
+                        XML_DECLARATION_ORIGIN,
+                        charsetFromXmlDeclaration.toString());
             }
         }
     }
 
     private void checkMimeType(final Message message) {
-        final ApplicationInfo applicationInfo = message.getCommunicationContext().getApplicationInfo();
+        final ApplicationInfo applicationInfo =
+                message.getCommunicationContext().getApplicationInfo();
         if (applicationInfo instanceof HttpApplicationInfo) {
-            final List<String> contentTypeHeaderValues = ((HttpApplicationInfo) applicationInfo).getHeaders()
-                .get(HTTP_HEADER_NAME_CONTENT_TYPE);
+            final List<String> contentTypeHeaderValues =
+                    ((HttpApplicationInfo) applicationInfo).getHeaders().get(HTTP_HEADER_NAME_CONTENT_TYPE);
             for (final String value : contentTypeHeaderValues) {
                 final int index = value.indexOf(";");
                 final String mimeType;
@@ -440,12 +431,11 @@ public class MessageStorage implements AutoCloseable {
                     mimeType = value;
                 }
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
-                    this.testRunObserver.invalidateTestRun(
-                        String.format("encountered a SOAP Envelope whose mimeType '%s' (declared in its "
-                                + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and"
-                                + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1.",
-                            mimeType)
-                    );
+                    this.testRunObserver.invalidateTestRun(String.format(
+                            "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
+                                    + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and"
+                                    + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1.",
+                            mimeType));
                 }
             }
         }
@@ -455,12 +445,16 @@ public class MessageStorage implements AutoCloseable {
         Charset charsetFromUnicodeByteOrderMark = null;
         try {
             final ByteArrayInputStream in = new ByteArrayInputStream(message.getFinalMemory());
-            final BOMInputStream bomIn =
-                new BOMInputStream(in, ByteOrderMark.UTF_8, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE,
-                    ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE);
+            final BOMInputStream bomIn = new BOMInputStream(
+                    in,
+                    ByteOrderMark.UTF_8,
+                    ByteOrderMark.UTF_16LE,
+                    ByteOrderMark.UTF_16BE,
+                    ByteOrderMark.UTF_32LE,
+                    ByteOrderMark.UTF_32BE);
             if (!bomIn.hasBOM()) {
-                LOG.trace("Unable to determine charset from byte order mark for message with ID '"
-                    + message.getID() + "'. Will use another option.");
+                LOG.trace("Unable to determine charset from byte order mark for message with ID '" + message.getID()
+                        + "'. Will use another option.");
             } else if (bomIn.hasBOM(ByteOrderMark.UTF_8)) {
                 charsetFromUnicodeByteOrderMark = StandardCharsets.UTF_8;
             } else if (bomIn.hasBOM(ByteOrderMark.UTF_16LE)) {
@@ -491,56 +485,67 @@ public class MessageStorage implements AutoCloseable {
             }
         }
 
-        checkCharsetConsistency(charsetFromBOM, charsetFromPrefix, result,
-            (String originA, String valueA,
-             String originB, String valueB) -> this.testRunObserver.invalidateTestRun(
-                String.format(INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
-                    message.getID(),
-                    String.format(originA, valueA),
-                    String.format(originB, valueB))));
+        checkCharsetConsistency(
+                charsetFromBOM,
+                charsetFromPrefix,
+                result,
+                (String originA, String valueA, String originB, String valueB) ->
+                        this.testRunObserver.invalidateTestRun(String.format(
+                                INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
+                                message.getID(),
+                                String.format(originA, valueA),
+                                String.format(originB, valueB))));
 
         return result;
     }
 
-    private void checkCharsetConsistency(final @javax.annotation.Nullable Charset charsetFromBOM,
-                                         final @javax.annotation.Nullable Charset charsetFromPrefix,
-                                         final @javax.annotation.Nullable Charset charsetFromDeclaration,
-                                         final InconsistencyReport report) {
+    private void checkCharsetConsistency(
+            final @javax.annotation.Nullable Charset charsetFromBOM,
+            final @javax.annotation.Nullable Charset charsetFromPrefix,
+            final @javax.annotation.Nullable Charset charsetFromDeclaration,
+            final InconsistencyReport report) {
         if (charsetFromDeclaration == null) {
-            if (charsetFromBOM != null && charsetFromPrefix != null
-                && !bomAndPrefixAreCompatible(charsetFromBOM, charsetFromPrefix)) {
-                report.report(XML_DECLARATION_PREFIX_ORIGIN, charsetFromPrefix.toString(),
-                    BOM_ORIGIN, charsetFromBOM.toString());
+            if (charsetFromBOM != null
+                    && charsetFromPrefix != null
+                    && !bomAndPrefixAreCompatible(charsetFromBOM, charsetFromPrefix)) {
+                report.report(
+                        XML_DECLARATION_PREFIX_ORIGIN,
+                        charsetFromPrefix.toString(),
+                        BOM_ORIGIN,
+                        charsetFromBOM.toString());
             }
         } else {
             if (charsetFromBOM != null && !charsetFromBOM.equals(charsetFromDeclaration)) {
-                report.report(XML_DECLARATION_ORIGIN, charsetFromDeclaration.toString(),
-                    BOM_ORIGIN, charsetFromBOM.toString());
+                report.report(
+                        XML_DECLARATION_ORIGIN,
+                        charsetFromDeclaration.toString(),
+                        BOM_ORIGIN,
+                        charsetFromBOM.toString());
             }
 
-            final boolean charset_declaration_inconsistent = charsetFromPrefix != null
-                && !charsetFromPrefix.equals(charsetFromDeclaration);
+            final boolean charset_declaration_inconsistent =
+                    charsetFromPrefix != null && !charsetFromPrefix.equals(charsetFromDeclaration);
             // EBCDIC Prefix is consistent with any charset from the EBCDIC family.
             final boolean special_case_EBCDIC_family = charsetFromPrefix != null
-                && charsetFromPrefix.equals(Charset.forName("ebcdic-international-500+euro"))
-                && isEBCDIC(charsetFromDeclaration);
+                    && charsetFromPrefix.equals(Charset.forName("ebcdic-international-500+euro"))
+                    && isEBCDIC(charsetFromDeclaration);
             // UTF-8 Prefix is consistent with any charset using the same bit pattern for the ASCII characters
             // as UTF-8. Since we were able to read the XML Declaration successfully we can assume this is the
             // case.
-            final boolean special_case_ASCII_compatible = charsetFromPrefix != null
-                && charsetFromPrefix.equals(StandardCharsets.US_ASCII);
+            final boolean special_case_ASCII_compatible =
+                    charsetFromPrefix != null && charsetFromPrefix.equals(StandardCharsets.US_ASCII);
 
-            if (charset_declaration_inconsistent
-                && !special_case_EBCDIC_family
-                && !special_case_ASCII_compatible) {
-                report.report(XML_DECLARATION_ORIGIN, charsetFromDeclaration.toString(),
-                    XML_DECLARATION_PREFIX_ORIGIN, charsetFromPrefix.toString());
+            if (charset_declaration_inconsistent && !special_case_EBCDIC_family && !special_case_ASCII_compatible) {
+                report.report(
+                        XML_DECLARATION_ORIGIN,
+                        charsetFromDeclaration.toString(),
+                        XML_DECLARATION_PREFIX_ORIGIN,
+                        charsetFromPrefix.toString());
             }
         }
     }
 
-    private boolean bomAndPrefixAreCompatible(final Charset charsetFromBOM,
-                                              final Charset charsetFromPrefix) {
+    private boolean bomAndPrefixAreCompatible(final Charset charsetFromBOM, final Charset charsetFromPrefix) {
         if (StandardCharsets.US_ASCII.equals(charsetFromPrefix) && StandardCharsets.UTF_8.equals(charsetFromBOM)) {
             return true;
         }
@@ -609,7 +614,6 @@ public class MessageStorage implements AutoCloseable {
         return true;
     }
 
-
     private Charset determineCharsetFromXmlDeclarationInternal(final Message message, final Charset encoding) {
         Charset charsetFromXmlDeclaration = null;
 
@@ -628,14 +632,16 @@ public class MessageStorage implements AutoCloseable {
 
     private Charset determineCharsetFromHttpHeader(final Message message) {
         Charset charsetFromHttpHeader = null;
-        final ApplicationInfo applicationInfo = message.getCommunicationContext().getApplicationInfo();
+        final ApplicationInfo applicationInfo =
+                message.getCommunicationContext().getApplicationInfo();
         if (applicationInfo instanceof HttpApplicationInfo) {
-            final List<String> contentTypeHeaderValues = ((HttpApplicationInfo) applicationInfo).getHeaders()
-                .get(HTTP_HEADER_NAME_CONTENT_TYPE);
+            final List<String> contentTypeHeaderValues =
+                    ((HttpApplicationInfo) applicationInfo).getHeaders().get(HTTP_HEADER_NAME_CONTENT_TYPE);
             for (final String value : contentTypeHeaderValues) {
                 final Matcher matcher = charsetPattern.matcher(value);
                 if (matcher.matches()) {
-                    final String charsetName = stripQuotes(matcher.group(1).trim()).trim();
+                    final String charsetName =
+                            stripQuotes(matcher.group(1).trim()).trim();
                     try {
                         charsetFromHttpHeader = Charset.forName(charsetName);
                     } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
@@ -646,7 +652,8 @@ public class MessageStorage implements AutoCloseable {
                         //       use other clues to determine the charset and hopefully succeed in correctly decoding
                         //       the Message before storing it in the DB.
                         this.testRunObserver.invalidateTestRun(
-                            String.format("Encountered invalid/unknown charset '%s' in HTTP Header", charsetName), e);
+                                String.format("Encountered invalid/unknown charset '%s' in HTTP Header", charsetName),
+                                e);
                     }
                 }
             }
@@ -655,16 +662,14 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private String stripQuotes(final String str) {
-        if ((str.startsWith("\"") && str.endsWith("\""))
-            || (str.startsWith("'") && str.endsWith("'"))) {
+        if ((str.startsWith("\"") && str.endsWith("\"")) || (str.startsWith("'") && str.endsWith("'"))) {
             return str.substring(1, str.length() - 1);
         } else {
             return str;
         }
     }
 
-    private void handleActionEvent(final Set<String> actions, final XMLEventReader reader)
-        throws XMLStreamException {
+    private void handleActionEvent(final Set<String> actions, final XMLEventReader reader) throws XMLStreamException {
         final XMLEvent nextEvent;
         nextEvent = reader.nextEvent();
         if (nextEvent.isCharacters()) {
@@ -676,7 +681,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private void handleSoapBodyEvent(final Set<String> bodyElements, final XMLEventReader reader)
-        throws XMLStreamException {
+            throws XMLStreamException {
         XMLEvent nextEvent;
         var level = 0;
         while (level >= 0) {
@@ -703,11 +708,12 @@ public class MessageStorage implements AutoCloseable {
      * @return new message instance, already inserted into the global message list
      * @throws IOException if MessageCache was already closed
      */
-    public Message createMessageStream(final CommunicationLog.TransportType path,
-                                       final CommunicationLog.Direction direction,
-                                       final CommunicationLog.MessageType messageType,
-                                       final CommunicationContext communicationContext)
-        throws IOException {
+    public Message createMessageStream(
+            final CommunicationLog.TransportType path,
+            final CommunicationLog.Direction direction,
+            final CommunicationLog.MessageType messageType,
+            final CommunicationContext communicationContext)
+            throws IOException {
         if (this.closed.get()) {
             LOG.error(CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE);
             throw new IOException(CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE);
@@ -725,11 +731,12 @@ public class MessageStorage implements AutoCloseable {
      * @param name       of the manipulation
      * @param parameters of the manipulation
      */
-    public void createManipulationInfo(final long startTime,
-                                       final long finishTime,
-                                       final ResponseTypes.Result result,
-                                       final String name,
-                                       final List<Pair<String, String>> parameters) {
+    public void createManipulationInfo(
+            final long startTime,
+            final long finishTime,
+            final ResponseTypes.Result result,
+            final String name,
+            final List<Pair<String, String>> parameters) {
         final var manipulation = new ManipulationInfo(startTime, finishTime, result, name, parameters, this);
         manipulation.addToStorage();
     }
@@ -750,8 +757,7 @@ public class MessageStorage implements AutoCloseable {
                     try {
                         thread.join();
                     } catch (final InterruptedException e) {
-                        LOG.error("unable to wait for database interaction thread termination due to an interrupt",
-                            e);
+                        LOG.error("unable to wait for database interaction thread termination due to an interrupt", e);
                         testRunObserver.invalidateTestRun(e);
                     }
                 });
@@ -781,12 +787,10 @@ public class MessageStorage implements AutoCloseable {
         this.flush(messageList, false, null);
     }
 
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
-    private void flush(final List<DatabaseEntry> messageList,
-                       final boolean await,
-                       @Nullable final DatabaseInteractionThread databaseInteractionThread) {
+    private void flush(
+            final List<DatabaseEntry> messageList,
+            final boolean await,
+            @Nullable final DatabaseInteractionThread databaseInteractionThread) {
 
         if (!messageList.isEmpty()) {
 
@@ -840,9 +844,6 @@ public class MessageStorage implements AutoCloseable {
         }
     }
 
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
     private CriteriaQuery<String> buildCriteria(final Class<? extends DatabaseEntry> entryClass, final String id) {
         final CriteriaQuery<String> criteria;
         try (final Session session = sessionFactory.openSession()) {
@@ -884,10 +885,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification =
-            "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getInboundMessages() throws IOException {
 
         if (this.closed.get()) {
@@ -903,8 +900,7 @@ public class MessageStorage implements AutoCloseable {
             final Root<MessageContent> messageContentRoot = criteria.from(MessageContent.class);
             criteria.select(messageContentRoot);
             criteria.where(criteriaBuilder.equal(
-                messageContentRoot.get(MessageContent_.direction),
-                CommunicationLog.Direction.INBOUND));
+                    messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND));
         }
 
         final boolean present;
@@ -921,10 +917,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all outbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification =
-            "it is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<MessageContent> getOutboundMessages() throws IOException {
 
         if (this.closed.get()) {
@@ -940,8 +932,7 @@ public class MessageStorage implements AutoCloseable {
             final Root<MessageContent> messageContentRoot = criteria.from(MessageContent.class);
             criteria.select(messageContentRoot);
             criteria.where(criteriaBuilder.equal(
-                messageContentRoot.get(MessageContent_.direction),
-                CommunicationLog.Direction.OUTBOUND));
+                    messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.OUTBOUND));
         }
 
         final boolean present;
@@ -962,10 +953,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     public GetterResult<MessageContent> getInboundSoapMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -985,33 +972,24 @@ public class MessageStorage implements AutoCloseable {
             final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
             headerSubQuery.select(stringEntryEntityRoot);
 
-            headerSubQuery.where(
-                criteriaBuilder.and(
-                    criteriaBuilder.equal(stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
-                        messageContentRoot.get(MessageContent_.incId)),
-                    criteriaBuilder.and(
-                        criteriaBuilder.equal(criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
-                            HTTP_HEADER_NAME_CONTENT_TYPE),
-                        criteriaBuilder.like(
-                            criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
-                            criteriaBuilder.literal("%application/soap+xml%"))
-
-                    )
-                ));
-
-            messageContentQuery.where(
-                criteriaBuilder.and(
+            headerSubQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.direction),
-                        CommunicationLog.Direction.INBOUND),
+                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.and(
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                    HTTP_HEADER_NAME_CONTENT_TYPE),
+                            criteriaBuilder.like(
+                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                    criteriaBuilder.literal("%application/soap+xml%")))));
+
+            messageContentQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
                     criteriaBuilder.or(
-                        criteriaBuilder.isTrue(messageContentRoot.get(MessageContent_.isSOAP)),
-                        criteriaBuilder.exists(headerSubQuery)
-                    )
-                )
-            );
+                            criteriaBuilder.isTrue(messageContentRoot.get(MessageContent_.isSOAP)),
+                            criteriaBuilder.exists(headerSubQuery))));
         }
 
         final boolean present;
@@ -1032,10 +1010,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     public GetterResult<MessageContent> getInboundSoapResponseMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -1055,36 +1029,26 @@ public class MessageStorage implements AutoCloseable {
             final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
             headerSubQuery.select(stringEntryEntityRoot);
 
-            headerSubQuery.where(
-                criteriaBuilder.and(
-                    criteriaBuilder.equal(stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
-                        messageContentRoot.get(MessageContent_.incId)),
+            headerSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.and(
-                        criteriaBuilder.equal(criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
-                            HTTP_HEADER_NAME_CONTENT_TYPE),
-                        criteriaBuilder.like(
-                            criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
-                            criteriaBuilder.literal("%application/soap+xml%"))
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                    HTTP_HEADER_NAME_CONTENT_TYPE),
+                            criteriaBuilder.like(
+                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                    criteriaBuilder.literal("%application/soap+xml%")))));
 
-                    )
-                ));
-
-            messageContentQuery.where(
-                criteriaBuilder.and(
+            messageContentQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.direction),
-                        CommunicationLog.Direction.INBOUND),
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.messageType),
-                        CommunicationLog.MessageType.RESPONSE),
+                            messageContentRoot.get(MessageContent_.messageType), CommunicationLog.MessageType.RESPONSE),
                     criteriaBuilder.or(
-                        criteriaBuilder.isTrue(messageContentRoot.get(MessageContent_.isSOAP)),
-                        criteriaBuilder.exists(headerSubQuery)
-                    )
-                )
-            );
+                            criteriaBuilder.isTrue(messageContentRoot.get(MessageContent_.isSOAP)),
+                            criteriaBuilder.exists(headerSubQuery))));
         }
 
         final boolean present;
@@ -1106,14 +1070,9 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching outgoing {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     public GetterResult<MessageContent> getOutboundHttpMessagesByBodyTypeAndHeaders(
-        final List<QName> bodyTypes,
-        final List<AbstractMap.SimpleImmutableEntry<String, String>> headers)
-        throws IOException {
+            final List<QName> bodyTypes, final List<AbstractMap.SimpleImmutableEntry<String, String>> headers)
+            throws IOException {
         if (this.closed.get()) {
             final String failureString = "getOutboundHttpMessagesByBodyTypeAndHeaders called on closed storage";
             LOG.error(failureString);
@@ -1132,9 +1091,7 @@ public class MessageStorage implements AutoCloseable {
             final var bodyPredicates = new ArrayList<Predicate>();
             for (final var bodyType : bodyTypes) {
                 bodyPredicates.add(criteriaBuilder.isMember(
-                    bodyType.toString(),
-                    messageContentRoot.get(MessageContent_.bodyElements)
-                ));
+                        bodyType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
             }
 
             final Subquery<StringEntryEntity> headerSubQuery = messageContentQuery.subquery(StringEntryEntity.class);
@@ -1142,43 +1099,32 @@ public class MessageStorage implements AutoCloseable {
             headerSubQuery.select(stringEntryEntityRoot);
             final var headerPredicates = new ArrayList<Predicate>();
             for (final AbstractMap.SimpleImmutableEntry<String, String> header : headers) {
-                headerPredicates.add(
-                    criteriaBuilder.and(
-                        criteriaBuilder.equal(criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
-                            header.getKey()),
-                        criteriaBuilder.equal(criteriaBuilder.lower(
-                                stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
-                            header.getValue())
-                    ));
+                headerPredicates.add(criteriaBuilder.and(
+                        criteriaBuilder.equal(
+                                criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                header.getKey()),
+                        criteriaBuilder.equal(
+                                criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                header.getValue())));
             }
-            headerSubQuery.where(
-                criteriaBuilder.and(
-                    criteriaBuilder.equal(stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
-                        messageContentRoot.get(MessageContent_.incId)),
-                    criteriaBuilder.or(headerPredicates.toArray(new Predicate[0]))
-                ));
-
-
-            messageContentQuery.where(
-                criteriaBuilder.and(
+            headerSubQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.direction),
-                        CommunicationLog.Direction.OUTBOUND),
+                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(headerPredicates.toArray(new Predicate[0]))));
+
+            messageContentQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.OUTBOUND),
                     criteriaBuilder.or(
-                        criteriaBuilder.equal(
-                            criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
-                            Constants.HTTP_SCHEME
-                        ),
-                        criteriaBuilder.equal(
-                            criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
-                            Constants.HTTPS_SCHEME
-                        )
-                    ),
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
+                                    Constants.HTTP_SCHEME),
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
+                                    Constants.HTTPS_SCHEME)),
                     criteriaBuilder.or(bodyPredicates.toArray(new Predicate[0])),
-                    criteriaBuilder.exists(headerSubQuery)
-                )
-            );
+                    criteriaBuilder.exists(headerSubQuery)));
         }
 
         final boolean present;
@@ -1189,7 +1135,6 @@ public class MessageStorage implements AutoCloseable {
         return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
     }
 
-
     /**
      * Retrieves all incoming HTTP messages.
      *
@@ -1199,10 +1144,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     public GetterResult<MessageContent> getInboundHttpMessages() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_SOAP_MESSAGES_CALLED_ON_CLOSED_STORAGE);
@@ -1217,23 +1158,16 @@ public class MessageStorage implements AutoCloseable {
             criteria = criteriaBuilder.createQuery(MessageContent.class);
             final Root<MessageContent> messageContentRoot = criteria.from(MessageContent.class);
             criteria.select(messageContentRoot);
-            criteria.where(
-                criteriaBuilder.and(
+            criteria.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.direction),
-                        CommunicationLog.Direction.INBOUND),
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
                     criteriaBuilder.or(
-                        criteriaBuilder.equal(
-                            criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
-                            Constants.HTTP_SCHEME
-                        ),
-                        criteriaBuilder.equal(
-                            criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
-                            Constants.HTTPS_SCHEME
-                        )
-                    )
-                )
-            );
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
+                                    Constants.HTTP_SCHEME),
+                            criteriaBuilder.equal(
+                                    criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
+                                    Constants.HTTPS_SCHEME))));
         }
 
         final boolean present;
@@ -1254,10 +1188,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     public GetterResult<MessageContent> getInboundMessagesByBodyType(final QName... bodyTypes) throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
@@ -1275,18 +1205,12 @@ public class MessageStorage implements AutoCloseable {
             final var predicates = new ArrayList<Predicate>();
             for (final var bodyType : bodyTypes) {
                 predicates.add(criteriaBuilder.isMember(
-                    bodyType.toString(),
-                    messageContentRoot.get(MessageContent_.bodyElements)
-                ));
+                        bodyType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
             }
-            criteria.where(
-                criteriaBuilder.and(
+            criteria.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                        messageContentRoot.get(MessageContent_.direction),
-                        CommunicationLog.Direction.INBOUND),
-                    criteriaBuilder.or(predicates.toArray(new Predicate[0]))
-                )
-            );
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
+                    criteriaBuilder.or(predicates.toArray(new Predicate[0]))));
             // the answer should still adhere to the order the messages arrived,
             // even when mixing bodies
             criteria.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
@@ -1309,9 +1233,6 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationData() throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_MANIPULATION_DATA_BY_MANIPULATION);
@@ -1352,13 +1273,8 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
-    public GetterResult<MessageContent> getInboundMessagesByTimeIntervalAndBodyType(final long startTimestamp,
-                                                                                    final long finishTimestamp,
-                                                                                    final QName... reportTypes)
-        throws IOException {
+    public GetterResult<MessageContent> getInboundMessagesByTimeIntervalAndBodyType(
+            final long startTimestamp, final long finishTimestamp, final QName... reportTypes) throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE);
             throw new IOException(GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE);
@@ -1375,28 +1291,17 @@ public class MessageStorage implements AutoCloseable {
             final var predicates = new ArrayList<Predicate>();
             for (final var reportType : reportTypes) {
                 predicates.add(criteriaBuilder.isMember(
-                    reportType.toString(),
-                    messageContentRoot.get(MessageContent_.bodyElements)
-                ));
+                        reportType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
             }
-            criteria.where(
-                criteriaBuilder.and(
+            criteria.where(criteriaBuilder.and(
                     criteriaBuilder.and(
-                        criteriaBuilder.ge(
-                            messageContentRoot.get(MessageContent_.nanoTimestamp),
-                            startTimestamp
-                        ),
-                        criteriaBuilder.le(
-                            messageContentRoot.get(MessageContent_.nanoTimestamp),
-                            finishTimestamp
-                        )),
+                            criteriaBuilder.ge(messageContentRoot.get(MessageContent_.nanoTimestamp), startTimestamp),
+                            criteriaBuilder.le(messageContentRoot.get(MessageContent_.nanoTimestamp), finishTimestamp)),
                     criteriaBuilder.and(
-                        criteriaBuilder.equal(
-                            messageContentRoot.get(MessageContent_.direction),
-                            CommunicationLog.Direction.INBOUND),
-                        criteriaBuilder.or(predicates.toArray(new Predicate[0]))
-                    ))
-            );
+                            criteriaBuilder.equal(
+                                    messageContentRoot.get(MessageContent_.direction),
+                                    CommunicationLog.Direction.INBOUND),
+                            criteriaBuilder.or(predicates.toArray(new Predicate[0])))));
             // the answer should still adhere to the order the messages arrived,
             // even when mixing bodies
             criteria.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
@@ -1420,11 +1325,8 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationDataByManipulation(final String... manipulationNames)
-        throws IOException {
+            throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_MANIPULATION_DATA_BY_MANIPULATION);
             throw new IOException(GET_MANIPULATION_DATA_BY_MANIPULATION);
@@ -1441,13 +1343,9 @@ public class MessageStorage implements AutoCloseable {
             final var predicates = new ArrayList<Predicate>();
             for (final var manipulationName : manipulationNames) {
                 predicates.add(criteriaBuilder.equal(
-                    manipulationDataRoot.get(ManipulationData_.methodName),
-                    manipulationName
-                ));
+                        manipulationDataRoot.get(ManipulationData_.methodName), manipulationName));
             }
-            criteria.where(
-                criteriaBuilder.and(predicates.toArray(new Predicate[0]))
-            );
+            criteria.where(criteriaBuilder.and(predicates.toArray(new Predicate[0])));
             // the answer should adhere to the order in which the manipulations have been performed,
             // even when mixing bodies
             criteria.orderBy(criteriaBuilder.asc(manipulationDataRoot.get(ManipulationData_.startTimestamp)));
@@ -1472,11 +1370,8 @@ public class MessageStorage implements AutoCloseable {
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "This is a bug in 'spotbugs' when using try with resources.")
     public GetterResult<ManipulationData> getManipulationDataByParametersAndManipulation(
-        final List<Pair<String, String>> parameters, final String manipulationName) throws IOException {
+            final List<Pair<String, String>> parameters, final String manipulationName) throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_MANIPULATION_DATA_BY_MANIPULATION);
             throw new IOException(GET_MANIPULATION_DATA_BY_MANIPULATION);
@@ -1496,44 +1391,33 @@ public class MessageStorage implements AutoCloseable {
             criteria.select(root);
 
             final var rootPredicates = new ArrayList<Predicate>();
-            rootPredicates.add(criteriaBuilder.equal(
-                root.get(ManipulationData_.methodName),
-                manipulationName
-            ));
+            rootPredicates.add(criteriaBuilder.equal(root.get(ManipulationData_.methodName), manipulationName));
 
-            final Subquery<ManipulationParameter> parameterSubQuery =
-                criteria.subquery(ManipulationParameter.class);
+            final Subquery<ManipulationParameter> parameterSubQuery = criteria.subquery(ManipulationParameter.class);
             final Root<ManipulationParameter> manipulationParameterRoot =
-                parameterSubQuery.from(ManipulationParameter.class);
+                    parameterSubQuery.from(ManipulationParameter.class);
 
             final var parameterPredicates = new ArrayList<Predicate>();
 
             for (var parameter : parameters) {
-                parameterPredicates.add(
-                    criteriaBuilder.and(
+                parameterPredicates.add(criteriaBuilder.and(
                         criteriaBuilder.equal(
-                            manipulationParameterRoot.get(ManipulationParameter_.parameterName),
-                            parameter.getKey()
-                        ),
+                                manipulationParameterRoot.get(ManipulationParameter_.parameterName),
+                                parameter.getKey()),
                         criteriaBuilder.equal(
-                            manipulationParameterRoot.get(ManipulationParameter_.parameterValue),
-                            parameter.getValue()
-                        )
-                    )
-                );
+                                manipulationParameterRoot.get(ManipulationParameter_.parameterValue),
+                                parameter.getValue())));
             }
-            parameterSubQuery.select(manipulationParameterRoot).where(
-                criteriaBuilder.and(
-                    criteriaBuilder.equal(manipulationParameterRoot.get(ManipulationParameter_.manipulationData),
-                        root.get(ManipulationData_.incId)),
-                    xor(criteriaBuilder, parameterPredicates))
-            );
-            criteria.where(
-                criteriaBuilder.and(
+            parameterSubQuery
+                    .select(manipulationParameterRoot)
+                    .where(criteriaBuilder.and(
+                            criteriaBuilder.equal(
+                                    manipulationParameterRoot.get(ManipulationParameter_.manipulationData),
+                                    root.get(ManipulationData_.incId)),
+                            xor(criteriaBuilder, parameterPredicates)));
+            criteria.where(criteriaBuilder.and(
                     criteriaBuilder.and(rootPredicates.toArray(new Predicate[0])),
-                    criteriaBuilder.exists(parameterSubQuery)
-                )
-            );
+                    criteriaBuilder.exists(parameterSubQuery)));
         }
         final boolean present;
         try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
@@ -1545,13 +1429,13 @@ public class MessageStorage implements AutoCloseable {
     private static Predicate xor(final CriteriaBuilder builder, final List<Predicate> predicates) {
         if (predicates.size() < 2) return builder.and(predicates.toArray(new Predicate[0]));
         return predicates.subList(1, predicates.size() - 1).stream()
-            .reduce(predicates.get(0), (subquery, predicate) -> xor(builder, subquery, predicate));
+                .reduce(predicates.get(0), (subquery, predicate) -> xor(builder, subquery, predicate));
     }
 
-    private static Predicate xor(final CriteriaBuilder builder, final Predicate predicate1,
-                                 final Predicate predicate2) {
-        return builder.or(builder.and(predicate1, builder.not(predicate2)),
-            builder.and(predicate2, builder.not(predicate1)));
+    private static Predicate xor(
+            final CriteriaBuilder builder, final Predicate predicate1, final Predicate predicate2) {
+        return builder.or(
+                builder.and(predicate1, builder.not(predicate2)), builder.and(predicate2, builder.not(predicate1)));
     }
 
     private <T> Stream<T> getQueryResult(final CriteriaQuery<T> criteriaQuery) {
@@ -1560,31 +1444,34 @@ public class MessageStorage implements AutoCloseable {
 
         final ResultIterator<T> resultIterator = new ResultIterator<>(session, results);
 
-        return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(resultIterator,
-                Spliterator.ORDERED),
-            false).onClose(resultIterator::close);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false)
+                .onClose(resultIterator::close);
     }
 
     // be aware, that this does not use evict on cached objects
     private <T> Stream<T> getStreamForQuery(final CriteriaQuery<T> criteriaQuery) {
         final Session session = sessionFactory.openSession();
-        final Stream<T> results = session.createQuery(criteriaQuery)
-            .setReadOnly(true).setCacheable(false).setFetchSize(FETCH_SIZE).stream();
+        final Stream<T> results =
+                session
+                        .createQuery(criteriaQuery)
+                        .setReadOnly(true)
+                        .setCacheable(false)
+                        .setFetchSize(FETCH_SIZE)
+                        .stream();
 
         return results.onClose(session::close);
     }
 
     // be aware, that this does not use evict on cached objects
     private <T> Stream<T> getStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
-        return session.createQuery(criteriaQuery)
-            .setReadOnly(true).setCacheable(false).setFetchSize(FETCH_SIZE).stream();
+        return session
+                .createQuery(criteriaQuery)
+                .setReadOnly(true)
+                .setCacheable(false)
+                .setFetchSize(FETCH_SIZE)
+                .stream();
     }
 
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "it is a bug in 'spotbugs' when using try with resources."
-    )
     private void transmit(final List<DatabaseEntry> results) {
         try (final Session session = sessionFactory.openSession()) {
             final Transaction transaction = session.beginTransaction();
@@ -1596,7 +1483,7 @@ public class MessageStorage implements AutoCloseable {
                     session.save(content);
                 } else if (entry instanceof ManipulationInfo) {
                     final ManipulationData content =
-                        convertManipulationInfoToManipulationData((ManipulationInfo) entry);
+                            convertManipulationInfoToManipulationData((ManipulationInfo) entry);
                     session.save(content);
                 }
 
@@ -1704,10 +1591,7 @@ public class MessageStorage implements AutoCloseable {
 
             queueExitLock.lock();
             try {
-                while (
-                    results.size() < blockingQueueSize
-                        && !this.stopped.get()
-                ) {
+                while (results.size() < blockingQueueSize && !this.stopped.get()) {
                     final DatabaseEntry polledElement = messageQueue.poll(100L, TimeUnit.MICROSECONDS);
                     if (polledElement != null) {
                         results.add(polledElement);

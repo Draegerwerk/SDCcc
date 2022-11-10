@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.AbstractAlertReport;
 import com.draeger.medical.biceps.model.message.AbstractComponentReport;
 import com.draeger.medical.biceps.model.message.AbstractContextReport;
@@ -53,6 +57,13 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -61,18 +72,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantMessageModelAnnexTest}.
@@ -129,14 +128,12 @@ public class InvariantMessageModelAnnexTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -181,27 +178,30 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT,
-                    mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE),
-                mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE),
+                        mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final var second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT,
-                    mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final var third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(DescriptionModificationType.DEL,
-                    mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementR5024();
@@ -219,14 +219,13 @@ public class InvariantMessageModelAnnexTestTest {
 
         final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
         final var mdsAlertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         mdsAlertSystem.getLeft().getAlertCondition().clear();
         mdsAlertSystem.getLeft().getAlertCondition().add(mdsAlertCondition.getLeft());
         final var first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT,
-                mdsAlertSystem));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.UPT, mdsAlertSystem));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementR5024);
@@ -283,25 +282,23 @@ public class InvariantMessageModelAnnexTestTest {
                 SEQUENCE_ID,
                 BigInteger.ONE,
                 buildDescriptionModificationReportPart(
-                    modificationType,
-                        "someParentHandle",
-                        mdibBuilder.buildVmd(parentDescriptor)
-                ),
+                        modificationType, "someParentHandle", mdibBuilder.buildVmd(parentDescriptor)),
                 buildDescriptionModificationReportPart(
                         modificationType,
                         parentDescriptor,
                         mdibBuilder.buildChannel(firstChannelHandle),
-                        mdibBuilder.buildChannel("second channel")
-                ),
-                buildDescriptionModificationReportPart(modificationType,
-                        firstChannelHandle, mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                        mdibBuilder.buildNumericMetric("firstChannelfirstMetric",
+                        mdibBuilder.buildChannel("second channel")),
+                buildDescriptionModificationReportPart(
+                        modificationType,
+                        firstChannelHandle,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildNumericMetric(
+                                "firstChannelfirstMetric",
                                 MetricCategory.CLC,
                                 MetricAvailability.INTR,
-                                mdibBuilder.buildCodedValue("Millibar"), BigDecimal.ONE),
-                        mdibBuilder.buildSco(SCO_HANDLE)
-                )
-        );
+                                mdibBuilder.buildCodedValue("Millibar"),
+                                BigDecimal.ONE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementR5025();
@@ -322,25 +319,17 @@ public class InvariantMessageModelAnnexTestTest {
         final var parentDescriptor = "parent1";
         final String firstChannelHandle = "first channel";
         final var first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                modificationType,
-                "someParentHandle",
-                mdibBuilder.buildVmd(parentDescriptor)
-            ),
-            // Empty Report Part
-            buildDescriptionModificationReportPart(
-                modificationType,
-                parentDescriptor
-            ),
-            buildDescriptionModificationReportPart(
-                modificationType,
-                parentDescriptor,
-                mdibBuilder.buildChannel(firstChannelHandle),
-                mdibBuilder.buildChannel("third channel")
-            )
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        modificationType, "someParentHandle", mdibBuilder.buildVmd(parentDescriptor)),
+                // Empty Report Part
+                buildDescriptionModificationReportPart(modificationType, parentDescriptor),
+                buildDescriptionModificationReportPart(
+                        modificationType,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel(firstChannelHandle),
+                        mdibBuilder.buildChannel("third channel")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementR5025();
@@ -380,7 +369,7 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     private void testRequirementR5025Bad(final DescriptionModificationType modificationType)
-        throws JAXBException, IOException {
+            throws JAXBException, IOException {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -390,27 +379,23 @@ public class InvariantMessageModelAnnexTestTest {
                 SEQUENCE_ID,
                 BigInteger.ONE,
                 buildDescriptionModificationReportPart(
+                        modificationType, "someParentHandle", mdibBuilder.buildVmd(parentDescriptor)),
+                buildDescriptionModificationReportPart(
                         modificationType,
-                        "someParentHandle",
-                        mdibBuilder.buildVmd(parentDescriptor)
-                ),
-                buildDescriptionModificationReportPart(modificationType,
                         firstChannelHandle,
                         mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                        mdibBuilder.buildNumericMetric("firstChannelfirstMetric",
+                        mdibBuilder.buildNumericMetric(
+                                "firstChannelfirstMetric",
                                 MetricCategory.CLC,
                                 MetricAvailability.INTR,
                                 mdibBuilder.buildCodedValue("Millibar"),
                                 BigDecimal.ONE),
-                        mdibBuilder.buildSco(SCO_HANDLE)
-                ),
+                        mdibBuilder.buildSco(SCO_HANDLE)),
                 buildDescriptionModificationReportPart(
                         modificationType,
                         parentDescriptor,
                         mdibBuilder.buildChannel(firstChannelHandle),
-                        mdibBuilder.buildChannel("second channel")
-                )
-        );
+                        mdibBuilder.buildChannel("second channel")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementR5025);
@@ -450,7 +435,7 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     private void testRequirementR5025Bad2(final DescriptionModificationType modificationType)
-        throws JAXBException, IOException {
+            throws JAXBException, IOException {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -463,23 +448,20 @@ public class InvariantMessageModelAnnexTestTest {
                         modificationType,
                         parentDescriptor,
                         mdibBuilder.buildChannel(firstChannelHandle),
-                        mdibBuilder.buildChannel("second channel")
-                ),
+                        mdibBuilder.buildChannel("second channel")),
+                buildDescriptionModificationReportPart(
+                        modificationType, "someParentHandle", mdibBuilder.buildVmd(parentDescriptor)),
                 buildDescriptionModificationReportPart(
                         modificationType,
-                        "someParentHandle",
-                        mdibBuilder.buildVmd(parentDescriptor)
-                ),
-                buildDescriptionModificationReportPart(modificationType,
-                        firstChannelHandle, mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                        mdibBuilder.buildNumericMetric("firstChannelfirstMetric",
+                        firstChannelHandle,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildNumericMetric(
+                                "firstChannelfirstMetric",
                                 MetricCategory.CLC,
                                 MetricAvailability.INTR,
                                 mdibBuilder.buildCodedValue("Millibar"),
                                 BigDecimal.ONE),
-                        mdibBuilder.buildSco(SCO_HANDLE)
-                )
-        );
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementR5025);
@@ -502,17 +484,21 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5051Good() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         // wrong modification type, should be ignored
         alertCondition.getLeft().setDescriptorVersion(BigInteger.TWO);
-        final var second = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
+        final var second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         testClass.testRequirementR5051();
@@ -528,10 +514,12 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5051GoodImpliedValue() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ZERO);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementR5051();
@@ -547,24 +535,29 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5051BadImpliedValue() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ZERO);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ZERO,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
 
         final var secondAlertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         secondAlertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         secondAlertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
-        final var second = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT,
-                secondAlertCondition));
+        final var second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, secondAlertCondition));
 
         final var thirdAlertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         thirdAlertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
-        final var third = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, thirdAlertCondition));
+        final var third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, thirdAlertCondition));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
@@ -582,11 +575,13 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5051BadVersionMismatch() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.TWO);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
@@ -601,16 +596,14 @@ public class InvariantMessageModelAnnexTestTest {
      */
     @Test
     public void testRequirementR5051BadMissingDescriptor() throws Exception {
-        final var alertConditionState = mdibBuilder.buildAlertConditionState(
-            MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON);
+        final var alertConditionState =
+                mdibBuilder.buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON);
         alertConditionState.setDescriptorVersion(BigInteger.TWO);
-        final var reportPart = messageBuilder
-                .buildDescriptionModificationReportReportPart();
+        final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.CRT);
         reportPart.getState().add(alertConditionState);
 
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            reportPart);
+        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, reportPart);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
@@ -634,17 +627,21 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5052Good() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         // wrong modification type, should be ignored
         alertCondition.getLeft().setDescriptorVersion(BigInteger.TWO);
-        final var second = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO,
-            buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
+        final var second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         testClass.testRequirementR5052();
@@ -660,10 +657,12 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5052GoodImpliedValue() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ZERO);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementR5052();
@@ -678,11 +677,13 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5052BadVersionMismatch() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.TWO);
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
@@ -697,15 +698,14 @@ public class InvariantMessageModelAnnexTestTest {
      */
     @Test
     public void testRequirementR5052BadMissingDescriptor() throws Exception {
-        final var alertConditionState = mdibBuilder.buildAlertConditionState(
-            MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON);
+        final var alertConditionState =
+                mdibBuilder.buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON);
         alertConditionState.setDescriptorVersion(BigInteger.TWO);
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.UPT);
         reportPart.getState().add(alertConditionState);
 
-        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE,
-            reportPart);
+        final var first = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, reportPart);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
@@ -730,20 +730,26 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC11Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -764,14 +770,15 @@ public class InvariantMessageModelAnnexTestTest {
         final var firstMessageFirstSequence = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.ONE);
         final var secondMessageFirstSequence = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.TWO);
         final var thirdMessageFirstSequence = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.valueOf(3));
-        final var fourthMessageFirstSequence =
-                buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
+        final var fourthMessageFirstSequence = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO);
-        final var firstMessageSecondSequence = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var firstMessageSecondSequence = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialFirstSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstMessageFirstSequence);
@@ -795,8 +802,8 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC11Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID, BigInteger.ONE, buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -815,20 +822,18 @@ public class InvariantMessageModelAnnexTestTest {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var reportPartGood = buildAbstractAlertReportPart(
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
-        final var reportPartBad = buildAbstractAlertReportPart(
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
-        final var first = buildEpisodicAlertReportWithParts(SEQUENCE_ID, BigInteger.ONE,
-            reportPartGood, reportPartBad);
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var reportPartBad =
+                buildAbstractAlertReportPart(buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReportWithParts(SEQUENCE_ID, BigInteger.ONE, reportPartGood, reportPartBad);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementC11);
     }
-
 
     /**
      * Tests whether calling the test without any input data causes a failure.
@@ -848,21 +853,22 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC12Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.ONE,
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
-            buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
-            buildScoState(SCO_HANDLE, ComponentActivation.SHTDN)
-        );
+        final var first = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
 
-        final var second = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.TWO,
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.OFF, 101L),
-            buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.ON),
-            buildScoState(SCO_HANDLE, ComponentActivation.OFF)
-        );
+        final var second = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.OFF, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.ON),
+                buildScoState(SCO_HANDLE, ComponentActivation.OFF));
 
-        final var third = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.NOT_RDY, 0L)
-        );
+        final var third = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.valueOf(3), buildBatteryState(BATTERY_HANDLE, ComponentActivation.NOT_RDY, 0L));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -883,15 +889,15 @@ public class InvariantMessageModelAnnexTestTest {
         final var firstMessageFirstSequence = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.ONE);
         final var secondMessageFirstSequence = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO);
         final var thirdMessageFirstSequence = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.valueOf(3));
-        final var fourthMessageFirstSequence =
-                buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
+        final var fourthMessageFirstSequence = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO);
-        final var firstMessageSecondSequence = buildEpisodicComponentReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
-            buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
-            buildScoState(SCO_HANDLE, ComponentActivation.SHTDN)
-        );
+        final var firstMessageSecondSequence = buildEpisodicComponentReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialFirstSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstMessageFirstSequence);
@@ -915,16 +921,14 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC12Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.ONE,
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 100L)
-        );
+        final var first = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.ONE, buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 100L));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementC12);
     }
-
 
     /**
      * Tests whether EpisodicComponentReports with multiple report parts where one part contain only
@@ -937,12 +941,12 @@ public class InvariantMessageModelAnnexTestTest {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var reportPartGood = buildAbstractComponentReportPart(
-            buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
-            buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
-        final var reportPartBad = buildAbstractComponentReportPart(
-            buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 100L));
-        final var first = buildEpisodicComponentReportWithParts(SEQUENCE_ID, BigInteger.ONE,
-            reportPartBad, reportPartGood);
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
+        final var reportPartBad =
+                buildAbstractComponentReportPart(buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 100L));
+        final var first =
+                buildEpisodicComponentReportWithParts(SEQUENCE_ID, BigInteger.ONE, reportPartBad, reportPartGood);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -968,37 +972,37 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC13Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.ONE,
-            buildPatientContextState(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_STATE_HANDLE,
-                ContextAssociation.ASSOC,
-                mdibBuilder.buildCodedValue("newCodedValue"))
-        );
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
 
-        final var second = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.TWO,
-            buildLocationContextState(
-                LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-                LOCATION_CONTEXT_STATE_HANDLE,
-                ContextAssociation.DIS,
-                mdibBuilder.buildCodedValue("initial")
-            )
-        );
+        final var second = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.DIS,
+                        mdibBuilder.buildCodedValue("initial")));
 
-        final var third = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildPatientContextState(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_STATE_HANDLE,
-                ContextAssociation.ASSOC,
-                mdibBuilder.buildCodedValue("otherValue")
-            ),
-            buildLocationContextState(
-                LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
-                LOCATION_CONTEXT_STATE_HANDLE,
-                ContextAssociation.PRE,
-                mdibBuilder.buildCodedValue("newValue")
-            )
-        );
+        final var third = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("otherValue")),
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.PRE,
+                        mdibBuilder.buildCodedValue("newValue")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1017,13 +1021,14 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC13GoodContextStateCreated() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.ONE,
-            buildOperatorContextState(
-                OPERATOR_CONTEXT_DESCRIPTOR_HANDLE,
-                NEW_OPERATOR_CONTEXT_STATE_HANDLE,
-                ContextAssociation.ASSOC,
-                mdibBuilder.buildCodedValue("newCodedValue"))
-        );
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildOperatorContextState(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE,
+                        NEW_OPERATOR_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1042,17 +1047,17 @@ public class InvariantMessageModelAnnexTestTest {
         final var firstMessageFirstSequence = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.ONE);
         final var secondMessageFirstSequence = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.TWO);
         final var thirdMessageFirstSequence = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3));
-        final var fourthMessageFirstSequence =
-                buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
+        final var fourthMessageFirstSequence = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO);
-        final var firstMessageSecondSequence = buildEpisodicContextReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildPatientContextState(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_STATE_HANDLE,
-                ContextAssociation.ASSOC,
-                mdibBuilder.buildCodedValue("newCodedValue"))
-        );
+        final var firstMessageSecondSequence = buildEpisodicContextReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialFirstSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstMessageFirstSequence);
@@ -1076,13 +1081,14 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC13Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.ONE,
-            buildPatientContextState(
-                PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
-                PATIENT_CONTEXT_STATE_HANDLE,
-                ContextAssociation.ASSOC,
-                mdibBuilder.buildCodedValue("initial"))
-        );
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("initial")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1100,21 +1106,18 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC13BadMultipleReportParts() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var reportPartGood = buildAbstractContextReportPart(
-            buildLocationContextState(
+        final var reportPartGood = buildAbstractContextReportPart(buildLocationContextState(
                 LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
                 LOCATION_CONTEXT_STATE_HANDLE,
                 ContextAssociation.DIS,
-                mdibBuilder.buildCodedValue("initial")
-            ));
-        final var reportPartBad = buildAbstractContextReportPart(
-            buildPatientContextState(
+                mdibBuilder.buildCodedValue("initial")));
+        final var reportPartBad = buildAbstractContextReportPart(buildPatientContextState(
                 PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
                 PATIENT_CONTEXT_STATE_HANDLE,
                 ContextAssociation.ASSOC,
                 mdibBuilder.buildCodedValue("initial")));
-        final var first = buildEpisodicContextReportWithParts(SEQUENCE_ID, BigInteger.ONE,
-            reportPartGood, reportPartBad);
+        final var first =
+                buildEpisodicContextReportWithParts(SEQUENCE_ID, BigInteger.ONE, reportPartGood, reportPartBad);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1140,22 +1143,33 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC14Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            buildNumericMetricState(NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
-                ComponentActivation.NOT_RDY)
-        );
+        final var first = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
 
-        final var second = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.TWO,
-            buildStringMetricState(STRING_METRIC_HANDLE, mdibBuilder.buildStringMetricValue("otherValue"),
-                ComponentActivation.SHTDN)
-        );
+        final var second = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("otherValue"),
+                        ComponentActivation.SHTDN));
 
-        final var third = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildNumericMetricState(NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.valueOf(11L)),
-                ComponentActivation.ON),
-            buildStringMetricState(STRING_METRIC_HANDLE, mdibBuilder.buildStringMetricValue("changedValue"),
-                ComponentActivation.ON)
-        );
+        final var third = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.valueOf(11L)),
+                        ComponentActivation.ON),
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("changedValue"),
+                        ComponentActivation.ON));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1176,14 +1190,16 @@ public class InvariantMessageModelAnnexTestTest {
         final var firstMessageFirstSequence = buildEpisodicContextReport(SEQUENCE_ID, BigInteger.ONE);
         final var secondMessageFirstSequence = buildEpisodicComponentReport(SEQUENCE_ID, BigInteger.TWO);
         final var thirdMessageFirstSequence = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3));
-        final var fourthMessageFirstSequence =
-                buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
+        final var fourthMessageFirstSequence = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(4));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO);
-        final var firstMessageSecondSequence = buildEpisodicMetricReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildNumericMetricState(NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
-                ComponentActivation.SHTDN)
-        );
+        final var firstMessageSecondSequence = buildEpisodicMetricReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.SHTDN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialFirstSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstMessageFirstSequence);
@@ -1207,10 +1223,13 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC14Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.ONE,
-            buildNumericMetricState(NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.ONE),
-                ComponentActivation.OFF)
-        );
+        final var first = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.ONE),
+                        ComponentActivation.OFF));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1228,14 +1247,12 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC14BadMultipleReportParts() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var reportPartGood = buildAbstractMetricReportPart(
-            buildStringMetricState(STRING_METRIC_HANDLE, mdibBuilder.buildStringMetricValue("otherValue"),
-                ComponentActivation.SHTDN));
-        final var reportPartBad = buildAbstractMetricReportPart(
-            buildNumericMetricState(NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.ONE),
-                ComponentActivation.OFF));
-        final var first = buildEpisodicMetricReportWithParts(SEQUENCE_ID, BigInteger.ONE,
-            reportPartGood, reportPartBad);
+        final var reportPartGood = buildAbstractMetricReportPart(buildStringMetricState(
+                STRING_METRIC_HANDLE, mdibBuilder.buildStringMetricValue("otherValue"), ComponentActivation.SHTDN));
+        final var reportPartBad = buildAbstractMetricReportPart(buildNumericMetricState(
+                NUMERIC_METRIC_HANDLE, mdibBuilder.buildNumericMetricValue(BigDecimal.ONE), ComponentActivation.OFF));
+        final var first =
+                buildEpisodicMetricReportWithParts(SEQUENCE_ID, BigInteger.ONE, reportPartGood, reportPartBad);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1261,18 +1278,19 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC15Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.ONE,
-            buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS)
-        );
+        final var first = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
 
-        final var second = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.TWO,
-            buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA)
-        );
+        final var second = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID, BigInteger.TWO, buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
 
-        final var third = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN),
-            buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN)
-        );
+        final var third = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN),
+                buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1296,9 +1314,10 @@ public class InvariantMessageModelAnnexTestTest {
         final var fourthMessageFirstSequence = buildEpisodicMetricReport(SEQUENCE_ID, BigInteger.valueOf(4));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO);
-        final var firstMessageSecondSequence = buildEpisodicOperationalStateReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS)
-        );
+        final var firstMessageSecondSequence = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialFirstSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstMessageFirstSequence);
@@ -1322,9 +1341,10 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC15Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
-        final var first = buildEpisodicOperationalStateReport(SEQUENCE_ID, BigInteger.ONE,
-            buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN)
-        );
+        final var first = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1343,11 +1363,11 @@ public class InvariantMessageModelAnnexTestTest {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var reportPartGood = buildAbstractOperationalStateReportPart(
-            buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
+                buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
         final var reportPartBad = buildAbstractOperationalStateReportPart(
-            buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN));
-        final var first = buildEpisodicOperationalStateReportWithParts(SEQUENCE_ID, BigInteger.ONE,
-            reportPartGood, reportPartBad);
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN));
+        final var first = buildEpisodicOperationalStateReportWithParts(
+                SEQUENCE_ID, BigInteger.ONE, reportPartGood, reportPartBad);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -1359,9 +1379,8 @@ public class InvariantMessageModelAnnexTestTest {
         return mdibBuilder.buildAlertSystemState(handle, activation);
     }
 
-    private AbstractAlertState buildAlertConditionState(final String handle,
-                                                        final AlertActivation activation,
-                                                        final boolean presence) {
+    private AbstractAlertState buildAlertConditionState(
+            final String handle, final AlertActivation activation, final boolean presence) {
         final var alertConditionState = mdibBuilder.buildAlertConditionState(handle, activation);
         alertConditionState.setPresence(presence);
         return alertConditionState;
@@ -1371,16 +1390,16 @@ public class InvariantMessageModelAnnexTestTest {
         return mdibBuilder.buildAlertSignalState(handle, activation);
     }
 
-    private AbstractDeviceComponentState buildBatteryState(final String handle, final ComponentActivation activation,
-                                                           final long operatingHours) {
+    private AbstractDeviceComponentState buildBatteryState(
+            final String handle, final ComponentActivation activation, final long operatingHours) {
         final var batteryState = mdibBuilder.buildBatteryState(handle);
         batteryState.setActivationState(activation);
         batteryState.setOperatingHours(operatingHours);
         return batteryState;
     }
 
-    private AbstractDeviceComponentState buildSystemContextState(final String handle,
-                                                                 final ComponentActivation activation) {
+    private AbstractDeviceComponentState buildSystemContextState(
+            final String handle, final ComponentActivation activation) {
         final var systemContextState = mdibBuilder.buildSystemContextState(handle);
         systemContextState.setActivationState(activation);
         return systemContextState;
@@ -1392,66 +1411,67 @@ public class InvariantMessageModelAnnexTestTest {
         return scoState;
     }
 
-    private PatientContextState buildPatientContextState(final String patientContextHandle,
-                                                         final String patientContextStateHandle,
-                                                         final ContextAssociation association,
-                                                         final CodedValue category) {
-        final var patientContextState = mdibBuilder.buildPatientContextState(patientContextHandle,
-            patientContextStateHandle);
+    private PatientContextState buildPatientContextState(
+            final String patientContextHandle,
+            final String patientContextStateHandle,
+            final ContextAssociation association,
+            final CodedValue category) {
+        final var patientContextState =
+                mdibBuilder.buildPatientContextState(patientContextHandle, patientContextStateHandle);
         patientContextState.setContextAssociation(association);
         patientContextState.setCategory(category);
         return patientContextState;
     }
 
-    private LocationContextState buildLocationContextState(final String locationContextHandle,
-                                                           final String locationContextStateHandle,
-                                                           final ContextAssociation association,
-                                                           final CodedValue category) {
-        final var locationContextState = mdibBuilder.buildLocationContextState(locationContextHandle,
-            locationContextStateHandle);
+    private LocationContextState buildLocationContextState(
+            final String locationContextHandle,
+            final String locationContextStateHandle,
+            final ContextAssociation association,
+            final CodedValue category) {
+        final var locationContextState =
+                mdibBuilder.buildLocationContextState(locationContextHandle, locationContextStateHandle);
         locationContextState.setContextAssociation(association);
         locationContextState.setCategory(category);
         return locationContextState;
     }
 
-    private OperatorContextState buildOperatorContextState(final String operatorContextHandle,
-                                                           final String operatorContextStateHandle,
-                                                           final ContextAssociation association,
-                                                           final CodedValue category) {
-        final var operatorContextState = mdibBuilder.buildOperatorContextState(operatorContextHandle,
-            operatorContextStateHandle);
+    private OperatorContextState buildOperatorContextState(
+            final String operatorContextHandle,
+            final String operatorContextStateHandle,
+            final ContextAssociation association,
+            final CodedValue category) {
+        final var operatorContextState =
+                mdibBuilder.buildOperatorContextState(operatorContextHandle, operatorContextStateHandle);
         operatorContextState.setContextAssociation(association);
         operatorContextState.setCategory(category);
         return operatorContextState;
     }
 
-    private AbstractMetricState buildStringMetricState(final String metricHandle, final StringMetricValue metricValue,
-                                                       final ComponentActivation activation) {
+    private AbstractMetricState buildStringMetricState(
+            final String metricHandle, final StringMetricValue metricValue, final ComponentActivation activation) {
         final var metricState = mdibBuilder.buildStringMetricState(metricHandle);
         metricState.setActivationState(activation);
         metricState.setMetricValue(metricValue);
         return metricState;
     }
 
-    private AbstractMetricState buildNumericMetricState(final String metricHandle, final NumericMetricValue metricValue,
-                                                        final ComponentActivation activation) {
+    private AbstractMetricState buildNumericMetricState(
+            final String metricHandle, final NumericMetricValue metricValue, final ComponentActivation activation) {
         final var metricState = mdibBuilder.buildNumericMetricState(metricHandle);
         metricState.setActivationState(activation);
         metricState.setMetricValue(metricValue);
         return metricState;
     }
 
-    private AbstractOperationState buildSetStringOperationState(final String handle,
-                                                                final OperatingMode operatingMode) {
+    private AbstractOperationState buildSetStringOperationState(
+            final String handle, final OperatingMode operatingMode) {
         return mdibBuilder.buildSetStringOperationState(handle, operatingMode);
     }
 
-    private AbstractOperationState buildActivateOperationState(final String handle,
-                                                               final OperatingMode operatingMode) {
+    private AbstractOperationState buildActivateOperationState(final String handle, final OperatingMode operatingMode) {
         return mdibBuilder.buildActivateOperationState(handle, operatingMode);
     }
 
-    // CHECKSTYLE.OFF: NCSS, disabled to set up larger mdib
     private Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdsVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
@@ -1460,36 +1480,41 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(mdsVersion);
 
         // alerts for c.11
-        final var mdsAlertSystem =
-                mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
+        final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
 
         final var mdsAlertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         mdsAlertCondition.getRight().setPresence(false);
         final var mdsAlertSignal = mdibBuilder.buildAlertSignal(
-            MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
+                MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
 
         final var mdsSecondAlertCondition = mdibBuilder.buildAlertCondition(
-            MDS_SECOND_ALERT_CONDITION_HANDLE, AlertConditionKind.TEC, AlertConditionPriority.HI, AlertActivation.ON);
+                MDS_SECOND_ALERT_CONDITION_HANDLE,
+                AlertConditionKind.TEC,
+                AlertConditionPriority.HI,
+                AlertActivation.ON);
         mdsSecondAlertCondition.getRight().setPresence(false);
         final var mdsSecondAlertSignal = mdibBuilder.buildAlertSignal(
-            MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.VIS, true, AlertActivation.OFF);
+                MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.VIS, true, AlertActivation.OFF);
 
         mdsAlertSystem.getLeft().getAlertCondition().clear();
-        mdsAlertSystem.getLeft().getAlertCondition().addAll(List.of(mdsAlertCondition.getLeft(),
-                mdsSecondAlertCondition.getLeft()));
+        mdsAlertSystem
+                .getLeft()
+                .getAlertCondition()
+                .addAll(List.of(mdsAlertCondition.getLeft(), mdsSecondAlertCondition.getLeft()));
         mdsAlertSystem.getLeft().getAlertSignal().clear();
-        mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(mdsAlertSignal.getLeft(),
-                mdsSecondAlertSignal.getLeft()));
+        mdsAlertSystem
+                .getLeft()
+                .getAlertSignal()
+                .addAll(List.of(mdsAlertSignal.getLeft(), mdsSecondAlertSignal.getLeft()));
 
         final var vmdAlertCondition = mdibBuilder.buildAlertCondition(
-            VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         vmdAlertCondition.getRight().setPresence(false);
         final var vmdAlertSignal = mdibBuilder.buildAlertSignal(
-            VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
+                VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
 
-        final var vmdAlertSystem =
-                mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
+        final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
 
         vmdAlertSystem.getLeft().getAlertCondition().clear();
         vmdAlertSystem.getLeft().getAlertCondition().add(vmdAlertCondition.getLeft());
@@ -1498,14 +1523,20 @@ public class InvariantMessageModelAnnexTestTest {
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setAlertSystem(vmdAlertSystem.getLeft());
-        mdState.getState().addAll(List.of(
-            mdsAlertSystem.getRight(), mdsAlertCondition.getRight(), mdsAlertSignal.getRight(),
-            mdsSecondAlertCondition.getRight(), mdsSecondAlertSignal.getRight(), vmd.getRight(),
-            vmdAlertSystem.getRight(), vmdAlertCondition.getRight(), vmdAlertSignal.getRight()));
+        mdState.getState()
+                .addAll(List.of(
+                        mdsAlertSystem.getRight(),
+                        mdsAlertCondition.getRight(),
+                        mdsAlertSignal.getRight(),
+                        mdsSecondAlertCondition.getRight(),
+                        mdsSecondAlertSignal.getRight(),
+                        vmd.getRight(),
+                        vmdAlertSystem.getRight(),
+                        vmdAlertCondition.getRight(),
+                        vmdAlertSignal.getRight()));
 
         // component for c.12
-        final var systemContext =
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);
+        final var systemContext = mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);
         systemContext.getRight().setActivationState(ComponentActivation.ON);
 
         final var battery = mdibBuilder.buildBattery(BATTERY_HANDLE);
@@ -1520,20 +1551,20 @@ public class InvariantMessageModelAnnexTestTest {
 
         // contexts for c.13
         final Pair<PatientContextDescriptor, PatientContextState> patientContext;
-        patientContext = mdibBuilder.buildPatientContext(
-            PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE);
+        patientContext =
+                mdibBuilder.buildPatientContext(PATIENT_CONTEXT_DESCRIPTOR_HANDLE, PATIENT_CONTEXT_STATE_HANDLE);
         patientContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
         patientContext.getRight().setCategory(mdibBuilder.buildCodedValue("initial"));
-        final Pair<LocationContextDescriptor, LocationContextState> locationContext = mdibBuilder.buildLocationContext(
-            LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE);
+        final Pair<LocationContextDescriptor, LocationContextState> locationContext =
+                mdibBuilder.buildLocationContext(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, LOCATION_CONTEXT_STATE_HANDLE);
         locationContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
         locationContext.getRight().setCategory(mdibBuilder.buildCodedValue("initial"));
-        final Pair<OperatorContextDescriptor, OperatorContextState> operatorContext = mdibBuilder.buildOperatorContext(
-            OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE);
+        final Pair<OperatorContextDescriptor, OperatorContextState> operatorContext =
+                mdibBuilder.buildOperatorContext(OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE);
         operatorContext.getRight().setContextAssociation(ContextAssociation.ASSOC);
         operatorContext.getRight().setCategory(mdibBuilder.buildCodedValue("initial"));
-        mdState.getState().addAll(List.of(
-            patientContext.getRight(), locationContext.getRight(), operatorContext.getRight()));
+        mdState.getState()
+                .addAll(List.of(patientContext.getRight(), locationContext.getRight(), operatorContext.getRight()));
 
         systemContext.getLeft().setPatientContext(patientContext.getLeft());
         systemContext.getLeft().setLocationContext(locationContext.getLeft());
@@ -1541,13 +1572,17 @@ public class InvariantMessageModelAnnexTestTest {
         systemContext.getLeft().getOperatorContext().add(operatorContext.getLeft());
 
         // metrics for c.14
-        final var metric = mdibBuilder.buildStringMetric(STRING_METRIC_HANDLE,
-            MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
+        final var metric = mdibBuilder.buildStringMetric(
+                STRING_METRIC_HANDLE, MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         metric.getRight().setActivationState(ComponentActivation.OFF);
         metric.getRight().setMetricValue(mdibBuilder.buildStringMetricValue("value"));
 
-        final var numericMetric = mdibBuilder.buildNumericMetric(NUMERIC_METRIC_HANDLE,
-            MetricCategory.RCMM, MetricAvailability.CONT, mdibBuilder.buildCodedValue("abc"), BigDecimal.ONE);
+        final var numericMetric = mdibBuilder.buildNumericMetric(
+                NUMERIC_METRIC_HANDLE,
+                MetricCategory.RCMM,
+                MetricAvailability.CONT,
+                mdibBuilder.buildCodedValue("abc"),
+                BigDecimal.ONE);
         numericMetric.getRight().setActivationState(ComponentActivation.OFF);
         numericMetric.getRight().setMetricValue(mdibBuilder.buildNumericMetricValue(BigDecimal.ONE));
 
@@ -1557,11 +1592,9 @@ public class InvariantMessageModelAnnexTestTest {
 
         // operations for c.15
         final var setStringOperation =
-                mdibBuilder.buildSetStringOperation(SET_STRING_OPERATION_HANDLE,
-            "someTarget", OperatingMode.EN);
+                mdibBuilder.buildSetStringOperation(SET_STRING_OPERATION_HANDLE, "someTarget", OperatingMode.EN);
         final var activateOperation =
-                mdibBuilder.buildActivateOperation(ACTIVATE_OPERATION_HANDLE,
-            "someTarget", OperatingMode.EN);
+                mdibBuilder.buildActivateOperation(ACTIVATE_OPERATION_HANDLE, "someTarget", OperatingMode.EN);
         final var sco = mdibBuilder.buildSco(SCO_HANDLE);
         sco.getLeft().getOperation().clear();
         sco.getLeft().getOperation().addAll(List.of(setStringOperation.getLeft(), activateOperation.getLeft()));
@@ -1578,9 +1611,8 @@ public class InvariantMessageModelAnnexTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
-    // CHECKSTYLE.ON: NCSS
 
     AbstractAlertReport.ReportPart buildAbstractAlertReportPart(final AbstractAlertState... alertStates) {
         final var reportPart = messageBuilder.buildAbstractAlertReportReportPart();
@@ -1590,23 +1622,20 @@ public class InvariantMessageModelAnnexTestTest {
         return reportPart;
     }
 
-    Envelope buildEpisodicAlertReportWithParts(final String sequenceId,
-                                               final @Nullable BigInteger mdibVersion,
-                                               final AbstractAlertReport.ReportPart... reportParts) {
+    Envelope buildEpisodicAlertReportWithParts(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractAlertReport.ReportPart... reportParts) {
         final var report = messageBuilder.buildEpisodicAlertReport(sequenceId);
         report.setMdibVersion(mdibVersion);
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_ALERT_REPORT, report);
     }
 
-    Envelope buildEpisodicAlertReport(final String sequenceId,
-                                      final @Nullable BigInteger mdibVersion,
-                                      final AbstractAlertState... alertStates) {
+    Envelope buildEpisodicAlertReport(
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final AbstractAlertState... alertStates) {
         final var reportPart = messageBuilder.buildAbstractAlertReportReportPart();
         for (var alertState : alertStates) {
             reportPart.getAlertState().add(alertState);
@@ -1616,7 +1645,7 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     AbstractComponentReport.ReportPart buildAbstractComponentReportPart(
-        final AbstractDeviceComponentState... componentStates) {
+            final AbstractDeviceComponentState... componentStates) {
         final var reportPart = messageBuilder.buildAbstractComponentReportReportPart();
         for (var componentState : componentStates) {
             reportPart.getComponentState().add(componentState);
@@ -1624,23 +1653,22 @@ public class InvariantMessageModelAnnexTestTest {
         return reportPart;
     }
 
-    Envelope buildEpisodicComponentReportWithParts(final String sequenceId,
-                                                   final @Nullable BigInteger mdibVersion,
-                                                   final AbstractComponentReport.ReportPart... reportParts) {
+    Envelope buildEpisodicComponentReportWithParts(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractComponentReport.ReportPart... reportParts) {
         final var report = messageBuilder.buildEpisodicComponentReport(sequenceId);
         report.setMdibVersion(mdibVersion);
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT, report);
     }
 
-    Envelope buildEpisodicComponentReport(final String sequenceId,
-                                          final @Nullable BigInteger mdibVersion,
-                                          final AbstractDeviceComponentState... componentStates) {
+    Envelope buildEpisodicComponentReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractDeviceComponentState... componentStates) {
         final var reportPart = messageBuilder.buildAbstractComponentReportReportPart();
         for (var componentState : componentStates) {
             reportPart.getComponentState().add(componentState);
@@ -1656,23 +1684,22 @@ public class InvariantMessageModelAnnexTestTest {
         return reportPart;
     }
 
-    Envelope buildEpisodicContextReportWithParts(final String sequenceId,
-                                                 final @Nullable BigInteger mdibVersion,
-                                                 final AbstractContextReport.ReportPart... reportParts) {
+    Envelope buildEpisodicContextReportWithParts(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractContextReport.ReportPart... reportParts) {
         final var report = messageBuilder.buildEpisodicContextReport(sequenceId);
         report.setMdibVersion(mdibVersion);
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 
-    Envelope buildEpisodicContextReport(final String sequenceId,
-                                        final @Nullable BigInteger mdibVersion,
-                                        final AbstractContextState... contextStates) {
+    Envelope buildEpisodicContextReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractContextState... contextStates) {
         final var reportPart = messageBuilder.buildAbstractContextReportReportPart();
         for (var contextState : contextStates) {
             reportPart.getContextState().add(contextState);
@@ -1688,23 +1715,22 @@ public class InvariantMessageModelAnnexTestTest {
         return reportPart;
     }
 
-    Envelope buildEpisodicMetricReportWithParts(final String sequenceId,
-                                                final @Nullable BigInteger mdibVersion,
-                                                final AbstractMetricReport.ReportPart... reportParts) {
+    Envelope buildEpisodicMetricReportWithParts(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractMetricReport.ReportPart... reportParts) {
         final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
         report.setMdibVersion(mdibVersion);
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_METRIC_REPORT, report);
     }
 
-    Envelope buildEpisodicMetricReport(final String sequenceId,
-                                       final @Nullable BigInteger mdibVersion,
-                                       final AbstractMetricState... metricStates) {
+    Envelope buildEpisodicMetricReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractMetricState... metricStates) {
         final var reportPart = messageBuilder.buildAbstractMetricReportReportPart();
         for (var metricState : metricStates) {
             reportPart.getMetricState().add(metricState);
@@ -1713,7 +1739,7 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     AbstractOperationalStateReport.ReportPart buildAbstractOperationalStateReportPart(
-        final AbstractOperationState... operationStates) {
+            final AbstractOperationState... operationStates) {
         final var reportPart = messageBuilder.buildAbstractOperationalStateReportReportPart();
         for (var operationState : operationStates) {
             reportPart.getOperationState().add(operationState);
@@ -1722,23 +1748,22 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     Envelope buildEpisodicOperationalStateReportWithParts(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractOperationalStateReport.ReportPart... reportParts) {
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractOperationalStateReport.ReportPart... reportParts) {
         final var report = messageBuilder.buildEpisodicOperationalStateReport(sequenceId);
         report.setMdibVersion(mdibVersion);
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
-            report
-        );
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT, report);
     }
 
-    Envelope buildEpisodicOperationalStateReport(final String sequenceId,
-                                                 final @Nullable BigInteger mdibVersion,
-                                                 final AbstractOperationState... operationStates) {
+    Envelope buildEpisodicOperationalStateReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractOperationState... operationStates) {
         final var reportPart = messageBuilder.buildAbstractOperationalStateReportReportPart();
         for (var operationState : operationStates) {
             reportPart.getOperationState().add(operationState);
@@ -1748,10 +1773,9 @@ public class InvariantMessageModelAnnexTestTest {
 
     @SafeVarargs
     final DescriptionModificationReport.ReportPart buildDescriptionModificationReportPart(
-        final DescriptionModificationType modificationType,
-        final Pair<? extends AbstractDescriptor, ? extends AbstractState>... modifications) {
-        return buildDescriptionModificationReportPart(modificationType,
-            null, modifications);
+            final DescriptionModificationType modificationType,
+            final Pair<? extends AbstractDescriptor, ? extends AbstractState>... modifications) {
+        return buildDescriptionModificationReportPart(modificationType, null, modifications);
     }
 
     @SafeVarargs
@@ -1762,7 +1786,7 @@ public class InvariantMessageModelAnnexTestTest {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(modificationType);
         reportPart.setParentDescriptor(parentDescriptor);
-        for (var modification: modifications) {
+        for (var modification : modifications) {
             reportPart.getDescriptor().add(modification.getLeft());
             if (modificationType != DescriptionModificationType.DEL) {
                 reportPart.getState().add(modification.getRight());
@@ -1771,15 +1795,12 @@ public class InvariantMessageModelAnnexTestTest {
         return reportPart;
     }
 
-    Envelope buildDescriptionModificationReport(final String sequenceId,
-                                                final @Nullable BigInteger mdibVersion,
-                                                final DescriptionModificationReport.ReportPart... reportParts) {
-        final var report = messageBuilder.buildDescriptionModificationReport(sequenceId,
-            List.of(reportParts));
+    Envelope buildDescriptionModificationReport(
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final DescriptionModificationReport.ReportPart... reportParts) {
+        final var report = messageBuilder.buildDescriptionModificationReport(sequenceId, List.of(reportParts));
         report.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
     }
 }

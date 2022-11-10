@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.util;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import javax.annotation.Nullable;
 import org.somda.sdc.biceps.common.access.MdibAccess;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
@@ -44,18 +48,12 @@ import org.somda.sdc.biceps.model.participant.MdsOperatingMode;
 import org.somda.sdc.biceps.model.participant.MdsState;
 import org.somda.sdc.biceps.model.participant.SafetyClassification;
 
-import javax.annotation.Nullable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Duration;
-
 /**
  * Utility which provides the implied value.
  */
 public final class ImpliedValueUtil {
 
-    private ImpliedValueUtil() {
-    }
+    private ImpliedValueUtil() {}
 
     /**
      * Retrieves the context association of an abstract context state or the implied value.
@@ -77,16 +75,17 @@ public final class ImpliedValueUtil {
      * @throws InitialImpliedValueException when the descriptor version is null, even though the version was
      *                                      non-initial before.
      */
-    public static BigInteger getDescriptorVersion(final AbstractDescriptor descriptor,
-                                                  final InitialImpliedValue impliedValues)
-        throws InitialImpliedValueException {
+    public static BigInteger getDescriptorVersion(
+            final AbstractDescriptor descriptor, final InitialImpliedValue impliedValues)
+            throws InitialImpliedValueException {
         final var descriptorVersion = descriptor.getDescriptorVersion();
         final var handle = descriptor.getHandle();
         if (descriptorVersion == null) {
             if (!impliedValues.isDescriptorVersionInitial(handle)) {
-                throw new InitialImpliedValueException(
-                    String.format("The descriptor version for handle %s is null but was not allowed to be."
-                        + " It occurred previously without an implied value.", handle));
+                throw new InitialImpliedValueException(String.format(
+                        "The descriptor version for handle %s is null but was not allowed to be."
+                                + " It occurred previously without an implied value.",
+                        handle));
             }
         } else {
             impliedValues.setDescriptorVersionNonInitial(handle);
@@ -180,16 +179,18 @@ public final class ImpliedValueUtil {
      * @throws InitialImpliedValueException when the state version is null, even though the version was non-initial
      *                                      before.
      */
-    public static BigInteger getStateVersion(final AbstractState state,
-                               final InitialImpliedValue impliedValues) throws InitialImpliedValueException {
+    public static BigInteger getStateVersion(final AbstractState state, final InitialImpliedValue impliedValues)
+            throws InitialImpliedValueException {
         final var version = state.getStateVersion();
         final var handle = state instanceof AbstractMultiState
-            ? ((AbstractMultiState) state).getHandle() : state.getDescriptorHandle();
+                ? ((AbstractMultiState) state).getHandle()
+                : state.getDescriptorHandle();
         if (version == null) {
             if (!impliedValues.isStateVersionInitial(handle)) {
-                throw new InitialImpliedValueException(
-                    String.format("The state version for handle %s is null but was not allowed to be."
-                            + " It occurred previously without an implied value.", handle));
+                throw new InitialImpliedValueException(String.format(
+                        "The state version for handle %s is null but was not allowed to be."
+                                + " It occurred previously without an implied value.",
+                        handle));
             }
         } else {
             impliedValues.setStateVersionNonInitial(handle);
@@ -207,16 +208,18 @@ public final class ImpliedValueUtil {
      * @throws InitialImpliedValueException when the state descriptor version is null, even though the version was
      *                                      non-initial before.
      */
-    public static BigInteger getStateDescriptorVersion(final AbstractState state,
-                                         final InitialImpliedValue impliedValues) throws InitialImpliedValueException {
+    public static BigInteger getStateDescriptorVersion(
+            final AbstractState state, final InitialImpliedValue impliedValues) throws InitialImpliedValueException {
         final var descriptorVersion = state.getDescriptorVersion();
         final var handle = state instanceof AbstractMultiState
-            ? ((AbstractMultiState) state).getHandle() : state.getDescriptorHandle();
+                ? ((AbstractMultiState) state).getHandle()
+                : state.getDescriptorHandle();
         if (descriptorVersion == null) {
             if (!impliedValues.isStateDescriptorVersionInitial(handle)) {
-                throw new InitialImpliedValueException(
-                    String.format("The state descriptor version for handle %s is null but was not allowed to be."
-                        + " It occurred previously without an implied value.", handle));
+                throw new InitialImpliedValueException(String.format(
+                        "The state descriptor version for handle %s is null but was not allowed to be."
+                                + " It occurred previously without an implied value.",
+                        handle));
             }
         } else {
             impliedValues.setStateDescriptorVersionNonInitial(handle);
@@ -440,7 +443,7 @@ public final class ImpliedValueUtil {
      * @return the modification type
      */
     public static DescriptionModificationType getModificationType(
-        final DescriptionModificationReport.ReportPart reportPart) {
+            final DescriptionModificationReport.ReportPart reportPart) {
         final var modificationType = reportPart.getModificationType();
         return modificationType != null ? modificationType : DescriptionModificationType.UPT;
     }

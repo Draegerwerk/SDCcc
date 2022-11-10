@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -16,6 +21,11 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
+import javax.xml.namespace.QName;
 import org.apache.http.client.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,17 +49,6 @@ import org.somda.sdc.dpws.soap.wsdiscovery.model.ProbeType;
 import org.somda.sdc.dpws.soap.wsdiscovery.model.ScopesType;
 import org.somda.sdc.glue.consumer.SdcDiscoveryFilterBuilder;
 
-import javax.xml.namespace.QName;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 /**
  * MDPWS security considerations tests (ch. 10).
  */
@@ -70,14 +69,15 @@ public class DirectSecurityConsiderationsTest extends InjectorTestBase {
     @BeforeEach
     void setUp() {
         testClient = getInjector().getInstance(TestClient.class);
-        httpClient = testClient.getInjector().getInstance(ApacheTransportBindingFactoryImpl.class).getClient();
+        httpClient = testClient
+                .getInjector()
+                .getInstance(ApacheTransportBindingFactoryImpl.class)
+                .getClient();
         soapUtil = testClient.getInjector().getInstance(SoapUtil.class);
         httpClientUtil = testClient.getInjector().getInstance(HttpClientUtil.class);
         marshalling = testClient.getInjector().getInstance(MarshallingService.class);
         wsaUtil = testClient.getInjector().getInstance(WsAddressingUtil.class);
-        wsdFactory = testClient.getInjector().getInstance(
-            ObjectFactory.class
-        );
+        wsdFactory = testClient.getInjector().getInstance(ObjectFactory.class);
     }
 
     @Test
@@ -86,12 +86,10 @@ public class DirectSecurityConsiderationsTest extends InjectorTestBase {
     void testRequirementR0015() throws NoTestData, TransportException, SoapFaultException, MarshallingException {
 
         // ensure the http client can only use tls
-        final var httpEnabled = testClient.getInjector().getInstance(
-            Key.get(Boolean.class, Names.named(DpwsConfig.HTTP_SUPPORT))
-        );
-        final var httpsEnabled = testClient.getInjector().getInstance(
-            Key.get(Boolean.class, Names.named(DpwsConfig.HTTPS_SUPPORT))
-        );
+        final var httpEnabled =
+                testClient.getInjector().getInstance(Key.get(Boolean.class, Names.named(DpwsConfig.HTTP_SUPPORT)));
+        final var httpsEnabled =
+                testClient.getInjector().getInstance(Key.get(Boolean.class, Names.named(DpwsConfig.HTTPS_SUPPORT)));
         assertFalse(httpEnabled, HTTP_ENABLED_ERROR);
         assertTrue(httpsEnabled, HTTPS_DISABLED_ERROR);
 
@@ -104,8 +102,8 @@ public class DirectSecurityConsiderationsTest extends InjectorTestBase {
             final var filter = filterBuilder.get();
 
             final var probeMessage = createProbeMessage(filter.getTypes(), filter.getScopes());
-            final AttributedURIType msgId = wsaUtil.createAttributedURIType(
-                soapUtil.createUriFromUuid(UUID.randomUUID()));
+            final AttributedURIType msgId =
+                    wsaUtil.createAttributedURIType(soapUtil.createUriFromUuid(UUID.randomUUID()));
             probeMessage.getWsAddressingHeader().setMessageId(msgId);
             final var output = new ByteArrayOutputStream();
             try {
@@ -152,10 +150,9 @@ public class DirectSecurityConsiderationsTest extends InjectorTestBase {
         probeType.setScopes(scopesType);
 
         return soapUtil.createMessage(
-            WsDiscoveryConstants.WSA_ACTION_PROBE,
-            // If sent to a Target Service, MUST be "urn:docs-oasis-open-org:ws-dd:ns:discovery:2009:01" [RFC 2141]
-            WsDiscoveryConstants.WSA_UDP_TO,
-            wsdFactory.createProbe(probeType)
-        );
+                WsDiscoveryConstants.WSA_ACTION_PROBE,
+                // If sent to a Target Service, MUST be "urn:docs-oasis-open-org:ws-dd:ns:discovery:2009:01" [RFC 2141]
+                WsDiscoveryConstants.WSA_UDP_TO,
+                wsdFactory.createProbe(probeType));
     }
 }

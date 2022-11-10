@@ -43,16 +43,15 @@ import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchType;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchesType;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
 import jakarta.xml.bind.JAXBElement;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import javax.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.dpws.soap.SoapConstants;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 import org.w3c.dom.Element;
-
-import javax.inject.Inject;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Utility to build message objects to be used with {@linkplain SoapMarshalling}.
@@ -65,14 +64,12 @@ public class MessageBuilder {
     private final com.draeger.medical.dpws.soap.wsaddressing.model.ObjectFactory wsAddressingFactory;
     private final com.draeger.medical.dpws.soap.model.ObjectFactory soapFactory;
 
-
     @Inject
     MessageBuilder(
-        final ObjectFactory messageModelFactory,
-        final com.draeger.medical.dpws.soap.wsdiscovery.model.ObjectFactory wsDiscoveryFactory,
-        final com.draeger.medical.dpws.soap.wsaddressing.model.ObjectFactory wsAddressingFactory,
-        final com.draeger.medical.dpws.soap.model.ObjectFactory soapFactory
-    ) {
+            final ObjectFactory messageModelFactory,
+            final com.draeger.medical.dpws.soap.wsdiscovery.model.ObjectFactory wsDiscoveryFactory,
+            final com.draeger.medical.dpws.soap.wsaddressing.model.ObjectFactory wsAddressingFactory,
+            final com.draeger.medical.dpws.soap.model.ObjectFactory soapFactory) {
         this.messageModelFactory = messageModelFactory;
         this.wsAddressingFactory = wsAddressingFactory;
         this.wsDiscoveryFactory = wsDiscoveryFactory;
@@ -125,11 +122,9 @@ public class MessageBuilder {
      */
     public Envelope createBasicSoapMessage(final String action) {
         final var message = createMessage(action);
-        message.getHeader().getAny().add(
-            wsAddressingFactory.createMessageID(
-                createAttributedUriType(createRandomUUIDUri())
-            )
-        );
+        message.getHeader()
+                .getAny()
+                .add(wsAddressingFactory.createMessageID(createAttributedUriType(createRandomUUIDUri())));
 
         return message;
     }
@@ -170,8 +165,7 @@ public class MessageBuilder {
         fault.setReason(faultReason);
         fault.setCode(faultCode);
 
-        return createSoapMessageWithBody(
-            WsAddressingConstants.FAULT_ACTION, soapFactory.createFault(fault));
+        return createSoapMessageWithBody(WsAddressingConstants.FAULT_ACTION, soapFactory.createFault(fault));
     }
 
     /**
@@ -205,8 +199,8 @@ public class MessageBuilder {
      * @param metadataVersion   of new hello
      * @return new hello
      */
-    public JAXBElement<HelloType> buildHello(final EndpointReferenceType endpointReference,
-                                             final long metadataVersion) {
+    public JAXBElement<HelloType> buildHello(
+            final EndpointReferenceType endpointReference, final long metadataVersion) {
         final var hello = wsDiscoveryFactory.createHelloType();
         hello.setEndpointReference(endpointReference);
         hello.setMetadataVersion(metadataVersion);
@@ -247,8 +241,8 @@ public class MessageBuilder {
      * @param metadataVersion   of match
      * @return match element
      */
-    public ResolveMatchType buildResolveMatch(final EndpointReferenceType endpointReference,
-                                              final long metadataVersion) {
+    public ResolveMatchType buildResolveMatch(
+            final EndpointReferenceType endpointReference, final long metadataVersion) {
         final var resolveMatch = wsDiscoveryFactory.createResolveMatchType();
         resolveMatch.setEndpointReference(endpointReference);
         resolveMatch.setMetadataVersion(metadataVersion);
@@ -324,8 +318,8 @@ public class MessageBuilder {
      * @param reportParts report elements
      * @return system error report element
      */
-    public SystemErrorReport buildSystemErrorReport(final String sequenceId,
-                                                    final List<SystemErrorReport.ReportPart> reportParts) {
+    public SystemErrorReport buildSystemErrorReport(
+            final String sequenceId, final List<SystemErrorReport.ReportPart> reportParts) {
         final var response = messageModelFactory.createSystemErrorReport();
         response.setSequenceId(sequenceId);
         response.getReportPart().clear();
@@ -364,8 +358,8 @@ public class MessageBuilder {
      * @param invocationInfo result of operation
      * @return set context states response element
      */
-    public SetContextStateResponse buildSetContextStateResponse(final String sequenceId,
-                                                                final InvocationInfo invocationInfo) {
+    public SetContextStateResponse buildSetContextStateResponse(
+            final String sequenceId, final InvocationInfo invocationInfo) {
         final var response = messageModelFactory.createSetContextStateResponse();
         response.setSequenceId(sequenceId);
         response.setInvocationInfo(invocationInfo);
@@ -407,7 +401,6 @@ public class MessageBuilder {
         report.setSequenceId(sequenceId);
         return report;
     }
-
 
     /**
      * Creates a new episodic component report element.
@@ -453,8 +446,7 @@ public class MessageBuilder {
      * @return new description modification report
      */
     public DescriptionModificationReport buildDescriptionModificationReport(
-        final String sequenceId,
-        final Collection<DescriptionModificationReport.ReportPart> reportParts) {
+            final String sequenceId, final Collection<DescriptionModificationReport.ReportPart> reportParts) {
         final var report = messageModelFactory.createDescriptionModificationReport();
         report.setSequenceId(sequenceId);
         report.getReportPart().addAll(reportParts);
@@ -469,9 +461,7 @@ public class MessageBuilder {
      * @return new waveform stream
      */
     public WaveformStream buildWaveformStream(
-        final String sequenceId,
-        final List<RealTimeSampleArrayMetricState> states
-    ) {
+            final String sequenceId, final List<RealTimeSampleArrayMetricState> states) {
         final var waveform = messageModelFactory.createWaveformStream();
         waveform.setSequenceId(sequenceId);
         waveform.getState().addAll(states);
@@ -514,7 +504,6 @@ public class MessageBuilder {
         return messageModelFactory.createAbstractContextReportReportPart();
     }
 
-
     /**
      * Creates a new abstract operational state report report part element.
      *
@@ -548,8 +537,8 @@ public class MessageBuilder {
     }
 
     /*
-      Message utility methods
-     */
+     Message utility methods
+    */
 
     /**
      * Set the wsa:To element of message.
@@ -572,9 +561,10 @@ public class MessageBuilder {
     public void setMessageRelatesTo(final Envelope envelope, final String relatesTo) {
         final var relatesToType = wsAddressingFactory.createRelatesToType();
         relatesToType.setValue(relatesTo);
-        addWithDuplicateCheck(wsAddressingFactory.createRelatesTo(relatesToType), envelope.getHeader().getAny());
+        addWithDuplicateCheck(
+                wsAddressingFactory.createRelatesTo(relatesToType),
+                envelope.getHeader().getAny());
     }
-
 
     /**
      * Duplicate check for adding new header elements.
@@ -600,11 +590,14 @@ public class MessageBuilder {
                 final var jaxbElement = (JAXBElement<?>) element;
 
                 if (jaxbObj.getName().equals(jaxbElement.getName())
-                    && jaxbObj.getDeclaredType().equals(jaxbElement.getDeclaredType())
-                    && jaxbObj.getScope().equals(jaxbElement.getScope())) {
-                    LOG.warn("Envelope header already contains entry for JAXBElement {}."
-                            + "Removing previously set element with value {} and replacing it with {}",
-                        obj, jaxbElement.getValue(), jaxbObj.getValue());
+                        && jaxbObj.getDeclaredType().equals(jaxbElement.getDeclaredType())
+                        && jaxbObj.getScope().equals(jaxbElement.getScope())) {
+                    LOG.warn(
+                            "Envelope header already contains entry for JAXBElement {}."
+                                    + "Removing previously set element with value {} and replacing it with {}",
+                            obj,
+                            jaxbElement.getValue(),
+                            jaxbObj.getValue());
                     dest.remove(jaxbElement);
                     break;
                 }

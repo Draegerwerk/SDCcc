@@ -8,6 +8,12 @@
 package com.draeger.medical.sdccc.configuration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Optional;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -16,13 +22,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.Optional;
 
 /**
  * Command line option parser.
@@ -46,7 +45,9 @@ public class CommandLineOptions {
      *
      * @param commandLineArguments array of commandline options, as usually passed to a main function.
      */
-    @SuppressFBWarnings(value = {"DM_EXIT"}, justification = "Invalid arguments must lead to a halt.")
+    @SuppressFBWarnings(
+            value = {"DM_EXIT"},
+            justification = "Invalid arguments must lead to a halt.")
     public CommandLineOptions(final String[] commandLineArguments) {
 
         final var options = setupOptions();
@@ -101,14 +102,14 @@ public class CommandLineOptions {
         }
         {
             final String description = "IP address of the adapter to use for communication,"
-                + " overrides setting from configuration if provided";
+                    + " overrides setting from configuration if provided";
             final var consumerTargetEprOpt = new Option("ip", IP_ADDRESS, true, description);
             consumerTargetEprOpt.setRequired(false);
             options.addOption(consumerTargetEprOpt);
         }
         {
             final String description = "Base directory to store test runs in, creates a timestamped SDCcc run"
-                + " directory inside the base directory. Defaults to current working directory as base.";
+                    + " directory inside the base directory. Defaults to current working directory as base.";
             final var testRunDirectoryOpt = new Option("d", TEST_RUN_DIRECTORY, true, description);
             testRunDirectoryOpt.setRequired(false);
             options.addOption(testRunDirectoryOpt);
@@ -159,17 +160,13 @@ public class CommandLineOptions {
                     networkInterface.isLoopback(),
                     networkInterface.supportsMulticast(),
                     networkInterface.getMTU(),
-                    networkInterface.isVirtual()
-            );
-            final Iterator<InetAddress> inetAddressIterator = networkInterface.getInetAddresses().asIterator();
+                    networkInterface.isVirtual());
+            final Iterator<InetAddress> inetAddressIterator =
+                    networkInterface.getInetAddresses().asIterator();
             int i = 0;
             while (inetAddressIterator.hasNext()) {
                 final var addr = inetAddressIterator.next();
-                System.out.printf(
-                        "\t\tAddress[%s]: %s%n",
-                        i++,
-                        addr
-                );
+                System.out.printf("\t\tAddress[%s]: %s%n", i++, addr);
             }
             System.out.println("");
         }
