@@ -24,6 +24,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
@@ -48,6 +50,7 @@ import org.somda.sdc.dpws.model.HostedServiceType;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
 import org.somda.sdc.dpws.soap.CommunicationContext;
+import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
@@ -124,6 +127,9 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
+
+    @Captor
+    private ArgumentCaptor<NotificationSink> notificationSinkArgumentCaptor;
 
     private HashSet<String> subscriptionsToCancel;
     private HashSet<String> cancelledSubscriptions;
@@ -499,6 +505,16 @@ public class DirectSubscriptionHandlingTestTest {
         ));
         setupTestScenarioForR0036(false);
         cancelledSubscriptions = new HashSet<>();
+
+        final Optional<HostedServiceProxy> contextService = MessageGeneratingUtil.getContextService();
+        final RequestResponseClient requestResponseClient = contextService.orElseGet().getRequestResponseClient();
+        final CommunicationLog communicationLog =
+            testClient.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog();
+        EventSink eventSink = mock(EventSink.class);
+        when(eventSinkFactory.createWsEventingEventSink(requestResponseClient, testUnderTest.getLocalBaseURI(), communicationLog)).thenReturn(eventSink);
+
+
+        when(eventSink.subscribe(eq(List.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT)), eq(testUnderTest.DURATION), any())).thenReturn()
 
         final HttpHandler[] handlers = {null, null};
         final int INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 0;

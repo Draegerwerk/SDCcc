@@ -23,6 +23,8 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
+import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.CommunicationContext;
@@ -519,7 +522,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void subscribeToReportWithTheAbilityToFail(final String baseURI,
+    private SubscribeResult subscribeToReportWithTheAbilityToFail(final String baseURI,
                                                        final String reportName,
                                                        final String action,
                                                        final String serviceName,
@@ -530,61 +533,52 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             fail("failed to retrieve serviceProxy for " + serviceName);
         }
 
-        final String contextSuffix = determineContextSuffix(reportName);
-        final String endToContext = "/EventSink/EndTo/" + contextSuffix;
-        final String endToUri = this.httpServerRegistry.registerContext(
-            baseURI,
-            endToContext,
-            (inStream, outStream, communicationContext) -> {
-                // end of subscription
-            });
-        final String notifyToContext = "/EventSink/NotifyTo/" + contextSuffix;
-        final String notifyToUri = this.httpServerRegistry.registerContext(
-            baseURI,
-            notifyToContext,
-            new FailingHttpHandler(reportTestData));
-        final Subscribe subscribeBody = this.wseFactory.createSubscribe();
-        final DeliveryType deliveryType = this.wseFactory.createDeliveryType();
-        deliveryType.setMode("http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryModes/Push");
-        final EndpointReferenceType notifyToEpr = this.wsaUtil.createEprWithAddress(notifyToUri);
-        deliveryType.setContent(Collections.singletonList(this.wseFactory.createNotifyTo(notifyToEpr)));
-        subscribeBody.setDelivery(deliveryType);
-        final EndpointReferenceType endToEpr = this.wsaUtil.createEprWithAddress(endToUri);
-        subscribeBody.setEndTo(endToEpr);
-        final FilterType filterType = this.wseFactory.createFilterType();
-        filterType.setDialect("http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01/Action");
-        filterType.setContent(Collections.singletonList(this.implodeUriList(Collections.singletonList(action))));
-        subscribeBody.setExpires(DURATION);
-        subscribeBody.setFilter(filterType);
-        final SoapMessage subscribeRequest =
-            this.soapUtil.createMessage(
-                WsEventingConstants.WSA_ACTION_SUBSCRIBE,
-                subscribeBody);
+        final List<String> actions =
+            List.of(action);
 
         final RequestResponseClient requestResponseClient = hostedServiceProxy
-                .orElseThrow()
-                .getRequestResponseClient();
+            .orElseThrow()
+            .getRequestResponseClient();
 
-        final SoapMessage soapResponse;
+        final EventSink eventSink =
+            eventSinkFactory.createWsEventingEventSink(
+                requestResponseClient,
+                baseURI,
+                testClient.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog());
+        final ListenableFuture<SubscribeResult> subscribeResult =
+            eventSink.subscribe(actions, DURATION, new NotificationSink() {
+                @Override
+                public void receiveNotification(final SoapMessage soapMessage,
+                                                final CommunicationContext communicationContext) {
+                    // notification
+                    synchronized (reportTestData.getSyncPoint()) {
+                        reportTestData.setReportReceived(true);
+                        reportTestData.getSyncPoint().notifyAll();
+                    }
+                    LOG.info("receiveNotification was called for report " + reportTestData.getReportName() + ": notification was " + soapMessage);
+                    if (reportTestData.getFailOnReceivingReport()) {
+                        LOG.info("answering notification with an intentional failure (500).");
+                        throw new RuntimeException("intentional failure for testing purposes.");
+                    } else {
+                        LOG.info("answering notification with success.");
+                    }
+                }
+
+                @Override
+                public void register(final Interceptor interceptor) {
+                    // not important
+                }
+            });
+
+        SubscribeResult result = null;
         try {
-            soapResponse = requestResponseClient.sendRequestResponse(subscribeRequest);
-            if (soapResponse.isFault()) {
-                throw new RuntimeException("Could not subscribe to " + reportName + ".");
-            } else {
-                final SubscribeResponse responseBody = soapUtil
-                    .getBody(soapResponse, SubscribeResponse.class)
-                    .orElseThrow(() -> new MalformedSoapMessageException("Cannot read WS-Eventing Subscribe response"));
-
-                reportTestData.setSubscription(
-                    new SubscribeResult(determineSubscriptionIdForAction(action), responseBody.getExpires()));
-                final EventSink eventSink =
-                    eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI, commLog);
-                reportTestData.setEventSink(eventSink);
-
-            }
-        } catch (SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
-            fail("encountered Exception while subscribing to " + reportName, e);
+            result = subscribeResult.get();
+            reportTestData.setSubscription(result);
+            reportTestData.setEventSink(eventSink);
+        } catch (InterruptedException | ExecutionException e) {
+            fail("encountered exception while subscribing to " + reportName, e);
         }
+        return result;
     }
 
     /**
@@ -598,7 +592,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return UUID.randomUUID().toString();
     }
 
-    private String getLocalBaseURI() {
+    protected String getLocalBaseURI() {
         return String.format("https://%s:0", this.adapterAddress);
     }
 
