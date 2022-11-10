@@ -81,7 +81,8 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
     @TestDescription("Ensures that the DUT provides a DescriptionEventService in the GetMetadataResponse "
         + "and verifies the description event service endpoint provided by the DUT is conforming with SDC Glue "
         + "Annex B and only implements SDC services. "
-        + "Note that this test case is only applicable to PoC Medical Devices that are extendable by removable subsystems.")
+        + "Note that this test case is only applicable to PoC Medical Devices that are extendable by "
+        + "removable subsystems.")
     void testRequirement813() {
 
         // 1. check presence of DescriptionEventService
