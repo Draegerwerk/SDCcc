@@ -201,6 +201,22 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         testRequirement547(metricCategory, activationState);
     }
 
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is not being"
+        + " performed and is de-initialized, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState"
+        + " = Off.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_16)
+    @TestDescription("For each metric with the category CLC, the device is manipulated so that the calculation of"
+        + " the metric is de-initialized and no calculation is performed and then it is verified that the"
+        + " ActivationState of the metric is set to Off.")
+    @RequirePrecondition(manipulationPreconditions =
+        {ManipulationPreconditions.MetricStatusManipulationCLCActivationStateOFF.class})
+    void testRequirement54716() throws NoTestData {
+        final var metricCategory = MetricCategory.CLC;
+        final var activationState = ComponentActivation.OFF;
+        testRequirement547(metricCategory, activationState);
+    }
+
     private void testRequirement547(final MetricCategory category, final ComponentActivation activation)
             throws NoTestData {
         final var successfulReportsSeen = new AtomicBoolean(false);
