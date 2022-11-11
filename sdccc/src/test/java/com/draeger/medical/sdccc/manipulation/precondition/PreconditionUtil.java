@@ -8,7 +8,6 @@
 package com.draeger.medical.sdccc.manipulation.precondition;
 
 import com.google.inject.Injector;
-
 import java.util.concurrent.Callable;
 
 /**

@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.util;
 
+import java.util.HashMap;
+import java.util.Map;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.namespace.QName;
 import org.somda.sdc.biceps.common.CommonConstants;
 import org.somda.sdc.dpws.DpwsConstants;
 import org.somda.sdc.dpws.soap.SoapConstants;
@@ -16,11 +20,6 @@ import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wsmetadataexchange.WsMetadataExchangeConstants;
 import org.somda.sdc.dpws.soap.wstransfer.WsTransferConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
-
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.namespace.QName;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Constants used for SDCcc.
@@ -32,33 +31,33 @@ public final class Constants {
     public static final String FIELD_ACCESS_ERROR_BASE_MESSAGE = "Error while accessing field {}";
 
     /*
-     MDPWS constants
-     */
+    MDPWS constants
+    */
 
     // MDPWS Annex A
     public static final int MAX_LARGE_ENVELOPE_SIZE = 4096 * 1000;
 
     // query for all LocalizedText elements with a @Ref attribute
     public static final String REF_ELEMENT_QUERY = "//" + pm("CodingSystemName[@Ref]")
-        + "| //" + pm("ConceptDescription[@Ref]")
-        + "| //" + pm("IdentifierName[@Ref]")
-        + "| //" + pm("Manufacturer[@Ref]")
-        + "| //" + pm("ModelName[@Ref]")
-        + "| //" + pm("Description[@Ref]")
-        + "| //" + msg("ErrorInfo[@Ref]")
-        + "| //" + msg("InvocationErrorMessage[@Ref]")
-        + "| //" + msg("Text[@Ref]")
-        + "| //" + pm("Documentation[@Ref]")
-        + "| //" + pm("Label[@Ref]");
+            + "| //" + pm("ConceptDescription[@Ref]")
+            + "| //" + pm("IdentifierName[@Ref]")
+            + "| //" + pm("Manufacturer[@Ref]")
+            + "| //" + pm("ModelName[@Ref]")
+            + "| //" + pm("Description[@Ref]")
+            + "| //" + msg("ErrorInfo[@Ref]")
+            + "| //" + msg("InvocationErrorMessage[@Ref]")
+            + "| //" + msg("Text[@Ref]")
+            + "| //" + pm("Documentation[@Ref]")
+            + "| //" + pm("Label[@Ref]");
 
     /*
-     SOAP constants
-     */
+    SOAP constants
+    */
     public static final QName MUST_UNDERSTAND_ATTRIBUTE = new QName(SoapConstants.NAMESPACE, "mustUnderstand");
 
     /*
-     WSDL constants
-     */
+    WSDL constants
+    */
     public static final String WSDL_NAMESPACE_PREFIX = "wsdl";
     public static final String WSDL_NAMESPACE = WsMetadataExchangeConstants.DIALECT_WSDL;
 
@@ -68,7 +67,7 @@ public final class Constants {
 
     public static final String WSU_NAMESPACE_PREFIX = "wsu";
     public static final String WSU_NAMESPACE =
-        "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
+            "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
 
     public static final String MDPWS_NAMESPACE_PREFIX = "mdpws";
     public static final String MDPWS_NAMESPACE = org.somda.sdc.mdpws.common.CommonConstants.NAMESPACE;
@@ -77,8 +76,8 @@ public final class Constants {
     public static final QName WSDL_OUTPUT = new QName(WSDL_NAMESPACE, "output");
 
     /*
-     DPWS constants
-     */
+    DPWS constants
+    */
     public static final QName DPWS_DISCOVERY_TYPE = new QName(DpwsConstants.NAMESPACE, "DiscoveryType");
 
     /*
@@ -91,8 +90,8 @@ public final class Constants {
     public static final String CA_CERTIFICATE = "ca_certificate.pem";
 
     /*
-     HTTP constants
-     */
+    HTTP constants
+    */
     public static final String HTTP_SCHEME = "http";
     public static final String HTTPS_SCHEME = "https";
 
@@ -107,15 +106,15 @@ public final class Constants {
 
     public static final String HTTP_APPLICATION_EXI = "application/exi";
     /*
-     BICEPS constants
-     */
+    BICEPS constants
+    */
     public static final int HANDLE_UNICODE_LOWER_BOUND = 0x0021;
     public static final int HANDLE_UNICODE_UPPER_BOUND = 0x10ffff;
     public static final int HANDLE_UNICODE_EXCEPTION = 0xfffd;
 
     /*
-     XML constants
-     */
+    XML constants
+    */
     public static final NamespaceContext NAMESPACES;
 
     static {
@@ -139,16 +138,15 @@ public final class Constants {
         namespaceMap.put(MDPWS_NAMESPACE_PREFIX, MDPWS_NAMESPACE);
 
         namespaceMap.put(
-            org.somda.sdc.glue.common.CommonConstants.NAMESPACE_SDC_PREFIX,
-            org.somda.sdc.glue.common.CommonConstants.NAMESPACE_SDC
-        );
+                org.somda.sdc.glue.common.CommonConstants.NAMESPACE_SDC_PREFIX,
+                org.somda.sdc.glue.common.CommonConstants.NAMESPACE_SDC);
 
         NAMESPACES = new SimpleNamespaceContext(namespaceMap);
     }
 
     /*
-     Body QNames
-     */
+    Body QNames
+    */
 
     // WS-Discovery
     public static final QName WSD_HELLO_BODY = new QName(WsDiscoveryConstants.NAMESPACE, "Hello");
@@ -160,48 +158,36 @@ public final class Constants {
     public static final QName WSD_RESOLVE_MATCHES_BODY = new QName(WsDiscoveryConstants.NAMESPACE, "ResolveMatches");
 
     // Message Model
-    public static final QName MSG_GET_MDIB = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_GET_MDIB
-    );
-    public static final QName MSG_GET_MDIB_RESPONSE = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_GET_MDIB + "Response"
-    );
+    public static final QName MSG_GET_MDIB =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_GET_MDIB);
+    public static final QName MSG_GET_MDIB_RESPONSE =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_GET_MDIB + "Response");
 
     // Message Model: Report
-    public static final QName MSG_SYSTEM_ERROR_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_SYSTEM_ERROR_REPORT
-    );
+    public static final QName MSG_SYSTEM_ERROR_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_SYSTEM_ERROR_REPORT);
 
     // Message Model: Episodic Reports
-    public static final QName MSG_EPISODIC_ALERT_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_ALERT_REPORT
-    );
-    public static final QName MSG_EPISODIC_COMPONENT_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_COMPONENT_REPORT
-    );
-    public static final QName MSG_EPISODIC_CONTEXT_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_CONTEXT_REPORT
-    );
-    public static final QName MSG_EPISODIC_METRIC_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_METRIC_REPORT
-    );
-    public static final QName MSG_EPISODIC_OPERATIONAL_STATE_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_OPERATIONAL_STATE_REPORT
-    );
-    public static final QName MSG_DESCRIPTION_MODIFICATION_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_DESCRIPTION_MODIFICATION_REPORT
-    );
-    public static final QName MSG_OPERATION_INVOKED_REPORT = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_OPERATION_INVOKED_REPORT
-    );
+    public static final QName MSG_EPISODIC_ALERT_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_ALERT_REPORT);
+    public static final QName MSG_EPISODIC_COMPONENT_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_COMPONENT_REPORT);
+    public static final QName MSG_EPISODIC_CONTEXT_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_CONTEXT_REPORT);
+    public static final QName MSG_EPISODIC_METRIC_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_METRIC_REPORT);
+    public static final QName MSG_EPISODIC_OPERATIONAL_STATE_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_EPISODIC_OPERATIONAL_STATE_REPORT);
+    public static final QName MSG_DESCRIPTION_MODIFICATION_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_DESCRIPTION_MODIFICATION_REPORT);
+    public static final QName MSG_OPERATION_INVOKED_REPORT =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_OPERATION_INVOKED_REPORT);
 
     // Message Model: Streaming Reports
-    public static final QName MSG_OBSERVED_VALUE_STREAM = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_OBSERVED_VALUE_STREAM
-    );
-    public static final QName MSG_WAVEFORM_STREAM = new QName(
-        CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_WAVEFORM_STREAM
-    );
+    public static final QName MSG_OBSERVED_VALUE_STREAM =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_OBSERVED_VALUE_STREAM);
+    public static final QName MSG_WAVEFORM_STREAM =
+            new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_WAVEFORM_STREAM);
 
     // Manipulation Names for Hibernation
     public static final String MANIPULATION_NAME_SET_LOCATION_DETAIL = "setLocationDetail";
@@ -210,7 +196,7 @@ public final class Constants {
     public static final String MANIPULATION_NAME_INSERT_DESCRIPTOR = "insertDescriptor";
     public static final String MANIPULATION_NAME_SEND_HELLO = "sendHello";
     public static final String MANIPULATION_NAME_CREATE_CONTEXT_STATE_WITH_ASSOCIATION =
-        "createContextStateWithAssociation";
+            "createContextStateWithAssociation";
     public static final String MANIPULATION_NAME_SET_ALERT_ACTIVATION = "setAlertActivation";
     public static final String MANIPULATION_NAME_SET_ALERT_CONDITION_PRESENCE = "setAlertConditionPresence";
     public static final String MANIPULATION_NAME_SET_SYSTEM_SIGNAL_ACTIVATION = "setSystemSignalActivation";
@@ -231,8 +217,7 @@ public final class Constants {
     public static final String MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY = "MeasurementValidity";
     public static final String MANIPULATION_PARAMETER_QNAME = "QName";
 
-    private Constants() {
-    }
+    private Constants() {}
 
     /**
      * Adds a prefix resolving to the BICEPS message model namespace matching {@linkplain #NAMESPACES}.

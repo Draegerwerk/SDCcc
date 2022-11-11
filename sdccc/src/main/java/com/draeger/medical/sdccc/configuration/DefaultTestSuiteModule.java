@@ -45,6 +45,4 @@ public class DefaultTestSuiteModule extends AbstractModule {
         bind(HibernateConfig.class).to(HibernateConfigImpl.class).in(Singleton.class);
         bind(Manipulations.class).to(GRpcManipulations.class).in(Singleton.class);
     }
-
-
 }

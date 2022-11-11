@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.glue.direct;
 
+import static com.draeger.medical.sdccc.util.Constants.wsdl;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -16,20 +21,14 @@ import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.XPathExtractor;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.wsdl.WsdlRetriever;
-
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-import static com.draeger.medical.sdccc.util.Constants.wsdl;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Glue Annex B wsdl tests.
@@ -48,7 +47,7 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.GLUE_13)
     @TestDescription("Checks if the wsdl service descriptions of the DUT contain a target namespace attribute with the"
-        + " value: http://standards.ieee.org/downloads/11073/11073-20701-2018.")
+            + " value: http://standards.ieee.org/downloads/11073/11073-20701-2018.")
     void testRequirement13() throws NoTestData, IOException, TransportException, XPathExpressionException {
         final Map<String, List<String>> wsdlMap = wsdlRetriever.retrieveWsdls(client.getHostingServiceProxy());
         assertTestData(wsdlMap.entrySet(), "No WSDLs could be extracted from DUT");
@@ -67,10 +66,13 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
 
                 definitions.forEach(definition -> {
                     final var targetNamespace = definition.getAttributes().getNamedItem("targetNamespace");
-                    assertNotNull(targetNamespace, String.format(
-                        "No target namespace attribute defined for service %s", service));
-                    assertEquals(TARGET_NAMESPACE, targetNamespace.getNodeValue(), String.format(
-                        "Wrong target namespace attribute defined for service %s", service));
+                    assertNotNull(
+                            targetNamespace,
+                            String.format("No target namespace attribute defined for service %s", service));
+                    assertEquals(
+                            TARGET_NAMESPACE,
+                            targetNamespace.getNodeValue(),
+                            String.format("Wrong target namespace attribute defined for service %s", service));
                 });
             }
         }

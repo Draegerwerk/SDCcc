@@ -10,7 +10,6 @@ package com.draeger.medical.sdccc.util.junit.guice;
 import com.draeger.medical.sdccc.util.junit.ReportData;
 import com.draeger.medical.sdccc.util.junit.XmlReportListener;
 import com.draeger.medical.sdccc.util.junit.XmlReportWriter;
-
 import java.nio.file.Path;
 import java.util.List;
 
@@ -35,5 +34,4 @@ public interface XmlReportFactory {
      * @return listener instance
      */
     XmlReportListener createXmlReportListener(Path reportsDir, String xmlReportName);
-
 }

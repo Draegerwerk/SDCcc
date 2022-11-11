@@ -16,5 +16,4 @@ public interface ReportTriggerClosure {
      * Triggers the Report.
      */
     void trigger();
-
 }

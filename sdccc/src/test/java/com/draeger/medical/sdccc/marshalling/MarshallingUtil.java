@@ -31,9 +31,7 @@ public final class MarshallingUtil {
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(MarshallingConfig.VALIDATE_SOAP_MESSAGES,
-                                Boolean.class,
-                                validateMessages);
+                        bind(MarshallingConfig.VALIDATE_SOAP_MESSAGES, Boolean.class, validateMessages);
                     }
                 },
                 new AbstractModule() {
@@ -41,8 +39,7 @@ public final class MarshallingUtil {
                     protected void configure() {
                         bind(SoapMarshalling.class).asEagerSingleton();
                     }
-                }
-        );
+                });
 
         return testInjector;
     }

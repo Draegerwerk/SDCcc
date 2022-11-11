@@ -7,10 +7,10 @@
 
 package com.draeger.medical.sdccc.util;
 
-import javax.xml.namespace.NamespaceContext;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.xml.namespace.NamespaceContext;
 
 /**
  * A simple implementation of {@linkplain NamespaceContext} to allow XPath extraction.
@@ -40,5 +40,4 @@ public class SimpleNamespaceContext implements NamespaceContext {
     public Iterator<String> getPrefixes(final String namespaceURI) {
         throw new UnsupportedOperationException();
     }
-
 }

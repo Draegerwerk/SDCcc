@@ -65,13 +65,12 @@ import com.draeger.medical.biceps.model.participant.SystemContextDescriptor;
 import com.draeger.medical.biceps.model.participant.SystemContextState;
 import com.draeger.medical.biceps.model.participant.VmdDescriptor;
 import com.draeger.medical.biceps.model.participant.VmdState;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-
-import javax.inject.Inject;
-import javax.xml.datatype.Duration;
 import java.math.BigDecimal;
 import java.util.List;
+import javax.inject.Inject;
+import javax.xml.datatype.Duration;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Utility to build mdibs used for unit testing.
@@ -117,7 +116,6 @@ public class MdibBuilder {
         return participantModelFactory.createMdState();
     }
 
-
     /**
      * @param code for new coded value
      * @return a new coded value
@@ -136,8 +134,8 @@ public class MdibBuilder {
     }
 
     /*
-     MDS
-     */
+    MDS
+    */
 
     /**
      * @param handle for new descriptor
@@ -185,10 +183,7 @@ public class MdibBuilder {
      * @return new udi for mds metadata
      */
     public MdsDescriptor.MetaData.Udi buildMdsDescriptorMetaDataUdi(
-        final String deviceIdentifier,
-        final String humanReadableForm,
-        final InstanceIdentifier issuer
-    ) {
+            final String deviceIdentifier, final String humanReadableForm, final InstanceIdentifier issuer) {
         final var udi = participantModelFactory.createMdsDescriptorMetaDataUdi();
         udi.setDeviceIdentifier(deviceIdentifier);
         udi.setHumanReadableForm(humanReadableForm);
@@ -197,8 +192,8 @@ public class MdibBuilder {
     }
 
     /*
-     VMD
-     */
+    VMD
+    */
 
     /**
      * @param handle for new descriptor
@@ -233,8 +228,8 @@ public class MdibBuilder {
     }
 
     /*
-     Channel
-     */
+    Channel
+    */
 
     /**
      * @param handle for new descriptor
@@ -301,8 +296,8 @@ public class MdibBuilder {
     }
 
     /*
-     String Metric
-     */
+    String Metric
+    */
 
     /**
      * Builds a string metric value.
@@ -326,11 +321,10 @@ public class MdibBuilder {
      * @return a new string metric descriptor
      */
     public StringMetricDescriptor buildStringMetricDescriptor(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit
-    ) {
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit) {
         final var stringMetricDescriptor = participantModelFactory.createStringMetricDescriptor();
         stringMetricDescriptor.setHandle(handle);
         stringMetricDescriptor.setMetricCategory(category);
@@ -359,19 +353,18 @@ public class MdibBuilder {
      * @return new string metric descriptor and state
      */
     public Pair<StringMetricDescriptor, StringMetricState> buildStringMetric(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit
-    ) {
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit) {
         final var stringMetricDescriptor = buildStringMetricDescriptor(handle, category, availability, unit);
         final var stringMetricState = buildStringMetricState(handle);
         return new ImmutablePair<>(stringMetricDescriptor, stringMetricState);
     }
 
     /*
-     Numeric Metric
-     */
+    Numeric Metric
+    */
 
     /**
      * Builds a numeric metric value.
@@ -396,12 +389,11 @@ public class MdibBuilder {
      * @return a new string metric descriptor
      */
     public NumericMetricDescriptor buildNumericMetricDescriptor(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit,
-        final BigDecimal resolution
-    ) {
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution) {
         final var numericMetricDescriptor = participantModelFactory.createNumericMetricDescriptor();
         numericMetricDescriptor.setHandle(handle);
         numericMetricDescriptor.setMetricCategory(category);
@@ -432,14 +424,13 @@ public class MdibBuilder {
      * @return new string metric descriptor and state
      */
     public Pair<NumericMetricDescriptor, NumericMetricState> buildNumericMetric(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit,
-        final BigDecimal resolution
-    ) {
-        final var numericMetricDescriptor = buildNumericMetricDescriptor(
-            handle, category, availability, unit, resolution);
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution) {
+        final var numericMetricDescriptor =
+                buildNumericMetricDescriptor(handle, category, availability, unit, resolution);
         final var numericMetricState = buildNumericMetricState(handle);
         return new ImmutablePair<>(numericMetricDescriptor, numericMetricState);
     }
@@ -468,15 +459,14 @@ public class MdibBuilder {
      * @return a new string metric descriptor
      */
     public RealTimeSampleArrayMetricDescriptor buildRealTimeSampleArrayMetricDescriptor(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit,
-        final BigDecimal resolution,
-        final Duration samplePeriod
-    ) {
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution,
+            final Duration samplePeriod) {
         final var realTimeSampleArrayMetricDescriptor =
-            participantModelFactory.createRealTimeSampleArrayMetricDescriptor();
+                participantModelFactory.createRealTimeSampleArrayMetricDescriptor();
         realTimeSampleArrayMetricDescriptor.setHandle(handle);
         realTimeSampleArrayMetricDescriptor.setMetricCategory(category);
         realTimeSampleArrayMetricDescriptor.setMetricAvailability(availability);
@@ -508,22 +498,21 @@ public class MdibBuilder {
      * @return new string metric descriptor and state
      */
     public Pair<RealTimeSampleArrayMetricDescriptor, RealTimeSampleArrayMetricState> buildRealTimeSampleArrayMetric(
-        final String handle,
-        final MetricCategory category,
-        final MetricAvailability availability,
-        final CodedValue unit,
-        final BigDecimal resolution,
-        final Duration samplePeriod
-    ) {
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution,
+            final Duration samplePeriod) {
         final var realTimeSampleArrayMetricDescriptor = buildRealTimeSampleArrayMetricDescriptor(
-            handle, category, availability, unit, resolution, samplePeriod);
+                handle, category, availability, unit, resolution, samplePeriod);
         final var realTimeSampleArrayMetricState = buildRealTimeSampleArrayMetricState(handle);
         return new ImmutablePair<>(realTimeSampleArrayMetricDescriptor, realTimeSampleArrayMetricState);
     }
 
     /*
-     Alert system
-     */
+    Alert system
+    */
 
     /**
      * @param handle for new descriptor
@@ -555,16 +544,15 @@ public class MdibBuilder {
      * @return new alert system descriptor and state
      */
     public Pair<AlertSystemDescriptor, AlertSystemState> buildAlertSystem(
-        final String handle, final AlertActivation activationState
-    ) {
+            final String handle, final AlertActivation activationState) {
         final var alertSystemDescriptor = buildAlertSystemDescriptor(handle);
         final var alertSystemState = buildAlertSystemState(handle, activationState);
         return new ImmutablePair<>(alertSystemDescriptor, alertSystemState);
     }
 
     /*
-     Alert condition
-     */
+    Alert condition
+    */
 
     /**
      * @param handle   for new descriptor
@@ -573,10 +561,7 @@ public class MdibBuilder {
      * @return new alert condition descriptor
      */
     public AlertConditionDescriptor buildAlertConditionDescriptor(
-        final String handle,
-        final AlertConditionKind kind,
-        final AlertConditionPriority priority
-    ) {
+            final String handle, final AlertConditionKind kind, final AlertConditionPriority priority) {
         final var alertConditionDescriptor = participantModelFactory.createAlertConditionDescriptor();
         alertConditionDescriptor.setHandle(handle);
         alertConditionDescriptor.setKind(kind);
@@ -606,19 +591,18 @@ public class MdibBuilder {
      * @return new alert condition descriptor and state
      */
     public Pair<AlertConditionDescriptor, AlertConditionState> buildAlertCondition(
-        final String handle,
-        final AlertConditionKind kind,
-        final AlertConditionPriority priority,
-        final AlertActivation activationState
-    ) {
+            final String handle,
+            final AlertConditionKind kind,
+            final AlertConditionPriority priority,
+            final AlertActivation activationState) {
         final var alertConditionDescriptor = buildAlertConditionDescriptor(handle, kind, priority);
         final var alertConditionState = buildAlertConditionState(handle, activationState);
         return new ImmutablePair<>(alertConditionDescriptor, alertConditionState);
     }
 
     /*
-     Alert signal
-     */
+    Alert signal
+    */
 
     /**
      * @param handle        for new descriptor
@@ -627,10 +611,7 @@ public class MdibBuilder {
      * @return new alert signal descriptor
      */
     public AlertSignalDescriptor buildAlertSignalDescriptor(
-        final String handle,
-        final AlertSignalManifestation manifestation,
-        final boolean latching
-    ) {
+            final String handle, final AlertSignalManifestation manifestation, final boolean latching) {
         final var alertSignalDescriptor = participantModelFactory.createAlertSignalDescriptor();
         alertSignalDescriptor.setHandle(handle);
         alertSignalDescriptor.setManifestation(manifestation);
@@ -660,19 +641,18 @@ public class MdibBuilder {
      * @return new alert signal descriptor and state
      */
     public Pair<AlertSignalDescriptor, AlertSignalState> buildAlertSignal(
-        final String handle,
-        final AlertSignalManifestation manifestation,
-        final boolean latching,
-        final AlertActivation activationState
-    ) {
+            final String handle,
+            final AlertSignalManifestation manifestation,
+            final boolean latching,
+            final AlertActivation activationState) {
         final var alertSignalDescriptor = buildAlertSignalDescriptor(handle, manifestation, latching);
         final var alertSignalState = buildAlertSignalState(handle, activationState);
         return new ImmutablePair<>(alertSignalDescriptor, alertSignalState);
     }
 
     /*
-     Sco
-     */
+    Sco
+    */
 
     /**
      * @param handle for new descriptor
@@ -707,16 +687,16 @@ public class MdibBuilder {
     }
 
     /*
-     Set string operation
-     */
+    Set string operation
+    */
 
     /**
      * @param handle          for new descriptor
      * @param operationTarget of descriptor
      * @return new set string operation descriptor
      */
-    public SetStringOperationDescriptor buildSetStringOperationDescriptor(final String handle,
-                                                                          final String operationTarget) {
+    public SetStringOperationDescriptor buildSetStringOperationDescriptor(
+            final String handle, final String operationTarget) {
         final var setStringOperationDescriptor = participantModelFactory.createSetStringOperationDescriptor();
         setStringOperationDescriptor.setHandle(handle);
         setStringOperationDescriptor.setOperationTarget(operationTarget);
@@ -728,8 +708,8 @@ public class MdibBuilder {
      * @param operatingMode of state
      * @return new set string operation state
      */
-    public SetStringOperationState buildSetStringOperationState(final String handle,
-                                                                final OperatingMode operatingMode) {
+    public SetStringOperationState buildSetStringOperationState(
+            final String handle, final OperatingMode operatingMode) {
         final var setStringOperationState = participantModelFactory.createSetStringOperationState();
         setStringOperationState.setDescriptorHandle(handle);
         setStringOperationState.setOperatingMode(operatingMode);
@@ -745,24 +725,23 @@ public class MdibBuilder {
      * @return new set string operation descriptor and state
      */
     public Pair<SetStringOperationDescriptor, SetStringOperationState> buildSetStringOperation(
-        final String handle, final String operationTarget, final OperatingMode operatingMode
-    ) {
+            final String handle, final String operationTarget, final OperatingMode operatingMode) {
         final var setStringOperationDescriptor = buildSetStringOperationDescriptor(handle, operationTarget);
         final var setStringOperationState = buildSetStringOperationState(handle, operatingMode);
         return new ImmutablePair<>(setStringOperationDescriptor, setStringOperationState);
     }
 
     /*
-     Activate operation operation
-     */
+    Activate operation operation
+    */
 
     /**
      * @param handle          for new descriptor
      * @param operationTarget of descriptor
      * @return new activate operation descriptor
      */
-    public ActivateOperationDescriptor buildActivateOperationDescriptor(final String handle,
-                                                                        final String operationTarget) {
+    public ActivateOperationDescriptor buildActivateOperationDescriptor(
+            final String handle, final String operationTarget) {
         final var activateOperationDescriptor = participantModelFactory.createActivateOperationDescriptor();
         activateOperationDescriptor.setHandle(handle);
         activateOperationDescriptor.setOperationTarget(operationTarget);
@@ -774,8 +753,7 @@ public class MdibBuilder {
      * @param operatingMode of state
      * @return new activate operation state
      */
-    public ActivateOperationState buildActivateOperationState(final String handle,
-                                                              final OperatingMode operatingMode) {
+    public ActivateOperationState buildActivateOperationState(final String handle, final OperatingMode operatingMode) {
         final var activateOperationState = participantModelFactory.createActivateOperationState();
         activateOperationState.setDescriptorHandle(handle);
         activateOperationState.setOperatingMode(operatingMode);
@@ -791,16 +769,15 @@ public class MdibBuilder {
      * @return new activate operation descriptor and state
      */
     public Pair<ActivateOperationDescriptor, ActivateOperationState> buildActivateOperation(
-        final String handle, final String operationTarget, final OperatingMode operatingMode
-    ) {
+            final String handle, final String operationTarget, final OperatingMode operatingMode) {
         final var activateOperationDescriptor = buildActivateOperationDescriptor(handle, operationTarget);
         final var activateOperationState = buildActivateOperationState(handle, operatingMode);
         return new ImmutablePair<>(activateOperationDescriptor, activateOperationState);
     }
 
     /*
-     Battery
-     */
+    Battery
+    */
 
     /**
      * @param handle for new descriptor
@@ -835,8 +812,8 @@ public class MdibBuilder {
     }
 
     /*
-     Calibration
-     */
+    Calibration
+    */
 
     /**
      * @return new calibration info
@@ -858,17 +835,18 @@ public class MdibBuilder {
      * @return new calibration info calibration documentation calibration result
      */
     public CalibrationInfo.CalibrationDocumentation.CalibrationResult
-        buildCalibrationInfoCalibrationDocumentationCalibrationResult(final CodedValue code, final Measurement value) {
+            buildCalibrationInfoCalibrationDocumentationCalibrationResult(
+                    final CodedValue code, final Measurement value) {
         final var calibrationResult =
-            participantModelFactory.createCalibrationInfoCalibrationDocumentationCalibrationResult();
+                participantModelFactory.createCalibrationInfoCalibrationDocumentationCalibrationResult();
         calibrationResult.setCode(code);
         calibrationResult.setValue(value);
         return calibrationResult;
     }
 
     /*
-     Contexts
-     */
+    Contexts
+    */
 
     /**
      * @param handle for new descriptor
@@ -932,8 +910,7 @@ public class MdibBuilder {
      * @return new patient descriptor and state
      */
     public Pair<PatientContextDescriptor, PatientContextState> buildPatientContext(
-        final String descriptorHandle, final String stateHandle
-    ) {
+            final String descriptorHandle, final String stateHandle) {
         final var descriptor = buildPatientContextDescriptor(descriptorHandle);
         final var state = buildPatientContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
@@ -969,8 +946,7 @@ public class MdibBuilder {
      * @return new location descriptor and state
      */
     public Pair<LocationContextDescriptor, LocationContextState> buildLocationContext(
-        final String descriptorHandle, final String stateHandle
-    ) {
+            final String descriptorHandle, final String stateHandle) {
         final var descriptor = buildLocationContextDescriptor(descriptorHandle);
         final var state = buildLocationContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
@@ -1006,16 +982,15 @@ public class MdibBuilder {
      * @return new operator descriptor and state
      */
     public Pair<OperatorContextDescriptor, OperatorContextState> buildOperatorContext(
-        final String descriptorHandle, final String stateHandle
-    ) {
+            final String descriptorHandle, final String stateHandle) {
         final var descriptor = buildOperatorContextDescriptor(descriptorHandle);
         final var state = buildOperatorContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
     }
 
     /*
-     Misc
-     */
+    Misc
+    */
 
     /**
      * @return new instance identifier

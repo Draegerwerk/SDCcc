@@ -18,6 +18,20 @@ import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.Injector;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -47,75 +61,53 @@ import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
-import javax.xml.namespace.QName;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * A collection of conditional preconditions.
  */
 public class ConditionalPreconditions {
 
     private static boolean descriptionModificationPreconditionCheck(
-        final Injector injector,
-        final DescriptionModificationType... modificationTypes)
-        throws PreconditionException {
+            final Injector injector, final DescriptionModificationType... modificationTypes)
+            throws PreconditionException {
         final var modificationTypesList = List.of(modificationTypes);
         final var messageStorage = injector.getInstance(MessageStorage.class);
         final var testClient = injector.getInstance(TestClient.class);
         final var clientInjector = testClient.getInjector();
         final var marshalling = clientInjector.getInstance(MarshallingService.class);
         final var soapUtil = clientInjector.getInstance(SoapUtil.class);
-        try (final var messages = messageStorage
-            .getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+        try (final var messages =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             // determine if there were any description insertions or deletions
             return messages.getStream()
-                .map(MessageContent::getBody)
-                .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
-                .map(body -> {
-                    try {
-                        return marshalling.unmarshal(body);
-                    } catch (MarshallingException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
-                    .orElseThrow(() -> new RuntimeException(
-                        "Could not retrieve description modification report body from message")
-                    ))
-                .anyMatch(message -> message.getReportPart()
-                    .stream()
-                    .map(DescriptionModificationReport.ReportPart::getModificationType)
-                    .anyMatch(modificationTypesList::contains));
+                    .map(MessageContent::getBody)
+                    .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
+                    .map(body -> {
+                        try {
+                            return marshalling.unmarshal(body);
+                        } catch (MarshallingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Could not retrieve description modification report body from message")))
+                    .anyMatch(message -> message.getReportPart().stream()
+                            .map(DescriptionModificationReport.ReportPart::getModificationType)
+                            .anyMatch(modificationTypesList::contains));
         } catch (final IOException e) {
             throw new PreconditionException(
-                "An error occurred while trying to retrieve description modification report messages from storage",
-                e
-            );
-            // CHECKSTYLE.OFF: IllegalCatch
+                    "An error occurred while trying to retrieve description modification report messages from storage",
+                    e);
             // there is no other way to retrieve the exception from the stream scope
         } catch (final RuntimeException e) {
             throw new PreconditionException(
-                "An error occurred while trying to process description modification report messages from storage",
-                e
-            );
+                    "An error occurred while trying to process description modification report messages from storage",
+                    e);
         }
-        // CHECKSTYLE.ON: IllegalCatch
     }
 
     private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger)
-        throws PreconditionException {
+            throws PreconditionException {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
 
@@ -178,8 +170,8 @@ public class ConditionalPreconditions {
         }
 
         return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-            && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-            && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }
 
     private static boolean descriptionUpdateManipulation(final Injector injector, final Logger logger) {
@@ -196,29 +188,31 @@ public class ConditionalPreconditions {
         }
         mdibAccess = remoteDevice.getMdibAccess();
 
-        final String handle = mdibAccess.getRootEntities().get(0).getDescriptor().getHandle();
+        final String handle =
+                mdibAccess.getRootEntities().get(0).getDescriptor().getHandle();
 
         final ResponseTypes.Result manipulationResult = manipulations.triggerDescriptorUpdate(handle);
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
 
-    private static boolean triggerReportPreconditionCheck(final Injector injector,
-                                                          final QName... reportType) throws PreconditionException {
+    private static boolean triggerReportPreconditionCheck(final Injector injector, final QName... reportType)
+            throws PreconditionException {
         final var messageStorage = injector.getInstance(MessageStorage.class);
-        try (final var messages = messageStorage
-            .getInboundMessagesByBodyType(reportType)) {
+        try (final var messages = messageStorage.getInboundMessagesByBodyType(reportType)) {
             // determine if there were any reports with the specified type
             return messages.areObjectsPresent();
         } catch (IOException e) {
-            throw new PreconditionException(String.format(
-                "An error occurred while trying to retrieve %s report messages from storage",
-                Arrays.stream(reportType).map(QName::toString).collect(Collectors.joining(", "))), e);
+            throw new PreconditionException(
+                    String.format(
+                            "An error occurred while trying to retrieve %s report messages from storage",
+                            Arrays.stream(reportType).map(QName::toString).collect(Collectors.joining(", "))),
+                    e);
         }
     }
 
-    private static boolean triggerReportManipulation(final Injector injector,
-                                                     final Logger log, final QName reportType) {
+    private static boolean triggerReportManipulation(
+            final Injector injector, final Logger log, final QName reportType) {
         final var manipulations = injector.getInstance(Manipulations.class);
         log.info("Executing triggerReport manipulation for {}", reportType);
         final var result = manipulations.triggerReport(reportType);
@@ -241,13 +235,11 @@ public class ConditionalPreconditions {
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
             final var messageStorage = injector.getInstance(MessageStorage.class);
-            try (final var messages = messageStorage
-                .getInboundMessagesByBodyType(Constants.WSD_HELLO_BODY)) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyType(Constants.WSD_HELLO_BODY)) {
                 return messages.areObjectsPresent();
             } catch (final IOException e) {
                 throw new PreconditionException(
-                    "An error occurred while trying to retrieve hello messages from storage", e
-                );
+                        "An error occurred while trying to retrieve hello messages from storage", e);
             }
         }
 
@@ -271,8 +263,9 @@ public class ConditionalPreconditions {
          * Creates a description modification crt precondition check.
          */
         public DescriptionModificationCrtPrecondition() {
-            super(DescriptionModificationCrtPrecondition::preconditionCheck,
-                DescriptionModificationCrtPrecondition::manipulation);
+            super(
+                    DescriptionModificationCrtPrecondition::preconditionCheck,
+                    DescriptionModificationCrtPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -303,7 +296,8 @@ public class ConditionalPreconditions {
          * Creates a description modification upt precondition check.
          */
         public DescriptionModificationUptPrecondition() {
-            super(DescriptionModificationUptPrecondition::preconditionCheck,
+            super(
+                    DescriptionModificationUptPrecondition::preconditionCheck,
                     DescriptionModificationUptPrecondition::manipulation);
         }
 
@@ -338,19 +332,22 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_ALERT_REPORT,
-                Constants.MSG_EPISODIC_COMPONENT_REPORT,
-                Constants.MSG_EPISODIC_METRIC_REPORT,
-                Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
-                Constants.MSG_EPISODIC_CONTEXT_REPORT);
+            return triggerReportPreconditionCheck(
+                    injector,
+                    Constants.MSG_EPISODIC_ALERT_REPORT,
+                    Constants.MSG_EPISODIC_COMPONENT_REPORT,
+                    Constants.MSG_EPISODIC_METRIC_REPORT,
+                    Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
+                    Constants.MSG_EPISODIC_CONTEXT_REPORT);
         }
 
         static boolean manipulation(final Injector injector) {
-            final var reportTypes = List.of(Constants.MSG_EPISODIC_ALERT_REPORT,
-                Constants.MSG_EPISODIC_COMPONENT_REPORT,
-                Constants.MSG_EPISODIC_METRIC_REPORT,
-                Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
-                Constants.MSG_EPISODIC_CONTEXT_REPORT);
+            final var reportTypes = List.of(
+                    Constants.MSG_EPISODIC_ALERT_REPORT,
+                    Constants.MSG_EPISODIC_COMPONENT_REPORT,
+                    Constants.MSG_EPISODIC_METRIC_REPORT,
+                    Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
+                    Constants.MSG_EPISODIC_CONTEXT_REPORT);
             final var manipulations = injector.getInstance(Manipulations.class);
             LOG.info("Executing triggerReport manipulation for {}", reportTypes);
             final var results = new HashSet<ResponseTypes.Result>();
@@ -358,10 +355,9 @@ public class ConditionalPreconditions {
                 results.add(manipulations.triggerReport(reportType));
             }
             return results.contains(ResponseTypes.Result.RESULT_SUCCESS)
-                && !results.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                && !results.contains(ResponseTypes.Result.RESULT_FAIL);
+                    && !results.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                    && !results.contains(ResponseTypes.Result.RESULT_FAIL);
         }
-
     }
 
     /**
@@ -381,9 +377,7 @@ public class ConditionalPreconditions {
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
             return descriptionModificationPreconditionCheck(
-                injector,
-                DescriptionModificationType.CRT,
-                DescriptionModificationType.DEL);
+                    injector, DescriptionModificationType.CRT, DescriptionModificationType.DEL);
         }
 
         /**
@@ -422,8 +416,9 @@ public class ConditionalPreconditions {
          * Creates a precondition check, if all kind of context where associated.
          */
         public AllKindsOfContextStatesAssociatedPrecondition() {
-            super(AllKindsOfContextStatesAssociatedPrecondition::preconditionCheck,
-                AllKindsOfContextStatesAssociatedPrecondition::manipulation);
+            super(
+                    AllKindsOfContextStatesAssociatedPrecondition::preconditionCheck,
+                    AllKindsOfContextStatesAssociatedPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -434,29 +429,26 @@ public class ConditionalPreconditions {
             final var soapUtil = clientInjector.getInstance(SoapUtil.class);
             final var contextStates = new ArrayList<AbstractContextState>();
             ALREADY_ASSOCIATED_CONTEXTS.values().forEach(Set::clear);
-            try (final var messages = messageStorage
-                .getInboundMessagesByBodyType(Constants.MSG_EPISODIC_CONTEXT_REPORT)) {
+            try (final var messages =
+                    messageStorage.getInboundMessagesByBodyType(Constants.MSG_EPISODIC_CONTEXT_REPORT)) {
                 // determine if there were any context state changes
                 messages.getStream()
-                    .map(MessageContent::getBody)
-                    .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
-                    .map(body -> {
-                        try {
-                            return marshalling.unmarshal(body);
-                        } catch (MarshallingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .map(message -> soapUtil.getBody(message, EpisodicContextReport.class)
-                        .orElseThrow(() -> new RuntimeException(
-                            "Could not retrieve episodic context report body from message")
-                        ))
-                    .forEach(message -> message.getReportPart()
-                        .stream()
-                        .map(AbstractContextReport.ReportPart::getContextState)
-                        .collect(Collectors.toList())
-                        .forEach(contextStates::addAll)
-                    );
+                        .map(MessageContent::getBody)
+                        .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
+                        .map(body -> {
+                            try {
+                                return marshalling.unmarshal(body);
+                            } catch (MarshallingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .map(message -> soapUtil.getBody(message, EpisodicContextReport.class)
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Could not retrieve episodic context report body from message")))
+                        .forEach(message -> message.getReportPart().stream()
+                                .map(AbstractContextReport.ReportPart::getContextState)
+                                .collect(Collectors.toList())
+                                .forEach(contextStates::addAll));
                 for (var state : contextStates) {
                     if (ImpliedValueUtil.getContextAssociation(state) == ContextAssociation.ASSOC) {
                         ALREADY_ASSOCIATED_CONTEXTS.get(state.getClass()).add(state.getHandle());
@@ -464,18 +456,14 @@ public class ConditionalPreconditions {
                 }
             } catch (final IOException e) {
                 throw new PreconditionException(
-                    "An error occurred while trying to retrieve description modification report messages from storage",
-                    e
-                );
-                // CHECKSTYLE.OFF: IllegalCatch
+                        "An error occurred while trying to retrieve description modification report messages from storage",
+                        e);
                 // there is no other way to retrieve the exception from the stream scope
             } catch (final RuntimeException e) {
                 throw new PreconditionException(
-                    "An error occurred while trying to process description modification report messages from storage",
-                    e
-                );
+                        "An error occurred while trying to process description modification report messages from storage",
+                        e);
             }
-            // CHECKSTYLE.ON: IllegalCatch
             return enoughContextStatesSeen();
         }
 
@@ -507,13 +495,12 @@ public class ConditionalPreconditions {
             var entitiesSeen = false;
 
             for (var entry : ALREADY_ASSOCIATED_CONTEXTS.entrySet()) {
-                final var entities = mdibAccess
-                    .findEntitiesByType(getDescriptorClass(entry.getKey()));
+                final var entities = mdibAccess.findEntitiesByType(getDescriptorClass(entry.getKey()));
                 if (!entities.isEmpty()) {
                     entitiesSeen = true;
                     if (entry.getValue().size() < 2) {
-                        manipulationSuccessful &= manipulateContextState(entities, entry.getKey(),
-                            testClient, manipulations, testRunObserver);
+                        manipulationSuccessful &= manipulateContextState(
+                                entities, entry.getKey(), testClient, manipulations, testRunObserver);
                     }
                 }
             }
@@ -522,7 +509,7 @@ public class ConditionalPreconditions {
         }
 
         private static Class<? extends AbstractContextDescriptor> getDescriptorClass(
-            final Class<? extends AbstractContextState> stateClass) throws PreconditionException {
+                final Class<? extends AbstractContextState> stateClass) throws PreconditionException {
             Class<? extends AbstractContextDescriptor> descriptorClass = null;
             if (stateClass.equals(PatientContextState.class)) {
                 descriptorClass = PatientContextDescriptor.class;
@@ -544,42 +531,41 @@ public class ConditionalPreconditions {
             }
         }
 
-        private static boolean manipulateContextState(final Collection<MdibEntity> contextEntities,
-                                                      final Class<? extends AbstractContextState> contextStateClass,
-                                                      final TestClient testClient,
-                                                      final Manipulations manipulations,
-                                                      final TestRunObserver testRunObserver) {
+        private static boolean manipulateContextState(
+                final Collection<MdibEntity> contextEntities,
+                final Class<? extends AbstractContextState> contextStateClass,
+                final TestClient testClient,
+                final Manipulations manipulations,
+                final TestRunObserver testRunObserver) {
             LOG.info("Associating new context states for {} handle(s)", contextEntities.size());
             for (MdibEntity entity : contextEntities) {
                 // store previously existing handles for comparison
                 final var originalStates = entity.getStates(contextStateClass).stream()
-                    .map(AbstractMultiState::getHandle)
-                    .collect(Collectors.toSet());
+                        .map(AbstractMultiState::getHandle)
+                        .collect(Collectors.toSet());
                 // associate first new context state
                 var newStateHandle = associateNewContextForHandle(
-                    testClient.getSdcRemoteDevice(),
-                    manipulations,
-                    entity.getHandle(),
-                    originalStates, contextStateClass
-                );
+                        testClient.getSdcRemoteDevice(),
+                        manipulations,
+                        entity.getHandle(),
+                        originalStates,
+                        contextStateClass);
 
                 // associate another one if the first one worked out
                 if (newStateHandle.isPresent()) {
                     // add new state to known states
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewContextForHandle(
-                        testClient.getSdcRemoteDevice(),
-                        manipulations,
-                        entity.getHandle(),
-                        originalStates,
-                        contextStateClass);
+                            testClient.getSdcRemoteDevice(),
+                            manipulations,
+                            entity.getHandle(),
+                            originalStates,
+                            contextStateClass);
                 }
 
                 if (newStateHandle.isEmpty()) {
-                    testRunObserver.invalidateTestRun(String.format(
-                        "Associating a new context state for handle %s failed",
-                        entity.getHandle()
-                    ));
+                    testRunObserver.invalidateTestRun(
+                            String.format("Associating a new context state for handle %s failed", entity.getHandle()));
                     return false;
                 }
             }
@@ -597,11 +583,11 @@ public class ConditionalPreconditions {
          * @return handle of new valid state, or empty
          */
         static Optional<String> associateNewContextForHandle(
-            final SdcRemoteDevice device,
-            final Manipulations manipulations,
-            final String handle,
-            final Collection<String> previousStateHandles,
-            final Class<? extends AbstractContextState> contextStateClass) {
+                final SdcRemoteDevice device,
+                final Manipulations manipulations,
+                final String handle,
+                final Collection<String> previousStateHandles,
+                final Class<? extends AbstractContextState> contextStateClass) {
             LOG.debug("Associating new context state for handle {}", handle);
             var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
             if (stateHandle.isEmpty()) {
@@ -610,7 +596,7 @@ public class ConditionalPreconditions {
             }
             LOG.debug("New context created, state handle is {}", stateHandle.orElseThrow());
             final var validState = verifyStatePresentAndAssociated(
-                device, handle, stateHandle.orElseThrow(), previousStateHandles, contextStateClass);
+                    device, handle, stateHandle.orElseThrow(), previousStateHandles, contextStateClass);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
@@ -632,11 +618,11 @@ public class ConditionalPreconditions {
          * @return true if valid, false otherwise
          */
         static boolean verifyStatePresentAndAssociated(
-            final SdcRemoteDevice device,
-            final String descriptorHandle,
-            final String stateHandle,
-            final Collection<String> previousStateHandles,
-            final Class<? extends AbstractContextState> contextStateClass) {
+                final SdcRemoteDevice device,
+                final String descriptorHandle,
+                final String stateHandle,
+                final Collection<String> previousStateHandles,
+                final Class<? extends AbstractContextState> contextStateClass) {
             final var contextStateOpt = device.getMdibAccess().getState(stateHandle, contextStateClass);
 
             if (contextStateOpt.isEmpty()) {
@@ -668,8 +654,9 @@ public class ConditionalPreconditions {
          * Creates a trigger episodic alert report precondition check.
          */
         public TriggerEpisodicAlertReportPrecondition() {
-            super(TriggerEpisodicAlertReportPrecondition::preconditionCheck,
-                TriggerEpisodicAlertReportPrecondition::manipulation);
+            super(
+                    TriggerEpisodicAlertReportPrecondition::preconditionCheck,
+                    TriggerEpisodicAlertReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -699,8 +686,9 @@ public class ConditionalPreconditions {
          * Creates a trigger episodic component report precondition check.
          */
         public TriggerEpisodicComponentReportPrecondition() {
-            super(TriggerEpisodicComponentReportPrecondition::preconditionCheck,
-                TriggerEpisodicComponentReportPrecondition::manipulation);
+            super(
+                    TriggerEpisodicComponentReportPrecondition::preconditionCheck,
+                    TriggerEpisodicComponentReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -730,8 +718,9 @@ public class ConditionalPreconditions {
          * Creates a trigger episodic context report precondition check.
          */
         public TriggerEpisodicContextReportPrecondition() {
-            super(TriggerEpisodicContextReportPrecondition::preconditionCheck,
-                TriggerEpisodicContextReportPrecondition::manipulation);
+            super(
+                    TriggerEpisodicContextReportPrecondition::preconditionCheck,
+                    TriggerEpisodicContextReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -761,8 +750,9 @@ public class ConditionalPreconditions {
          * Creates a trigger episodic metric report precondition check.
          */
         public TriggerEpisodicMetricReportPrecondition() {
-            super(TriggerEpisodicMetricReportPrecondition::preconditionCheck,
-                TriggerEpisodicMetricReportPrecondition::manipulation);
+            super(
+                    TriggerEpisodicMetricReportPrecondition::preconditionCheck,
+                    TriggerEpisodicMetricReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -792,8 +782,9 @@ public class ConditionalPreconditions {
          * Creates a trigger episodic operational state report precondition check.
          */
         public TriggerEpisodicOperationalStateReportPrecondition() {
-            super(TriggerEpisodicOperationalStateReportPrecondition::preconditionCheck,
-                TriggerEpisodicOperationalStateReportPrecondition::manipulation);
+            super(
+                    TriggerEpisodicOperationalStateReportPrecondition::preconditionCheck,
+                    TriggerEpisodicOperationalStateReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {

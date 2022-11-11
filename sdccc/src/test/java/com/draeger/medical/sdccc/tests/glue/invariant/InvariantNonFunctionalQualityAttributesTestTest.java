@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.glue.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.participant.AbstractAlertState;
 import com.draeger.medical.biceps.model.participant.AbstractContextState;
 import com.draeger.medical.biceps.model.participant.AbstractMetricState;
@@ -39,6 +43,13 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,18 +59,6 @@ import org.opentest4j.AssertionFailedError;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the GLUE {@linkplain InvariantNonFunctionalQualityAttributesTest}.
@@ -101,14 +100,12 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
         InjectorTestBase.setInjector(injector);
 
         final var riInjector = TestClientUtil.createClientInjector();
@@ -189,10 +186,11 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         assertThrows(AssertionError.class, testClass::testRequirementR0010);
     }
 
-    Envelope buildMdibForR0010(final String sequenceId,
-                               final @Nullable BigInteger mdsVersion,
-                               final boolean clockPresent,
-                               final boolean multipleMds) {
+    Envelope buildMdibForR0010(
+            final String sequenceId,
+            final @Nullable BigInteger mdsVersion,
+            final boolean clockPresent,
+            final boolean multipleMds) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -218,9 +216,7 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     /**
@@ -266,9 +262,8 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final var first = buildEpisodicMetricReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE,
-            mdibBuilder.buildStringMetricState(METRIC_HANDLE)
-        );
+        final var first = buildEpisodicMetricReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE, mdibBuilder.buildStringMetricState(METRIC_HANDLE));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementR0011();
@@ -293,20 +288,28 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final var first = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(1),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.valueOf(1)));
+        final var first = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(1),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.valueOf(1)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
-        final var second = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(2),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.valueOf(2)));
+        final var second = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(2),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.valueOf(2)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
-        final var third = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.valueOf(2)));
+        final var third = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.valueOf(2)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
-        final var fourth = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.valueOf(3)));
+        final var fourth = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.valueOf(3)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, fourth);
 
         testClass.testRequirementR001200();
@@ -323,12 +326,16 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final var first = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(1),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.ONE));
+        final var first = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(1),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, false, BigInteger.ONE));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
-        final var second = buildEpisodicAlertReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(2),
-            buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.ONE));
+        final var second = buildEpisodicAlertReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(2),
+                buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.OFF, true, BigInteger.ONE));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         assertThrows(AssertionFailedError.class, testClass::testRequirementR001200);
@@ -353,31 +360,28 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     public void testRequirementR0013Good() throws Exception {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         // BindingMdibVersion and BindingStartTime present
-        final var patientContext = buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE,
-            BigInteger.ONE);
+        final var patientContext =
+                buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         patientContext.setBindingMdibVersion(BigInteger.ONE);
         patientContext.setBindingStartTime(BigInteger.ONE);
-        final var locationContext = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.ONE);
+        final var locationContext =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         locationContext.setBindingMdibVersion(BigInteger.ONE);
         locationContext.setBindingStartTime(BigInteger.ONE);
         final var firstUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE,
-            patientContext, locationContext);
+                MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE, patientContext, locationContext);
         // BindingMdibVersion and BindingStartTime absent
-        final var secondLocationContext = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.TWO);
-        final var secondUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO,
-            secondLocationContext);
-        //BindingMdibVersion absent and BindingStartTime present
-        final var thirdLocationContext = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.valueOf(3));
+        final var secondLocationContext =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.TWO);
+        final var secondUpdate =
+                buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO, secondLocationContext);
+        // BindingMdibVersion absent and BindingStartTime present
+        final var thirdLocationContext =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.valueOf(3));
         final var bindingStartTime = BigInteger.valueOf(3);
         thirdLocationContext.setBindingStartTime(bindingStartTime);
         final var thirdUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(3),
-            thirdLocationContext);
+                MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(3), thirdLocationContext);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -397,11 +401,11 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     public void testRequirementR0013Bad() throws Exception {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         // BindingMdibVersion present and BindingStartTime absent
-        final var patientContext = buildPatientContext(
-            PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
+        final var patientContext =
+                buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         patientContext.setBindingMdibVersion(BigInteger.ONE);
-        final var firstUpdate = buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE,
-            patientContext);
+        final var firstUpdate =
+                buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE, patientContext);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -428,32 +432,28 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     public void testRequirementR0072Good() throws Exception {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         // UnbindingMdibVersion and BindingEndTime present
-        final var patientContext = buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE,
-            BigInteger.ONE);
+        final var patientContext =
+                buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         patientContext.setUnbindingMdibVersion(BigInteger.ONE);
         patientContext.setBindingEndTime(BigInteger.ONE);
-        final var locationContext = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.ONE);
+        final var locationContext =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         locationContext.setUnbindingMdibVersion(BigInteger.ONE);
         locationContext.setBindingEndTime(BigInteger.ONE);
         final var firstUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE,
-            patientContext,
-            locationContext);
+                MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE, patientContext, locationContext);
         // UnbindingMdibVersion and BindingEndTime absent
-        final var locationContext2 = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.TWO);
-        final var secondUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO,
-            locationContext2);
-        //UnbindingMdibVersion absent and BindingEndTime present
-        final var locationContext3 = buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE,
-            BigInteger.valueOf(3));
+        final var locationContext2 =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.TWO);
+        final var secondUpdate =
+                buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO, locationContext2);
+        // UnbindingMdibVersion absent and BindingEndTime present
+        final var locationContext3 =
+                buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE, BigInteger.valueOf(3));
         final var bindingEndTime = BigInteger.valueOf(3);
         locationContext3.setBindingEndTime(bindingEndTime);
-        final var thirdUpdate = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(3),
-            locationContext3);
+        final var thirdUpdate =
+                buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.valueOf(3), locationContext3);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -473,11 +473,11 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     public void testRequirementR0072Bad() throws Exception {
         final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO);
         // UnbindingMdibVersion present and BindingEndTime absent
-        final var patientContext = buildPatientContext(
-            PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
+        final var patientContext =
+                buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE, BigInteger.ONE);
         patientContext.setUnbindingMdibVersion(BigInteger.ONE);
-        final var firstUpdate = buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE,
-            patientContext);
+        final var firstUpdate =
+                buildEpisodicContextReport(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ONE, patientContext);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -485,8 +485,7 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         assertThrows(AssertionError.class, testClass::testRequirementR0072);
     }
 
-    Envelope buildMdib(final String sequenceId,
-                       final @Nullable BigInteger mdsVersion) {
+    Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdsVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -496,7 +495,7 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         final var alertSystem = mdibBuilder.buildAlertSystem(ALERT_SYSTEM_HANDLE, AlertActivation.ON);
         alertSystem.getRight().setLastSelfCheck(BigInteger.ZERO);
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI, AlertActivation.ON);
+                ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI, AlertActivation.ON);
         alertCondition.getRight().setDeterminationTime(BigInteger.ZERO);
         alertSystem.getLeft().getAlertCondition().add(alertCondition.getLeft());
         mdsDescriptor.setAlertSystem(alertSystem.getLeft());
@@ -517,16 +516,14 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().add(systemContext.getRight());
 
-        final var patientContext = mdibBuilder.buildPatientContext(
-            PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE
-        );
+        final var patientContext =
+                mdibBuilder.buildPatientContext(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE);
 
         systemContext.getLeft().setPatientContext(patientContext.getLeft());
         mdState.getState().add(patientContext.getRight());
 
-        final var locationContext = mdibBuilder.buildLocationContext(
-            LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE
-        );
+        final var locationContext =
+                mdibBuilder.buildLocationContext(LOCATION_CONTEXT_HANDLE, LOCATION_CONTEXT_STATE_HANDLE);
 
         systemContext.getLeft().setLocationContext(locationContext.getLeft());
         mdState.getState().add(locationContext.getRight());
@@ -535,16 +532,14 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     private Pair<StringMetricDescriptor, StringMetricState> getStringMetricStatePair(final boolean correct) {
         final var codedValue = new CodedValue();
         codedValue.setCode("1");
-        final var metric = mdibBuilder.buildStringMetric(
-            METRIC_HANDLE, MetricCategory.MSRMT, MetricAvailability.CONT, codedValue);
+        final var metric =
+                mdibBuilder.buildStringMetric(METRIC_HANDLE, MetricCategory.MSRMT, MetricAvailability.CONT, codedValue);
         final var metricValue = new StringMetricValue();
         metricValue.setValue("0");
         final var metricQuality = new AbstractMetricValue.MetricQuality();
@@ -558,10 +553,7 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     }
 
     Envelope buildEpisodicAlertReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractAlertState... states
-    ) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final AbstractAlertState... states) {
         final var report = messageBuilder.buildEpisodicAlertReport(sequenceId);
         final var reportPart = messageBuilder.buildAbstractAlertReportReportPart();
         reportPart.getAlertState().addAll(Arrays.asList(states));
@@ -571,9 +563,7 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     }
 
     Envelope buildEpisodicMetricReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractMetricState... states) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final AbstractMetricState... states) {
         final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
 
         final var reportPart = messageBuilder.buildAbstractMetricReportReportPart();
@@ -600,10 +590,9 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
     }
 
     Envelope buildEpisodicContextReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractContextState... contextStates
-    ) {
+            final String sequenceId,
+            final @Nullable BigInteger mdibVersion,
+            final AbstractContextState... contextStates) {
         final var report = messageBuilder.buildEpisodicContextReport(sequenceId);
 
         final var reportPart = messageBuilder.buildAbstractContextReportReportPart();
@@ -614,45 +603,44 @@ public class InvariantNonFunctionalQualityAttributesTestTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 
-    PatientContextState buildPatientContext(final String patientContextHandle,
-                                            final String patientContextStateHandle,
-                                            final BigInteger patientContextVersion) {
-        final var patientContext = mdibBuilder.buildPatientContextState(patientContextHandle,
-            patientContextStateHandle);
+    PatientContextState buildPatientContext(
+            final String patientContextHandle,
+            final String patientContextStateHandle,
+            final BigInteger patientContextVersion) {
+        final var patientContext =
+                mdibBuilder.buildPatientContextState(patientContextHandle, patientContextStateHandle);
         patientContext.setDescriptorVersion(patientContextVersion);
         patientContext.setContextAssociation(ContextAssociation.ASSOC);
         return patientContext;
     }
 
-    LocationContextState buildLocationContext(final String locationContextHandle,
-                                              final String locationContextStateHandle,
-                                              final BigInteger locationContextVersion) {
-        final var locationContext = mdibBuilder.buildLocationContextState(locationContextHandle,
-            locationContextStateHandle);
+    LocationContextState buildLocationContext(
+            final String locationContextHandle,
+            final String locationContextStateHandle,
+            final BigInteger locationContextVersion) {
+        final var locationContext =
+                mdibBuilder.buildLocationContextState(locationContextHandle, locationContextStateHandle);
         locationContext.setDescriptorVersion(locationContextVersion);
         locationContext.setContextAssociation(ContextAssociation.ASSOC);
         return locationContext;
     }
 
-    AlertConditionState buildAlertConditionState(final String handle,
-                                                 final AlertActivation activation,
-                                                 final boolean presence,
-                                                 @Nullable final BigInteger determinationTime) {
+    AlertConditionState buildAlertConditionState(
+            final String handle,
+            final AlertActivation activation,
+            final boolean presence,
+            @Nullable final BigInteger determinationTime) {
         final var state = mdibBuilder.buildAlertConditionState(handle, activation);
         state.setDeterminationTime(determinationTime);
         state.setPresence(presence);
         return state;
     }
 
-    AbstractAlertState buildAlertSystemState(final String handle,
-                                             final AlertActivation activation,
-                                             @Nullable final BigInteger lastSelfCheck) {
+    AbstractAlertState buildAlertSystemState(
+            final String handle, final AlertActivation activation, @Nullable final BigInteger lastSelfCheck) {
         final var state = mdibBuilder.buildAlertSystemState(handle, activation);
         state.setLastSelfCheck(lastSelfCheck);
         return state;

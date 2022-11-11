@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.participant.AbstractAlertState;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.AlertConditionDescriptor;
@@ -27,6 +32,12 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,18 +45,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantAlertStateTest}.
@@ -87,14 +86,12 @@ public class InvariantAlertStateTestTest {
         when(mockClient.isClientRunning()).thenReturn(true);
 
         final Injector injector;
-        injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -138,15 +135,19 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0029Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -166,27 +167,33 @@ public class InvariantAlertStateTestTest {
 
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var update = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var update = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.TWO,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, update);
 
-        //new sequence
+        // new sequence
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialSecondSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
@@ -205,22 +212,30 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0029GoodMultipleAlertConditionStates() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
-        final var fourth = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var fourth = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -241,22 +256,28 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0029GoodDifferentAlertSystems() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var secondUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var secondUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
-        final var thirdUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var thirdUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -275,18 +296,22 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0029Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, () -> testClass.testRequirementR00290());
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, true));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, true));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
@@ -302,7 +327,6 @@ public class InvariantAlertStateTestTest {
         assertEquals(InvariantAlertStateTest.NO_ACCEPTABLE_SEQUENCE_SEEN, error.getMessage());
     }
 
-
     /**
      * Tests whether setting the activation state of an alert system state and the activation states of an alert
      * condition state and an alert signal state to expected combinations causes the test to pass.
@@ -313,22 +337,30 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116Good() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, false, true);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
-        final var fourth = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var fourth = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -348,33 +380,43 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116GoodMultipleSequences() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, false, true);
 
-        final var update = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var update = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
         final var initialSecondSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO, BigInteger.ZERO, false, false, true);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.TWO,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.TWO,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.valueOf(3),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
-        final var fourth = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.valueOf(4),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var fourth = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.valueOf(4),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, update);
 
-        //second sequence
+        // second sequence
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialSecondSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
@@ -393,29 +435,37 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116GoodMultipleAlertConditionsAndSignals() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
-        final var fourth = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var fourth = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -435,30 +485,38 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116GoodMultipleAlertSystems() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true, false, true);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
-        final var third = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
-        final var fourth = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var fourth = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -478,8 +536,8 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116Bad() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID, BigInteger.ONE, buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -495,22 +553,26 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116BadNoPsdState() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -528,22 +590,26 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116BadNoOffState() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
-            buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false),
+                buildAlertSignalState(MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertActivation.OFF));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -562,13 +628,17 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116BadMultipleAlertConditionsAndSignals() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
-            buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var second = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.OFF, false));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -587,13 +657,15 @@ public class InvariantAlertStateTestTest {
     public void testRequirementR0116BadMultipleAlertSystems() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO);
 
-        final var first = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
-            buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
-            buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE, AlertActivation.PSD));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
@@ -604,9 +676,8 @@ public class InvariantAlertStateTestTest {
         return mdibBuilder.buildAlertSystemState(handle, activation);
     }
 
-    private AbstractAlertState buildAlertConditionState(final String handle,
-                                                        final AlertActivation activation,
-                                                        final boolean presence) {
+    private AbstractAlertState buildAlertConditionState(
+            final String handle, final AlertActivation activation, final boolean presence) {
         final var alertConditionState = mdibBuilder.buildAlertConditionState(handle, activation);
         alertConditionState.setPresence(presence);
         return alertConditionState;
@@ -617,27 +688,25 @@ public class InvariantAlertStateTestTest {
     }
 
     private Envelope buildMdib(
-        final String sequenceId,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion) {
+            final String sequenceId, final @Nullable BigInteger vmdVersion, final @Nullable BigInteger mdsVersion) {
         return buildMdib(sequenceId, vmdVersion, mdsVersion, true, true, true);
     }
 
     private Envelope buildMdib(
-        final String sequenceId,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion,
-        final boolean presence) {
+            final String sequenceId,
+            final @Nullable BigInteger vmdVersion,
+            final @Nullable BigInteger mdsVersion,
+            final boolean presence) {
         return buildMdib(sequenceId, vmdVersion, mdsVersion, true, true, presence);
     }
 
     private Envelope buildMdib(
-        final String sequenceId,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion,
-        final boolean multipleAlertSystems,
-        final boolean multipleAlertConditionsAndSignals,
-        final boolean presence) {
+            final String sequenceId,
+            final @Nullable BigInteger vmdVersion,
+            final @Nullable BigInteger mdsVersion,
+            final boolean multipleAlertSystems,
+            final boolean multipleAlertConditionsAndSignals,
+            final boolean presence) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -645,16 +714,10 @@ public class InvariantAlertStateTestTest {
         mdsDescriptor.setDescriptorVersion(mdsVersion);
 
         final var vmdAlertCondition = mdibBuilder.buildAlertCondition(
-            VMD_ALERT_CONDITION_HANDLE,
-            AlertConditionKind.OTH,
-            AlertConditionPriority.ME,
-            AlertActivation.ON);
+                VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         vmdAlertCondition.getRight().setPresence(presence);
         final var vmdAlertSignal = mdibBuilder.buildAlertSignal(
-            VMD_ALERT_SIGNAL_HANDLE,
-            AlertSignalManifestation.OTH,
-            false,
-            AlertActivation.OFF);
+                VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
 
         final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
         vmdAlertCondition.getLeft().setDescriptorVersion(null);
@@ -669,8 +732,8 @@ public class InvariantAlertStateTestTest {
         vmd.getLeft().setDescriptorVersion(vmdVersion);
         vmd.getRight().setDescriptorVersion(vmdVersion);
         vmd.getLeft().setAlertSystem(vmdAlertSystem.getLeft());
-        mdState.getState().addAll(List.of(
-            vmdAlertSystem.getRight(), vmdAlertCondition.getRight(), vmdAlertSignal.getRight()));
+        mdState.getState()
+                .addAll(List.of(vmdAlertSystem.getRight(), vmdAlertCondition.getRight(), vmdAlertSignal.getRight()));
 
         mdsDescriptor.getVmd().add(vmd.getLeft());
         mdState.getState().add(vmd.getRight());
@@ -680,31 +743,22 @@ public class InvariantAlertStateTestTest {
             final var listOfAlertConditions = new ArrayList<AlertConditionDescriptor>();
             final var listOfAlertSignals = new ArrayList<AlertSignalDescriptor>();
             final var mdsAlertCondition = mdibBuilder.buildAlertCondition(
-                MDS_ALERT_CONDITION_HANDLE,
-                AlertConditionKind.OTH,
-                AlertConditionPriority.ME,
-                AlertActivation.ON);
+                    MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
             mdsAlertCondition.getRight().setPresence(presence);
             listOfAlertConditions.add(mdsAlertCondition.getLeft());
             final var mdsAlertSignal = mdibBuilder.buildAlertSignal(
-                MDS_ALERT_SIGNAL_HANDLE,
-                AlertSignalManifestation.OTH,
-                false,
-                AlertActivation.OFF);
+                    MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
             listOfAlertSignals.add(mdsAlertSignal.getLeft());
             if (multipleAlertConditionsAndSignals) {
                 final var mdsSecondAlertCondition = mdibBuilder.buildAlertCondition(
-                    MDS_SECOND_ALERT_CONDITION_HANDLE,
-                    AlertConditionKind.TEC,
-                    AlertConditionPriority.HI,
-                    AlertActivation.ON);
+                        MDS_SECOND_ALERT_CONDITION_HANDLE,
+                        AlertConditionKind.TEC,
+                        AlertConditionPriority.HI,
+                        AlertActivation.ON);
                 mdsSecondAlertCondition.getRight().setPresence(presence);
                 listOfAlertConditions.add(mdsSecondAlertCondition.getLeft());
                 final var mdsSecondAlertSignal = mdibBuilder.buildAlertSignal(
-                    MDS_SECOND_ALERT_SIGNAL_HANDLE,
-                    AlertSignalManifestation.VIS,
-                    true,
-                    AlertActivation.OFF);
+                        MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.VIS, true, AlertActivation.OFF);
                 listOfAlertSignals.add(mdsSecondAlertSignal.getLeft());
                 mdState.getState().addAll(List.of(mdsSecondAlertCondition.getRight(), mdsSecondAlertSignal.getRight()));
             }
@@ -715,24 +769,19 @@ public class InvariantAlertStateTestTest {
             mdsAlertSystem.getLeft().getAlertSignal().addAll(listOfAlertSignals);
 
             mdsDescriptor.setAlertSystem(mdsAlertSystem.getLeft());
-            mdState.getState().addAll(List.of(
-                mdsAlertSystem.getRight(), mdsAlertCondition.getRight(), mdsAlertSignal.getRight()));
-
+            mdState.getState()
+                    .addAll(List.of(
+                            mdsAlertSystem.getRight(), mdsAlertCondition.getRight(), mdsAlertSignal.getRight()));
         }
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     private Envelope buildEpisodicAlertReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractAlertState... alertStates
-    ) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final AbstractAlertState... alertStates) {
         final var report = messageBuilder.buildEpisodicAlertReport(sequenceId);
 
         final var reportPart = messageBuilder.buildAbstractAlertReportReportPart();
@@ -742,9 +791,6 @@ public class InvariantAlertStateTestTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_ALERT_REPORT, report);
     }
 }

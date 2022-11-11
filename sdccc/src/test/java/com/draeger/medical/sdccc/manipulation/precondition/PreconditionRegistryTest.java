@@ -7,18 +7,17 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition;
 
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+
+import com.google.inject.Injector;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for the precondition registry.
@@ -104,9 +103,8 @@ public class PreconditionRegistryTest {
         });
 
         assertThrows(
-            RuntimeException.class,
-            () -> registry.registerSimplePrecondition(PreconditionUtil.MockPrecondition.class)
-        );
+                RuntimeException.class,
+                () -> registry.registerSimplePrecondition(PreconditionUtil.MockPrecondition.class));
         assertEquals(1, mockInteractionWasCalled.get());
     }
 
@@ -174,10 +172,8 @@ public class PreconditionRegistryTest {
         });
 
         assertThrows(
-            RuntimeException.class,
-            () -> registry.registerManipulationPrecondition(PreconditionUtil.MockManipulation.class)
-        );
+                RuntimeException.class,
+                () -> registry.registerManipulationPrecondition(PreconditionUtil.MockManipulation.class));
         assertEquals(1, mockInteractionWasCalled.get());
     }
-
 }

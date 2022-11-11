@@ -9,12 +9,10 @@ package com.draeger.medical.sdccc.messages;
 
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.google.inject.name.Named;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.File;
 import java.nio.file.Path;
-
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Hibernate configuration using a file based backend.

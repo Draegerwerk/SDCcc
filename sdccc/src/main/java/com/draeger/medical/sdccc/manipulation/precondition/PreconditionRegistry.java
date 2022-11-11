@@ -10,12 +10,11 @@ package com.draeger.medical.sdccc.manipulation.precondition;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Registry which allows executing preconditions during a test run.
@@ -47,8 +46,10 @@ public class PreconditionRegistry {
             if (!this.preconditions.contains(instance)) {
                 this.preconditions.add(instance);
             }
-        } catch (final NoSuchMethodException | IllegalAccessException
-                | InstantiationException | InvocationTargetException e) {
+        } catch (final NoSuchMethodException
+                | IllegalAccessException
+                | InstantiationException
+                | InvocationTargetException e) {
             final String baseMessage = "Error while registering precondition";
             LOG.error(baseMessage, e);
             throw new RuntimeException(baseMessage, e);
@@ -70,8 +71,10 @@ public class PreconditionRegistry {
             if (!this.preconditions.contains(instance)) {
                 this.preconditions.add(instance);
             }
-        } catch (final NoSuchMethodException | IllegalAccessException
-            | InstantiationException | InvocationTargetException e) {
+        } catch (final NoSuchMethodException
+                | IllegalAccessException
+                | InstantiationException
+                | InvocationTargetException e) {
             final String baseMessage = "Error while registering precondition";
             LOG.error(baseMessage, e);
             throw new RuntimeException(baseMessage, e);
@@ -89,6 +92,5 @@ public class PreconditionRegistry {
             LOG.info("Running precondition {}", precondition.getClass().getSimpleName());
             precondition.verifyPrecondition(injector);
         }
-
     }
 }

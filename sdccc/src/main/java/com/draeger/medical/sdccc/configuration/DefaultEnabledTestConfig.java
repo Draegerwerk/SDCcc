@@ -8,13 +8,12 @@
 package com.draeger.medical.sdccc.configuration;
 
 import com.draeger.medical.sdccc.util.Constants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
  * Configuration module which disables all tests by default.
@@ -42,9 +41,8 @@ public class DefaultEnabledTestConfig extends AbstractConfigurationModule {
         });
 
         publicKeys.forEach(key -> {
-                LOG.debug("Disabling key {} by default", key);
-                bind(key, Boolean.class, false);
-            }
-        );
+            LOG.debug("Disabling key {} by default", key);
+            bind(key, Boolean.class, false);
+        });
     }
 }
