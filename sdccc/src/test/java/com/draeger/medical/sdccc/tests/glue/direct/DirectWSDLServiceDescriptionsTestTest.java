@@ -242,14 +242,16 @@ public class DirectWSDLServiceDescriptionsTestTest {
     @Test
     public void testRequirement813Good() throws Exception {
 
-        HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
-        HostedServiceProxy descriptionEventServiceProxy = mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
+        final HostedServiceProxy descriptionEventServiceProxy =
+            mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
         when(hostingServiceProxy.getHostedServices()).thenReturn(
             Map.of("DescriptionEventService", descriptionEventServiceProxy));
-        when(descriptionEventServiceProxy.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
+        when(descriptionEventServiceProxy.getType().getTypes()).thenReturn(
+            List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
 
-        String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
+        final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
             + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
             + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
             + "xmlns:s12=\"http://schemas.xmlsoap.org/wsdl/soap12/\" "
@@ -276,7 +278,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
                 "DescriptionEventService", List.of(wsdl)
             ));
 
-       testClass.testRequirement813();
+        testClass.testRequirement813();
     }
 
     /**
@@ -285,7 +287,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
     @Test
     public void testRequirement813BadNoDescriptionEventService() {
 
-        HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
         when(hostingServiceProxy.getHostedServices()).thenReturn(
             Map.of());
@@ -301,14 +303,16 @@ public class DirectWSDLServiceDescriptionsTestTest {
     @Test
     public void testRequirement813BadInvalidSWSDL() throws Exception {
 
-        HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
-        HostedServiceProxy descriptionEventServiceProxy = mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
+        final HostedServiceProxy descriptionEventServiceProxy =
+            mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
         when(hostingServiceProxy.getHostedServices()).thenReturn(
             Map.of("DescriptionEventService", descriptionEventServiceProxy));
-        when(descriptionEventServiceProxy.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
+        when(descriptionEventServiceProxy.getType().getTypes())
+            .thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
 
-        String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
+        final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
             + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
             + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
             + "xmlns:s12=\"http://schemas.xmlsoap.org/wsdl/soap12/\" "
