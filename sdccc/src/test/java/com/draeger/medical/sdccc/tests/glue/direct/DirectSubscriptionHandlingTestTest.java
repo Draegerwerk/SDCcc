@@ -13,6 +13,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
+import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,7 +55,9 @@ import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
+import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.factory.SoapFaultFactory;
+import org.somda.sdc.dpws.soap.interception.Interceptor;
 import org.somda.sdc.dpws.soap.wseventing.EventSink;
 import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
 import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
@@ -127,9 +130,7 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
-
-    @Captor
-    private ArgumentCaptor<NotificationSink> notificationSinkArgumentCaptor;
+    private CommunicationLogFactory communicationLogFactory;
 
     private HashSet<String> subscriptionsToCancel;
     private HashSet<String> cancelledSubscriptions;
@@ -146,6 +147,7 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
+        communicationLogFactory = mock(CommunicationLogFactory.class);
         final var communicationLogSink = mock(CommunicationLogSink.class);
 
         // set up the injector used by sdcri
@@ -160,9 +162,7 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier"))
                         .toInstance(FRAMEWORK_IDENTIFIER);
                     bind(CommunicationLogSink.class).toInstance(communicationLogSink);
-                    install(new FactoryModuleBuilder()
-                        .implement(CommunicationLog.class, CommunicationLogImpl.class)
-                        .build(CommunicationLogFactory.class));
+                    bind(CommunicationLogFactory.class).toInstance(communicationLogFactory);
                 }
             }
         );
@@ -506,30 +506,38 @@ public class DirectSubscriptionHandlingTestTest {
         setupTestScenarioForR0036(false);
         cancelledSubscriptions = new HashSet<>();
 
-        final Optional<HostedServiceProxy> contextService = MessageGeneratingUtil.getContextService();
-        final RequestResponseClient requestResponseClient = contextService.orElseGet().getRequestResponseClient();
-        final CommunicationLog communicationLog =
-            testClient.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog();
+        final Optional<HostedServiceProxy> contextService = MessageGeneratingUtil.getContextService(testClient);
+        final RequestResponseClient requestResponseClient = contextService.orElseThrow().getRequestResponseClient();
+
+        final CommunicationLog communicationLog = mock(CommunicationLog.class);
+        when(communicationLogFactory.createCommunicationLog()).thenReturn(communicationLog);
+
         EventSink eventSink = mock(EventSink.class);
-        when(eventSinkFactory.createWsEventingEventSink(requestResponseClient, testUnderTest.getLocalBaseURI(), communicationLog)).thenReturn(eventSink);
+        when(eventSinkFactory.createWsEventingEventSink(
+                requestResponseClient,
+                testUnderTest.getLocalBaseURI(),
+                communicationLog))
+            .thenReturn(eventSink);
 
-
-        when(eventSink.subscribe(eq(List.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT)), eq(testUnderTest.DURATION), any())).thenReturn()
-
-        final HttpHandler[] handlers = {null, null};
+        ListenableFuture<SubscribeResult> subscribeResultFuture = mock(ListenableFuture.class);
+        SubscribeResult subscribeResult = new SubscribeResult("subscriptionId", Duration.ofSeconds(10));
+        when(subscribeResultFuture.get()).thenReturn(subscribeResult);
+        final NotificationSink[] handlers = {null};
         final int INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 0;
         final int INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 1;
-        when(httpServerRegistry.registerContext(anyString(),
-            any(), any())).thenAnswer(args -> {
-                final String context = args.getArgument(1);
-                if ("/EventSink/NotifyTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else if ("/EventSink/EndTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else {
-                    fail("an unexpected http Context was registered: " + context);
+        when(eventSink
+            .subscribe(any(), eq(DirectSubscriptionHandlingTest.DURATION), any()))
+            .thenAnswer((args) -> {
+                final List<String> actions = args.getArgument(0);
+                final NotificationSink sink = args.getArgument(2);
+
+                System.out.println("DEBUG: " + actions.get(0) + " was subscribed to.");
+
+                if (ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT.equals(actions.get(0))) {
+                    handlers[0] = args.getArgument(2);
                 }
-                return END_TO_URI;
+
+                return subscribeResultFuture;
             });
 
         final boolean[] hadFailure = {false};
@@ -542,9 +550,11 @@ public class DirectSubscriptionHandlingTestTest {
             if (!hadFailure[0]
                 || !this.subscriptionsToCancel.contains(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT)) {
                 try {
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER].handle(InputStream.nullInputStream(),
-                        OutputStream.nullOutputStream(), communicationContext);
-                } catch (HttpException he) {
+                    final SoapMessage soapMessage = mock(SoapMessage.class);
+                    assertNotNull(handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER]);
+                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER]
+                        .receiveNotification(soapMessage, communicationContext);
+                } catch (RuntimeException re) {
                     hadFailure[0] = true;
                     // cancel all subscriptions.
                     cancelledSubscriptions = subscriptionsToCancel;
