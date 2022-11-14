@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.wsdl.WsdlRetriever;
+import org.somda.sdc.glue.common.WsdlConstants;
 
 /**
  * Glue Annex B wsdl tests.
@@ -37,11 +38,13 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
     private static final String TARGET_NAMESPACE = "http://standards.ieee.org/downloads/11073/11073-20701-2018";
     private TestClient client;
     private WsdlRetriever wsdlRetriever;
+    private HostedServiceVerifier hostedServiceVerifier;
 
     @BeforeEach
     void setup() {
         client = getInjector().getInstance(TestClient.class);
         wsdlRetriever = client.getInjector().getInstance(WsdlRetriever.class);
+        hostedServiceVerifier = client.getInjector().getInstance(HostedServiceVerifier.class);
     }
 
     @Test
@@ -86,13 +89,8 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
             + "Note that this test case is only applicable to PoC Medical Devices that are extendable by "
             + "removable subsystems.")
     void testRequirement813() {
-
-        // 1. check presence of DescriptionEventService
-        final var hostedServiceProxy = MessageGeneratingUtil.getDescriptionEventService(client);
-        assertTrue(hostedServiceProxy.isPresent());
-
-        // 2. validate in WSDL
-        final HostedServiceVerifier verifier = new HostedServiceVerifier(client);
-        verifier.verifyHostedService(hostedServiceProxy);
+        hostedServiceVerifier.checkServicePresenceAndConformance(
+                WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME,
+                MessageGeneratingUtil.getDescriptionEventService(client));
     }
 }

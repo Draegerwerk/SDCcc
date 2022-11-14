@@ -92,6 +92,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
             @Override
             protected void configure() {
                 bind(WsdlRetriever.class).toInstance(wsdlRetriever);
+                bind(TestClient.class).toInstance(testClient);
             }
         });
         when(testClient.getInjector()).thenReturn(clientInjector);
