@@ -50,8 +50,15 @@ import org.somda.sdc.dpws.soap.exception.MalformedSoapMessageException;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
+import org.somda.sdc.dpws.soap.factory.NotificationSinkFactory;
+import org.somda.sdc.dpws.soap.interception.Direction;
 import org.somda.sdc.dpws.soap.interception.Interceptor;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
+import org.somda.sdc.dpws.soap.interception.InterceptorRegistry;
+import org.somda.sdc.dpws.soap.interception.MessageInterceptor;
+import org.somda.sdc.dpws.soap.interception.NotificationObject;
+import org.somda.sdc.dpws.soap.interception.RequestResponseObject;
+import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingServerInterceptor;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingUtil;
 import org.somda.sdc.dpws.soap.wsaddressing.model.EndpointReferenceType;
 import org.somda.sdc.dpws.soap.wseventing.EventSink;
@@ -96,6 +103,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private static final String ROOM1 = "123";
     private static final String ROOM2 = "124";
+    private final InterceptorWithTheAbilityToFailReports interceptor = new InterceptorWithTheAbilityToFailReports();
 
 
     private TestClient testClient;
@@ -109,6 +117,8 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     private WsEventingEventSinkFactory eventSinkFactory;
     private String adapterAddress;
     private CommunicationLog commLog;
+    private NotificationSinkFactory notificationSinkFactory;
+    private WsAddressingServerInterceptor wsaServerInterceptor;
 
     @BeforeEach
     void setUp() {
@@ -126,9 +136,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.adapterAddress = getInjector().getInstance(
             Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS))
         );
+        this.notificationSinkFactory = testClient.getInjector().getInstance(NotificationSinkFactory.class);
+        this.wsaServerInterceptor = testClient.getInjector().getInstance(WsAddressingServerInterceptor.class);
         this.commLog = testClient.getInjector().getInstance(CommunicationLogFactory.class)
                                                .createCommunicationLog();
-
     }
 
     @Test
@@ -202,12 +213,13 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             WsdlConstants.OPERATION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             report -> { // subscribe to Report
-                subscribeToReportWithTheAbilityToFail(getLocalBaseURI(),
+                subscribeToReport(getLocalBaseURI(),
                     WsdlConstants.OPERATION_EPISODIC_CONTEXT_REPORT,
                     ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                     WsdlConstants.SERVICE_CONTEXT,
                     MessageGeneratingUtil::getContextService,
                     report);
+                addTheAbilityToFailViaInterceptors();
                 return null;
             },
             () -> { // trigger Report
@@ -492,23 +504,41 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     requestResponseClient,
                     baseURI,
                     testClient.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog());
-        final ListenableFuture<SubscribeResult> subscribeResult =
-            eventSink.subscribe(actions, DURATION, new NotificationSink() {
-                @Override
-                public void receiveNotification(final SoapMessage soapMessage,
-                                                final CommunicationContext communicationContext) {
-                    // notification
-                    synchronized (reportTestData.getSyncPoint()) {
-                        reportTestData.setReportReceived(true);
-                        reportTestData.getSyncPoint().notifyAll();
-                    }
-                }
 
-                @Override
-                public void register(final Interceptor interceptor) {
-                    // not important
-                }
-            });
+        final NotificationSink notificationSink = notificationSinkFactory.createNotificationSink(wsaServerInterceptor);
+        final ListenableFuture<SubscribeResult> subscribeResult =
+            eventSink.subscribe(actions, DURATION, notificationSink);
+        // TODO: remove before committing!
+        System.out.println("DEBUG: registering Interceptors...");
+        notificationSink.register(interceptor);
+        notificationSink.register(new Interceptor() {
+
+            @MessageInterceptor(direction = Direction.NOTIFICATION)
+            public void onNotification(final NotificationObject notificationObject) {
+                    // TODO: remove before committing!
+                    System.out.println("DEBUG: Report received!");
+                    reportTestData.setReportReceived(true);
+                    reportTestData.getSyncPoint().notifyAll();
+            }
+
+        });
+
+//        new NotificationSink() {
+//            @Override
+//            public void receiveNotification(final SoapMessage soapMessage,
+//                                            final CommunicationContext communicationContext) {
+//                // notification
+//                synchronized (reportTestData.getSyncPoint()) {
+//                    reportTestData.setReportReceived(true);
+//                    reportTestData.getSyncPoint().notifyAll();
+//                }
+//            }
+//
+//            @Override
+//            public void register(final Interceptor interceptor) {
+//                // not important
+//            }
+//        }
 
         SubscribeResult result = null;
         try {
@@ -521,6 +551,11 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return result;
     }
 
+
+    private void addTheAbilityToFailViaInterceptors() {
+    }
+
+/*
     @SuppressWarnings("SameParameterValue")
     private SubscribeResult subscribeToReportWithTheAbilityToFail(final String baseURI,
                                                        final String reportName,
@@ -580,6 +615,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         }
         return result;
     }
+*/
 
     /**
      * Determine SubscriptionId for a report with the given action.
@@ -616,5 +652,15 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return sb.toString();
     }
 
+    class InterceptorWithTheAbilityToFailReports implements Interceptor {
 
+        @MessageInterceptor(direction = Direction.ANY)
+        public void onMessage(NotificationObject message) throws SoapFaultException {
+            // TODO: remove before committing!
+            System.out.println("DEBUG: InterceptorWithTheAbilityToFailReports was called!!!");
+
+            throw new SoapFaultException(message.getNotification(), new RuntimeException("Intentional failure for testing purposes."));
+        }
+
+    }
 }
