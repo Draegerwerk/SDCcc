@@ -229,7 +229,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
         final HostedServiceProxy descriptionEventServiceProxy =
                 mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
         when(hostingServiceProxy.getHostedServices())
-                .thenReturn(Map.of("DescriptionEventService", descriptionEventServiceProxy));
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, descriptionEventServiceProxy));
         when(descriptionEventServiceProxy.getType().getTypes())
                 .thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
 
@@ -255,7 +255,8 @@ public class DirectWSDLServiceDescriptionsTestTest {
                 + "\t\t</wsdl:operation>\n"
                 + "\t</wsdl:portType>\n"
                 + "</wsdl:definitions>\n";
-        when(wsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of("DescriptionEventService", List.of(wsdl)));
+        when(wsdlRetriever.retrieveWsdls(any()))
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, List.of(wsdl)));
 
         testClass.testRequirement813();
     }
@@ -286,7 +287,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
         final HostedServiceProxy descriptionEventServiceProxy =
                 mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
         when(hostingServiceProxy.getHostedServices())
-                .thenReturn(Map.of("DescriptionEventService", descriptionEventServiceProxy));
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, descriptionEventServiceProxy));
         when(descriptionEventServiceProxy.getType().getTypes())
                 .thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
 
@@ -312,7 +313,8 @@ public class DirectWSDLServiceDescriptionsTestTest {
                 + "\t\t</wsdl:operation>\n"
                 + "\t</wsdl:portType>\n"
                 + "</wsdl:definitions>\n";
-        when(wsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of("DescriptionEventService", List.of(wsdl)));
+        when(wsdlRetriever.retrieveWsdls(any()))
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, List.of(wsdl)));
 
         assertThrows(AssertionFailedError.class, testClass::testRequirement813);
     }

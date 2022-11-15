@@ -122,8 +122,8 @@ public class HostedServiceVerifier {
     }
 
     /**
-     * Check the Presence and BICEPS-Conformance of a hosted Service.
-     * Throws an AssertionFailedError when the Service is not present or its WSDL description does not conform to
+     * Checks the presence and BICEPS conformance of a hosted service.
+     * Throws an AssertionFailedError when the service is not present or its WSDL description does not conform to
      * the BICEPS standard.
      * @param targetQName   - QName of the service to check
      * @param hostedService - HostedService to check
