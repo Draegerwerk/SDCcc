@@ -99,7 +99,7 @@ public class InvariantRemoteControlCapabilitiesTest extends InjectorTestBase {
         }
     }
 
-    private String buildCertPemString(MessageContent messageContent) throws IOException {
+    private String buildCertPemString(final MessageContent messageContent) throws IOException {
         final StringBuilder certsPEMString = new StringBuilder();
         for (X509Certificate cert : messageContent.getCerts()) {
             certsPEMString.append(CryptoUtil.getCertificateAsPEMString(cert));
