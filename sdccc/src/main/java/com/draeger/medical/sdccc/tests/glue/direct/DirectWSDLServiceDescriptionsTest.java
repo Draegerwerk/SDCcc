@@ -44,7 +44,7 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
     void setup() {
         client = getInjector().getInstance(TestClient.class);
         wsdlRetriever = client.getInjector().getInstance(WsdlRetriever.class);
-        hostedServiceVerifier = client.getInjector().getInstance(HostedServiceVerifier.class);
+        hostedServiceVerifier = getInjector().getInstance(HostedServiceVerifier.class);
     }
 
     @Test
