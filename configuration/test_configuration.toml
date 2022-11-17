@@ -74,6 +74,7 @@ R0040=true
 
 [GLUE]         # ISO/IEEE 11073-20701
 13=true
+8-1-3=true
 R0010_0=true
 R0011=true
 R0012_0_0=true

@@ -17,7 +17,9 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
+import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.XPathExtractor;
 import java.io.IOException;
 import java.util.List;
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.wsdl.WsdlRetriever;
+import org.somda.sdc.glue.common.WsdlConstants;
 
 /**
  * Glue Annex B wsdl tests.
@@ -35,11 +38,13 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
     private static final String TARGET_NAMESPACE = "http://standards.ieee.org/downloads/11073/11073-20701-2018";
     private TestClient client;
     private WsdlRetriever wsdlRetriever;
+    private HostedServiceVerifier hostedServiceVerifier;
 
     @BeforeEach
     void setup() {
         client = getInjector().getInstance(TestClient.class);
         wsdlRetriever = client.getInjector().getInstance(WsdlRetriever.class);
+        hostedServiceVerifier = getInjector().getInstance(HostedServiceVerifier.class);
     }
 
     @Test
@@ -74,5 +79,18 @@ public class DirectWSDLServiceDescriptionsTest extends InjectorTestBase {
                 });
             }
         }
+    }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.GLUE_813)
+    @TestDescription("Ensures that the DUT provides a DescriptionEventService in the GetMetadataResponse "
+            + "and verifies the description event service endpoint provided by the DUT is conforming with SDC Glue "
+            + "Annex B and only implements SDC services. "
+            + "Note that this test case is only applicable to PoC Medical Devices that are extendable by "
+            + "removable subsystems.")
+    void testRequirement813() {
+        hostedServiceVerifier.checkServicePresenceAndConformance(
+                WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME,
+                MessageGeneratingUtil.getDescriptionEventService(client));
     }
 }
