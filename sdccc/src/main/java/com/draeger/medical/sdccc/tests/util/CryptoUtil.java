@@ -1,10 +1,9 @@
 package com.draeger.medical.sdccc.tests.util;
 
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.security.cert.X509Certificate;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
 /**
  * Utility to process the custom crypto settings.

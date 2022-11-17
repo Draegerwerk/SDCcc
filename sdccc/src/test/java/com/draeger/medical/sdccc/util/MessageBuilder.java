@@ -475,9 +475,7 @@ public class MessageBuilder {
      * @param sequenceId  of current mdib
      * @return new operation invoked report
      */
-    public OperationInvokedReport buildOperationInvokedReport(
-        final String sequenceId
-    ) {
+    public OperationInvokedReport buildOperationInvokedReport(final String sequenceId) {
         final var report = messageModelFactory.createOperationInvokedReport();
         report.setSequenceId(sequenceId);
         return report;

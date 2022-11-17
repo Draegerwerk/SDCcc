@@ -813,8 +813,9 @@ public class ConditionalPreconditions {
          * Creates a trigger operation invoked report message precondition check.
          */
         public TriggerOperationInvokedReportPrecondition() {
-            super(TriggerOperationInvokedReportPrecondition::preconditionCheck,
-                TriggerOperationInvokedReportPrecondition::manipulation);
+            super(
+                    TriggerOperationInvokedReportPrecondition::preconditionCheck,
+                    TriggerOperationInvokedReportPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {

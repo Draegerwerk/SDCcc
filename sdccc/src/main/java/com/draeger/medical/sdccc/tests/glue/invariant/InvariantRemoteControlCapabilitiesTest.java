@@ -1,5 +1,8 @@
 package com.draeger.medical.sdccc.tests.glue.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -12,6 +15,11 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.CryptoUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.Constants;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,23 +28,14 @@ import org.somda.sdc.dpws.soap.MarshallingService;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.X509Certificate;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
 /**
  * Glue remote-control capabilities tests.
  */
 public class InvariantRemoteControlCapabilitiesTest extends InjectorTestBase {
 
     public static final String WRONG_ROOT_ERROR_MESSAGE = "Root is not the expected root%n%s%nbut is%n%s%n";
-    public static final String WRONG_EXTENSION_ERROR_MESSAGE = "Extension is not the expected extension%n%s%nbut"
-        + " is%n%s%n";
+    public static final String WRONG_EXTENSION_ERROR_MESSAGE =
+            "Extension is not the expected extension%n%s%nbut" + " is%n%s%n";
     private MessageStorage messageStorage;
     private MarshallingService marshalling;
     private SoapUtil soapUtil;
@@ -51,24 +50,23 @@ public class InvariantRemoteControlCapabilitiesTest extends InjectorTestBase {
 
     @Test
     @DisplayName("An SDC SERVICE PROVIDER SHALL set pm:OperationInvokedReport/pm:ReportPart/pm:InvocationSource to"
-        + " - @Root = “http://standards.ieee.org/downloads/11073/11073-20701-2018/X509Certificate/PEM”\n"
-        + " - @Extension =  being the X.509 certificate of the SDC PARTICIPANT that invoked the SERVICE OPERATION"
-        + " referenced by the enclosing report part, encoded as PEM text.")
+            + " - @Root = “http://standards.ieee.org/downloads/11073/11073-20701-2018/X509Certificate/PEM”\n"
+            + " - @Extension =  being the X.509 certificate of the SDC PARTICIPANT that invoked the SERVICE OPERATION"
+            + " referenced by the enclosing report part, encoded as PEM text.")
     @TestIdentifier(EnabledTestConfig.GLUE_R0078_0)
     @TestDescription("Starting from the initially retrieved mdib, checks every operation invoked report and verifies,"
-        + " that for each report part the root and extension of the invocation source is set as specified.")
-    @RequirePrecondition(simplePreconditions = {
-        ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.class})
+            + " that for each report part the root and extension of the invocation source is set as specified.")
+    @RequirePrecondition(
+            simplePreconditions = {ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.class})
     void testRequirementR00780() throws NoTestData, IOException {
         final var expectedRoot = "http://standards.ieee.org/downloads/11073/11073-20701-2018/X509Certificate/PEM";
 
-        try (final var messages = messageStorage.getInboundMessagesByBodyType(
-            Constants.MSG_OPERATION_INVOKED_REPORT)) {
+        try (final var messages = messageStorage.getInboundMessagesByBodyType(Constants.MSG_OPERATION_INVOKED_REPORT)) {
             final var operationInvokedReportsSeen = new AtomicInteger(0);
             messages.getStream().forEach(messageContent -> {
                 try {
-                    final var soapMessage = marshalling.unmarshal(new ByteArrayInputStream(
-                        messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                    final var soapMessage = marshalling.unmarshal(
+                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, OperationInvokedReport.class);
                     if (reportOpt.isPresent()) {
                         for (var reportPart : reportOpt.orElseThrow().getReportPart()) {
@@ -79,12 +77,12 @@ public class InvariantRemoteControlCapabilitiesTest extends InjectorTestBase {
                             final var root = invocationSource.getRootName();
                             final var extension = invocationSource.getExtensionName();
 
-                            assertEquals(expectedRoot, root, String.format(
-                                WRONG_ROOT_ERROR_MESSAGE,
-                                expectedRoot, root));
-                            assertEquals(expectedExtension, extension, String.format(
-                                WRONG_EXTENSION_ERROR_MESSAGE,
-                                expectedExtension, extension));
+                            assertEquals(
+                                    expectedRoot, root, String.format(WRONG_ROOT_ERROR_MESSAGE, expectedRoot, root));
+                            assertEquals(
+                                    expectedExtension,
+                                    extension,
+                                    String.format(WRONG_EXTENSION_ERROR_MESSAGE, expectedExtension, extension));
                         }
                     }
                 } catch (MarshallingException e) {
@@ -94,8 +92,8 @@ public class InvariantRemoteControlCapabilitiesTest extends InjectorTestBase {
                 }
             });
 
-            assertTestData(operationInvokedReportsSeen.get(),
-                "No OperationInvokedReports seen during test run, test failed.");
+            assertTestData(
+                    operationInvokedReportsSeen.get(), "No OperationInvokedReports seen during test run, test failed.");
         }
     }
 
