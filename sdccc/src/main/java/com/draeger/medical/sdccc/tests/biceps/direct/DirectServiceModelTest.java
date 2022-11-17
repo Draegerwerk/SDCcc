@@ -16,11 +16,8 @@ import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
-import java.util.Optional;
-import javax.xml.namespace.QName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.glue.common.WsdlConstants;
 
 /**
@@ -44,7 +41,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " the get service endpoint provided by the DUT is conforming with SDC Glue Annex B"
             + " and only implements SDC services.")
     void testRequirement0062() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_GET_QNAME, MessageGeneratingUtil.getGetService(testClient));
     }
 
@@ -54,7 +51,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the sdc:StateEventService endpoint provided by the DUT is conforming"
             + " with IEEE Std 11073-20701-2018 SDC Glue Annex B and only implements SDC services.")
     void testRequirement0064() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME, MessageGeneratingUtil.getStateEventService(testClient));
     }
 
@@ -64,7 +61,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the waveform service endpoint provided by the DUT is conforming"
             + " with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0066() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_WAVEFORM_QNAME, MessageGeneratingUtil.getWaveformService(testClient));
     }
 
@@ -74,7 +71,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " the set service endpoint provided by the DUT is conforming with SDC Glue Annex B"
             + " and only implements SDC services.")
     void testRequirement0068() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_SET_QNAME, MessageGeneratingUtil.getSetService(testClient));
     }
 
@@ -84,7 +81,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the context service endpoint provided by the DUT is conforming"
             + " with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0069() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_CONTEXT_QNAME, MessageGeneratingUtil.getContextService(testClient));
     }
 
@@ -94,7 +91,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the archive service endpoint provided by the DUT is conforming"
             + " with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0100() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_ARCHIVE_QNAME, MessageGeneratingUtil.getArchiveService(testClient));
     }
 
@@ -104,7 +101,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the localization service endpoint provided by the DUT is conforming"
             + " with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0101() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME, MessageGeneratingUtil.getLocalizationService(testClient));
     }
 
@@ -114,7 +111,7 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + "verifies the description event service endpoint provided by the DUT is conforming "
             + "with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0104() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME,
                 MessageGeneratingUtil.getDescriptionEventService(testClient));
     }
@@ -125,18 +122,8 @@ public class DirectServiceModelTest extends InjectorTestBase {
             + " verifies the containment tree service endpoint provided by the DUT is conforming"
             + " with SDC Glue Annex B and only implements SDC services.")
     void testRequirement0119() {
-        checkServicePresenceAndConformance(
+        hostedServiceVerifier.checkServicePresenceAndConformance(
                 WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME,
                 MessageGeneratingUtil.getContainmentTreeService(testClient));
-    }
-
-    private void checkServicePresenceAndConformance(
-            final QName targetQName, final Optional<HostedServiceProxy> hostedService) {
-        final var hostedServices = testClient.getHostingServiceProxy().getHostedServices();
-        assertTrue(
-                hostedServices.values().stream().anyMatch(value -> value.getType().getTypes().stream()
-                        .anyMatch(qname -> qname.equals(targetQName))),
-                String.format("No %s present", targetQName.getLocalPart()));
-        hostedServiceVerifier.verifyHostedService(hostedService);
     }
 }

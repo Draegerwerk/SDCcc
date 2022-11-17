@@ -32,7 +32,9 @@ import javax.xml.namespace.QName;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.mockito.Mockito;
+import org.opentest4j.AssertionFailedError;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
@@ -90,6 +92,7 @@ public class DirectWSDLServiceDescriptionsTestTest {
             @Override
             protected void configure() {
                 bind(WsdlRetriever.class).toInstance(wsdlRetriever);
+                bind(TestClient.class).toInstance(testClient);
             }
         });
         when(testClient.getInjector()).thenReturn(clientInjector);
@@ -213,16 +216,121 @@ public class DirectWSDLServiceDescriptionsTestTest {
         assertThrows(AssertionError.class, testClass::testRequirement13);
     }
 
+    /**
+     * Tests whether the test passes when the Device provides a DescriptionEventService.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement813Good() throws Exception {
+
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
+        final HostedServiceProxy descriptionEventServiceProxy =
+                mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
+        when(hostingServiceProxy.getHostedServices())
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, descriptionEventServiceProxy));
+        when(descriptionEventServiceProxy.getType().getTypes())
+                .thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
+
+        final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
+                + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
+                + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
+                + "xmlns:s12=\"http://schemas.xmlsoap.org/wsdl/soap12/\" "
+                + "xmlns:tns=\"http://standards.ieee.org/downloads/11073/11073-20701-2018\" "
+                + "xmlns:wsdl=\"http://schemas.xmlsoap.org/wsdl/\" "
+                + "xmlns:wsp=\"http://www.w3.org/ns/ws-policy\" "
+                + "xmlns:ns=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/extension\" "
+                + "xmlns:ns1=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/participant\" "
+                + "xmlns:dt=\"http://standards.ieee.org/downloads/11073/11073-10207-2017\" "
+                + "xmlns:wse=\"http://schemas.xmlsoap.org/ws/2004/08/eventing\" "
+                + "targetNamespace=\"http://standards.ieee.org/downloads/11073/11073-20701-2018\">\n"
+                + "\t<wsdl:message name=\"DescriptionModificationReport\">\n"
+                + "\t\t<wsdl:part name=\"parameters\" element=\"msg:DescriptionModificationReport\"/>\n"
+                + "\t</wsdl:message>\n"
+                + "\t<wsdl:portType name=\"DescriptionEventService\" "
+                + "dpws:DiscoveryType=\"dt:ServiceProvider\" wse:EventSource=\"true\">\n"
+                + "\t\t<wsdl:operation name=\"DescriptionModificationReport\">\n"
+                + "\t\t\t<wsdl:output message=\"tns:DescriptionModificationReport\"/>\n"
+                + "\t\t</wsdl:operation>\n"
+                + "\t</wsdl:portType>\n"
+                + "</wsdl:definitions>\n";
+        when(wsdlRetriever.retrieveWsdls(any()))
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, List.of(wsdl)));
+
+        testClass.testRequirement813();
+    }
+
+    /**
+     * Tests whether the test fails when the DUT does not provide a DescriptionEventService.
+     */
+    @Test
+    public void testRequirement813BadNoDescriptionEventService() {
+
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
+        when(hostingServiceProxy.getHostedServices()).thenReturn(Map.of());
+
+        assertThrows(AssertionError.class, testClass::testRequirement813);
+    }
+
+    /**
+     * Tests whether the test fails when the DUT's declaration of the DescriptionEventService in its WSDL is invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement813BadInvalidSWSDL() throws Exception {
+
+        final HostingServiceProxy hostingServiceProxy = mock(HostingServiceProxy.class);
+        when(testClient.getHostingServiceProxy()).thenReturn(hostingServiceProxy);
+        final HostedServiceProxy descriptionEventServiceProxy =
+                mock(HostedServiceProxy.class, Answers.RETURNS_DEEP_STUBS);
+        when(hostingServiceProxy.getHostedServices())
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, descriptionEventServiceProxy));
+        when(descriptionEventServiceProxy.getType().getTypes())
+                .thenReturn(List.of(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
+
+        final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
+                + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
+                + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
+                + "xmlns:s12=\"http://schemas.xmlsoap.org/wsdl/soap12/\" "
+                + "xmlns:tns=\"http://standards.ieee.org/downloads/11073/11073-20701-2018\" "
+                + "xmlns:wsdl=\"http://schemas.xmlsoap.org/wsdl/\" "
+                + "xmlns:wsp=\"http://www.w3.org/ns/ws-policy\" "
+                + "xmlns:ns=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/extension\" "
+                + "xmlns:ns1=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/participant\" "
+                + "xmlns:dt=\"http://standards.ieee.org/downloads/11073/11073-10207-2017\" "
+                + "xmlns:wse=\"http://schemas.xmlsoap.org/ws/2004/08/eventing\" "
+                + "targetNamespace=\"http://standards.ieee.org/downloads/11073/11073-20701-2018\">\n"
+                + "\t<wsdl:message name=\"DescriptionModificationReport\">\n"
+                + "\t\t<wsdl:part name=\"parameters\" element=\"msg:DescriptionModificationReport\"/>\n"
+                + "\t</wsdl:message>\n"
+                + "\t<wsdl:portType name=\"DescriptionEventService\" "
+                + "dpws:DiscoveryType=\"dt:ServiceProvider\" wse:EventSource=\"true\">\n"
+                + "\t\t<wsdl:operation name=\"DescriptionModificationReport\">\n"
+                + "\t\t\t<wsdl:input message=\"tns:DescriptionModificationReport\"/>\n"
+                + "\t\t</wsdl:operation>\n"
+                + "\t</wsdl:portType>\n"
+                + "</wsdl:definitions>\n";
+        when(wsdlRetriever.retrieveWsdls(any()))
+                .thenReturn(Map.of(WsdlConstants.SERVICE_DESCRIPTION_EVENT, List.of(wsdl)));
+
+        assertThrows(AssertionFailedError.class, testClass::testRequirement813);
+    }
+
     private String loadWsdl(final String wsdlPath, final boolean classpath) throws IOException {
         final String wsdl;
         if (classpath) {
             final var loader = getClass().getClassLoader();
             try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+                assertNotNull(wsdlStream);
                 wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
             }
         } else {
             final var loader = SdcDevice.class.getClassLoader();
             try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+                assertNotNull(wsdlStream);
                 wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
             }
         }

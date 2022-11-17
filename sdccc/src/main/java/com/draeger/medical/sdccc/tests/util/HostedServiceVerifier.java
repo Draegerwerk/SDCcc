@@ -60,7 +60,8 @@ public class HostedServiceVerifier {
      *
      * @param hostedService the hostedService to be verified
      */
-    public void verifyHostedService(final Optional<HostedServiceProxy> hostedService) {
+    public void verifyHostedService(
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") final Optional<HostedServiceProxy> hostedService) {
         if (hostedService.isEmpty()) {
             fail("No hosted service present");
         }
@@ -96,11 +97,9 @@ public class HostedServiceVerifier {
                 // detect duplicates, we cannot determine which description is correct if multiple
                 // WSDLs contain them.
                 final var wsdlPortTypes = wsdlParser.parseWsdlPortTypes(wsdl);
-                wsdlPortTypes.forEach((portTypeName, entry) -> {
-                    assertFalse(
-                            parsedWsdls.containsKey(portTypeName),
-                            DUPLICATE_PORT_TYPE_TEMPLATE + " portType " + portTypeName + " service " + serviceId);
-                });
+                wsdlPortTypes.forEach((portTypeName, entry) -> assertFalse(
+                        parsedWsdls.containsKey(portTypeName),
+                        DUPLICATE_PORT_TYPE_TEMPLATE + " portType " + portTypeName + " service " + serviceId));
                 parsedWsdls.putAll(wsdlPortTypes);
             } catch (final javax.xml.bind.JAXBException e) {
                 LOG.debug("Could not parse WSDL for service {}", serviceId, e);
@@ -120,5 +119,23 @@ public class HostedServiceVerifier {
                     WsdlValidator.isEqualService(type, parsedWsdls.get(type)),
                     "Service " + type + " does not match service defined in SDC Glue Annex B.");
         });
+    }
+
+    /**
+     * Checks the presence and BICEPS conformance of a hosted service.
+     * Throws an AssertionFailedError when the service is not present or its WSDL description does not conform to
+     * the BICEPS standard.
+     * @param targetQName   - QName of the service to check
+     * @param hostedService - HostedService to check
+     */
+    public void checkServicePresenceAndConformance(
+            final QName targetQName,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") final Optional<HostedServiceProxy> hostedService) {
+        final var hostedServices = testClient.getHostingServiceProxy().getHostedServices();
+        assertTrue(
+                hostedServices.values().stream().anyMatch(value -> value.getType().getTypes().stream()
+                        .anyMatch(qname -> qname.equals(targetQName))),
+                String.format("No %s present", targetQName.getLocalPart()));
+        verifyHostedService(hostedService);
     }
 }
