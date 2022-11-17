@@ -9,10 +9,9 @@ package com.draeger.medical.sdccc.tests;
 
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.Injector;
+import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
 
 /**
  * Base class for SDCcc requirement tests.
@@ -84,5 +83,4 @@ public class InjectorTestBase {
             throw new NoTestData(message);
         }
     }
-
 }

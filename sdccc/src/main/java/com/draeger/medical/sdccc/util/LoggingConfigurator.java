@@ -7,6 +7,9 @@
 
 package com.draeger.medical.sdccc.util;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
@@ -16,20 +19,13 @@ import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
-
 /**
  * Provides the configuration for the SDCcc log4j2 Logger.
  */
 public final class LoggingConfigurator {
 
-    private static final List<String> CHATTY_LOGGERS = List.of(
-            "org.apache.http.wire",
-            "org.apache.http.headers",
-            "org.eclipse.jetty"
-    );
+    private static final List<String> CHATTY_LOGGERS =
+            List.of("org.apache.http.wire", "org.apache.http.headers", "org.eclipse.jetty");
 
     private LoggingConfigurator() {}
 
@@ -44,9 +40,8 @@ public final class LoggingConfigurator {
         builder.setStatusLevel(Level.ERROR);
         builder.setConfigurationName("SDCcc");
 
-        final var layoutBuilder = builder
-                .newLayout("PatternLayout")
-                .addAttribute("pattern", DefaultConfiguration.DEFAULT_PATTERN);
+        final var layoutBuilder =
+                builder.newLayout("PatternLayout").addAttribute("pattern", DefaultConfiguration.DEFAULT_PATTERN);
 
         final var rootLogger = builder.newAsyncRootLogger(Level.DEBUG);
         final var sdcccLogger = builder.newAsyncLogger("com.draeger.medical.sdccc", Level.DEBUG)
@@ -54,43 +49,38 @@ public final class LoggingConfigurator {
                 .addAttribute("additivity", false);
 
         final AppenderComponentBuilder triggerOnErrorOrWorseLogAppenderBuilder =
-            builder.newAppender("triggerOnErrorOrWorse", "TriggerOnErrorOrWorseLogAppender");
+                builder.newAppender("triggerOnErrorOrWorse", "TriggerOnErrorOrWorseLogAppender");
 
         builder.add(triggerOnErrorOrWorseLogAppenderBuilder);
         sdcccLogger.add(builder.newAppenderRef(triggerOnErrorOrWorseLogAppenderBuilder.getName()));
         rootLogger.add(builder.newAppenderRef(triggerOnErrorOrWorseLogAppenderBuilder.getName()));
         {
             // create a console appender for info messages
-            final var appenderBuilder = builder
-                    .newAppender("console_logger", ConsoleAppender.PLUGIN_NAME)
+            final var appenderBuilder = builder.newAppender("console_logger", ConsoleAppender.PLUGIN_NAME)
                     .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
             appenderBuilder.add(layoutBuilder);
             // only log INFO or worse to console
-            appenderBuilder.addComponent(
-                    builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
-                            .addAttribute("level", Level.INFO)
-            );
+            appenderBuilder.addComponent(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
+                    .addAttribute("level", Level.INFO));
             builder.add(appenderBuilder);
 
             sdcccLogger.add(builder.newAppenderRef(appenderBuilder.getName()));
         }
         {
             // create a console appender for error messages
-            final var appenderBuilder = builder
-                    .newAppender("console_warning_logger", ConsoleAppender.PLUGIN_NAME)
+            final var appenderBuilder = builder.newAppender("console_warning_logger", ConsoleAppender.PLUGIN_NAME)
                     .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
             appenderBuilder.add(layoutBuilder);
             // only log WARN or worse to console
-            appenderBuilder.addComponent(
-                    builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
-                            .addAttribute("level", Level.WARN)
-            );
+            appenderBuilder.addComponent(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
+                    .addAttribute("level", Level.WARN));
             builder.add(appenderBuilder);
 
             rootLogger.add(builder.newAppenderRef(appenderBuilder.getName()));
         }
         {
-            final var filePath = Path.of(loggingFolder.getAbsolutePath(), "SDCcc.log").toAbsolutePath();
+            final var filePath =
+                    Path.of(loggingFolder.getAbsolutePath(), "SDCcc.log").toAbsolutePath();
 
             // create a file appender
             final var appenderBuilder = builder.newAppender("file", "File")
@@ -106,8 +96,7 @@ public final class LoggingConfigurator {
             // quiet down chatty loggers
             CHATTY_LOGGERS.forEach(logger -> builder.add(builder.newAsyncLogger(logger, Level.INFO)
                     .addAttribute("additivity", true)
-                    .add(builder.newAppenderRef(triggerOnErrorOrWorseLogAppenderBuilder.getName()))
-            ));
+                    .add(builder.newAppenderRef(triggerOnErrorOrWorseLogAppenderBuilder.getName()))));
         }
 
         builder.add(rootLogger);

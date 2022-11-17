@@ -19,14 +19,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
  * Utility for injector management in tests.
@@ -49,30 +48,24 @@ public final class InjectorUtil {
 
         final var allOverrides = new ArrayList<AbstractModule>();
 
-        allOverrides.add(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        // use in memory database by default
-                        bind(HibernateConfig.class).to(HibernateConfigInMemoryImpl.class).in(Singleton.class);
-                    }
-                }
-        );
+        allOverrides.add(new AbstractModule() {
+            @Override
+            protected void configure() {
+                // use in memory database by default
+                bind(HibernateConfig.class)
+                        .to(HibernateConfigInMemoryImpl.class)
+                        .in(Singleton.class);
+            }
+        });
         allOverrides.addAll(Arrays.asList(overrides));
 
-
-        return Guice.createInjector(
-                Modules.override(
+        return Guice.createInjector(Modules.override(
                         new DefaultTestSuiteModule(),
                         new DefaultTestSuiteConfig() {
 
                             @Override
                             protected void configureCommlogSettings() {
-                                bind(
-                                    TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE,
-                                    int.class,
-                                    1
-                                );
+                                bind(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE, int.class, 1);
                             }
                         },
                         new DefaultEnabledTestConfig(),
@@ -82,8 +75,7 @@ public final class InjectorUtil {
                                 // use temp dir for testing
                                 this.bind(TestRunConfig.TEST_RUN_DIR, File.class, tempDir.toFile());
                             }
-                        }
-                ).with(allOverrides)
-        );
+                        })
+                .with(allOverrides));
     }
 }

@@ -18,8 +18,5 @@ public interface InconsistencyReport {
      * @param originB - the origin of valueB
      * @param valueB - the valueB
      */
-    void report(String originA,
-                String valueA,
-                String originB,
-                String valueB);
+    void report(String originA, String valueA, String originB, String valueB);
 }

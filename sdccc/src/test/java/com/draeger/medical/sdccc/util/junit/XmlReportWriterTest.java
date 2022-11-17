@@ -7,37 +7,21 @@
 
 package com.draeger.medical.sdccc.util.junit;
 
+import static com.draeger.medical.sdccc.util.junit.XmlReportWriter.INVALID_TEST_RUN_TEST_NAME;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.w3c.dom.Node.ELEMENT_NODE;
+
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.XPathExtractor;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtil;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.TestSource;
-import org.junit.platform.engine.TestTag;
-import org.junit.platform.engine.UniqueId;
-import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.TestIdentifier;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.annotation.Nullable;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,17 +36,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.draeger.medical.sdccc.util.junit.XmlReportWriter.INVALID_TEST_RUN_TEST_NAME;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.w3c.dom.Node.ELEMENT_NODE;
+import javax.annotation.Nullable;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.TestTag;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.TestIdentifier;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * Unit tests for the customized JUnit {@linkplain XmlReportWriter}.
@@ -94,10 +93,13 @@ public class XmlReportWriterTest {
     private Map<String, TestExecutionResult> errorTests;
 
     protected static TestDescriptor createMockedTestDescriptor(
-        final String uniqueId, final String displayName, @Nullable final TestSource source,
-        final Set<TestTag> tags, final TestDescriptor.Type type,
-        @Nullable final TestDescriptor parent, final String legacyReportingName
-    ) {
+            final String uniqueId,
+            final String displayName,
+            @Nullable final TestSource source,
+            final Set<TestTag> tags,
+            final TestDescriptor.Type type,
+            @Nullable final TestDescriptor parent,
+            final String legacyReportingName) {
 
         final Optional<TestSource> src = Optional.ofNullable(source);
         final Optional<TestDescriptor> parentId = Optional.ofNullable(parent);
@@ -116,17 +118,14 @@ public class XmlReportWriterTest {
     }
 
     TestExecutionResult createFailedTest(final TestDescriptor test) {
-        final var result = TestExecutionResult.failed(
-            new AssertionError(String.format("Assertion for %s failed", test.getUniqueId().toString()))
-        );
+        final var result = TestExecutionResult.failed(new AssertionError(
+                String.format("Assertion for %s failed", test.getUniqueId().toString())));
         failedTests.put(test.getUniqueId().toString(), result);
         return result;
     }
 
     TestExecutionResult createErrorTest(final TestDescriptor test) {
-        final var result = TestExecutionResult.failed(
-            new RuntimeException("Other exception occurred")
-        );
+        final var result = TestExecutionResult.failed(new RuntimeException("Other exception occurred"));
         errorTests.put(test.getUniqueId().toString(), result);
         return result;
     }
@@ -149,7 +148,6 @@ public class XmlReportWriterTest {
     }
 
     private void createTestCases() throws NoSuchMethodException, ClassNotFoundException {
-        // CHECKSTYLE.OFF: MagicNumber
         for (int i = 0; i < 10; i++) {
             final String uniqueId = UNIQUE_ID_PREFIX + i + "]";
 
@@ -157,9 +155,13 @@ public class XmlReportWriterTest {
 
             final Set<TestTag> tags = new HashSet<>();
             final TestDescriptor child = createMockedTestDescriptor(
-                uniqueId, DEFAULT_DISPLAY_NAME + " " + i, src, tags,
-                TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + i
-            );
+                    uniqueId,
+                    DEFAULT_DISPLAY_NAME + " " + i,
+                    src,
+                    tags,
+                    TestDescriptor.Type.TEST,
+                    null,
+                    DEFAULT_LEGACY_REPORTING_NAME + i);
 
             stringToIdentifier.put(uniqueId, child);
 
@@ -171,7 +173,7 @@ public class XmlReportWriterTest {
             final TestExecutionResult testExecutionResult;
             switch (testType) {
                 case 0:
-                    //success
+                    // success
                     testExecutionResult = TestExecutionResult.successful();
                     break;
                 case 1:
@@ -187,13 +189,11 @@ public class XmlReportWriterTest {
             }
 
             data.add(new ReportData(
-                TestIdentifier.from(child),
-                Duration.ofSeconds(i),
-                testExecutionResult,
-                List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))
-            ));
+                    TestIdentifier.from(child),
+                    Duration.ofSeconds(i),
+                    testExecutionResult,
+                    List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))));
         }
-        // CHECKSTYLE.ON: MagicNumber
     }
 
     /**
@@ -231,9 +231,9 @@ public class XmlReportWriterTest {
             assertNotNull(value.uniqueId);
 
             final var testCaseData = data.stream()
-                .filter(it -> value.uniqueId.equals(it.getTestIdentifier().getUniqueId()))
-                .findFirst()
-                .orElseThrow();
+                    .filter(it -> value.uniqueId.equals(it.testIdentifier().getUniqueId()))
+                    .findFirst()
+                    .orElseThrow();
 
             assertNotNull(value.testDescription);
             assertFalse(value.testDescription.isBlank());
@@ -243,26 +243,23 @@ public class XmlReportWriterTest {
             assertFalse(value.testIdentifier.isBlank());
             assertEquals(MOCK_METHOD_DESCRIPTION, value.testDescription);
 
-            assertEquals(testCaseData.getTestIdentifier().getDisplayName(), value.getDisplayName());
-            assertEquals(testCaseData.getTestIdentifier().getUniqueId(), value.getUniqueId());
-            assertEquals(testCaseData.getTestIdentifier().getLegacyReportingName(), value.getName());
+            assertEquals(testCaseData.testIdentifier().getDisplayName(), value.displayName());
+            assertEquals(testCaseData.testIdentifier().getUniqueId(), value.uniqueId());
+            assertEquals(testCaseData.testIdentifier().getLegacyReportingName(), value.name());
 
-            for (ReportEntry reportEntry : testCaseData.getReportEntries()) {
+            for (ReportEntry reportEntry : testCaseData.reportEntries()) {
                 assertTrue(
-                    value.getSystemOut().contains(reportEntry.toString()),
-                    String.format("%s does not occur in %s", reportEntry, value.getMessage())
-                );
+                        value.systemOut().contains(reportEntry.toString()),
+                        String.format("%s does not occur in %s", reportEntry, value.message()));
             }
 
-            assertNotNull(testCaseData.getTestDuration());
+            assertNotNull(testCaseData.testDuration());
             assertEquals(
-                String.valueOf(testCaseData.getTestDuration().toSeconds()),
-                value.getTime().split("\\.")[0]
-            );
+                    String.valueOf(testCaseData.testDuration().toSeconds()),
+                    value.time().split("\\.")[0]);
             assertEquals(
-                String.valueOf(testCaseData.getTestDuration().toMillisPart()),
-                value.getTime().split("\\.")[1]
-            );
+                    String.valueOf(testCaseData.testDuration().toMillisPart()),
+                    value.time().split("\\.")[1]);
 
             // verify remaining attributes match
             final var identifier = stringToIdentifier.get(key);
@@ -271,11 +268,23 @@ public class XmlReportWriterTest {
 
             if (failedTests.containsKey(value.uniqueId)) {
                 assertEquals("failure", value.failureType);
-                assertEquals(failedTests.get(value.uniqueId).getThrowable().orElseThrow().getMessage(), value.message);
+                assertEquals(
+                        failedTests
+                                .get(value.uniqueId)
+                                .getThrowable()
+                                .orElseThrow()
+                                .getMessage(),
+                        value.message);
             }
             if (errorTests.containsKey(value.uniqueId)) {
                 assertEquals("error", value.failureType);
-                assertEquals(errorTests.get(value.uniqueId).getThrowable().orElseThrow().getMessage(), value.message);
+                assertEquals(
+                        errorTests
+                                .get(value.uniqueId)
+                                .getThrowable()
+                                .orElseThrow()
+                                .getMessage(),
+                        value.message);
             }
         });
     }
@@ -295,20 +304,23 @@ public class XmlReportWriterTest {
         final TestSource src = MethodSource.from(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         final TestDescriptor child = createMockedTestDescriptor(
-            uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
-            TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
-        );
+                uniqueId,
+                DEFAULT_DISPLAY_NAME + " " + testName,
+                src,
+                Collections.emptySet(),
+                TestDescriptor.Type.TEST,
+                null,
+                DEFAULT_LEGACY_REPORTING_NAME + testName);
 
         stringToIdentifier.put(uniqueId, child);
         final var mockMethod = this.getClass().getDeclaredMethod("mockMethodNoDescription");
         doReturn(mockMethod).when(classUtil).getMethod(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         data.add(new ReportData(
-            TestIdentifier.from(child),
-            Duration.ofSeconds(1),
-            TestExecutionResult.successful(),
-            Collections.emptyList()
-        ));
+                TestIdentifier.from(child),
+                Duration.ofSeconds(1),
+                TestExecutionResult.successful(),
+                Collections.emptyList()));
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
@@ -316,14 +328,12 @@ public class XmlReportWriterTest {
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
             final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
-            final var error = assertThrows(XMLStreamException.class,
-                () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
-                "XmlReportWriter accepted test case without TestDescription annotation"
-            );
-            final var expectedMessage = String.format(
-                XmlReportWriter.MISSING_ANNOTATION_TEXT,
-                uniqueId, annotationClass.getSimpleName()
-            );
+            final var error = assertThrows(
+                    XMLStreamException.class,
+                    () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
+                    "XmlReportWriter accepted test case without TestDescription annotation");
+            final var expectedMessage =
+                    String.format(XmlReportWriter.MISSING_ANNOTATION_TEXT, uniqueId, annotationClass.getSimpleName());
             assertTrue(error.getMessage().contains(expectedMessage));
         }
     }
@@ -344,18 +354,21 @@ public class XmlReportWriterTest {
         final TestSource src = MethodSource.from(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
 
         final TestDescriptor child = createMockedTestDescriptor(
-            uniqueId, DEFAULT_DISPLAY_NAME + " " + testName, src, Collections.emptySet(),
-            TestDescriptor.Type.TEST, null, DEFAULT_LEGACY_REPORTING_NAME + testName
-        );
+                uniqueId,
+                DEFAULT_DISPLAY_NAME + " " + testName,
+                src,
+                Collections.emptySet(),
+                TestDescriptor.Type.TEST,
+                null,
+                DEFAULT_LEGACY_REPORTING_NAME + testName);
 
         stringToIdentifier.put(uniqueId, child);
 
         data.add(new ReportData(
-            TestIdentifier.from(child),
-            Duration.ofSeconds(1),
-            TestExecutionResult.successful(),
-            Collections.emptyList()
-        ));
+                TestIdentifier.from(child),
+                Duration.ofSeconds(1),
+                TestExecutionResult.successful(),
+                Collections.emptyList()));
 
         final var mockMethod = this.getClass().getDeclaredMethod("mockMethodNoIdentifier");
         doReturn(mockMethod).when(classUtil).getMethod(TEST_PACKAGE, TEST_CASE_PREFIX + testName);
@@ -366,14 +379,12 @@ public class XmlReportWriterTest {
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
             final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
-            final var error = assertThrows(XMLStreamException.class,
-                () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
-                "XmlReportWriter accepted test case without TestIdentifier annotation"
-            );
-            final var expectedMessage = String.format(
-                XmlReportWriter.MISSING_ANNOTATION_TEXT,
-                uniqueId, annotationClass.getSimpleName()
-            );
+            final var error = assertThrows(
+                    XMLStreamException.class,
+                    () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
+                    "XmlReportWriter accepted test case without TestIdentifier annotation");
+            final var expectedMessage =
+                    String.format(XmlReportWriter.MISSING_ANNOTATION_TEXT, uniqueId, annotationClass.getSimpleName());
             assertTrue(error.getMessage().contains(expectedMessage));
         }
     }
@@ -417,11 +428,13 @@ public class XmlReportWriterTest {
 
         // find invalidated test
         final var testCaseExtractor = new XPathExtractor("//testcase");
-        final var tests = testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
+        final var tests =
+                testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
 
         final var invalidTestRunTest = tests.stream()
-            .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
-            .findFirst();
+                .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(
+                        it.getAttributes().getNamedItem("name").getNodeValue()))
+                .findFirst();
 
         assertTrue(invalidTestRunTest.isPresent());
     }
@@ -465,11 +478,13 @@ public class XmlReportWriterTest {
 
         // find invalidated test
         final var testCaseExtractor = new XPathExtractor("//testcase");
-        final var tests = testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
+        final var tests =
+                testCaseExtractor.extractFrom(suites.stream().findFirst().orElseThrow());
 
         final var invalidTestRunTest = tests.stream()
-            .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(it.getAttributes().getNamedItem("name").getNodeValue()))
-            .findFirst();
+                .filter(it -> INVALID_TEST_RUN_TEST_NAME.equals(
+                        it.getAttributes().getNamedItem("name").getNodeValue()))
+                .findFirst();
 
         assertTrue(invalidTestRunTest.isEmpty());
     }
@@ -529,8 +544,8 @@ public class XmlReportWriterTest {
             } else if (UNIQUE_ID.equals(childNodeName)) {
                 uniqueId = nephew.getTextContent();
             } else if ("skipped".equals(childNodeName)
-                || "error".equals(childNodeName)
-                || "failure".equals(childNodeName)) {
+                    || "error".equals(childNodeName)
+                    || "failure".equals(childNodeName)) {
                 failureType = childNodeName;
                 textContent = nephew.getTextContent();
                 final var messageAttribute = nephew.getAttributes().getNamedItem("message");
@@ -541,10 +556,17 @@ public class XmlReportWriterTest {
         }
 
         final TestContainer tc = new TestContainer(
-            systemOut, displayName, uniqueId,
-            message, textContent, tags, testDescription, failureType, testIdentifier,
-            name, time
-        );
+                systemOut,
+                displayName,
+                uniqueId,
+                message,
+                textContent,
+                tags,
+                testDescription,
+                failureType,
+                testIdentifier,
+                name,
+                time);
         testCases.put(uniqueId, tc);
     }
 
@@ -566,91 +588,24 @@ public class XmlReportWriterTest {
     // this is primarily because {@linkplain Method} is not mockable, as it is declared final
     @TestDescription(MOCK_METHOD_DESCRIPTION)
     @com.draeger.medical.sdccc.tests.annotations.TestIdentifier(MOCK_METHOD_IDENTIFIER)
-    void mockMethod() {
-    }
+    void mockMethod() {}
 
     @com.draeger.medical.sdccc.tests.annotations.TestIdentifier(MOCK_METHOD_IDENTIFIER)
-    void mockMethodNoDescription() {
-
-    }
+    void mockMethodNoDescription() {}
 
     @TestDescription(MOCK_METHOD_DESCRIPTION)
-    void mockMethodNoIdentifier() {
+    void mockMethodNoIdentifier() {}
 
-    }
-
-    static class TestContainer {
-        private final String systemOut;
-        private final String displayName;
-        private final String uniqueId;
-        private final String message;
-        private final String tags;
-        private final String testDescription;
-        private final String failureType;
-        private final String textContent;
-        private final String testIdentifier;
-        private final String name;
-        private final String time;
-
-        TestContainer(final String systemOut, final String displayName, final String uniqueId,
-                      final String message, final String textContent, final String tags,
-                      final String testDescription, @Nullable final String failureType,
-                      final String testIdentifier, final String name, final String time) {
-            this.systemOut = systemOut;
-            this.displayName = displayName;
-            this.uniqueId = uniqueId;
-            this.message = message;
-            this.tags = tags;
-            this.testDescription = testDescription;
-            this.failureType = failureType;
-            this.textContent = textContent;
-            this.testIdentifier = testIdentifier;
-            this.name = name;
-            this.time = time;
-        }
-
-        public String getSystemOut() {
-            return systemOut;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getUniqueId() {
-            return uniqueId;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getTags() {
-            return tags;
-        }
-
-        public String getTestDescription() {
-            return testDescription;
-        }
-
-        public String getFailureType() {
-            return failureType;
-        }
-
-        public String getTextContent() {
-            return textContent;
-        }
-
-        public String getTestIdentifier() {
-            return testIdentifier;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getTime() {
-            return time;
-        }
-    }
+    record TestContainer(
+            String systemOut,
+            String displayName,
+            String uniqueId,
+            String message,
+            String textContent,
+            String tags,
+            String testDescription,
+            @Nullable String failureType,
+            String testIdentifier,
+            String name,
+            String time) {}
 }

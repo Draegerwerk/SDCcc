@@ -7,16 +7,15 @@
 
 package com.draeger.medical.sdccc.tests.glue.direct;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.http.HttpStatus;
 import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpHandler;
 import org.somda.sdc.dpws.soap.CommunicationContext;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * HTTPHandler that fails reception (answers the request with the HTTP response status code 500)
@@ -48,10 +47,9 @@ public class FailingHttpHandler implements HttpHandler {
      *                                   port, certificate data etc.
      * @throws HttpException in order to fail the Report.
      */
-    public void handle(final InputStream inStream,
-                       final OutputStream outStream,
-                       final CommunicationContext communicationContext)
-        throws HttpException {
+    public void handle(
+            final InputStream inStream, final OutputStream outStream, final CommunicationContext communicationContext)
+            throws HttpException {
         // read message, so it is properly stored in the commLog.
         try {
             inStream.readAllBytes();
@@ -65,10 +63,7 @@ public class FailingHttpHandler implements HttpHandler {
             reportTestData.getSyncPoint().notifyAll();
         }
         if (reportTestData.getFailOnReceivingReport()) {
-            throw new HttpException(
-                HttpStatus.INTERNAL_SERVER_ERROR_500,
-                "intentional failure for testing purposes.");
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR_500, "intentional failure for testing purposes.");
         }
     }
-
 }

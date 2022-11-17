@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -17,6 +21,10 @@ import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,15 +37,6 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * BICEPS participant model handle tests (ch. 5.2.2).
@@ -61,16 +60,14 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
     @DisplayName("R0007_0: Within every MDIB version of a SERVICE PROVIDER, all HANDLEs SHALL be unique.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0007_0)
     @TestDescription("Starting from the initially retrieved mdib, ensures that for each mdib version, "
-        + " all contained handles are unique.")
+            + " all contained handles are unique.")
     void testRequirementR0007() throws NoTestData {
         // NOTE: MdibHistorian checks the uniqueness of Handles in all MdibVersions.
         //       However, its checks are missing duplicate handles introduced by ContextReports.
         //       Hence, we cannot fully rely on the MdibHistorian and have to check handle
         //       uniqueness ourselves.
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-            messageStorage,
-            getInjector().getInstance(TestRunObserver.class)
-        );
+                messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final List<String> sequenceIds;
         try {
@@ -88,23 +85,27 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
                 while (current != null) {
                     final var allEntities = current.findEntitiesByType(AbstractDescriptor.class);
 
-                    final List<String> entityHandles = allEntities.stream()
-                        .map(MdibEntity::getHandle)
-                        .collect(Collectors.toList());
+                    final List<String> entityHandles =
+                            allEntities.stream().map(MdibEntity::getHandle).collect(Collectors.toList());
                     final HashSet<String> allHandles = new HashSet<>();
                     for (var handle : entityHandles) {
-                        assertFalse(allHandles.contains(handle), "Handle '" + handle
-                            + "' is not unique in mdib version " + current.getMdibVersion() + ".");
+                        assertFalse(
+                                allHandles.contains(handle),
+                                "Handle '" + handle + "' is not unique in mdib version " + current.getMdibVersion()
+                                        + ".");
                         allHandles.add(handle);
                     }
 
                     final List<AbstractContextState> contextStates =
-                        current.findContextStatesByType(AbstractContextState.class);
-                    final List<String> contextStateHandles =
-                        contextStates.stream().map(AbstractMultiState::getHandle).collect(Collectors.toList());
-                    for (var cSHandle: contextStateHandles) {
-                        assertFalse(allHandles.contains(cSHandle), "contextState handle '" + cSHandle
-                            + "' is not unique in Mdib version " + current.getMdibVersion() + ".");
+                            current.findContextStatesByType(AbstractContextState.class);
+                    final List<String> contextStateHandles = contextStates.stream()
+                            .map(AbstractMultiState::getHandle)
+                            .collect(Collectors.toList());
+                    for (var cSHandle : contextStateHandles) {
+                        assertFalse(
+                                allHandles.contains(cSHandle),
+                                "contextState handle '" + cSHandle + "' is not unique in Mdib version "
+                                        + current.getMdibVersion() + ".");
                         allHandles.add(cSHandle);
                     }
                     handlesSeen += allHandles.size();
@@ -115,21 +116,18 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
             }
         }
         assertTestData(handlesSeen, "No Data to perform test on");
-
     }
 
     @Test
     @DisplayName("A HANDLE SHALL only consist of characters that match ASCII character codes in the range of"
-        + " [0x21, 0x7E].")
+            + " [0x21, 0x7E].")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0105_0)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
-        + " verifies that every descriptor and state handle present only contains valid ASCII characters within the"
-        + " permitted range.")
+            + " verifies that every descriptor and state handle present only contains valid ASCII characters within the"
+            + " permitted range.")
     void testRequirementR0105() throws NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-            messageStorage,
-            getInjector().getInstance(TestRunObserver.class)
-        );
+                messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final List<String> sequenceIds;
         try {
@@ -151,24 +149,20 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
                     for (MdibEntity entity : allEntities) {
                         // descriptor handle
                         assertTrue(
-                            isWithinPermittedASCIIRange(entity.getHandle()),
-                            String.format(
-                                "Invalid descriptor handle %s found in mdib version %s",
-                                entity.getHandle(), mdibVersion
-                            )
-                        );
+                                isWithinPermittedASCIIRange(entity.getHandle()),
+                                String.format(
+                                        "Invalid descriptor handle %s found in mdib version %s",
+                                        entity.getHandle(), mdibVersion));
                         handlesSeen.add(entity.getHandle());
 
                         // state handles
                         entity.doIfMultiState(states -> states.forEach(state -> {
                             handlesSeen.add(state.getHandle());
                             assertTrue(
-                                isWithinPermittedASCIIRange(state.getHandle()),
-                                String.format(
-                                    "Invalid multi state handle %s found in mdib version %s",
-                                    state.getHandle(), mdibVersion
-                                )
-                            );
+                                    isWithinPermittedASCIIRange(state.getHandle()),
+                                    String.format(
+                                            "Invalid multi state handle %s found in mdib version %s",
+                                            state.getHandle(), mdibVersion));
                         }));
                     }
                     first = history.next();
@@ -178,7 +172,6 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
             }
         }
         assertTestData(handlesSeen, "No Data to perform test on");
-
     }
 
     /**
@@ -188,12 +181,10 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
      * @return true if correct, false otherwise
      */
     boolean isWithinPermittedASCIIRange(final String data) {
-        return data.codePoints().allMatch(c ->
-            isInRange(c, VALID_ASCII_RANGE));
+        return data.codePoints().allMatch(c -> isInRange(c, VALID_ASCII_RANGE));
     }
 
     private boolean isInRange(final int codePoint, final Pair<Integer, Integer> range) {
         return codePoint >= range.getLeft() && codePoint <= range.getRight();
     }
-
 }

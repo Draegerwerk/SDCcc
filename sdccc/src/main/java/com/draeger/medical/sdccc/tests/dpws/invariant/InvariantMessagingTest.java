@@ -7,20 +7,6 @@
 
 package com.draeger.medical.sdccc.tests.dpws.invariant;
 
-import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
-import com.draeger.medical.sdccc.messages.MessageStorage;
-import com.draeger.medical.sdccc.tests.InjectorTestBase;
-import com.draeger.medical.sdccc.tests.annotations.TestDescription;
-import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
-import com.draeger.medical.sdccc.util.XPathExtractor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.Test;
-import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
-
-import javax.xml.xpath.XPathExpressionException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.draeger.medical.sdccc.util.Constants.s12;
 import static com.draeger.medical.sdccc.util.Constants.wsa;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +14,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+
+import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.util.XPathExtractor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.xml.xpath.XPathExpressionException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
 /**
  * DPWS Messaging tests for
@@ -53,19 +52,20 @@ public class InvariantMessagingTest extends InjectorTestBase {
             assertTestData(inboundSoaps.areObjectsPresent(), "No inbound messages to perform test on.");
 
             inboundSoaps.getStream().forEach(message -> {
-
                 final var messageBody = message.getBody();
                 try {
-                    final var relationshipProperty = relatesToExtractor.extractFrom(messageBody)
-                        .stream().findFirst();
+                    final var relationshipProperty =
+                            relatesToExtractor.extractFrom(messageBody).stream().findFirst();
                     assertFalse(relationshipProperty.isEmpty());
-                    final var attribute = relationshipProperty.orElseThrow().getAttributes()
-                        .getNamedItem(RELATIONSHIP_ATTRIBUTE);
+                    final var attribute =
+                            relationshipProperty.orElseThrow().getAttributes().getNamedItem(RELATIONSHIP_ATTRIBUTE);
                     assertNotNull(attribute, "No RelationshipType is set");
                     assertEquals(BROKEN_R0019_IRI, attribute.getNodeValue());
                 } catch (XPathExpressionException e) {
-                    LOG.error("XPathExpressionException while trying to traverse {}. Message: {}",
-                        messageBody, e.getMessage());
+                    LOG.error(
+                            "XPathExpressionException while trying to traverse {}. Message: {}",
+                            messageBody,
+                            e.getMessage());
                     fail("Encountered XPathExpressionException trying to traverse " + messageBody);
                 }
             });
@@ -75,7 +75,7 @@ public class InvariantMessagingTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.DPWS_R0040)
     @TestDescription("Checks all response messages from the DUT containing a SOAP Fault and verifies the relationship"
-        + " property is set.")
+            + " property is set.")
     void testRequirement0040() throws Exception {
         final var messageStorage = getInjector().getInstance(MessageStorage.class);
 
@@ -90,18 +90,23 @@ public class InvariantMessagingTest extends InjectorTestBase {
             inboundSoaps.getStream().forEach(message -> {
                 final var messageBody = message.getBody();
                 try {
-                    final var fault = faultExtractor.extractFrom(messageBody).stream().findFirst().orElse(null);
+                    final var fault = faultExtractor.extractFrom(messageBody).stream()
+                            .findFirst()
+                            .orElse(null);
                     if (fault != null) {
                         faultsPresent.set(true);
-                        final var relatesTo = relatesToExtractor.extractFrom(messageBody).stream().findFirst();
+                        final var relatesTo = relatesToExtractor.extractFrom(messageBody).stream()
+                                .findFirst();
                         assertFalse(relatesTo.isEmpty());
-                        final var attribute = relatesTo.orElseThrow()
-                            .getAttributes().getNamedItem(RELATIONSHIP_ATTRIBUTE);
+                        final var attribute =
+                                relatesTo.orElseThrow().getAttributes().getNamedItem(RELATIONSHIP_ATTRIBUTE);
                         assertTrue(attribute == null || attribute.getNodeValue().equals(WS_ADDRESSING_RELATIONSHIP));
                     }
                 } catch (XPathExpressionException e) {
-                    LOG.error("XPathExpressionException while trying to traverse {}. Message: {}",
-                        messageBody, e.getMessage());
+                    LOG.error(
+                            "XPathExpressionException while trying to traverse {}. Message: {}",
+                            messageBody,
+                            e.getMessage());
                     fail("Encountered XPathExpressionException trying to traverse " + messageBody);
                 }
             });

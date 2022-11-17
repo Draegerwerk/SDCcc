@@ -22,5 +22,4 @@ public interface ClassUtil {
      * @return the method object
      */
     Method getMethod(String className, String methodName) throws ClassNotFoundException, NoSuchMethodException;
-
 }
