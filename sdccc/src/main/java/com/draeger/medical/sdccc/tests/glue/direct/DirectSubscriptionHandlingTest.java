@@ -23,13 +23,18 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
+import org.somda.sdc.biceps.model.message.EpisodicAlertReport;
+import org.somda.sdc.biceps.model.message.EpisodicComponentReport;
+import org.somda.sdc.biceps.model.message.EpisodicContextReport;
+import org.somda.sdc.biceps.model.message.EpisodicMetricReport;
+import org.somda.sdc.biceps.model.message.EpisodicOperationalStateReport;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdibResponse;
+import org.somda.sdc.biceps.model.message.OperationInvokedReport;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
@@ -38,44 +43,29 @@ import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
-import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
-import org.somda.sdc.dpws.soap.CommunicationContext;
 import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
-import org.somda.sdc.dpws.soap.exception.MalformedSoapMessageException;
-import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
-import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.factory.NotificationSinkFactory;
 import org.somda.sdc.dpws.soap.interception.Direction;
 import org.somda.sdc.dpws.soap.interception.Interceptor;
-import org.somda.sdc.dpws.soap.interception.InterceptorException;
-import org.somda.sdc.dpws.soap.interception.InterceptorRegistry;
 import org.somda.sdc.dpws.soap.interception.MessageInterceptor;
 import org.somda.sdc.dpws.soap.interception.NotificationObject;
-import org.somda.sdc.dpws.soap.interception.RequestResponseObject;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingServerInterceptor;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingUtil;
-import org.somda.sdc.dpws.soap.wsaddressing.model.EndpointReferenceType;
 import org.somda.sdc.dpws.soap.wseventing.EventSink;
 import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
-import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
-import org.somda.sdc.dpws.soap.wseventing.model.DeliveryType;
-import org.somda.sdc.dpws.soap.wseventing.model.FilterType;
-import org.somda.sdc.dpws.soap.wseventing.model.Subscribe;
-import org.somda.sdc.dpws.soap.wseventing.model.SubscribeResponse;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
 import javax.xml.namespace.QName;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -143,12 +133,12 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     }
 
     @Test
-    @DisplayName("An SDC SERVICE PROVIDER SHALL implement at least those of the following BICEPS SERVICEs that it"
-        + " supports as one MDPWS HOSTED SERVICE:\n"
-        + " - Description Event Service\n"
-        + " - State Event Service\n"
-        + " - Context Service\n"
-        + " - Waveform Service")
+    @DisplayName("""
+        An SDC SERVICE PROVIDER SHALL implement at least those of the following BICEPS SERVICEs that it supports as one MDPWS HOSTED SERVICE:
+         - Description Event Service
+         - State Event Service
+         - Context Service
+         - Waveform Service""")
     @TestIdentifier(EnabledTestConfig.GLUE_R0034_0)
     @TestDescription("Checks whether the DUT has provided a DescriptionEventService, StateEventService, a"
         + " ContextService or a WaveformService and verifies each service is in the same hosted service and"
@@ -218,7 +208,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                     WsdlConstants.SERVICE_CONTEXT,
                     MessageGeneratingUtil::getContextService,
-                    report);
+                    report, true);
                 addTheAbilityToFailViaInterceptors();
                 return null;
             },
@@ -230,7 +220,12 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     locationDetail.setRoom(ROOM1);
                 }
                 manipulations.setLocationDetail(locationDetail);
-            });
+            }) {
+            @Override
+            public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                return notificationBody instanceof EpisodicContextReport;
+            }
+        };
         final List<ReportTestData> otherReports = List.of(
             new ReportTestData(
                 WsdlConstants.OPERATION_OPERATION_INVOKED_REPORT,
@@ -241,11 +236,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
                         WsdlConstants.SERVICE_SET,
                         MessageGeneratingUtil::getSetService,
-                        report);
+                        report, false);
                 },
                 () -> {
                     // does not need to be triggered in this test.
-                }),
+                }) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof OperationInvokedReport;
+                }
+            },
             new ReportTestData(
                 WsdlConstants.OPERATION_DESCRIPTION_MODIFICATION_REPORT,
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -255,12 +255,17 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
                         WsdlConstants.SERVICE_DESCRIPTION_EVENT,
                         MessageGeneratingUtil::getDescriptionEventService,
-                        report);
+                        report, false);
                 },
                 () -> {
                    // does not need to be triggered in this test.
                 }
-            ),
+            ) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof DescriptionModificationReport;
+                }
+            },
             new ReportTestData(
                 WsdlConstants.OPERATION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
@@ -270,11 +275,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                         WsdlConstants.SERVICE_STATE_EVENT,
                         MessageGeneratingUtil::getStateEventService,
-                        report);
+                        report, false);
                 },
                 () -> {
                     // does not need to be triggered in this test.
-                }),
+                }) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof EpisodicAlertReport;
+                }
+            },
             new ReportTestData(
                 WsdlConstants.OPERATION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
@@ -284,11 +294,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                         WsdlConstants.SERVICE_STATE_EVENT,
                         MessageGeneratingUtil::getStateEventService,
-                        report);
+                        report, false);
                 },
                 () -> {
                     // does not need to be triggered in this test.
-                }),
+                }) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof EpisodicComponentReport;
+                }
+            },
             new ReportTestData(
                 WsdlConstants.OPERATION_EPISODIC_METRIC_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
@@ -298,11 +313,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
                         WsdlConstants.SERVICE_STATE_EVENT,
                         MessageGeneratingUtil::getStateEventService,
-                        report);
+                        report, false);
                 },
                 () -> {
                     // does not need to be triggered in this test.
-                }),
+                }) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof EpisodicMetricReport;
+                }
+            },
             new ReportTestData(
                 WsdlConstants.OPERATION_EPISODIC_OPERATIONAL_STATE_REPORT,
                 ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
@@ -312,11 +332,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
                         WsdlConstants.SERVICE_STATE_EVENT,
                         MessageGeneratingUtil::getStateEventService,
-                        report);
+                        report, false);
                 },
                 () -> {
                     // does not need to be triggered in this test.
-                })
+                }) {
+                @Override
+                public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    return notificationBody instanceof EpisodicOperationalStateReport;
+                }
+            }
         );
         final List<ReportTestData> reports = new ArrayList<>();
         reports.add(triggerableReport);
@@ -486,7 +511,8 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                                               final String action,
                                               final String serviceName,
                                               final GetServiceProxyClosure getServiceProxy,
-                                              final ReportTestData reportTestData) {
+                                              final ReportTestData reportTestData,
+                                              final boolean addAbilityToFail) {
         final Optional<HostedServiceProxy> hostedServiceProxy = getServiceProxy.execute(testClient);
         if (hostedServiceProxy.isEmpty()) {
             fail("failed to retrieve serviceProxy for " + serviceName);
@@ -508,20 +534,22 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         final NotificationSink notificationSink = notificationSinkFactory.createNotificationSink(wsaServerInterceptor);
         final ListenableFuture<SubscribeResult> subscribeResult =
             eventSink.subscribe(actions, DURATION, notificationSink);
-        // TODO: remove before committing!
-        System.out.println("DEBUG: registering Interceptors...");
-        notificationSink.register(interceptor);
         notificationSink.register(new Interceptor() {
 
             @MessageInterceptor(direction = Direction.NOTIFICATION)
-            public void onNotification(final NotificationObject notificationObject) {
-                    // TODO: remove before committing!
-                    System.out.println("DEBUG: Report received!");
+            public void onNotification(final NotificationObject message) {
+                final Object body = message.getNotification().getOriginalEnvelope().getBody().getAny().get(0);
+                if (reportTestData.doesNotificationBodyBelongToThisReport(body)) {
                     reportTestData.setReportReceived(true);
                     reportTestData.getSyncPoint().notifyAll();
+                }
             }
 
         });
+        if (addAbilityToFail) {
+            interceptor.addReportToFail(reportTestData);
+            notificationSink.register(interceptor);
+        }
 
 //        new NotificationSink() {
 //            @Override
@@ -654,12 +682,21 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     class InterceptorWithTheAbilityToFailReports implements Interceptor {
 
+        private List<ReportTestData> reportsToFail = new ArrayList<>();
+
+        public void addReportToFail(ReportTestData reportToFail) {
+            this.reportsToFail.add(reportToFail);
+        }
+
         @MessageInterceptor(direction = Direction.ANY)
         public void onMessage(NotificationObject message) throws SoapFaultException {
-            // TODO: remove before committing!
-            System.out.println("DEBUG: InterceptorWithTheAbilityToFailReports was called!!!");
-
-            throw new SoapFaultException(message.getNotification(), new RuntimeException("Intentional failure for testing purposes."));
+            final Object body = message.getNotification().getOriginalEnvelope().getBody().getAny().get(0);
+            for (ReportTestData report : reportsToFail) {
+                if (report.doesNotificationBodyBelongToThisReport(body) && report.getFailOnReceivingReport()) {
+                    // fail report
+                    throw new SoapFaultException(message.getNotification(), new RuntimeException("Intentional failure for testing purposes."));
+                }
+            }
         }
 
     }

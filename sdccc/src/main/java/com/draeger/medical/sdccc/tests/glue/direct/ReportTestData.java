@@ -42,7 +42,7 @@ public class ReportTestData {
         this.failOnReceivingReport = false;
         this.syncPoint = new Object();
         this.subscribe = subscribe;
-        this.trigger = trigger;
+        this.trigger = trigger; // TODO: it would be simpler to pass the trigger as an override
     }
 
     public Boolean getReportReceived() {
@@ -116,6 +116,10 @@ public class ReportTestData {
      */
     public void setEventSink(final EventSink eventSink) {
         this.eventSink = eventSink;
+    }
+
+    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
+        return false; // default implementation - please override
     }
 
 }
