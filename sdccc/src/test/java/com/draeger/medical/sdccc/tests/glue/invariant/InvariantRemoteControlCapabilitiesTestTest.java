@@ -212,8 +212,7 @@ public class InvariantRemoteControlCapabilitiesTestTest {
     }
 
     /**
-     * Tests if the test case fails when a report part does not have the expected extension or root in their invocation
-     * source set, although the report has several parts and others meet the requirements.
+     * Tests if the test case fails when at least one report part does not meet the requirements.
      *
      * @throws Exception on any exception
      */
