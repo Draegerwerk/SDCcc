@@ -1311,6 +1311,25 @@ public class ConditionalPreconditionsTest {
             assertFalse(ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.preconditionCheck(
                     injector));
         }
+        // TriggerOperationInvokedReportPrecondition
+        {
+            when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
+
+            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
+                    .thenReturn(mockGetter);
+
+            final var injector = Guice.createInjector(new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(MessageStorage.class).toInstance(mockStorage);
+                }
+            });
+
+            assertTrue(ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.preconditionCheck(injector));
+
+            // no messages
+            assertFalse(ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.preconditionCheck(injector));
+        }
     }
 
     /**
@@ -1421,6 +1440,26 @@ public class ConditionalPreconditionsTest {
             // second call must return false
             assertFalse(
                     ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.manipulation(injector));
+        }
+        // TriggerOperationInvokedReportPrecondition
+        {
+            when(manipulations.triggerReport(Constants.MSG_OPERATION_INVOKED_REPORT))
+                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+            final var injector = Guice.createInjector(new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(Manipulations.class).toInstance(manipulations);
+                }
+            });
+
+            assertTrue(ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.manipulation(injector));
+
+            verify(manipulations, times(1)).triggerReport(Constants.MSG_OPERATION_INVOKED_REPORT);
+
+            // second call must return false
+            assertFalse(ConditionalPreconditions.TriggerOperationInvokedReportPrecondition.manipulation(injector));
         }
     }
 

@@ -801,4 +801,35 @@ public class ConditionalPreconditions {
             return triggerReportManipulation(injector, LOG, Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT);
         }
     }
+
+    /**
+     * Precondition which checks whether a OperationInvokedReport messages have been received, and trigger such a
+     * message otherwise.
+     */
+    public static class TriggerOperationInvokedReportPrecondition extends SimplePrecondition {
+        private static final Logger LOG = LogManager.getLogger(TriggerOperationInvokedReportPrecondition.class);
+
+        /**
+         * Creates a trigger operation invoked report message precondition check.
+         */
+        public TriggerOperationInvokedReportPrecondition() {
+            super(
+                    TriggerOperationInvokedReportPrecondition::preconditionCheck,
+                    TriggerOperationInvokedReportPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) throws PreconditionException {
+            return triggerReportPreconditionCheck(injector, Constants.MSG_OPERATION_INVOKED_REPORT);
+        }
+
+        /**
+         * Performs the manipulation to trigger operation invoked reports.
+         *
+         * @param injector to analyze mdib on
+         * @return  true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            return triggerReportManipulation(injector, LOG, Constants.MSG_OPERATION_INVOKED_REPORT);
+        }
+    }
 }

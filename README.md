@@ -212,6 +212,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | **Requirement** | **T2IAPI Manipulation** |
 |-----------------|-------------------------|
 | R0036           | SetLocationDetail       |
+| R0078_0         | TriggerReport           |
 
 
 ## Notices
