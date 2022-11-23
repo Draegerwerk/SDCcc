@@ -51,6 +51,7 @@ import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.factory.NotificationSinkFactory;
+import org.somda.sdc.dpws.soap.factory.SoapFaultFactory;
 import org.somda.sdc.dpws.soap.interception.Direction;
 import org.somda.sdc.dpws.soap.interception.Interceptor;
 import org.somda.sdc.dpws.soap.interception.MessageInterceptor;
@@ -109,6 +110,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     private CommunicationLog commLog;
     private NotificationSinkFactory notificationSinkFactory;
     private WsAddressingServerInterceptor wsaServerInterceptor;
+    private SoapFaultFactory soapFaultFactory;
 
     @BeforeEach
     void setUp() {
@@ -130,6 +132,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.wsaServerInterceptor = testClient.getInjector().getInstance(WsAddressingServerInterceptor.class);
         this.commLog = testClient.getInjector().getInstance(CommunicationLogFactory.class)
                                                .createCommunicationLog();
+        this.soapFaultFactory = testClient .getInjector().getInstance(SoapFaultFactory.class);
     }
 
     @Test
@@ -209,7 +212,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     WsdlConstants.SERVICE_CONTEXT,
                     MessageGeneratingUtil::getContextService,
                     report, true);
-                addTheAbilityToFailViaInterceptors();
                 return null;
             },
             () -> { // trigger Report
@@ -410,6 +412,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private void checkThatSubscriptionsHaveBeenCancelled(final List<ReportTestData> reports)
         throws InterruptedException {
+        // TODO: Do not actively poll the Status, but expect the Device to cancel the Reports by calling EndTo.
         final long timeoutWaitingForCancellations = System.nanoTime() + TIMEOUT_NANOS;
         final HashSet<ReportTestData> uncancelledSubscriptions = new HashSet<>(reports);
         while (!uncancelledSubscriptions.isEmpty() && System.nanoTime() < timeoutWaitingForCancellations) {
@@ -479,6 +482,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             } catch (InterruptedException | ExecutionException e) {
                 LOG.warn("encountered exception while querying the subscription status of report "
                     + report.getReportName(), e);
+                // TODO: be more strict. Do not tolerate Errors any more.
                 // do nothing here. Returning null will suffice to indicate failure.
             }
         }
@@ -540,8 +544,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             public void onNotification(final NotificationObject message) {
                 final Object body = message.getNotification().getOriginalEnvelope().getBody().getAny().get(0);
                 if (reportTestData.doesNotificationBodyBelongToThisReport(body)) {
-                    reportTestData.setReportReceived(true);
-                    reportTestData.getSyncPoint().notifyAll();
+                    synchronized (reportTestData.getSyncPoint()) {
+                        reportTestData.setReportReceived(true);
+                        reportTestData.getSyncPoint().notifyAll();
+                    }
                 }
             }
 
@@ -579,9 +585,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return result;
     }
 
-
-    private void addTheAbilityToFailViaInterceptors() {
-    }
 
 /*
     @SuppressWarnings("SameParameterValue")
@@ -689,12 +692,13 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         }
 
         @MessageInterceptor(direction = Direction.ANY)
-        public void onMessage(NotificationObject message) throws SoapFaultException {
+        public void onNotification(NotificationObject message) throws SoapFaultException {
             final Object body = message.getNotification().getOriginalEnvelope().getBody().getAny().get(0);
             for (ReportTestData report : reportsToFail) {
                 if (report.doesNotificationBodyBelongToThisReport(body) && report.getFailOnReceivingReport()) {
                     // fail report
-                    throw new SoapFaultException(message.getNotification(), new RuntimeException("Intentional failure for testing purposes."));
+                    SoapMessage fault = soapFaultFactory.createSenderFault("Intentional failure for testing purposes.");
+                    throw new SoapFaultException(fault);
                 }
             }
         }
