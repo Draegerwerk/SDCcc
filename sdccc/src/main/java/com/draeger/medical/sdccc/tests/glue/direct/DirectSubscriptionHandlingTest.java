@@ -41,14 +41,11 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
-import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
-import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
-import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.factory.NotificationSinkFactory;
 import org.somda.sdc.dpws.soap.factory.SoapFaultFactory;
@@ -57,7 +54,6 @@ import org.somda.sdc.dpws.soap.interception.Interceptor;
 import org.somda.sdc.dpws.soap.interception.MessageInterceptor;
 import org.somda.sdc.dpws.soap.interception.NotificationObject;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingServerInterceptor;
-import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingUtil;
 import org.somda.sdc.dpws.soap.wseventing.EventSink;
 import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
 import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
@@ -71,7 +67,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -99,15 +94,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private TestClient testClient;
     private HostedServiceVerifier hostedServiceVerifier;
-    private SoapUtil soapUtil;
     private MessageGeneratingUtil messageGeneratingUtil;
     private Manipulations manipulations;
-    private HttpServerRegistry httpServerRegistry;
-    private org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory wseFactory;
-    private WsAddressingUtil wsaUtil;
     private WsEventingEventSinkFactory eventSinkFactory;
     private String adapterAddress;
-    private CommunicationLog commLog;
     private NotificationSinkFactory notificationSinkFactory;
     private WsAddressingServerInterceptor wsaServerInterceptor;
     private SoapFaultFactory soapFaultFactory;
@@ -117,21 +107,15 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         this.testClient = getInjector().getInstance(TestClient.class);
         assertTrue(testClient.isClientRunning());
         final Injector riInjector = this.testClient.getInjector();
-        hostedServiceVerifier = getInjector().getInstance(HostedServiceVerifier.class);
-        this.soapUtil = riInjector.getInstance(SoapUtil.class);
+        this.hostedServiceVerifier = getInjector().getInstance(HostedServiceVerifier.class);
         this.messageGeneratingUtil = getInjector().getInstance(MessageGeneratingUtil.class);
         this.manipulations = getInjector().getInstance(Manipulations.class);
-        this.httpServerRegistry = riInjector.getInstance(HttpServerRegistry.class);
-        this.wseFactory = getInjector().getInstance(org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory.class);
-        this.wsaUtil = getInjector().getInstance(WsAddressingUtil.class);
         this.eventSinkFactory = riInjector.getInstance(WsEventingEventSinkFactory.class);
         this.adapterAddress = getInjector().getInstance(
             Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS))
         );
         this.notificationSinkFactory = testClient.getInjector().getInstance(NotificationSinkFactory.class);
         this.wsaServerInterceptor = testClient.getInjector().getInstance(WsAddressingServerInterceptor.class);
-        this.commLog = testClient.getInjector().getInstance(CommunicationLogFactory.class)
-                                               .createCommunicationLog();
         this.soapFaultFactory = testClient .getInjector().getInstance(SoapFaultFactory.class);
     }
 
@@ -557,23 +541,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             notificationSink.register(interceptor);
         }
 
-//        new NotificationSink() {
-//            @Override
-//            public void receiveNotification(final SoapMessage soapMessage,
-//                                            final CommunicationContext communicationContext) {
-//                // notification
-//                synchronized (reportTestData.getSyncPoint()) {
-//                    reportTestData.setReportReceived(true);
-//                    reportTestData.getSyncPoint().notifyAll();
-//                }
-//            }
-//
-//            @Override
-//            public void register(final Interceptor interceptor) {
-//                // not important
-//            }
-//        }
-
         SubscribeResult result = null;
         try {
             result = subscribeResult.get();
@@ -583,109 +550,15 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             fail("encountered exception while subscribing to " + reportName, e);
         }
         return result;
-    }
-
-
-/*
-    @SuppressWarnings("SameParameterValue")
-    private SubscribeResult subscribeToReportWithTheAbilityToFail(final String baseURI,
-                                                       final String reportName,
-                                                       final String action,
-                                                       final String serviceName,
-                                                       final GetServiceProxyClosure getServiceProxy,
-                                                       final ReportTestData reportTestData) {
-        final Optional<HostedServiceProxy> hostedServiceProxy = getServiceProxy.execute(testClient);
-        if (hostedServiceProxy.isEmpty()) {
-            fail("failed to retrieve serviceProxy for " + serviceName);
-        }
-
-        final List<String> actions =
-            List.of(action);
-
-        final RequestResponseClient requestResponseClient = hostedServiceProxy
-            .orElseThrow()
-            .getRequestResponseClient();
-
-        final EventSink eventSink =
-            eventSinkFactory.createWsEventingEventSink(
-                requestResponseClient,
-                baseURI,
-                testClient.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog());
-        final ListenableFuture<SubscribeResult> subscribeResult =
-            eventSink.subscribe(actions, DURATION, new NotificationSink() {
-                @Override
-                public void receiveNotification(final SoapMessage soapMessage,
-                                                final CommunicationContext communicationContext) {
-                    // notification
-                    synchronized (reportTestData.getSyncPoint()) {
-                        reportTestData.setReportReceived(true);
-                        reportTestData.getSyncPoint().notifyAll();
-                    }
-                    LOG.info("receiveNotification was called for report " + reportTestData.getReportName() + ": notification was " + soapMessage);
-                    if (reportTestData.getFailOnReceivingReport()) {
-                        LOG.info("answering notification with an intentional failure (500).");
-                        throw new RuntimeException("intentional failure for testing purposes.");
-                    } else {
-                        LOG.info("answering notification with success.");
-                    }
-                }
-
-                @Override
-                public void register(final Interceptor interceptor) {
-                    // not important
-                }
-            });
-
-        SubscribeResult result = null;
-        try {
-            result = subscribeResult.get();
-            reportTestData.setSubscription(result);
-            reportTestData.setEventSink(eventSink);
-        } catch (InterruptedException | ExecutionException e) {
-            fail("encountered exception while subscribing to " + reportName, e);
-        }
-        return result;
-    }
-*/
-
-    /**
-     * Determine SubscriptionId for a report with the given action.
-     * This method exists so a test case can override it and set the subscriptionId
-     * according to its needs.
-     * @param action the name of the report for which the context suffix should be determined.
-     * @return the context suffix.
-     */
-    public String determineSubscriptionIdForAction(final String action) {
-        return UUID.randomUUID().toString();
     }
 
     protected String getLocalBaseURI() {
         return String.format("https://%s:0", this.adapterAddress);
     }
 
-    /**
-     * Determine Context Suffix. This method exists so a test case can override it and set the context suffix
-     * according to its needs.
-     * @param reportName the name of the report for which the context suffix should be determined.
-     * @return the context suffix.
-     */
-    public String determineContextSuffix(final String reportName) {
-        return UUID.randomUUID().toString();
-    }
-
-    private String implodeUriList(final List<String> actionUris) {
-        final StringBuilder sb = new StringBuilder();
-        actionUris.forEach(s -> {
-            sb.append(s);
-            sb.append(" ");
-        });
-        sb.deleteCharAt(sb.length() - 1);
-        return sb.toString();
-    }
-
     class InterceptorWithTheAbilityToFailReports implements Interceptor {
 
-        private List<ReportTestData> reportsToFail = new ArrayList<>();
+        private final List<ReportTestData> reportsToFail = new ArrayList<>();
 
         public void addReportToFail(ReportTestData reportToFail) {
             this.reportsToFail.add(reportToFail);

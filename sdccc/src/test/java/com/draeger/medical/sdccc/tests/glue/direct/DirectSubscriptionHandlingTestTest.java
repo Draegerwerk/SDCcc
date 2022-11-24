@@ -37,7 +37,6 @@ import org.somda.sdc.biceps.model.participant.MdDescription;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
-import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.CommunicationLogSink;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
@@ -45,7 +44,6 @@ import org.somda.sdc.dpws.http.HttpServerRegistry;
 import org.somda.sdc.dpws.model.HostedServiceType;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
-import org.somda.sdc.dpws.soap.CommunicationContext;
 import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
 import org.somda.sdc.dpws.soap.SoapMessage;
@@ -113,7 +111,6 @@ public class DirectSubscriptionHandlingTestTest {
     private static final String LOW_PRIORITY_WSDL = "wsdl/IEEE11073-20701-LowPriority-Services.wsdl";
     private static final String HIGH_PRIORITY_WSDL = "wsdl/IEEE11073-20701-HighPriority-Services.wsdl";
 
-    private static final String END_TO_URI = "endTo-URI";
     private static final String LOC_CONTEXT_DESCRIPTOR_HANDLE = "locContextDesc";
     private static final int NANOS_IN_A_MILLISECOND = 1000000;
 
@@ -207,17 +204,7 @@ public class DirectSubscriptionHandlingTestTest {
         wsdlMarshalling.startAsync().awaitRunning(MAX_WAIT);
 
 
-        testUnderTest = new DirectSubscriptionHandlingTest() {
-            @Override
-            public String determineContextSuffix(final String reportName) {
-                return reportName + "ContextSuffix";
-            }
-
-            @Override
-            public String determineSubscriptionIdForAction(final String action) {
-                return action;
-            }
-        };
+        testUnderTest = new DirectSubscriptionHandlingTest();
         testUnderTest.setUp();
     }
 
@@ -513,64 +500,6 @@ public class DirectSubscriptionHandlingTestTest {
         ));
         setupTestScenarioForR0036(false, 0);
         cancelledReports = new HashSet<>();
-
-        final Optional<HostedServiceProxy> contextService = MessageGeneratingUtil.getContextService(testClient);
-        final RequestResponseClient requestResponseClient = contextService.orElseThrow().getRequestResponseClient();
-
-        final CommunicationLog communicationLog = mock(CommunicationLog.class);
-        when(communicationLogFactory.createCommunicationLog()).thenReturn(communicationLog);
-
-        EventSink eventSink = mock(EventSink.class);
-        when(eventSinkFactory.createWsEventingEventSink(
-                requestResponseClient,
-                testUnderTest.getLocalBaseURI(),
-                communicationLog))
-            .thenReturn(eventSink);
-
-        @SuppressWarnings("unchecked")
-        ListenableFuture<SubscribeResult> subscribeResultFuture = mock(ListenableFuture.class);
-        SubscribeResult subscribeResult = new SubscribeResult("subscriptionId", Duration.ofSeconds(10));
-        when(subscribeResultFuture.get()).thenReturn(subscribeResult);
-        final NotificationSink[] handlers = {null};
-        final int INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 0;
-        final int INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 1;
-        when(eventSink
-            .subscribe(any(), eq(DirectSubscriptionHandlingTest.DURATION), any()))
-            .thenAnswer((args) -> {
-                final List<String> actions = args.getArgument(0);
-                final NotificationSink sink = args.getArgument(2);
-
-                System.out.println("DEBUG: " + actions.get(0) + " was subscribed to.");
-
-                if (ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT.equals(actions.get(0))) {
-                    handlers[0] = args.getArgument(2);
-                }
-
-                return subscribeResultFuture;
-            });
-
-        final boolean[] hadFailure = {false};
-        // When the trigger is triggered, the handler must be called.
-        // when the handler fails with an Exception, then the subscriptions must be cancelled.
-        // EpisodicContextReport
-        final CommunicationContext communicationContext =
-            mock(CommunicationContext.class);
-        when(manipulations.setLocationDetail(any())).thenAnswer(args -> {
-            if (!hadFailure[0]
-                || !this.reportsToCancel.contains(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT)) {
-                try {
-                    final SoapMessage soapMessage = mock(SoapMessage.class);
-                    assertNotNull(handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER]);
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER]
-                        .receiveNotification(soapMessage, communicationContext);
-                } catch (RuntimeException re) {
-                    hadFailure[0] = true;
-                    // cancel all subscriptions.
-                    cancelledReports = reportsToCancel;
-                }
-            }
-            return ResponseTypes.Result.RESULT_SUCCESS;
-        });
 
         testUnderTest.testRequirementR00360();
     }
@@ -987,7 +916,6 @@ public class DirectSubscriptionHandlingTestTest {
 
         AtomicInteger lastSubscriptionId = new AtomicInteger();
         final HashMap<String, String> actionsToSubscriptionIds = new HashMap<>();
-        final HashMap<String, NotificationSink> subscriptionIdsToNotificationSink = new HashMap<>();
         final HashMap<String, List<Interceptor>> subscriptionIdsToInterceptors = new HashMap<>();
         final HashMap<NotificationSink, String> notificationSinkToSubscriptionId = new HashMap<>();
 
@@ -999,7 +927,6 @@ public class DirectSubscriptionHandlingTestTest {
                 final String subscriptionId = lastSubscriptionId.toString();
                 for (String action : actions) {
                     actionsToSubscriptionIds.put(action, subscriptionId);
-                    subscriptionIdsToNotificationSink.put(subscriptionId, notificationSink);
                     notificationSinkToSubscriptionId.put(notificationSink, subscriptionId);
                 }
                 lastSubscriptionId.addAndGet(1);
