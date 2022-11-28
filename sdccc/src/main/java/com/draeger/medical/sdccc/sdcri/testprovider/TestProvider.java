@@ -8,12 +8,11 @@
 package com.draeger.medical.sdccc.sdcri.testprovider;
 
 import com.google.inject.Injector;
-import org.somda.sdc.biceps.common.storage.PreprocessingException;
-import org.somda.sdc.dpws.soap.wseventing.SubscriptionManager;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.dpws.soap.wseventing.SubscriptionManager;
 
 /**
  * An SDC provider used for testing.

@@ -7,6 +7,10 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.message.GetMdibResponse;
 import com.draeger.medical.biceps.model.participant.AbstractMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.AbstractMetricState;
@@ -42,6 +46,12 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,17 +59,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantDeviceComponentStateTest}.
@@ -98,14 +97,12 @@ public class InvariantDeviceComponentStateTestTest {
         when(mockClient.isClientRunning()).thenReturn(true);
 
         final Injector injector;
-        injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -178,13 +175,14 @@ public class InvariantDeviceComponentStateTestTest {
     @Test
     public void testRequirementR00250BadDescendants() throws Exception {
         final var initial = buildMdibWithoutActivationStates();
-        setActivationStates(initial,
-            ComponentActivation.OFF,
-            ComponentActivation.OFF,
-            ComponentActivation.OFF,
-            ComponentActivation.OFF,
-            AlertActivation.OFF,
-            AlertActivation.ON);
+        setActivationStates(
+                initial,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                AlertActivation.OFF,
+                AlertActivation.ON);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, buildPassReport());
 
@@ -193,25 +191,33 @@ public class InvariantDeviceComponentStateTestTest {
 
     private Envelope buildMdib() {
         final Envelope result = buildMdibWithoutActivationStates();
-        setActivationStates(result, ComponentActivation.OFF, ComponentActivation.OFF, ComponentActivation.OFF,
-            ComponentActivation.OFF, AlertActivation.OFF, AlertActivation.OFF);
+        setActivationStates(
+                result,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                ComponentActivation.OFF,
+                AlertActivation.OFF,
+                AlertActivation.OFF);
         return result;
     }
 
     private void setActivationStates(
-        final Envelope result,
-        final @Nullable ComponentActivation mdsActivationState,
-        final @Nullable ComponentActivation vmdActivationState,
-        final @Nullable ComponentActivation channelActivationState,
-        final @Nullable ComponentActivation metricActivationState,
-        final @Nullable AlertActivation alertSystemActivationState,
-        final @Nullable AlertActivation alertConditionActivationState) {
-        final GetMdibResponse getMdibResponse = (GetMdibResponse) result.getBody().getAny().get(0);
+            final Envelope result,
+            final @Nullable ComponentActivation mdsActivationState,
+            final @Nullable ComponentActivation vmdActivationState,
+            final @Nullable ComponentActivation channelActivationState,
+            final @Nullable ComponentActivation metricActivationState,
+            final @Nullable AlertActivation alertSystemActivationState,
+            final @Nullable AlertActivation alertConditionActivationState) {
+        final GetMdibResponse getMdibResponse =
+                (GetMdibResponse) result.getBody().getAny().get(0);
         final Mdib mdib = getMdibResponse.getMdib();
 
         final MdsDescriptor mdsDesc = mdib.getMdDescription().getMds().get(0);
         final AlertSystemDescriptor alertSystemDesc = mdsDesc.getAlertSystem();
-        final AlertConditionDescriptor alertConditionDesc = alertSystemDesc.getAlertCondition().get(0);
+        final AlertConditionDescriptor alertConditionDesc =
+                alertSystemDesc.getAlertCondition().get(0);
         final VmdDescriptor vmdDesc = mdsDesc.getVmd().get(0);
         final ChannelDescriptor channelDesc = vmdDesc.getChannel().get(0);
         final AbstractMetricDescriptor metricDesc = channelDesc.getMetric().get(0);
@@ -219,7 +225,7 @@ public class InvariantDeviceComponentStateTestTest {
         final MdsState mdsState = getState(mdib, mdsDesc.getHandle(), MdsState.class);
         final AlertSystemState alertSystemState = getState(mdib, alertSystemDesc.getHandle(), AlertSystemState.class);
         final AlertConditionState alertConditionState =
-            getState(mdib, alertConditionDesc.getHandle(), AlertConditionState.class);
+                getState(mdib, alertConditionDesc.getHandle(), AlertConditionState.class);
         final VmdState vmdState = getState(mdib, vmdDesc.getHandle(), VmdState.class);
         final ChannelState channelState = getState(mdib, channelDesc.getHandle(), ChannelState.class);
         final AbstractMetricState metricState = getState(mdib, metricDesc.getHandle(), AbstractMetricState.class);
@@ -246,8 +252,10 @@ public class InvariantDeviceComponentStateTestTest {
 
     private <T> T getState(final Mdib mdib, final String handle, final Class<T> type) {
         final AbstractState state = mdib.getMdState().getState().stream()
-            .filter(e -> handle.equals(e.getDescriptorHandle())).collect(Collectors.toList()).get(0);
-        @SuppressWarnings("unchecked") final T result = (T) state;
+                .filter(e -> handle.equals(e.getDescriptorHandle()))
+                .collect(Collectors.toList())
+                .get(0);
+        final T result = (T) state;
         return result;
     }
 
@@ -255,13 +263,12 @@ public class InvariantDeviceComponentStateTestTest {
 
         final AlertSystemDescriptor alertSystem = mdibBuilder.buildAlertSystemDescriptor(ALERT_SYSTEM_HANDLE);
         final AlertSystemState alertSystemState =
-            mdibBuilder.buildAlertSystemState(ALERT_SYSTEM_HANDLE, AlertActivation.ON);
+                mdibBuilder.buildAlertSystemState(ALERT_SYSTEM_HANDLE, AlertActivation.ON);
 
-        final AlertConditionDescriptor alertCondition =
-            mdibBuilder.buildAlertConditionDescriptor(
+        final AlertConditionDescriptor alertCondition = mdibBuilder.buildAlertConditionDescriptor(
                 ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI);
         final AlertConditionState alertConditionState =
-            mdibBuilder.buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.ON);
+                mdibBuilder.buildAlertConditionState(ALERT_CONDITION_HANDLE, AlertActivation.ON);
         alertSystem.getAlertCondition().clear();
         alertSystem.getAlertCondition().add(alertCondition);
 
@@ -285,7 +292,7 @@ public class InvariantDeviceComponentStateTestTest {
         final var unit = new CodedValue();
         unit.setCode("1");
         final var metric =
-            mdibBuilder.buildStringMetric(METRIC_HANDLE, MetricCategory.SET, MetricAvailability.INTR, unit);
+                mdibBuilder.buildStringMetric(METRIC_HANDLE, MetricCategory.SET, MetricAvailability.INTR, unit);
         final var channel = mdibBuilder.buildChannel(CHANNEL_HANDLE);
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setDescriptorVersion(BigInteger.ZERO);
@@ -303,9 +310,7 @@ public class InvariantDeviceComponentStateTestTest {
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     private Envelope buildFailureReport() {
@@ -320,10 +325,7 @@ public class InvariantDeviceComponentStateTestTest {
 
         report.setMdibVersion(BigInteger.ONE);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT, report);
     }
 
     private Envelope buildPassReport() {
@@ -338,9 +340,6 @@ public class InvariantDeviceComponentStateTestTest {
 
         report.setMdibVersion(BigInteger.ONE);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT, report);
     }
 }

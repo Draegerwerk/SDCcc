@@ -8,9 +8,8 @@
 package com.draeger.medical.sdccc.tests.glue.direct;
 
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
-import org.somda.sdc.dpws.service.HostedServiceProxy;
-
 import java.util.Optional;
+import org.somda.sdc.dpws.service.HostedServiceProxy;
 
 /**
  * Closure to get a serviceProxy from a TestClient.
@@ -23,5 +22,4 @@ public interface GetServiceProxyClosure {
      * @return the HostedServiceProxy
      */
     Optional<HostedServiceProxy> execute(TestClient tc);
-
 }

@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.sdcri.testprovider.guice;
 
 import com.draeger.medical.sdccc.sdcri.testprovider.TestProviderImpl;
 import com.google.inject.assistedinject.Assisted;
-
 import java.io.InputStream;
 
 /**

@@ -7,9 +7,20 @@
 
 package com.draeger.medical.sdccc.util;
 
+import static com.draeger.medical.sdccc.util.Constants.REF_ELEMENT_QUERY;
+
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.xml.namespace.QName;
+import javax.xml.xpath.XPathExpressionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.model.message.GetContainmentTree;
@@ -28,18 +39,6 @@ import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
-import javax.xml.namespace.QName;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static com.draeger.medical.sdccc.util.Constants.REF_ELEMENT_QUERY;
-
 /**
  * Utility to generate message data with a provider DUT.
  */
@@ -54,11 +53,10 @@ public class MessageGeneratingUtil {
 
     @Inject
     MessageGeneratingUtil(
-        final TestClient client,
-        final TestRunObserver testRunObserver,
-        final ObjectFactory messageModelFactory,
-        final MessageStorage storage
-    ) {
+            final TestClient client,
+            final TestRunObserver testRunObserver,
+            final ObjectFactory messageModelFactory,
+            final MessageStorage storage) {
         this.client = client;
         this.testRunObserver = testRunObserver;
         this.messageModelFactory = messageModelFactory;
@@ -67,11 +65,10 @@ public class MessageGeneratingUtil {
     }
 
     private static Optional<HostedServiceProxy> getProxyForPortType(
-        final Collection<HostedServiceProxy> services, final QName portType
-    ) {
+            final Collection<HostedServiceProxy> services, final QName portType) {
         return services.stream()
-            .filter(service -> service.getType().getTypes().contains(portType))
-            .findFirst();
+                .filter(service -> service.getType().getTypes().contains(portType))
+                .findFirst();
     }
 
     /**
@@ -82,9 +79,7 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getGetService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(), WsdlConstants.PORT_TYPE_GET_QNAME);
     }
 
     /**
@@ -95,9 +90,7 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getSetService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_SET_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(), WsdlConstants.PORT_TYPE_SET_QNAME);
     }
 
     /**
@@ -108,9 +101,8 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getDescriptionEventService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(),
+                WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME);
     }
 
     /**
@@ -121,9 +113,8 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getStateEventService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(),
+                WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME);
     }
 
     /**
@@ -134,9 +125,7 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getContextService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_CONTEXT_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(), WsdlConstants.PORT_TYPE_CONTEXT_QNAME);
     }
 
     /**
@@ -156,9 +145,7 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getWaveformService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_WAVEFORM_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(), WsdlConstants.PORT_TYPE_WAVEFORM_QNAME);
     }
 
     /**
@@ -169,9 +156,8 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getContainmentTreeService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(),
+                WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME);
     }
 
     /**
@@ -191,9 +177,7 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getArchiveService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_ARCHIVE_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(), WsdlConstants.PORT_TYPE_ARCHIVE_QNAME);
     }
 
     /**
@@ -204,9 +188,8 @@ public class MessageGeneratingUtil {
      */
     public static Optional<HostedServiceProxy> getLocalizationService(final TestClient client) {
         return getProxyForPortType(
-            client.getHostingServiceProxy().getHostedServices().values(),
-            WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME
-        );
+                client.getHostingServiceProxy().getHostedServices().values(),
+                WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME);
     }
 
     /**
@@ -233,12 +216,10 @@ public class MessageGeneratingUtil {
         }
         try {
             LOG.debug("Sending a GetMdib message to the DUT.");
-            return getService.orElseThrow().sendRequestResponse(
-                soapUtil.createMessage(
-                    ActionConstants.ACTION_GET_MDIB,
-                    messageModelFactory.createGetMdib()
-                )
-            );
+            return getService
+                    .orElseThrow()
+                    .sendRequestResponse(soapUtil.createMessage(
+                            ActionConstants.ACTION_GET_MDIB, messageModelFactory.createGetMdib()));
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             final String failedRequestResponseMessage = "Could not send GetMdib request to DUT";
             testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
@@ -267,12 +248,10 @@ public class MessageGeneratingUtil {
 
             final var mdDescription = messageModelFactory.createGetMdDescription();
             mdDescription.setHandleRef(handleRef);
-            return getService.orElseThrow().sendRequestResponse(
-                soapUtil.createMessage(
-                    ActionConstants.ACTION_GET_MD_DESCRIPTION,
-                    mdDescription
-                )
-            );
+            return getService
+                    .orElseThrow()
+                    .sendRequestResponse(
+                            soapUtil.createMessage(ActionConstants.ACTION_GET_MD_DESCRIPTION, mdDescription));
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             final String failedRequestResponseMessage = "Could not send GetMdDescription request to DUT";
             testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
@@ -299,12 +278,9 @@ public class MessageGeneratingUtil {
 
             final var mdState = messageModelFactory.createGetMdState();
             mdState.setHandleRef(handleRef);
-            return getService.orElseThrow().sendRequestResponse(
-                soapUtil.createMessage(
-                    ActionConstants.ACTION_GET_MD_STATE,
-                    mdState
-                )
-            );
+            return getService
+                    .orElseThrow()
+                    .sendRequestResponse(soapUtil.createMessage(ActionConstants.ACTION_GET_MD_STATE, mdState));
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             final String failedRequestResponseMessage = "Could not send GetMdState request to DUT";
             testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
@@ -336,23 +312,21 @@ public class MessageGeneratingUtil {
             return null;
         }
         return handleSoapFaultsAndTechnicalProblems(
-            () -> {
-                LOG.debug("Sending a GetContextStates message to the DUT.");
+                () -> {
+                    LOG.debug("Sending a GetContextStates message to the DUT.");
 
-                final GetContextStates getContextStates = messageModelFactory.createGetContextStates();
-                getContextStates.setHandleRef(handleRef);
-                return contextService.orElseThrow().sendRequestResponse(
-                    soapUtil.createMessage(
-                        ActionConstants.ACTION_GET_CONTEXT_STATES,
-                        getContextStates
-                    )
-                );
-            },
-            e -> {
-                final String failedRequestResponseMessage = "Could not send GetContextStates request to DUT";
-                testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
-                return null;
-            });
+                    final GetContextStates getContextStates = messageModelFactory.createGetContextStates();
+                    getContextStates.setHandleRef(handleRef);
+                    return contextService
+                            .orElseThrow()
+                            .sendRequestResponse(soapUtil.createMessage(
+                                    ActionConstants.ACTION_GET_CONTEXT_STATES, getContextStates));
+                },
+                e -> {
+                    final String failedRequestResponseMessage = "Could not send GetContextStates request to DUT";
+                    testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
+                    return null;
+                });
     }
 
     /**
@@ -370,23 +344,21 @@ public class MessageGeneratingUtil {
             return null;
         }
         return handleSoapFaultsAndTechnicalProblems(
-            () -> {
-                LOG.debug("Sending a GetContainmentTree message to the DUT.");
+                () -> {
+                    LOG.debug("Sending a GetContainmentTree message to the DUT.");
 
-                final GetContainmentTree getContainmentTree = messageModelFactory.createGetContainmentTree();
-                getContainmentTree.setHandleRef(handleRef);
-                return containmentTreeService.orElseThrow().sendRequestResponse(
-                    soapUtil.createMessage(
-                        ActionConstants.ACTION_GET_CONTAINMENT_TREE,
-                        getContainmentTree
-                    )
-                );
-            },
-            e -> {
-                final String failedRequestResponseMessage = "Could not send GetContainmentTree request to DUT";
-                testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
-                return null;
-            });
+                    final GetContainmentTree getContainmentTree = messageModelFactory.createGetContainmentTree();
+                    getContainmentTree.setHandleRef(handleRef);
+                    return containmentTreeService
+                            .orElseThrow()
+                            .sendRequestResponse(soapUtil.createMessage(
+                                    ActionConstants.ACTION_GET_CONTAINMENT_TREE, getContainmentTree));
+                },
+                e -> {
+                    final String failedRequestResponseMessage = "Could not send GetContainmentTree request to DUT";
+                    testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
+                    return null;
+                });
     }
 
     /**
@@ -404,22 +376,20 @@ public class MessageGeneratingUtil {
             return null;
         }
         return handleSoapFaultsAndTechnicalProblems(
-            () -> {
-                LOG.debug("Sending a GetDescriptor message to the DUT.");
-                final GetDescriptor getDescriptor = messageModelFactory.createGetDescriptor();
-                getDescriptor.setHandleRef(handleRef);
-                return containmentTreeService.orElseThrow().sendRequestResponse(
-                    soapUtil.createMessage(
-                        ActionConstants.ACTION_GET_DESCRIPTOR,
-                        getDescriptor
-                    )
-                );
-            },
-            e -> {
-                final String failedRequestResponseMessage = "Could not send GetDescriptor request to DUT";
-                testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
-                return null;
-            });
+                () -> {
+                    LOG.debug("Sending a GetDescriptor message to the DUT.");
+                    final GetDescriptor getDescriptor = messageModelFactory.createGetDescriptor();
+                    getDescriptor.setHandleRef(handleRef);
+                    return containmentTreeService
+                            .orElseThrow()
+                            .sendRequestResponse(
+                                    soapUtil.createMessage(ActionConstants.ACTION_GET_DESCRIPTOR, getDescriptor));
+                },
+                e -> {
+                    final String failedRequestResponseMessage = "Could not send GetDescriptor request to DUT";
+                    testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
+                    return null;
+                });
     }
 
     /**
@@ -433,8 +403,6 @@ public class MessageGeneratingUtil {
      *     <li>GetLocalizedText without any arguments, querying all texts in all languages</li>
      * </ol>
      */
-    // CHECKSTYLE.OFF: ReturnCount
-    // Reason: Refactoring only hurts readability.
     public void getLocalizedTexts() {
         final var localizationService = getLocalizationService(client);
         if (localizationService.isEmpty()) {
@@ -450,52 +418,38 @@ public class MessageGeneratingUtil {
         }
         LOG.debug("Sending a GetLocalizedText message for each known ref.");
         textRefs.forEach(ref -> {
-                LOG.debug("Sending a GetLocalizedText message for ref {}", ref);
-                final var message = messageModelFactory.createGetLocalizedText();
-                message.getRef().add(ref);
-                // request each
-                try {
-                    sendLocalizedText(
+            LOG.debug("Sending a GetLocalizedText message for ref {}", ref);
+            final var message = messageModelFactory.createGetLocalizedText();
+            message.getRef().add(ref);
+            // request each
+            try {
+                sendLocalizedText(
                         localizationService.orElseThrow(),
-                        soapUtil.createMessage(
-                            ActionConstants.ACTION_GET_LOCALIZED_TEXT,
-                            message
-                        )
-                    );
-                } catch (final SoapFaultException | MarshallingException
-                    | InterceptorException | TransportException e) {
-                    testRunObserver.invalidateTestRun("Could not send GetLocalizedText request to DUT", e);
-                }
+                        soapUtil.createMessage(ActionConstants.ACTION_GET_LOCALIZED_TEXT, message));
+            } catch (final SoapFaultException | MarshallingException | InterceptorException | TransportException e) {
+                testRunObserver.invalidateTestRun("Could not send GetLocalizedText request to DUT", e);
             }
-        );
+        });
         try {
             LOG.debug("Sending a GetLocalizedText message for all known refs.");
             final var message = messageModelFactory.createGetLocalizedText();
             message.getRef().addAll(textRefs);
             sendLocalizedText(
-                localizationService.orElseThrow(),
-                soapUtil.createMessage(
-                    ActionConstants.ACTION_GET_LOCALIZED_TEXT,
-                    message
-                )
-            );
+                    localizationService.orElseThrow(),
+                    soapUtil.createMessage(ActionConstants.ACTION_GET_LOCALIZED_TEXT, message));
         } catch (final SoapFaultException | MarshallingException | InterceptorException | TransportException e) {
             testRunObserver.invalidateTestRun("Could not send GetLocalizedText request to DUT", e);
         }
         try {
             LOG.debug("Sending a GetLocalizedText message for all texts.");
             sendLocalizedText(
-                localizationService.orElseThrow(),
-                soapUtil.createMessage(
-                    ActionConstants.ACTION_GET_LOCALIZED_TEXT,
-                    messageModelFactory.createGetLocalizedText()
-                )
-            );
+                    localizationService.orElseThrow(),
+                    soapUtil.createMessage(
+                            ActionConstants.ACTION_GET_LOCALIZED_TEXT, messageModelFactory.createGetLocalizedText()));
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
             testRunObserver.invalidateTestRun("Could not send GetLocalizedText request to DUT", e);
         }
     }
-    // CHECKSTYLE.ON: ReturnCount
 
     /**
      * Sends a GetSupportedLanguages message to the DUT.
@@ -509,22 +463,21 @@ public class MessageGeneratingUtil {
             return null;
         }
         return handleSoapFaultsAndTechnicalProblems(
-            () -> {
-                LOG.debug("Sending a GetSupportedLanguages message to the DUT.");
+                () -> {
+                    LOG.debug("Sending a GetSupportedLanguages message to the DUT.");
 
-                final GetSupportedLanguages getSupportedLanguages = messageModelFactory.createGetSupportedLanguages();
-                return localizationService.orElseThrow().sendRequestResponse(
-                    soapUtil.createMessage(
-                        ActionConstants.ACTION_GET_SUPPORTED_LANGUAGES,
-                        getSupportedLanguages
-                    )
-                );
-            },
-            e -> {
-                final String failedRequestResponseMessage = "Could not send GetSupportedLanguages request to DUT";
-                testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
-                return null;
-            });
+                    final GetSupportedLanguages getSupportedLanguages =
+                            messageModelFactory.createGetSupportedLanguages();
+                    return localizationService
+                            .orElseThrow()
+                            .sendRequestResponse(soapUtil.createMessage(
+                                    ActionConstants.ACTION_GET_SUPPORTED_LANGUAGES, getSupportedLanguages));
+                },
+                e -> {
+                    final String failedRequestResponseMessage = "Could not send GetSupportedLanguages request to DUT";
+                    testRunObserver.invalidateTestRun(failedRequestResponseMessage, e);
+                    return null;
+                });
     }
 
     /**
@@ -539,7 +492,7 @@ public class MessageGeneratingUtil {
      * @throws TransportException   on transport errors except 413 status codes
      */
     private void sendLocalizedText(final HostedServiceProxy service, final SoapMessage message)
-        throws SoapFaultException, MarshallingException, InterceptorException, TransportException {
+            throws SoapFaultException, MarshallingException, InterceptorException, TransportException {
         try {
             service.sendRequestResponse(message);
         } catch (final TransportException e) {
@@ -547,9 +500,8 @@ public class MessageGeneratingUtil {
                 LOG.debug("TransportException with HttpException cause");
                 if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
-                        "TransportException with HttpException cause and {} status code",
-                        Constants.HTTP_PAYLOAD_TOO_LARGE
-                    );
+                            "TransportException with HttpException cause and {} status code",
+                            Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
                 }
             }
@@ -569,28 +521,27 @@ public class MessageGeneratingUtil {
         // collect all refs over all messages
         try (final var messages = storage.getInboundSoapMessages()) {
             return messages.getStream()
-                .flatMap(message -> {
+                    .flatMap(message -> {
                         try {
                             final var nodes = extractor.extractFrom(message.getBody());
                             return nodes.stream()
-                                .filter(node -> node.getAttributes().getNamedItem("Lang") == null)
-                                .map(node -> node.getAttributes().getNamedItem("Ref").getTextContent());
+                                    .filter(node -> node.getAttributes().getNamedItem("Lang") == null)
+                                    .map(node -> node.getAttributes()
+                                            .getNamedItem("Ref")
+                                            .getTextContent());
                         } catch (final XPathExpressionException e) {
                             final var error = String.format(
-                                "Error while extracting LocalizedText/@Ref elements"
-                                    + " from message with hash %s",
-                                message.getMessageHash()
-                            );
+                                    "Error while extracting LocalizedText/@Ref elements" + " from message with hash %s",
+                                    message.getMessageHash());
                             testRunObserver.invalidateTestRun(error, e);
                             return Stream.empty();
                         }
-                    }
-                ).collect(Collectors.toSet());
+                    })
+                    .collect(Collectors.toSet());
         }
     }
 
-    private SoapMessage handleSoapFaultsAndTechnicalProblems(
-        final SoapClosure closure, final ErrorClosure handle) {
+    private SoapMessage handleSoapFaultsAndTechnicalProblems(final SoapClosure closure, final ErrorClosure handle) {
         try {
             return closure.execute();
         } catch (final SoapFaultException | MarshallingException | TransportException | InterceptorException e) {
@@ -622,6 +573,4 @@ public class MessageGeneratingUtil {
          */
         SoapMessage execute(Exception e);
     }
-
-
 }

@@ -19,6 +19,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
@@ -37,11 +41,6 @@ import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
 import org.somda.sdc.glue.guice.DefaultGlueModule;
 import org.somda.sdc.glue.guice.GlueDpwsConfigModule;
 
-import javax.net.ssl.HostnameVerifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Utility for a {@linkplain TestClient} instance.
  */
@@ -56,21 +55,20 @@ public class TestClientUtil {
      * @param testRunObserver                observer for invalidating test runs on unexpected errors
      */
     @Inject
-    public TestClientUtil(final CryptoSettings cryptoSettings,
-                          final CommunicationLogMessageStorage communicationLogMessageStorage,
-                          final TestRunObserver testRunObserver) {
+    public TestClientUtil(
+            final CryptoSettings cryptoSettings,
+            final CommunicationLogMessageStorage communicationLogMessageStorage,
+            final TestRunObserver testRunObserver) {
 
-        injector = createClientInjector(
-            List.of(new AbstractConfigurationModule() {
+        injector = createClientInjector(List.of(
+                new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(CryptoConfig.CRYPTO_SETTINGS,
-                            CryptoSettings.class,
-                            cryptoSettings
-                        );
-                        bind(CryptoConfig.CRYPTO_CLIENT_HOSTNAME_VERIFIER,
-                            HostnameVerifier.class,
-                            (hostname, session) -> true);
+                        bind(CryptoConfig.CRYPTO_SETTINGS, CryptoSettings.class, cryptoSettings);
+                        bind(
+                                CryptoConfig.CRYPTO_CLIENT_HOSTNAME_VERIFIER,
+                                HostnameVerifier.class,
+                                (hostname, session) -> true);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
                     }
@@ -84,9 +82,7 @@ public class TestClientUtil {
                         bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
                         bind(TestRunObserver.class).toInstance(testRunObserver);
                     }
-                })
-        );
-
+                }));
     }
 
     /**
@@ -105,36 +101,36 @@ public class TestClientUtil {
     private static Injector createClientInjector(final List<AbstractModule> overrides) {
 
         final List<Module> BASE_MODULES = List.of(
-            new DefaultCommonConfigModule(),
-            new DefaultGlueModule(),
-            new DefaultGlueConfigModule() {
-                @Override
-                protected void customConfigure() {
-                    super.customConfigure();
-                    bind(ConsumerConfig.APPLY_REPORTS_SAME_MDIB_VERSION, Boolean.class, true);
-                }
-            },
-            new DefaultBicepsModule(),
-            new DefaultBicepsConfigModule(),
-            new DefaultCommonModule(),
-            new DefaultDpwsModule(),
-            new GlueDpwsConfigModule() {
+                new DefaultCommonConfigModule(),
+                new DefaultGlueModule(),
+                new DefaultGlueConfigModule() {
+                    @Override
+                    protected void customConfigure() {
+                        super.customConfigure();
+                        bind(ConsumerConfig.APPLY_REPORTS_SAME_MDIB_VERSION, Boolean.class, true);
+                    }
+                },
+                new DefaultBicepsModule(),
+                new DefaultBicepsConfigModule(),
+                new DefaultCommonModule(),
+                new DefaultDpwsModule(),
+                new GlueDpwsConfigModule() {
 
-                @Override
-                protected void customConfigure() {
-                    super.customConfigure();
-                    bind(DpwsConfig.ENFORCE_HTTP_CHUNKED_TRANSFER, Boolean.class, true);
-                }
-            },
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    super.configure();
-                    install(new FactoryModuleBuilder().implement(MdibHistorian.class, MdibHistorian.class)
-                        .build(MdibHistorianFactory.class));
-                }
-            }
-        );
+                    @Override
+                    protected void customConfigure() {
+                        super.customConfigure();
+                        bind(DpwsConfig.ENFORCE_HTTP_CHUNKED_TRANSFER, Boolean.class, true);
+                    }
+                },
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        super.configure();
+                        install(new FactoryModuleBuilder()
+                                .implement(MdibHistorian.class, MdibHistorian.class)
+                                .build(MdibHistorianFactory.class));
+                    }
+                });
 
         return Guice.createInjector(Modules.override(BASE_MODULES).with(overrides));
     }

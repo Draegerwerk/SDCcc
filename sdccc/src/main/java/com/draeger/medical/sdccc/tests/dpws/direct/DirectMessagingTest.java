@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.dpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -14,7 +20,8 @@ import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.ByteArrayOutputStream;
+import java.util.List;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -35,15 +42,6 @@ import org.somda.sdc.dpws.soap.wsaddressing.model.EndpointReferenceType;
 import org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory;
 import org.somda.sdc.dpws.soap.wstransfer.WsTransferConstants;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * DPWS tests for
@@ -76,15 +74,18 @@ public class DirectMessagingTest extends InjectorTestBase {
     void setUp() {
         testClient = getInjector().getInstance(TestClient.class);
         messageGeneratingUtil = getInjector().getInstance(MessageGeneratingUtil.class);
-        httpClient = testClient.getInjector().getInstance(ApacheTransportBindingFactoryImpl.class).getClient();
+        httpClient = testClient
+                .getInjector()
+                .getInstance(ApacheTransportBindingFactoryImpl.class)
+                .getClient();
         soapUtil = testClient.getInjector().getInstance(SoapUtil.class);
         soapMarshalling = testClient.getInjector().getInstance(SoapMarshalling.class);
         httpClientUtil = testClient.getInjector().getInstance(HttpClientUtil.class);
         marshalling = testClient.getInjector().getInstance(MarshallingService.class);
-        wsaFactory = testClient.getInjector()
-            .getInstance(org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory.class);
-        messageModelFactory = testClient.getInjector()
-            .getInstance(org.somda.sdc.biceps.model.message.ObjectFactory.class);
+        wsaFactory =
+                testClient.getInjector().getInstance(org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory.class);
+        messageModelFactory =
+                testClient.getInjector().getInstance(org.somda.sdc.biceps.model.message.ObjectFactory.class);
     }
 
     /*
@@ -107,7 +108,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.DPWS_R0013)
     @TestDescription("Sends valid and invalid requests and check if the response contains a binding-specific message"
-        + " indicating that the request has been received.")
+            + " indicating that the request has been received.")
     void testRequirement0013() throws Exception {
         testRequirement0013Good();
         testRequirement0013Bad();
@@ -155,16 +156,17 @@ public class DirectMessagingTest extends InjectorTestBase {
                     EntityUtils.consume(response.getEntity());
                 }
             }
-            assertTrue(low <= response.getStatusLine().getStatusCode()
-                && response.getStatusLine().getStatusCode() <= high, "The response contains no HTTP status"
-                + " code, which indicates that the request was received.");
+            assertTrue(
+                    low <= response.getStatusLine().getStatusCode()
+                            && response.getStatusLine().getStatusCode() <= high,
+                    "The response contains no HTTP status" + " code, which indicates that the request was received.");
         }
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.DPWS_R0031)
     @TestDescription("Provokes an wsa:InvalidAddressingHeader SOAP Fault and verifies, that with an anonymous"
-        + " reply endpoint the wsa:InvalidAddressingHeader SOAP Fault is not thrown.")
+            + " reply endpoint the wsa:InvalidAddressingHeader SOAP Fault is not thrown.")
     void testRequirement0031() throws javax.xml.bind.JAXBException {
         final var msgUUID = soapUtil.createRandomUuidUri();
         try {
@@ -175,8 +177,10 @@ public class DirectMessagingTest extends InjectorTestBase {
         try {
             sendMessageWithReplyToHeader(msgUUID, SOME_REPLY_ENDPOINT);
         } catch (SoapFaultException e) {
-            assertEquals(INVALID_ADDRESSING_HEADER, e.getFault().getCode().getSubcode().getValue().getLocalPart(),
-                "Duplicate MessageId should cause a wsa:InvalidAddressingHeader SOAP Fault.");
+            assertEquals(
+                    INVALID_ADDRESSING_HEADER,
+                    e.getFault().getCode().getSubcode().getValue().getLocalPart(),
+                    "Duplicate MessageId should cause a wsa:InvalidAddressingHeader SOAP Fault.");
         }
         try {
             sendMessageWithReplyToHeader(msgUUID, ANONYMOUS_REPLY_ENDPOINT);
@@ -187,8 +191,8 @@ public class DirectMessagingTest extends InjectorTestBase {
 
     private void sendMessageWithReplyToHeader(final String msgId, final String replyUri)
             throws javax.xml.bind.JAXBException, SoapFaultException {
-        final var message = soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB,
-            messageModelFactory.createGetMdib());
+        final var message =
+                soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB, messageModelFactory.createGetMdib());
 
         final var messageId = new AttributedURIType();
         messageId.setValue(msgId);
@@ -197,7 +201,8 @@ public class DirectMessagingTest extends InjectorTestBase {
         final var replyTo = new EndpointReferenceType();
         replyTo.setAddress(replyEndpoint);
 
-        final List<Object> tmpHeaderList = message.getEnvelopeWithMappedHeaders().getHeader().getAny();
+        final List<Object> tmpHeaderList =
+                message.getEnvelopeWithMappedHeaders().getHeader().getAny();
 
         tmpHeaderList.add(wsaFactory.createMessageID(messageId));
         tmpHeaderList.add(wsaFactory.createReplyTo(replyTo));
@@ -228,9 +233,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.DPWS_R0034)
     @TestDescription("Verifies that a transmitted SOAP message and the response uses SOAP 1.2 Envelopes,"
-        + " containing the correct namespace, an Envelope element and a Body element.")
-    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs, when using try for resources.")
+            + " containing the correct namespace, an Envelope element and a Body element.")
     void testRequirement0034() {
         final var getServiceOpt = MessageGeneratingUtil.getGetService(testClient);
         if (getServiceOpt.isEmpty()) {
@@ -238,5 +241,4 @@ public class DirectMessagingTest extends InjectorTestBase {
         }
         assertDoesNotThrow(() -> messageGeneratingUtil.getMdib());
     }
-
 }

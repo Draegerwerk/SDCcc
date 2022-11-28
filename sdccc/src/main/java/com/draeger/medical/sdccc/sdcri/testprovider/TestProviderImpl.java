@@ -13,6 +13,16 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import java.io.InputStream;
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.model.participant.Mdib;
@@ -29,17 +39,6 @@ import org.somda.sdc.glue.provider.SdcDevice;
 import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
 import org.somda.sdc.glue.provider.plugin.SdcRequiredTypesAndScopes;
 
-import java.io.InputStream;
-import java.net.Inet4Address;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
 /**
  * SDCri provider used to test SDC consumers.
  */
@@ -54,10 +53,11 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
     private final Mdib mdib;
 
     @Inject
-    TestProviderImpl(@Assisted final InputStream mdibAsStream,
-                     @Named(TestSuiteConfig.PROVIDER_DEVICE_EPR) final String providerEpr,
-                     @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
-                     final TestProviderUtil testProviderUtil) {
+    TestProviderImpl(
+            @Assisted final InputStream mdibAsStream,
+            @Named(TestSuiteConfig.PROVIDER_DEVICE_EPR) final String providerEpr,
+            @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
+            final TestProviderUtil testProviderUtil) {
         this.injector = testProviderUtil.getInjector();
         final MdibXmlIo mdibXmlIo = injector.getInstance(MdibXmlIo.class);
 
@@ -76,9 +76,7 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
 
         if (this.networkInterface == null) {
             LOG.error(
-                "Error while setting network interface, adapter for address {} seems unavailable",
-                adapterAddress
-            );
+                    "Error while setting network interface, adapter for address {} seems unavailable", adapterAddress);
             throw new RuntimeException("Error while setting network interface, adapter seems unavailable");
         }
 
@@ -86,26 +84,25 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
         this.dpwsFramework.setNetworkInterface(networkInterface);
         this.mdibAccess = injector.getInstance(LocalMdibAccessFactory.class).createLocalMdibAccess();
 
-        this.sdcDevice = injector.getInstance(SdcDeviceFactory.class).createSdcDevice(
-                new DeviceSettings() {
-                    @Override
-                    public EndpointReferenceType getEndpointReference() {
-                        return injector.getInstance(WsAddressingUtil.class)
-                                .createEprWithAddress(providerEpr);
-                    }
+        this.sdcDevice = injector.getInstance(SdcDeviceFactory.class)
+                .createSdcDevice(
+                        new DeviceSettings() {
+                            @Override
+                            public EndpointReferenceType getEndpointReference() {
+                                return injector.getInstance(WsAddressingUtil.class)
+                                        .createEprWithAddress(providerEpr);
+                            }
 
-                    @Override
-                    public NetworkInterface getNetworkInterface() {
-                        return networkInterface;
-                    }
-                },
-                this.mdibAccess,
-                Collections.emptyList(),
-                List.of(
-                        injector.getInstance(SdcRequiredTypesAndScopes.class),
-                        injector.getInstance(TestProviderHostingServicePlugin.class)
-                )
-        );
+                            @Override
+                            public NetworkInterface getNetworkInterface() {
+                                return networkInterface;
+                            }
+                        },
+                        this.mdibAccess,
+                        Collections.emptyList(),
+                        List.of(
+                                injector.getInstance(SdcRequiredTypesAndScopes.class),
+                                injector.getInstance(TestProviderHostingServicePlugin.class)));
     }
 
     @Override
@@ -126,7 +123,8 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
     @Override
     protected void startUp() throws Exception {
         final var modificationsBuilderFactory = injector.getInstance(ModificationsBuilderFactory.class);
-        final var modifications = modificationsBuilderFactory.createModificationsBuilder(mdib).get();
+        final var modifications =
+                modificationsBuilderFactory.createModificationsBuilder(mdib).get();
         mdibAccess.writeDescription(modifications);
 
         dpwsFramework.startAsync().awaitRunning();

@@ -7,78 +7,6 @@
 
 package com.draeger.medical.sdccc.tests.glue.direct;
 
-import com.draeger.medical.sdccc.manipulation.Manipulations;
-import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
-import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
-import com.draeger.medical.sdccc.tests.InjectorTestBase;
-import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
-import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
-import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
-import com.draeger.medical.t2iapi.ResponseTypes;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
-import org.somda.sdc.biceps.model.message.GetMdibResponse;
-import org.somda.sdc.biceps.model.message.ObjectFactory;
-import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
-import org.somda.sdc.biceps.model.participant.LocationContextState;
-import org.somda.sdc.biceps.model.participant.LocationDetail;
-import org.somda.sdc.biceps.model.participant.MdDescription;
-import org.somda.sdc.biceps.model.participant.Mdib;
-import org.somda.sdc.biceps.model.participant.MdsDescriptor;
-import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
-import org.somda.sdc.dpws.CommunicationLog;
-import org.somda.sdc.dpws.CommunicationLogImpl;
-import org.somda.sdc.dpws.CommunicationLogSink;
-import org.somda.sdc.dpws.factory.CommunicationLogFactory;
-import org.somda.sdc.dpws.helper.JaxbMarshalling;
-import org.somda.sdc.dpws.http.HttpException;
-import org.somda.sdc.dpws.http.HttpHandler;
-import org.somda.sdc.dpws.http.HttpServerRegistry;
-import org.somda.sdc.dpws.model.HostedServiceType;
-import org.somda.sdc.dpws.service.HostedServiceProxy;
-import org.somda.sdc.dpws.service.HostingServiceProxy;
-import org.somda.sdc.dpws.soap.CommunicationContext;
-import org.somda.sdc.dpws.soap.RequestResponseClient;
-import org.somda.sdc.dpws.soap.SoapMessage;
-import org.somda.sdc.dpws.soap.SoapUtil;
-import org.somda.sdc.dpws.soap.factory.SoapFaultFactory;
-import org.somda.sdc.dpws.soap.wseventing.EventSink;
-import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
-import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
-import org.somda.sdc.dpws.soap.wseventing.model.Subscribe;
-import org.somda.sdc.dpws.soap.wseventing.model.SubscribeResponse;
-import org.somda.sdc.dpws.wsdl.WsdlMarshalling;
-import org.somda.sdc.dpws.wsdl.WsdlRetriever;
-import org.somda.sdc.glue.common.ActionConstants;
-import org.somda.sdc.glue.common.WsdlConstants;
-import org.somda.sdc.glue.provider.SdcDevice;
-
-import javax.annotation.Nullable;
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -91,6 +19,86 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
+import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
+import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
+import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
+import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
+import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
+import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.xml.namespace.QName;
+import com.google.inject.name.Names;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.somda.sdc.biceps.model.message.EpisodicContextReport;
+import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
+import org.somda.sdc.biceps.model.message.GetMdibResponse;
+import org.somda.sdc.biceps.model.message.ObjectFactory;
+import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
+import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.LocationDetail;
+import org.somda.sdc.biceps.model.participant.MdDescription;
+import org.somda.sdc.biceps.model.participant.Mdib;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
+import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
+import org.somda.sdc.dpws.CommunicationLogSink;
+import org.somda.sdc.dpws.factory.CommunicationLogFactory;
+import org.somda.sdc.dpws.helper.JaxbMarshalling;
+import org.somda.sdc.dpws.http.HttpServerRegistry;
+import org.somda.sdc.dpws.model.HostedServiceType;
+import org.somda.sdc.dpws.service.HostedServiceProxy;
+import org.somda.sdc.dpws.service.HostingServiceProxy;
+import org.somda.sdc.dpws.soap.NotificationSink;
+import org.somda.sdc.dpws.soap.RequestResponseClient;
+import org.somda.sdc.dpws.soap.SoapMessage;
+import org.somda.sdc.dpws.soap.SoapUtil;
+import org.somda.sdc.dpws.soap.exception.SoapFaultException;
+import org.somda.sdc.dpws.soap.factory.NotificationSinkFactory;
+import org.somda.sdc.dpws.soap.factory.SoapFaultFactory;
+import org.somda.sdc.dpws.soap.interception.Interceptor;
+import org.somda.sdc.dpws.soap.interception.NotificationObject;
+import org.somda.sdc.dpws.soap.wseventing.EventSink;
+import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
+import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
+import org.somda.sdc.dpws.soap.wseventing.model.Subscribe;
+import org.somda.sdc.dpws.soap.wseventing.model.SubscribeResponse;
+import org.somda.sdc.dpws.soap.wseventing.model.SubscriptionEnd;
+import org.somda.sdc.dpws.wsdl.WsdlMarshalling;
+import org.somda.sdc.dpws.wsdl.WsdlRetriever;
+import org.somda.sdc.glue.common.ActionConstants;
+import org.somda.sdc.glue.common.WsdlConstants;
+import org.somda.sdc.glue.provider.SdcDevice;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doAnswer;
 
 /**
  * Unit test for Glue {@linkplain DirectSubscriptionHandlingTest}.
@@ -105,7 +113,9 @@ public class DirectSubscriptionHandlingTestTest {
     private static final String LOW_PRIORITY_WSDL = "wsdl/IEEE11073-20701-LowPriority-Services.wsdl";
     private static final String HIGH_PRIORITY_WSDL = "wsdl/IEEE11073-20701-HighPriority-Services.wsdl";
 
-    private static final String END_TO_URI = "endTo-URI";
+    private static final String SUBSCRIPTION_END_STATUS_DELIVERY_FAILED
+        = "http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryFailure";
+
     private static final String LOC_CONTEXT_DESCRIPTOR_HANDLE = "locContextDesc";
     private static final int NANOS_IN_A_MILLISECOND = 1000000;
 
@@ -124,9 +134,13 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
+    private CommunicationLogFactory communicationLogFactory;
 
-    private HashSet<String> subscriptionsToCancel;
-    private HashSet<String> cancelledSubscriptions;
+    @Mock
+    private NotificationSinkFactory notificationSinkFactory;
+
+    private HashSet<String> reportsToCancel;
+    private HashSet<String> cancelledReports;
     private HashSet<String> supportedReports;
 
     @BeforeEach
@@ -140,7 +154,9 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
+        communicationLogFactory = mock(CommunicationLogFactory.class);
         final var communicationLogSink = mock(CommunicationLogSink.class);
+        notificationSinkFactory = mock(NotificationSinkFactory.class); // testClient.getInjector().getInstance(NotificationSinkFactory.class);
 
         // set up the injector used by sdcri
         final var clientInjector = TestClientUtil.createClientInjector(
@@ -154,9 +170,8 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(String.class).annotatedWith(Names.named("Common.InstanceIdentifier"))
                         .toInstance(FRAMEWORK_IDENTIFIER);
                     bind(CommunicationLogSink.class).toInstance(communicationLogSink);
-                    install(new FactoryModuleBuilder()
-                        .implement(CommunicationLog.class, CommunicationLogImpl.class)
-                        .build(CommunicationLogFactory.class));
+                    bind(CommunicationLogFactory.class).toInstance(communicationLogFactory);
+                    bind(NotificationSinkFactory.class).toInstance(notificationSinkFactory);
                 }
             }
         );
@@ -176,12 +191,12 @@ public class DirectSubscriptionHandlingTestTest {
                     bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                     bind(Manipulations.class).toInstance(manipulations);
                     bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
+                    bind(NotificationSinkFactory.class).toInstance(notificationSinkFactory);
                 }
             }
         );
 
         InjectorTestBase.setInjector(injector);
-
 
         jaxbMarshalling = testClient.getInjector().getInstance(JaxbMarshalling.class);
         wsdlMarshalling = testClient.getInjector().getInstance(WsdlMarshalling.class);
@@ -193,17 +208,7 @@ public class DirectSubscriptionHandlingTestTest {
         wsdlMarshalling.startAsync().awaitRunning(MAX_WAIT);
 
 
-        testUnderTest = new DirectSubscriptionHandlingTest() {
-            @Override
-            public String determineContextSuffix(final String reportName) {
-                return reportName + "ContextSuffix";
-            }
-
-            @Override
-            public String determineSubscriptionIdForAction(final String action) {
-                return action;
-            }
-        };
+        testUnderTest = new DirectSubscriptionHandlingTest();
         testUnderTest.setUp();
     }
 
@@ -318,8 +323,6 @@ public class DirectSubscriptionHandlingTestTest {
         when(mockHostingService.getHostedServices()).thenReturn(hostedServices);
     }
 
-    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
@@ -337,7 +340,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360Good() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -349,7 +352,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -357,7 +361,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions1() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT
         ));
@@ -370,7 +374,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -378,7 +383,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions2() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT
         ));
@@ -391,7 +396,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -399,7 +405,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions3() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT
         ));
@@ -412,7 +418,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -420,7 +427,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions4() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT
         ));
@@ -433,7 +440,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -441,7 +449,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions5() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT
         ));
@@ -454,7 +462,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -462,7 +471,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR00360BadTooManyCancelledSubscriptions6() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
@@ -475,7 +484,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
 
@@ -485,7 +495,7 @@ public class DirectSubscriptionHandlingTestTest {
     @Test
     public void testRequirementR0036NoLocationContext() throws Exception {
         // given
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -497,45 +507,11 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        setupTestScenarioForR0036(false);
-        cancelledSubscriptions = new HashSet<>();
-
-        final HttpHandler[] handlers = {null, null};
-        final int INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 0;
-        final int INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 1;
-        when(httpServerRegistry.registerContext(anyString(),
-            any(), any())).thenAnswer(args -> {
-                final String context = args.getArgument(1);
-                if ("/EventSink/NotifyTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else if ("/EventSink/EndTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else {
-                    fail("an unexpected http Context was registered: " + context);
-                }
-                return END_TO_URI;
-            });
-
-        final boolean[] hadFailure = {false};
-        // When the trigger is triggered, the handler must be called.
-        // when the handler fails with an Exception, then the subscriptions must be cancelled.
-        // EpisodicContextReport
-        final CommunicationContext communicationContext =
-            mock(CommunicationContext.class);
-        when(manipulations.setLocationDetail(any())).thenAnswer(args -> {
-            if (!hadFailure[0]
-                || !this.subscriptionsToCancel.contains(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT)) {
-                try {
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER].handle(InputStream.nullInputStream(),
-                        OutputStream.nullOutputStream(), communicationContext);
-                } catch (HttpException he) {
-                    hadFailure[0] = true;
-                    // cancel all subscriptions.
-                    cancelledSubscriptions = subscriptionsToCancel;
-                }
-            }
-            return ResponseTypes.Result.RESULT_SUCCESS;
-        });
+        setupTestScenarioForR0036(false,
+                                  0,
+                                  true,
+                                  SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+        cancelledReports = new HashSet<>();
 
         testUnderTest.testRequirementR00360();
     }
@@ -547,7 +523,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelOperationInvokedReportsAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
@@ -564,7 +540,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -573,7 +550,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelEpisodicAlertReportsAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -590,7 +567,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -598,7 +576,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelEpisodicComponentReportAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -615,7 +593,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -623,7 +602,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelEpisodicMetricReportAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -640,7 +619,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -648,7 +628,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelEpisodicOperationalStateReportAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -665,7 +645,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -673,7 +654,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036DoNotCancelDescriptionModificationReportAfterFailure() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
@@ -690,7 +671,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, 0);
+        testDeviceForR00360(true, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     // NOTE: the test does not work when the Device does not support EpisodicContextReport.
@@ -700,7 +682,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForOperationInvokedReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -711,7 +693,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -719,7 +702,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForEpisodicAlertReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -730,7 +713,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -738,7 +722,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForDescriptionModificationReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -749,7 +733,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -757,7 +742,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForEpisodicComponentReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -768,7 +753,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -776,7 +762,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForEpisodicMetricReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -787,7 +773,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -795,7 +782,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036NoSupportForEpisodicOperationalStateReport() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -806,7 +793,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT
         ));
-        testDeviceForR00360(false, 0);
+        testDeviceForR00360(false, 0, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -814,7 +802,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036WithDelayedCancellations() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
         ));
         supportedReports = new HashSet<>(Set.of(
@@ -826,7 +814,8 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(false, INSIGNIFICANT_DELAY_IN_SECONDS);
+        testDeviceForR00360(false, INSIGNIFICANT_DELAY_IN_SECONDS, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -834,7 +823,7 @@ public class DirectSubscriptionHandlingTestTest {
      */
     @Test
     public void testRequirementR0036WithStronglyDelayedCancellations() throws Exception {
-        subscriptionsToCancel = new HashSet<>(Set.of(
+        reportsToCancel = new HashSet<>(Set.of(
             ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
             ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
             ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
@@ -852,51 +841,69 @@ public class DirectSubscriptionHandlingTestTest {
             ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
             ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
         ));
-        testDeviceForR00360(true, SIGNIFICANT_DELAY_IN_SECONDS);
+        testDeviceForR00360(true, SIGNIFICANT_DELAY_IN_SECONDS, true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+    }
+
+    /**
+     * Tests whether a device that does not send a SubscriptionEnd Message when cancelling the Report fails the test.
+     */
+    @Test
+    public void testRequirementR00360BadSilentCancellation() throws Exception {
+        reportsToCancel = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
+        ));
+        supportedReports = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+            ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+        ));
+
+        testDeviceForR00360(true, 0, false,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+    }
+
+    /**
+     * Tests whether a device that sets a wrong Status in its SubscriptionEnd messages fails the test.
+     */
+    @Test
+    public void testRequirementR00360BadWrongSubscriptionEndStatus() throws Exception {
+        reportsToCancel = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT
+        ));
+        supportedReports = new HashSet<>(Set.of(
+            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+            ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT
+        ));
+        testDeviceForR00360(true, 0, true,
+            "http://schemas.xmlsoap.org/ws/2004/08/eventing/SourceCancelling");
     }
 
     /**
      * Does all the work for the Tests for Requirement R0036.
      * @param expectFailure - should the test expect Failure?
      * @param delayBeforeCancellingInSeconds - time (in seconds) to wait before cancelling the subscriptions.
+     * @param sendSubscriptionEnd - true if a SubscriptionEnd Message should be send when a subscription is cancelled,
+     * @param subscriptionEndStatus - Status to set in the SubscriptionEnd message.
      */
     private void testDeviceForR00360(
         final boolean expectFailure,
-        final int delayBeforeCancellingInSeconds) throws Exception {
+        final int delayBeforeCancellingInSeconds,
+        boolean sendSubscriptionEnd,
+        String subscriptionEndStatus) throws Exception {
         // given
-        setupTestScenarioForR0036(true);
-        this.cancelledSubscriptions = new HashSet<>();
-
-        final HttpHandler[] handlers = {null, null};
-        final int INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 0;
-        final int INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER = 1;
-        when(httpServerRegistry.registerContext(anyString(),
-            any(), any())).thenAnswer(args -> {
-                final String context = args.getArgument(1);
-                if ("/EventSink/NotifyTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else if ("/EventSink/EndTo/EpisodicContextReportContextSuffix".equals(context)) {
-                    handlers[INDEX_END_TO_EPISODIC_CONTEXT_REPORT_HANDLER] = args.getArgument(2);
-                } else {
-                    fail("an unexpected http Context was registered: " + context);
-                }
-                return END_TO_URI;
-            });
-
-        // When the trigger is triggered, the handler must be called. It is called in another Thread,
-        // just like it would be the case when HTTP Request is handled.
-        // When the handler fails with an Exception, then the subscriptions must be cancelled.
-        // EpisodicContextReport
-        final CommunicationContext communicationContext =
-            mock(CommunicationContext.class);
-        when(manipulations.setLocationDetail(any())).thenAnswer(args -> {
-            final CallHandlerThread thread =
-                new CallHandlerThread(handlers[INDEX_NOTIFY_TO_EPISODIC_CONTEXT_REPORT_HANDLER],
-                        communicationContext,
-                        delayBeforeCancellingInSeconds);
-            thread.start();
-            return ResponseTypes.Result.RESULT_SUCCESS;
-        });
+        setupTestScenarioForR0036(true, delayBeforeCancellingInSeconds, sendSubscriptionEnd,
+            subscriptionEndStatus);
+        this.cancelledReports = new HashSet<>();
 
         // when & then
         if (expectFailure) {
@@ -906,12 +913,24 @@ public class DirectSubscriptionHandlingTestTest {
         }
     }
 
+    private <A,B> A keyForValue(HashMap<A, B> hashMap, B value) {
+        for (Map.Entry<A,B> entry : hashMap.entrySet()) {
+            if (entry.getValue().equals(value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
     @SuppressFBWarnings(
         value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
         justification = "False positive, caused by a disagreement between Spotbugs and JLS."
             + "See https://github.com/spotbugs/spotbugs/issues/1338"
     )
-    private void setupTestScenarioForR0036(final boolean hasLocationContextState) throws Exception {
+    private void setupTestScenarioForR0036(final boolean hasLocationContextState,
+                                           int delayBeforeCancellingInSeconds,
+                                           boolean sendSubscriptionEnd,
+                                           String subscriptionEndStatus) throws Exception {
         final Map<String, HostedServiceProxy> hostedServices = new HashMap<>();
 
         final RequestResponseClient requestResponseClient = mock(RequestResponseClient.class);
@@ -971,24 +990,89 @@ public class DirectSubscriptionHandlingTestTest {
         when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient),
                 anyString(), any())).thenReturn(eventSink);
 
-        when(eventSink.subscribe(anyList(), any(), any())).thenAnswer(call -> {
-            final List<String> actions = call.getArgument(0);
+        AtomicInteger lastSubscriptionId = new AtomicInteger();
+        final HashMap<String, String> actionsToSubscriptionIds = new HashMap<>();
+        final HashMap<String, List<Interceptor>> subscriptionIdsToInterceptors = new HashMap<>();
+        final HashMap<NotificationSink, String> notificationSinkToSubscriptionId = new HashMap<>();
+
+        when(eventSink.subscribe(anyList(), any(), any())).thenAnswer(invocationOnMock -> {
+            final List<String> actions = invocationOnMock.getArgument(0);
+            final NotificationSink notificationSink = invocationOnMock.getArgument(2);
+
             if (this.supportedReports.containsAll(actions)) {
-                return createListenableFuture(
-                    new SubscribeResult(actions.get(0), Duration.ofSeconds(DEFAULT_DURATION_IN_SECONDS, 0)));
+                final String subscriptionId = lastSubscriptionId.toString();
+                for (String action : actions) {
+                    actionsToSubscriptionIds.put(action, subscriptionId);
+                    notificationSinkToSubscriptionId.put(notificationSink, subscriptionId);
+                }
+                lastSubscriptionId.addAndGet(1);
+                return createListenableFuture(new SubscribeResult(subscriptionId, Duration.ofSeconds(60)));
             } else {
                 return createListenableFuture(null);
             }
         });
+
+        when(notificationSinkFactory.createNotificationSink(any())).thenAnswer(invocationOnMock -> {
+            final NotificationSink notificationSinkMock = mock(NotificationSink.class);
+            doAnswer(invocationOnMock2 -> {
+                final Interceptor interceptor = invocationOnMock2.getArgument(0);
+                final String subscriptionId = notificationSinkToSubscriptionId.get(notificationSinkMock);
+                addToHashMap(subscriptionIdsToInterceptors, subscriptionId, interceptor);
+                return null;
+            }).when(notificationSinkMock).register(any());
+            return notificationSinkMock;
+        });
+
+        // When the trigger is triggered, the handler must be called. It is called in another Thread,
+        // just like it would be the case when HTTP Request is handled.
+        // When the handler fails with an Exception, then the subscriptions must be cancelled.
+        // EpisodicContextReport
+        when(manipulations.setLocationDetail(any())).thenAnswer(args -> {
+            final List<Interceptor> interceptors = subscriptionIdsToInterceptors.get(
+                actionsToSubscriptionIds.get(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
+
+            final CallHandlerThread thread =
+                new CallHandlerThread(delayBeforeCancellingInSeconds,
+                    subscriptionEndStatus);
+            for (Interceptor interceptor : interceptors) {
+                thread.addReportInterceptor(interceptor);
+            }
+
+            if (sendSubscriptionEnd) {
+                final List<String> subscriptionIds = new ArrayList<>();
+                for (String reportToCancel : reportsToCancel) {
+                    subscriptionIds.add(actionsToSubscriptionIds.get(reportToCancel));
+                }
+                for (String subscriptionId : subscriptionIds) {
+                    for (Interceptor interceptor : subscriptionIdsToInterceptors.get(subscriptionId)) {
+                        thread.addSubscriptionEndInterceptor(interceptor);
+                    }
+                }
+            }
+            thread.start();
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+
         when(eventSink.getStatus(anyString())).thenAnswer(call -> {
             final String subscriptionId = call.getArgument(0);
-            if (this.cancelledSubscriptions.contains(subscriptionId)) {
+            final String action = keyForValue(actionsToSubscriptionIds, subscriptionId);
+            if (this.cancelledReports.contains(action)) {
                 return createListenableFuture(null);
             } else {
                 return createListenableFuture(Duration.ofSeconds(DEFAULT_DURATION_IN_SECONDS));
             }
         });
 
+    }
+
+    private <A,B> void addToHashMap(Map<A, List<B>> hashMap, A key, B value) {
+        if (hashMap.containsKey(key)) {
+            hashMap.get(key).add(value);
+        } else {
+            final LinkedList<B> list = new LinkedList<>();
+            list.add(value);
+            hashMap.put(key, list);
+        }
     }
 
     private void setupGetMdibResponse() throws Exception {
@@ -1065,39 +1149,78 @@ public class DirectSubscriptionHandlingTestTest {
         return service;
     }
 
+    /**
+     * Calls all ReportInterceptors with an EpisodicContextReport and - if one of them throws an Exception,
+     * waits for the given delay to pass and then delivers a SubscriptionEnd Message to all SubscriptionEndInterceptors.
+     */
     class CallHandlerThread extends Thread {
 
         public static final long NANOS_IN_A_SECOND = 1000000000;
-        private final HttpHandler handler;
-        private final CommunicationContext communicationContext;
+        private final List<Interceptor> reportInterceptors;
+        private final List<Interceptor> subscriptionEndinterceptors;
+        private final String subscriptionEndStatus;
 
         private final int delay;
 
-        CallHandlerThread(final HttpHandler handler,
-                          final CommunicationContext communicationContext,
-                          final int delayInSeconds) {
+        CallHandlerThread(final int delayInSeconds, String subscriptionEndStatus) {
             this.delay = delayInSeconds;
-            this.handler = handler;
-            this.communicationContext = communicationContext;
+            this.reportInterceptors = new ArrayList<>();
+            this.subscriptionEndinterceptors = new ArrayList<>();
+            this.subscriptionEndStatus = subscriptionEndStatus;
         }
+
+        public void addReportInterceptor(Interceptor interceptor) {
+            this.reportInterceptors.add(interceptor);
+        }
+
+        public void addSubscriptionEndInterceptor(Interceptor interceptor) {
+            this.subscriptionEndinterceptors.add(interceptor);
+        }
+
 
         public void run() {
             try {
-                handler.handle(InputStream.nullInputStream(),
-                    OutputStream.nullOutputStream(), communicationContext);
-            } catch (HttpException he) {
-                // wait for the prescribed delay
-                final long start = System.nanoTime();
-                final long endOfWaiting = start + this.delay * NANOS_IN_A_SECOND;
-                while (System.nanoTime() < endOfWaiting) {
-                    try {
-                        nanoSleep(endOfWaiting - System.nanoTime());
-                    } catch (InterruptedException e) {
-                        // do nothing
+                EpisodicContextReport episodicContextReport = new EpisodicContextReport();
+                sendToAllInterceptors(episodicContextReport, reportInterceptors);
+            } catch (InvocationTargetException ite) {
+                if (ite.getTargetException() instanceof SoapFaultException) {
+                    // wait for the prescribed delay
+                    final long start = System.nanoTime();
+                    final long endOfWaiting = start + this.delay * NANOS_IN_A_SECOND;
+                    while (System.nanoTime() < endOfWaiting) {
+                        try {
+                            nanoSleep(endOfWaiting - System.nanoTime());
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
                     }
+                    // cancel all subscriptions
+                    cancelledReports = reportsToCancel;
+                    final SubscriptionEnd subscriptionEnd = new SubscriptionEnd();
+                    subscriptionEnd.setStatus(subscriptionEndStatus);
+                    try {
+                        sendToAllInterceptors(subscriptionEnd, subscriptionEndinterceptors);
+                    } catch (InvocationTargetException ite2) {
+                        fail("Interceptor failed with exception when delivering SubscriptionEnd", ite2);
+                    }
+                } else {
+                    fail("encountered unexpected exception in interceptor", ite.getTargetException());
                 }
-                // cancel all subscriptions
-                cancelledSubscriptions = subscriptionsToCancel;
+            }
+        }
+
+        private void sendToAllInterceptors(Object episodicContextReport, List<Interceptor> interceptors) throws InvocationTargetException {
+            final NotificationObject notificationObject = mock(NotificationObject.class, RETURNS_DEEP_STUBS);
+            when(notificationObject.getNotification().getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(
+                episodicContextReport);
+
+            for (Interceptor interceptor : interceptors) {
+                try {
+                    Method method = interceptor.getClass().getMethod("onNotification", NotificationObject.class);
+                    method.invoke(interceptor, notificationObject);
+                } catch (NoSuchMethodException | IllegalAccessException e) {
+                    fail("failed to invoke Interceptor", e);
+                }
             }
         }
 

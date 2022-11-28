@@ -7,11 +7,11 @@
 
 package com.draeger.medical.sdccc.util;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for the {@linkplain TestRunObserver}.
@@ -53,7 +53,6 @@ public class TestRunObserverTest {
         assertTrue(obs.getReasons().contains(throwable.getMessage()));
         assertEquals(1, obs.getReasons().size());
     }
-
 
     /**
      * Test whether reasons with string and throwable have their string stored.
@@ -103,9 +102,6 @@ public class TestRunObserverTest {
         assertTrue(obs.getReasons().contains(reason1));
         assertTrue(obs.getReasons().contains(reason2));
         assertTrue(obs.getReasons().contains(reason3.getMessage()));
-        // CHECKSTYLE.OFF: MagicNumber
         assertEquals(3, obs.getReasons().size());
-        // CHECKSTYLE.ON: MagicNumber
     }
-
 }

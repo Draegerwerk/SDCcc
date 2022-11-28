@@ -32,7 +32,8 @@ public class PreconditionFilter implements PostDiscoveryFilter {
     }
 
     @Override
-    @SuppressFBWarnings(value = {"DCN_NULLPOINTER_EXCEPTION"},
+    @SuppressFBWarnings(
+            value = {"DCN_NULLPOINTER_EXCEPTION"},
             justification = "intentional due to not all tests having a precondition")
     public FilterResult apply(final TestDescriptor object) {
         final FilterResult result;
@@ -55,13 +56,13 @@ public class PreconditionFilter implements PostDiscoveryFilter {
                 result = FilterResult.included("No interaction found");
             } else {
 
-                for (final Class<? extends SimplePrecondition> complexInteraction : requiredInteraction
-                    .simplePreconditions()) {
+                for (final Class<? extends SimplePrecondition> complexInteraction :
+                        requiredInteraction.simplePreconditions()) {
                     preconditionRegistry.registerSimplePrecondition(complexInteraction);
                 }
 
-                for (final Class<? extends ManipulationPrecondition> manipulationPrecondition : requiredInteraction
-                    .manipulationPreconditions()) {
+                for (final Class<? extends ManipulationPrecondition> manipulationPrecondition :
+                        requiredInteraction.manipulationPreconditions()) {
                     preconditionRegistry.registerManipulationPrecondition(manipulationPrecondition);
                 }
 

@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,24 +21,16 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.Constants;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.somda.sdc.dpws.soap.exception.TransportException;
-import org.somda.sdc.dpws.wsdl.WsdlRetriever;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.somda.sdc.dpws.soap.exception.TransportException;
+import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 
 /**
  * Unit tests for MDPWS:R0010.
@@ -48,25 +46,21 @@ public class DirectWSDLR0010Test {
         when(mockClient.isClientRunning()).thenReturn(true);
         mockRetriever = mock(WsdlRetriever.class);
 
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(mockClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         // setup the injector used by sdcri
-        final var clientInjector = TestClientUtil.createClientInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(WsdlRetriever.class).toInstance(mockRetriever);
-                    }
-                }
-        );
+        final var clientInjector = TestClientUtil.createClientInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(WsdlRetriever.class).toInstance(mockRetriever);
+            }
+        });
         when(mockClient.getInjector()).thenReturn(clientInjector);
 
         testClass = new DirectWSDLTest();
@@ -88,14 +82,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
     public void testRequirement0010GoodPolicy() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Good_Policy.xml")) {
+        try (final var messageStream =
+                DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Good_Policy.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -110,14 +100,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
     public void testRequirement0010GoodPolicyReference() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Good_PolicyReference.xml")) {
+        try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
+                "DirectWSDLTestTest/R0010_R0011_Good_PolicyReference.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -132,14 +118,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
     public void testRequirement0010BadNoPolicy() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_No_Policies.xml")) {
+        try (final var messageStream =
+                DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_No_Policies.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -154,14 +136,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
     public void testRequirement0010BadMissingPolicy() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_Missing_Policy.xml")) {
+        try (final var messageStream =
+                DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_Missing_Policy.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -176,14 +154,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-            justification = "No unnecessary null check."
-    )
     public void testRequirement0010BadPolicyInPortType() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-                .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_Policy_In_PortType.xml")) {
+        try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
+                "DirectWSDLTestTest/R0010_R0011_Bad_Policy_In_PortType.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -198,14 +172,10 @@ public class DirectWSDLR0010Test {
      * @throws Exception on any exception
      */
     @Test
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "No unnecessary null check."
-    )
     public void testRequirement0010BadPolicyURIsInPortType() throws Exception {
         final String message;
-        try (final var messageStream = DirectWSDLUtilTest.class
-            .getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_PolicyURIs_In_PortType.xml")) {
+        try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
+                "DirectWSDLTestTest/R0010_R0011_Bad_PolicyURIs_In_PortType.xml")) {
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";

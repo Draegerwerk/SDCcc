@@ -7,25 +7,24 @@
 
 package com.draeger.medical.sdccc.util;
 
+import static com.draeger.medical.sdccc.util.Constants.wsa;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsaddressing.model.AttributedURIType;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
-
-import javax.xml.namespace.QName;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.draeger.medical.sdccc.util.Constants.wsa;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import javax.xml.namespace.QName;
+import javax.xml.xpath.XPathExpressionException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
 /**
  * Unit tests for the message builder utility.
@@ -95,5 +94,4 @@ public class MessageBuilderTest {
                 .filter(elem -> elem.getName().equals(toQname))
                 .collect(Collectors.toList());
     }
-
 }

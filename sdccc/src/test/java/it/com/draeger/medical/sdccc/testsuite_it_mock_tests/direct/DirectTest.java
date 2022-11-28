@@ -7,6 +7,9 @@
 
 package it.com.draeger.medical.sdccc.testsuite_it_mock_tests.direct;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
@@ -15,9 +18,6 @@ import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Mock direct tests.
@@ -49,5 +49,4 @@ public class DirectTest extends InjectorTestBase {
     void testFailingTest() {
         fail("Intended failure");
     }
-
 }

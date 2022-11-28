@@ -7,12 +7,11 @@
 
 package com.draeger.medical.sdccc.messages.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Utilities for handling of {@linkplain com.draeger.medical.sdccc.messages.Message}s.

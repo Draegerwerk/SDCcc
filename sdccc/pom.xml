@@ -15,7 +15,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junitVersion>5.6.0</junitVersion>
         <junitPlatformVersion>1.6.0</junitPlatformVersion>
-        <sdcriVersion>2.1.0-20221018.121941-19</sdcriVersion>
+        <!-- TODO: this must be a Release Version when building the Release -->
+        <sdcriVersion>3.0.0-SNAPSHOT</sdcriVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <spotbugsVersion>4.7.3</spotbugsVersion>
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
@@ -374,7 +375,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.2.0</version>
                 <configuration>
                     <configLocation>${checkstyleConfigDir}/checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
@@ -385,9 +386,29 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>8.32</version>
+                        <version>10.4</version>
                     </dependency>
                 </dependencies>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.27.2</version>
+                <configuration>
+                    <java>
+                        <palantirJavaFormat>
+                            <version>2.10.0</version>
+                        </palantirJavaFormat>
+                    </java>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>

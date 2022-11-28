@@ -7,6 +7,15 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,6 +24,11 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,21 +45,6 @@ import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.model.Fault;
 import org.somda.sdc.dpws.soap.wsdiscovery.WsDiscoveryConstants;
 import org.somda.sdc.dpws.soap.wsdiscovery.model.ObjectFactory;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the MDPWS {@linkplain DirectSecurityConsiderationsTest}.
@@ -70,14 +69,12 @@ public class DirectSecurityConsiderationsTestTest {
         mockClientUtil = mock(HttpClientUtil.class);
         mockApacheFactory = mock(ApacheTransportBindingFactoryImpl.class);
 
-        final Injector injector = InjectorUtil.setupInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(TestClient.class).toInstance(testClient);
-                    }
-                }
-        );
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         // setup the injector used by sdcri
@@ -95,8 +92,7 @@ public class DirectSecurityConsiderationsTestTest {
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                     }
-                }
-        );
+                });
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         wsdFactory = clientInjector.getInstance(ObjectFactory.class);
@@ -122,9 +118,7 @@ public class DirectSecurityConsiderationsTestTest {
         final var matchType = wsdFactory.createProbeMatchesType();
 
         return soapUtil.createMessage(
-                WsDiscoveryConstants.WSA_ACTION_PROBE_MATCHES,
-                wsdFactory.createProbeMatches(matchType)
-        );
+                WsDiscoveryConstants.WSA_ACTION_PROBE_MATCHES, wsdFactory.createProbeMatches(matchType));
     }
 
     /**
@@ -171,8 +165,7 @@ public class DirectSecurityConsiderationsTestTest {
         final var mockFaultMessage = mock(SoapMessage.class, Mockito.RETURNS_DEEP_STUBS);
         final javax.xml.bind.JAXBElement<Fault> mockJaxbFault =
                 mock(javax.xml.bind.JAXBElement.class, Mockito.RETURNS_DEEP_STUBS);
-        when(mockFaultMessage.getOriginalEnvelope().getBody().getAny().get(0))
-                .thenReturn(mockJaxbFault);
+        when(mockFaultMessage.getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(mockJaxbFault);
 
         final var mockFault = mock(Fault.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockJaxbFault.getValue()).thenReturn(mockFault);
@@ -210,8 +203,7 @@ public class DirectSecurityConsiderationsTestTest {
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, true);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                     }
-                }
-        );
+                });
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirementR0015);

@@ -8,11 +8,14 @@
 package com.draeger.medical.sdccc.messages.mapping;
 
 import com.draeger.medical.sdccc.messages.util.MessageUtil;
-import org.hibernate.annotations.GenericGenerator;
-import org.somda.sdc.dpws.CommunicationLog;
-import org.somda.sdc.dpws.soap.CommunicationContext;
-import org.somda.sdc.dpws.soap.HttpApplicationInfo;
-
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -22,15 +25,10 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import org.hibernate.annotations.GenericGenerator;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.soap.CommunicationContext;
+import org.somda.sdc.dpws.soap.HttpApplicationInfo;
 
 /**
  * POJO for persisting relevant message information.
@@ -54,11 +52,7 @@ public class MessageContent {
     @Column(columnDefinition = "blob", length = MAXIMUM_LENGTH)
     private List<X509Certificate> certs;
 
-    @OneToMany(
-        cascade = CascadeType.ALL,
-        mappedBy = "messageContent",
-        orphanRemoval = true
-    )
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
     private List<StringEntryEntity> headers;
 
     @ElementCollection
@@ -72,6 +66,7 @@ public class MessageContent {
 
     @Column(nullable = true)
     private String transactionId;
+
     private String requestUri;
     private long timestamp;
     private long nanoTimestamp;
@@ -80,13 +75,10 @@ public class MessageContent {
     private String uuid;
     private boolean isSOAP;
 
-
     /**
      * This will be used by hibernate when creating the POJO from database entries.
      */
-    public MessageContent() {
-    }
-
+    public MessageContent() {}
 
     /**
      * This will be used when creating the POJO before loading it into the database.
@@ -103,16 +95,17 @@ public class MessageContent {
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
      */
-    public MessageContent(final String body,
-                          final CommunicationContext communicationContext,
-                          final CommunicationLog.Direction direction,
-                          final CommunicationLog.MessageType messageType,
-                          final long timestamp,
-                          final long nanoTimestamp,
-                          final Set<String> actions,
-                          final Set<String> bodyElements,
-                          final String uuid,
-                          final boolean isSOAP) {
+    public MessageContent(
+            final String body,
+            final CommunicationContext communicationContext,
+            final CommunicationLog.Direction direction,
+            final CommunicationLog.MessageType messageType,
+            final long timestamp,
+            final long nanoTimestamp,
+            final Set<String> actions,
+            final Set<String> bodyElements,
+            final String uuid,
+            final boolean isSOAP) {
 
         this.body = body;
         this.direction = direction;
@@ -135,7 +128,8 @@ public class MessageContent {
             final HttpApplicationInfo httpAppInfo = (HttpApplicationInfo) communicationContext.getApplicationInfo();
 
             headersMap = new ArrayList<>();
-            for (final Map.Entry<String, Collection<String>> entry : httpAppInfo.getHeaders().asMap().entrySet()) {
+            for (final Map.Entry<String, Collection<String>> entry :
+                    httpAppInfo.getHeaders().asMap().entrySet()) {
                 final String key = entry.getKey();
                 final Collection<String> value = entry.getValue();
                 value.forEach(element -> headersMap.add(new StringEntryEntity(key, element, this)));
@@ -214,7 +208,7 @@ public class MessageContent {
     public String getRequestUri() {
         return this.requestUri;
     }
-    
+
     public Set<String> getBodyElements() {
         return bodyElements;
     }

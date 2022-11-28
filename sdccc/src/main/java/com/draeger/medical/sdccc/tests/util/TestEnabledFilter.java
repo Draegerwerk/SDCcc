@@ -12,14 +12,13 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.launcher.PostDiscoveryFilter;
-
-import java.util.function.Predicate;
 
 /**
  * Filters discovered test cases based on whether they're enabled.
@@ -51,9 +50,8 @@ public class TestEnabledFilter implements PostDiscoveryFilter {
 
             if (testIdentifier == null) {
                 LOG.error(
-                    "Test {} does not have a TestIdentifier tag, this is not allowed!",
-                    method.getTestMethod().getName()
-                );
+                        "Test {} does not have a TestIdentifier tag, this is not allowed!",
+                        method.getTestMethod().getName());
                 result = FilterResult.excluded("Test does not have a TestDescription tag, this is not allowed!");
             } else {
 
