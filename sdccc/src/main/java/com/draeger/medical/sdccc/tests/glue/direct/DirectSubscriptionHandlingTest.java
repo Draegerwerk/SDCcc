@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -84,13 +85,13 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     public static final Duration DURATION = Duration.ofHours(1);
     public static final long TIMEOUT_NANOS = 5000 * NANOS_IN_A_MILLISECOND;
     public static final int POLLING_WAIT_TIME_MILLIS = 1000;
+    public static final String SUBSCRIPTION_END_STATUS_DELIVERY_FAILURE =
+            "http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryFailure";
 
     private static final Logger LOG = LogManager.getLogger(DirectSubscriptionHandlingTest.class);
 
     private static final String ROOM1 = "123";
     private static final String ROOM2 = "124";
-    public static final String SUBSCRIPTION_END_STATUS_DELIVERY_FAILURE =
-            "http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryFailure";
     private final InterceptorWithTheAbilityToFailReports interceptor = new InterceptorWithTheAbilityToFailReports();
 
     private TestClient testClient;
@@ -215,7 +216,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             manipulations.setLocationDetail(locationDetail);
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicContextReport;
                     }
                 };
@@ -237,7 +238,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof OperationInvokedReport;
                     }
                 },
@@ -258,7 +259,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof DescriptionModificationReport;
                     }
                 },
@@ -279,7 +280,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicAlertReport;
                     }
                 },
@@ -300,7 +301,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicComponentReport;
                     }
                 },
@@ -321,7 +322,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicMetricReport;
                     }
                 },
@@ -342,7 +343,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicOperationalStateReport;
                     }
                 });
@@ -543,6 +544,9 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         notificationSink.register(new Interceptor() {
 
             @MessageInterceptor(direction = Direction.NOTIFICATION)
+            @SuppressFBWarnings(
+                    value = "UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS",
+                    justification = "this method is called by Guice via Reflection")
             public void onNotification(final NotificationObject message) {
                 final Object body = message.getNotification()
                         .getOriginalEnvelope()
@@ -587,12 +591,15 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
         private final List<ReportTestData> reportsToFail = new ArrayList<>();
 
-        public void addReportToFail(ReportTestData reportToFail) {
+        public void addReportToFail(final ReportTestData reportToFail) {
             this.reportsToFail.add(reportToFail);
         }
 
         @MessageInterceptor(direction = Direction.ANY)
-        public void onNotification(NotificationObject message) throws SoapFaultException {
+        @SuppressFBWarnings(
+                value = "UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS",
+                justification = "this method is called by Guice via Reflection")
+        public void onNotification(final NotificationObject message) throws SoapFaultException {
             final Object body = message.getNotification()
                     .getOriginalEnvelope()
                     .getBody()
@@ -601,7 +608,8 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             for (ReportTestData report : reportsToFail) {
                 if (report.doesNotificationBodyBelongToThisReport(body) && report.getFailOnReceivingReport()) {
                     // fail report
-                    SoapMessage fault = soapFaultFactory.createSenderFault("Intentional failure for testing purposes.");
+                    final SoapMessage fault =
+                            soapFaultFactory.createSenderFault("Intentional failure for testing purposes.");
                     throw new SoapFaultException(fault);
                 }
             }

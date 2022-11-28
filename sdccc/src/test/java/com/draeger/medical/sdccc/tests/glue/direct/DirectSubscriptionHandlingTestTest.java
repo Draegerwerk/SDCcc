@@ -802,8 +802,8 @@ public class DirectSubscriptionHandlingTestTest {
     private void testDeviceForR00360(
             final boolean expectFailure,
             final int delayBeforeCancellingInSeconds,
-            boolean sendSubscriptionEnd,
-            String subscriptionEndStatus)
+            final boolean sendSubscriptionEnd,
+            final String subscriptionEndStatus)
             throws Exception {
         // given
         setupTestScenarioForR0036(true, delayBeforeCancellingInSeconds, sendSubscriptionEnd, subscriptionEndStatus);
@@ -817,7 +817,7 @@ public class DirectSubscriptionHandlingTestTest {
         }
     }
 
-    private <A, B> A keyForValue(HashMap<A, B> hashMap, B value) {
+    private <A, B> A keyForValue(final HashMap<A, B> hashMap, final B value) {
         for (Map.Entry<A, B> entry : hashMap.entrySet()) {
             if (entry.getValue().equals(value)) {
                 return entry.getKey();
@@ -832,9 +832,9 @@ public class DirectSubscriptionHandlingTestTest {
                     + "See https://github.com/spotbugs/spotbugs/issues/1338")
     private void setupTestScenarioForR0036(
             final boolean hasLocationContextState,
-            int delayBeforeCancellingInSeconds,
-            boolean sendSubscriptionEnd,
-            String subscriptionEndStatus)
+            final int delayBeforeCancellingInSeconds,
+            final boolean sendSubscriptionEnd,
+            final String subscriptionEndStatus)
             throws Exception {
         final Map<String, HostedServiceProxy> hostedServices = new HashMap<>();
 
@@ -895,7 +895,7 @@ public class DirectSubscriptionHandlingTestTest {
         when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient), anyString(), any()))
                 .thenReturn(eventSink);
 
-        AtomicInteger lastSubscriptionId = new AtomicInteger();
+        final AtomicInteger lastSubscriptionId = new AtomicInteger();
         final HashMap<String, String> actionsToSubscriptionIds = new HashMap<>();
         final HashMap<String, List<Interceptor>> subscriptionIdsToInterceptors = new HashMap<>();
         final HashMap<NotificationSink, String> notificationSinkToSubscriptionId = new HashMap<>();
@@ -970,7 +970,7 @@ public class DirectSubscriptionHandlingTestTest {
         });
     }
 
-    private <A, B> void addToHashMap(Map<A, List<B>> hashMap, A key, B value) {
+    private <A, B> void addToHashMap(final Map<A, List<B>> hashMap, final A key, final B value) {
         if (hashMap.containsKey(key)) {
             hashMap.get(key).add(value);
         } else {
@@ -1082,24 +1082,24 @@ public class DirectSubscriptionHandlingTestTest {
 
         private final int delay;
 
-        CallHandlerThread(final int delayInSeconds, String subscriptionEndStatus) {
+        CallHandlerThread(final int delayInSeconds, final String subscriptionEndStatus) {
             this.delay = delayInSeconds;
             this.reportInterceptors = new ArrayList<>();
             this.subscriptionEndinterceptors = new ArrayList<>();
             this.subscriptionEndStatus = subscriptionEndStatus;
         }
 
-        public void addReportInterceptor(Interceptor interceptor) {
+        public void addReportInterceptor(final Interceptor interceptor) {
             this.reportInterceptors.add(interceptor);
         }
 
-        public void addSubscriptionEndInterceptor(Interceptor interceptor) {
+        public void addSubscriptionEndInterceptor(final Interceptor interceptor) {
             this.subscriptionEndinterceptors.add(interceptor);
         }
 
         public void run() {
             try {
-                EpisodicContextReport episodicContextReport = new EpisodicContextReport();
+                final EpisodicContextReport episodicContextReport = new EpisodicContextReport();
                 sendToAllInterceptors(episodicContextReport, reportInterceptors);
             } catch (InvocationTargetException ite) {
                 if (ite.getTargetException() instanceof SoapFaultException) {
@@ -1128,7 +1128,7 @@ public class DirectSubscriptionHandlingTestTest {
             }
         }
 
-        private void sendToAllInterceptors(Object episodicContextReport, List<Interceptor> interceptors)
+        private void sendToAllInterceptors(final Object episodicContextReport, final List<Interceptor> interceptors)
                 throws InvocationTargetException {
             final NotificationObject notificationObject = mock(NotificationObject.class, RETURNS_DEEP_STUBS);
             when(notificationObject
@@ -1141,7 +1141,7 @@ public class DirectSubscriptionHandlingTestTest {
 
             for (Interceptor interceptor : interceptors) {
                 try {
-                    Method method = interceptor.getClass().getMethod("onNotification", NotificationObject.class);
+                    final Method method = interceptor.getClass().getMethod("onNotification", NotificationObject.class);
                     method.invoke(interceptor, notificationObject);
                 } catch (NoSuchMethodException | IllegalAccessException e) {
                     fail("failed to invoke Interceptor", e);

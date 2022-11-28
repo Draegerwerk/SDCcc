@@ -122,14 +122,27 @@ public class ReportTestData {
         this.eventSink = eventSink;
     }
 
+    /**
+     * Returns true if the given notificationBody could belong to this subscription.
+     * @param notificationBody the notificationBody to check
+     * @return true, if it is of the right type, false otherwise.
+     */
     public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
         return false; // default implementation - please override
     }
 
-    public void setSubscriptionEndWithStatusDeliveryFailedReceived(boolean b) {
+    /**
+     * Set the Value of SubscriptionEndWithStatusDeliveryFailedReceived.
+     * @param b the new value.
+     */
+    public void setSubscriptionEndWithStatusDeliveryFailedReceived(final boolean b) {
         this.subscriptionEndWithStatusDeliveryFailedReceived = b;
     }
 
+    /**
+     * Gets the value of SubscriptionEndWithStatusDeliveryFailedReceived.
+     * @return the value.
+     */
     public boolean getSubscriptionEndWithStatusDeliveryFailedReceived() {
         return this.subscriptionEndWithStatusDeliveryFailedReceived;
     }
