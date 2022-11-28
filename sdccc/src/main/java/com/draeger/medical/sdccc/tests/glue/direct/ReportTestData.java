@@ -19,6 +19,7 @@ public class ReportTestData {
     private String action;
     private Boolean reportReceived;
     private Boolean failOnReceivingReport;
+    private Boolean subscriptionEndWithStatusDeliveryFailedReceived;
     private final Object syncPoint;
     private ReportTriggerClosure trigger;
     private ReportSubscribeClosure subscribe;
@@ -40,6 +41,7 @@ public class ReportTestData {
         this.action = action;
         this.reportReceived = false;
         this.failOnReceivingReport = false;
+        this.subscriptionEndWithStatusDeliveryFailedReceived = false;
         this.syncPoint = new Object();
         this.subscribe = subscribe;
         this.trigger = trigger; // TODO: it would be simpler to pass the trigger as an override
@@ -122,4 +124,11 @@ public class ReportTestData {
         return false; // default implementation - please override
     }
 
+    public void setSubscriptionEndWithStatusDeliveryFailedReceived(boolean b) {
+        this.subscriptionEndWithStatusDeliveryFailedReceived = b;
+    }
+
+    public boolean getSubscriptionEndWithStatusDeliveryFailedReceived() {
+        return this.subscriptionEndWithStatusDeliveryFailedReceived;
+    }
 }

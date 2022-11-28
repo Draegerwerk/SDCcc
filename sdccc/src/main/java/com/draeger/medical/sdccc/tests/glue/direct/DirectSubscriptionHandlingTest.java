@@ -57,6 +57,7 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingServerInterceptor;
 import org.somda.sdc.dpws.soap.wseventing.EventSink;
 import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
 import org.somda.sdc.dpws.soap.wseventing.factory.WsEventingEventSinkFactory;
+import org.somda.sdc.dpws.soap.wseventing.model.SubscriptionEnd;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
@@ -89,6 +90,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private static final String ROOM1 = "123";
     private static final String ROOM2 = "124";
+    public static final String SUBSCRIPTION_END_STATUS_DELIVERY_FAILURE = "http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryFailure";
     private final InterceptorWithTheAbilityToFailReports interceptor = new InterceptorWithTheAbilityToFailReports();
 
 
@@ -402,16 +404,13 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         while (!uncancelledSubscriptions.isEmpty() && System.nanoTime() < timeoutWaitingForCancellations) {
             //noinspection BusyWait
             Thread.sleep(POLLING_WAIT_TIME_MILLIS);
-            uncancelledSubscriptions.removeIf(report -> {
-                final Duration status = getSubscriptionStatus(report);
-                return status == null;
-            });
+            uncancelledSubscriptions.removeIf(ReportTestData::getSubscriptionEndWithStatusDeliveryFailedReceived);
         }
         if (!uncancelledSubscriptions.isEmpty()) {
             final List<String> subscriptions = uncancelledSubscriptions.stream()
                 .map(ReportTestData::getReportName)
                 .collect(Collectors.toList());
-            fail("Reports " + String.join(", ", subscriptions) + " have not been cancelled by the provider"
+            fail("Subscriptions for the Reports " + String.join(", ", subscriptions) + " have not been properly cancelled by the provider"
                 + " although they should have been according to glue:R0036_0.");
         }
     }
@@ -531,6 +530,12 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     synchronized (reportTestData.getSyncPoint()) {
                         reportTestData.setReportReceived(true);
                         reportTestData.getSyncPoint().notifyAll();
+                    }
+                } else if (body instanceof SubscriptionEnd) {
+                    if (SUBSCRIPTION_END_STATUS_DELIVERY_FAILURE.equals(((SubscriptionEnd)body).getStatus())) {
+                        synchronized (reportTestData.getSyncPoint()) {
+                            reportTestData.setSubscriptionEndWithStatusDeliveryFailedReceived(true);
+                        }
                     }
                 }
             }
