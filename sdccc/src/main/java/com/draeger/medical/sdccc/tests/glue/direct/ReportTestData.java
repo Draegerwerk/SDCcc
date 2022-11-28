@@ -33,10 +33,11 @@ public class ReportTestData {
      * @param subscribe - Closure that subscribes to the Report.
      * @param trigger - Closure that triggers the Report.
      */
-    public ReportTestData(final String reportName,
-                          final String action,
-                          final ReportSubscribeClosure subscribe,
-                          final ReportTriggerClosure trigger) {
+    public ReportTestData(
+            final String reportName,
+            final String action,
+            final ReportSubscribeClosure subscribe,
+            final ReportTriggerClosure trigger) {
         this.reportName = reportName;
         this.action = action;
         this.reportReceived = false;
