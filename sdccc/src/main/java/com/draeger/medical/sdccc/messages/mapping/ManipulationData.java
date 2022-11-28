@@ -8,17 +8,16 @@
 package com.draeger.medical.sdccc.messages.mapping;
 
 import com.draeger.medical.t2iapi.ResponseTypes;
-import org.apache.commons.lang3.tuple.Pair;
-import org.hibernate.annotations.GenericGenerator;
-
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * POJO for persisting relevant manipulation data.
@@ -36,11 +35,8 @@ public class ManipulationData {
     private long finishTimestamp;
     private ResponseTypes.Result result;
     private String methodName;
-    @OneToMany(
-        cascade = CascadeType.ALL,
-        mappedBy = "manipulationData",
-        orphanRemoval = true
-    )
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "manipulationData", orphanRemoval = true)
     private List<ManipulationParameter> parameters;
 
     private String uuid;
@@ -48,8 +44,7 @@ public class ManipulationData {
     /**
      * This will be used by hibernate when creating the POJO from database entries.
      */
-    public ManipulationData() {
-    }
+    public ManipulationData() {}
 
     /**
      * This will be used when creating the POJO before loading it into the database.
@@ -61,18 +56,19 @@ public class ManipulationData {
      * @param parameters      of the manipulation
      * @param uuid            of the manipulation
      */
-    public ManipulationData(final long startTimestamp,
-                            final long finishTimestamp,
-                            final ResponseTypes.Result result,
-                            final String methodName,
-                            final List<Pair<String, String>> parameters,
-                            final String uuid) {
+    public ManipulationData(
+            final long startTimestamp,
+            final long finishTimestamp,
+            final ResponseTypes.Result result,
+            final String methodName,
+            final List<Pair<String, String>> parameters,
+            final String uuid) {
         this.startTimestamp = startTimestamp;
         this.finishTimestamp = finishTimestamp;
         this.result = result;
         this.methodName = methodName;
         final List<ManipulationParameter> manipulationParameters = new ArrayList<>();
-        for (var parameter: parameters) {
+        for (var parameter : parameters) {
             manipulationParameters.add(new ManipulationParameter(parameter.getKey(), parameter.getValue(), this));
         }
         this.parameters = manipulationParameters;

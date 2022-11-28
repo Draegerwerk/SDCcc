@@ -7,6 +7,14 @@
 
 package com.draeger.medical.sdccc.tests.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.Mdib;
@@ -29,6 +37,11 @@ import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,20 +50,6 @@ import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for the {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}.
@@ -94,14 +93,12 @@ public class MdibHistorianTest {
         jaxbMarshalling.startAsync().awaitRunning();
 
         final var mockClient = mock(TestClient.class);
-        final Injector storageInjector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        final Injector storageInjector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(historianInjector);
         storage = storageInjector.getInstance(MessageStorage.class);
@@ -120,10 +117,10 @@ public class MdibHistorianTest {
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
 
-        messageStorageUtil.addInboundSecureHttpMessage(storage, messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        ));
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage,
+                messageBuilder.createSoapMessageWithBody(
+                        ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse));
 
         final var mockObserver = mock(TestRunObserver.class);
         final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
@@ -136,43 +133,38 @@ public class MdibHistorianTest {
     }
 
     @Test
-    void testEpisodicReports()
-        throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
+    void testEpisodicReports() throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
 
         final var componentReportMdibVersion = BigInteger.TEN;
         final var componentReportMdsStateVersion = BigInteger.TWO;
         final var componentReport = buildEpisodicComponentReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, MdibBuilder.DEFAULT_MDS_HANDLE,
-            componentReportMdibVersion, componentReportMdsStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MdibBuilder.DEFAULT_MDS_HANDLE,
+                componentReportMdibVersion,
+                componentReportMdsStateVersion);
 
         final var metricReportMdibVersion = componentReportMdibVersion.add(BigInteger.ONE);
         final var metricReportStateVersion = BigInteger.TWO;
         final var metricReport = buildEpisodicMetricReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion);
 
         final var alertReportMdibVersion = metricReportMdibVersion.add(BigInteger.ONE);
         final var alertReportStateVersion = BigInteger.TWO;
         final var alertReport = buildEpisodicAlertReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion);
 
         final var contextReportMdibVersion = alertReportMdibVersion.add(BigInteger.ONE);
         final var contextReportStateVersion = BigInteger.TWO;
         final var contextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
         final var operationalStateReportMdibVersion = contextReportMdibVersion.add(BigInteger.ONE);
         final var operationStateReportStateVersion = BigInteger.TWO;
         final var operationStateReport = buildEpisodicOperationalStateReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
         messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
         messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
         messageStorageUtil.addInboundSecureHttpMessage(storage, alertReport);
@@ -186,26 +178,32 @@ public class MdibHistorianTest {
             assertNotNull(history.next());
             {
                 final var componentReportMdib = history.next();
-                assertEquals(componentReportMdibVersion, componentReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        componentReportMdibVersion,
+                        componentReportMdib.getMdibVersion().getVersion());
             }
             {
                 final var metricReportMdib = history.next();
-                assertEquals(metricReportMdibVersion, metricReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        metricReportMdibVersion,
+                        metricReportMdib.getMdibVersion().getVersion());
             }
             {
                 final var alertReportMdib = history.next();
-                assertEquals(alertReportMdibVersion, alertReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        alertReportMdibVersion, alertReportMdib.getMdibVersion().getVersion());
             }
             {
                 final var contextReportMdib = history.next();
-                assertEquals(contextReportMdibVersion, contextReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        contextReportMdibVersion,
+                        contextReportMdib.getMdibVersion().getVersion());
             }
             {
                 final var operationalStateReportMdib = history.next();
                 assertEquals(
-                    operationalStateReportMdibVersion,
-                    operationalStateReportMdib.getMdibVersion().getVersion()
-                );
+                        operationalStateReportMdibVersion,
+                        operationalStateReportMdib.getMdibVersion().getVersion());
             }
             assertNull(history.next());
         }
@@ -213,17 +211,17 @@ public class MdibHistorianTest {
 
     @Test
     void testExceptionMissingDescriptor()
-        throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
+            throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
         final var componentReportMdibVersion = BigInteger.TEN;
         final var componentReportMdsStateVersion = BigInteger.TWO;
         final var componentReport = buildEpisodicComponentReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, "InvalidHandleYo",
-            componentReportMdibVersion, componentReportMdsStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                "InvalidHandleYo",
+                componentReportMdibVersion,
+                componentReportMdsStateVersion);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
         messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
 
         final var mockObserver = mock(TestRunObserver.class);
@@ -239,24 +237,23 @@ public class MdibHistorianTest {
 
     @Test
     void testExceptionOnMdibVersionDecrement()
-        throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
+            throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
 
         final var componentReportMdibVersion = BigInteger.TEN;
         final var componentReportMdsStateVersion = BigInteger.TWO;
         final var componentReport = buildEpisodicComponentReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, MdibBuilder.DEFAULT_MDS_HANDLE,
-            componentReportMdibVersion, componentReportMdsStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MdibBuilder.DEFAULT_MDS_HANDLE,
+                componentReportMdibVersion,
+                componentReportMdsStateVersion);
 
         final var metricReportMdibVersion = BigInteger.TEN.add(BigInteger.ONE);
         final var metricReportStateVersion = BigInteger.TWO;
         final var metricReport = buildEpisodicMetricReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
         messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
         messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
 
@@ -273,42 +270,38 @@ public class MdibHistorianTest {
 
     @Test
     void testFilterForMdibVersion()
-        throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
+            throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
 
         final var componentReportMdibVersion = BigInteger.ONE;
         final var componentReportMdsStateVersion = BigInteger.TWO;
         final var componentReport = buildEpisodicComponentReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, MdibBuilder.DEFAULT_MDS_HANDLE,
-            componentReportMdibVersion, componentReportMdsStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MdibBuilder.DEFAULT_MDS_HANDLE,
+                componentReportMdibVersion,
+                componentReportMdsStateVersion);
 
         final var metricReportMdibVersion = BigInteger.TWO;
         final var metricReportStateVersion = BigInteger.TWO;
         final var metricReport = buildEpisodicMetricReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion);
 
         final var alertReportMdibVersion = BigInteger.valueOf(3);
         final var alertReportStateVersion = BigInteger.TWO;
         final var alertReport = buildEpisodicAlertReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion);
 
         final var contextReportMdibVersion = BigInteger.valueOf(4);
         final var contextReportStateVersion = BigInteger.TWO;
         final var contextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
         final var operationalStateReportMdibVersion = BigInteger.ONE;
         final var operationStateReportStateVersion = BigInteger.TWO;
         final var operationStateReport = buildEpisodicOperationalStateReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.TWO));
         // should be filtered, since mdibVersion is smaller than initial get mdib response
         messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
 
@@ -333,48 +326,43 @@ public class MdibHistorianTest {
 
     @Test
     void testCorrectNumberOfReportsAfterFilter()
-        throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
+            throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
 
         final var componentReportMdibVersion = BigInteger.ONE;
         final var componentReportMdsStateVersion = BigInteger.TWO;
         final var componentReport = buildEpisodicComponentReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, MdibBuilder.DEFAULT_MDS_HANDLE,
-            componentReportMdibVersion, componentReportMdsStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MdibBuilder.DEFAULT_MDS_HANDLE,
+                componentReportMdibVersion,
+                componentReportMdsStateVersion);
 
         final var metricReportMdibVersion = BigInteger.TWO;
         final var metricReportStateVersion = BigInteger.TWO;
         final var metricReport = buildEpisodicMetricReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion);
 
         final var metricReportMdibVersion2 = BigInteger.valueOf(3);
         final var metricReport2 = buildEpisodicMetricReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion2, metricReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion2, metricReportStateVersion);
 
         final var alertReportMdibVersion = BigInteger.valueOf(3);
         final var alertReportStateVersion = BigInteger.TWO;
         final var alertReport = buildEpisodicAlertReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, alertReportMdibVersion, alertReportStateVersion);
 
         final var contextReportMdibVersion = BigInteger.valueOf(4);
         final var contextReportStateVersion = BigInteger.TWO;
         final var contextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
         final var operationalStateReportMdibVersion = BigInteger.valueOf(5);
         final var operationStateReportStateVersion = BigInteger.TWO;
         final var operationStateReport = buildEpisodicOperationalStateReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, operationalStateReportMdibVersion, operationStateReportStateVersion);
 
         final var initialMdibVersion = BigInteger.valueOf(3);
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, initialMdibVersion)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, initialMdibVersion));
         // should be filtered, since mdibVersion is smaller than initial get mdib response
         messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
         messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
@@ -410,34 +398,27 @@ public class MdibHistorianTest {
             final var componentReportMdibVersion = BigInteger.TEN;
             final var componentReportMdsStateVersion = BigInteger.TWO;
             final var componentReport = buildEpisodicComponentReport(
-                sequenceIds.get(0), MdibBuilder.DEFAULT_MDS_HANDLE,
-                componentReportMdibVersion, componentReportMdsStateVersion
-            );
-            messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(sequenceIds.get(0), null)
-            );
+                    sequenceIds.get(0),
+                    MdibBuilder.DEFAULT_MDS_HANDLE,
+                    componentReportMdibVersion,
+                    componentReportMdsStateVersion);
+            messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(0), null));
             messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
         }
         {
             final var metricReportMdibVersion = BigInteger.ONE;
             final var metricReportStateVersion = BigInteger.TWO;
-            final var metricReport = buildEpisodicMetricReport(
-                sequenceIds.get(1), metricReportMdibVersion, metricReportStateVersion
-            );
-            messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(sequenceIds.get(1), null)
-            );
+            final var metricReport =
+                    buildEpisodicMetricReport(sequenceIds.get(1), metricReportMdibVersion, metricReportStateVersion);
+            messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(1), null));
             messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
         }
         {
             final var alertReportMdibVersion = BigInteger.ONE;
             final var alertReportStateVersion = BigInteger.TWO;
-            final var alertReport = buildEpisodicAlertReport(
-                sequenceIds.get(2), alertReportMdibVersion, alertReportStateVersion
-            );
-            messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(sequenceIds.get(2), null)
-            );
+            final var alertReport =
+                    buildEpisodicAlertReport(sequenceIds.get(2), alertReportMdibVersion, alertReportStateVersion);
+            messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(2), null));
             messageStorageUtil.addInboundSecureHttpMessage(storage, alertReport);
         }
 
@@ -474,20 +455,18 @@ public class MdibHistorianTest {
             final var componentReportMdibVersion = BigInteger.TEN;
             final var componentReportMdsStateVersion = BigInteger.TWO;
             final var componentReport = buildEpisodicComponentReport(
-                sequenceIds.get(0), MdibBuilder.DEFAULT_MDS_HANDLE,
-                componentReportMdibVersion, componentReportMdsStateVersion
-            );
-            messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(sequenceIds.get(0), null)
-            );
+                    sequenceIds.get(0),
+                    MdibBuilder.DEFAULT_MDS_HANDLE,
+                    componentReportMdibVersion,
+                    componentReportMdsStateVersion);
+            messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(0), null));
             messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
         }
         {
             final var metricReportMdibVersion = BigInteger.ONE;
             final var metricReportStateVersion = BigInteger.TWO;
-            final var metricReport = buildEpisodicMetricReport(
-                sequenceIds.get(1), metricReportMdibVersion, metricReportStateVersion
-            );
+            final var metricReport =
+                    buildEpisodicMetricReport(sequenceIds.get(1), metricReportMdibVersion, metricReportStateVersion);
             messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
         }
 
@@ -533,26 +512,25 @@ public class MdibHistorianTest {
         final var contextReportStateVersion = BigInteger.ONE;
         final var firstCategory = mdibBuilder.buildCodedValue("1");
         final var contextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion
-        );
-        final var firstReport = (EpisodicContextReport) contextReport.getBody().getAny().get(0);
-        final var contextState = (PatientContextState) firstReport.getReportPart().get(0)
-            .getContextState().get(0);
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+        final var firstReport =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        final var contextState = (PatientContextState)
+                firstReport.getReportPart().get(0).getContextState().get(0);
         contextState.setCategory(firstCategory);
 
         final var secondContextReportMdibVersion = contextReportMdibVersion.add(BigInteger.ONE);
         final var secondCategory = mdibBuilder.buildCodedValue("2");
         final var secondContextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, secondContextReportMdibVersion, contextReportStateVersion
-        );
-        final var secondReport = (EpisodicContextReport) secondContextReport.getBody().getAny().get(0);
-        final var secondContextState = (PatientContextState) secondReport.getReportPart()
-            .get(0).getContextState().get(0);
+                MdibBuilder.DEFAULT_SEQUENCE_ID, secondContextReportMdibVersion, contextReportStateVersion);
+        final var secondReport =
+                (EpisodicContextReport) secondContextReport.getBody().getAny().get(0);
+        final var secondContextState = (PatientContextState)
+                secondReport.getReportPart().get(0).getContextState().get(0);
         secondContextState.setCategory(secondCategory);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
         messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
         messageStorageUtil.addInboundSecureHttpMessage(storage, secondContextReport);
 
@@ -563,15 +541,29 @@ public class MdibHistorianTest {
             assertNotNull(history.next());
             {
                 final var contextReportMdib = history.next();
-                assertEquals(contextReportMdibVersion, contextReportMdib.getMdibVersion().getVersion());
-                assertEquals(firstCategory.getCode(),
-                    contextReportMdib.getContextStates().get(0).getCategory().getCode());
+                assertEquals(
+                        contextReportMdibVersion,
+                        contextReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        firstCategory.getCode(),
+                        contextReportMdib
+                                .getContextStates()
+                                .get(0)
+                                .getCategory()
+                                .getCode());
             }
             {
                 final var contextReportMdib = history.next();
-                assertEquals(secondContextReportMdibVersion, contextReportMdib.getMdibVersion().getVersion());
-                assertEquals(secondCategory.getCode(),
-                    contextReportMdib.getContextStates().get(0).getCategory().getCode());
+                assertEquals(
+                        secondContextReportMdibVersion,
+                        contextReportMdib.getMdibVersion().getVersion());
+                assertEquals(
+                        secondCategory.getCode(),
+                        contextReportMdib
+                                .getContextStates()
+                                .get(0)
+                                .getCategory()
+                                .getCode());
             }
             assertNull(history.next());
         }
@@ -590,16 +582,15 @@ public class MdibHistorianTest {
         final var contextReportMdibVersion = BigInteger.ONE;
         final var contextReportStateVersion = BigInteger.TWO;
         final var contextReport = buildEpisodicContextReport(
-            MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion
-        );
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
-        final var firstMod = (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
         firstMod.getReportPart().get(0).getContextState().add(operator1);
         firstMod.getReportPart().get(0).getContextState().add(operator2);
 
         messageStorageUtil.addInboundSecureHttpMessage(
-            storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null)
-        );
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
 
@@ -621,9 +612,7 @@ public class MdibHistorianTest {
         final var report = messageBuilder.buildGetMdibResponse(MdibBuilder.DEFAULT_SEQUENCE_ID);
         report.setMdib(mdib);
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            report
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), report);
     }
 
     private Mdib buildMdib(final String sequenceId) {
@@ -644,8 +633,7 @@ public class MdibHistorianTest {
         mdState.getState().add(channel.getRight());
 
         final var metric = mdibBuilder.buildStringMetric(
-            STRING_METRIC_HANDLE, MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc")
-        );
+                STRING_METRIC_HANDLE, MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         channel.getLeft().getMetric().add(metric.getLeft());
         mdState.getState().add(metric.getRight());
 
@@ -653,9 +641,7 @@ public class MdibHistorianTest {
         mdsDescriptor.setAlertSystem(alertSystem.getLeft());
         mdState.getState().add(alertSystem.getRight());
 
-        final var systemContext = mdibBuilder.buildSystemContext(
-            SYSTEM_CONTEXT_HANDLE
-        );
+        final var systemContext = mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE);
 
         final var operator1 = mdibBuilder.buildOperatorContextDescriptor("opDescriptor1");
         final var operator2 = mdibBuilder.buildOperatorContextDescriptor("opDescriptor2");
@@ -664,30 +650,25 @@ public class MdibHistorianTest {
         mdsDescriptor.setSystemContext(systemContext.getLeft());
         mdState.getState().add(systemContext.getRight());
 
-        final var patientContextDescriptor = mdibBuilder.buildPatientContextDescriptor(
-            PATIENT_CONTEXT_HANDLE
-        );
+        final var patientContextDescriptor = mdibBuilder.buildPatientContextDescriptor(PATIENT_CONTEXT_HANDLE);
         systemContext.getLeft().setPatientContext(patientContextDescriptor);
 
         final var sco = mdibBuilder.buildSco(SCO_HANDLE);
         mdsDescriptor.setSco(sco.getLeft());
         mdState.getState().add(sco.getRight());
 
-        final var setString = mdibBuilder.buildSetStringOperation(
-            SET_STRING_HANDLE,
-            SYSTEM_CONTEXT_HANDLE,
-            OperatingMode.EN
-        );
+        final var setString =
+                mdibBuilder.buildSetStringOperation(SET_STRING_HANDLE, SYSTEM_CONTEXT_HANDLE, OperatingMode.EN);
         sco.getLeft().getOperation().add(setString.getLeft());
         mdState.getState().add(setString.getRight());
         return mdib;
     }
 
     Envelope buildEpisodicComponentReport(
-        final String sequenceId,
-        final String handle,
-        final @Nullable BigInteger mdibVersion,
-        final BigInteger mdsVersion) {
+            final String sequenceId,
+            final String handle,
+            final @Nullable BigInteger mdibVersion,
+            final BigInteger mdsVersion) {
         final var report = messageBuilder.buildEpisodicComponentReport(sequenceId);
 
         final var mdsState = mdibBuilder.buildMdsState(handle);
@@ -698,16 +679,11 @@ public class MdibHistorianTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT, report);
     }
 
     Envelope buildEpisodicMetricReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final BigInteger metricVersion) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final BigInteger metricVersion) {
         final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
 
         final var metricState = mdibBuilder.buildStringMetricState(STRING_METRIC_HANDLE);
@@ -718,16 +694,11 @@ public class MdibHistorianTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_METRIC_REPORT, report);
     }
 
     Envelope buildEpisodicAlertReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final BigInteger stateVersion) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final BigInteger stateVersion) {
         final var report = messageBuilder.buildEpisodicAlertReport(sequenceId);
 
         final var alertSystemState = mdibBuilder.buildAlertSystemState(ALERT_SYSTEM_HANDLE, AlertActivation.OFF);
@@ -738,21 +709,15 @@ public class MdibHistorianTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_ALERT_REPORT, report);
     }
 
     Envelope buildEpisodicContextReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final BigInteger stateVersion) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final BigInteger stateVersion) {
         final var report = messageBuilder.buildEpisodicContextReport(sequenceId);
 
-        final var patientContextState = mdibBuilder.buildPatientContextState(
-            PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE
-        );
+        final var patientContextState =
+                mdibBuilder.buildPatientContextState(PATIENT_CONTEXT_HANDLE, PATIENT_CONTEXT_STATE_HANDLE);
         patientContextState.setStateVersion(stateVersion);
 
         final var reportPart = messageBuilder.buildAbstractContextReportReportPart();
@@ -760,17 +725,11 @@ public class MdibHistorianTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
     }
 
     Envelope buildEpisodicOperationalStateReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final BigInteger stateVersion
-    ) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final BigInteger stateVersion) {
         final var report = messageBuilder.buildEpisodicOperationalStateReport(sequenceId);
 
         final var setString = mdibBuilder.buildSetStringOperationState(SET_STRING_HANDLE, OperatingMode.EN);
@@ -782,9 +741,6 @@ public class MdibHistorianTest {
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
-            report
-        );
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT, report);
     }
-
 }

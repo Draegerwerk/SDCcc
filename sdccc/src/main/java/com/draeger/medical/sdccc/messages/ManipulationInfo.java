@@ -9,11 +9,10 @@ package com.draeger.medical.sdccc.messages;
 
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.assistedinject.Assisted;
-import org.apache.commons.lang3.tuple.Pair;
-
-import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Manipulation Information object used for storage purposes.
@@ -29,12 +28,12 @@ public class ManipulationInfo implements DatabaseEntry {
 
     @Inject
     ManipulationInfo(
-        @Assisted(value = "startTime") final long startTimestamp,
-        @Assisted(value = "stopTime") final long finishTimestamp,
-        @Assisted final ResponseTypes.Result result,
-        @Assisted(value = "methodName") final String methodName,
-        @Assisted final List<Pair<String, String>> parameters,
-        final MessageStorage messageStorage) {
+            @Assisted(value = "startTime") final long startTimestamp,
+            @Assisted(value = "stopTime") final long finishTimestamp,
+            @Assisted final ResponseTypes.Result result,
+            @Assisted(value = "methodName") final String methodName,
+            @Assisted final List<Pair<String, String>> parameters,
+            final MessageStorage messageStorage) {
 
         this.startTimestamp = startTimestamp;
         this.finishTimestamp = finishTimestamp;

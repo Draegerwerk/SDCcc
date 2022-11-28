@@ -7,6 +7,8 @@
 
 package com.draeger.medical.sdccc.tests.util;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.util.Constants;
@@ -16,6 +18,19 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.inject.Provider;
+import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.CommonConfig;
@@ -52,22 +67,6 @@ import org.somda.sdc.glue.common.factory.ModificationsBuilderFactory;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessor;
 
-import javax.inject.Provider;
-import javax.xml.namespace.QName;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.fail;
-
 /**
  * The {@linkplain MdibHistorian} provides methods to generate histories of the Mdib during a test run.
  * It currently supports episodic report based histories.
@@ -102,12 +101,12 @@ public class MdibHistorian {
 
     @AssistedInject
     MdibHistorian(
-        final @Assisted MessageStorage messageStorage,
-        final @Assisted TestRunObserver testRunObserver,
-        final MarshallingService marshalling,
-        final SoapUtil soapUtil,
-        final ModificationsBuilderFactory modificationsBuilderFactory,
-        final Provider<ReportProcessor> reportProcessorProvider) {
+            final @Assisted MessageStorage messageStorage,
+            final @Assisted TestRunObserver testRunObserver,
+            final MarshallingService marshalling,
+            final SoapUtil soapUtil,
+            final ModificationsBuilderFactory modificationsBuilderFactory,
+            final Provider<ReportProcessor> reportProcessorProvider) {
         this.messageStorage = messageStorage;
         this.testRunObserver = testRunObserver;
         this.marshalling = marshalling;
@@ -119,20 +118,20 @@ public class MdibHistorian {
             @Override
             protected void defaultConfigure() {
                 install(new FactoryModuleBuilder()
-                    .implement(MdibEntity.class, MdibEntityImpl.class)
-                    .build(MdibEntityGuiceAssistedFactory.class));
+                        .implement(MdibEntity.class, MdibEntityImpl.class)
+                        .build(MdibEntityGuiceAssistedFactory.class));
                 install(new FactoryModuleBuilder()
-                    .implement(MdibStoragePreprocessingChain.class, MdibStoragePreprocessingChain.class)
-                    .build(MdibStoragePreprocessingChainFactory.class));
+                        .implement(MdibStoragePreprocessingChain.class, MdibStoragePreprocessingChain.class)
+                        .build(MdibStoragePreprocessingChainFactory.class));
                 install(new FactoryModuleBuilder()
-                    .implement(MdibStorage.class, MdibStorageImpl.class)
-                    .build(MdibStorageFactory.class));
+                        .implement(MdibStorage.class, MdibStorageImpl.class)
+                        .build(MdibStorageFactory.class));
                 install(new FactoryModuleBuilder()
-                    .implement(ReadTransaction.class, ReadTransactionImpl.class)
-                    .build(ReadTransactionFactory.class));
+                        .implement(ReadTransaction.class, ReadTransactionImpl.class)
+                        .build(ReadTransactionFactory.class));
                 install(new FactoryModuleBuilder()
-                    .implement(RemoteMdibAccess.class, RemoteMdibAccessImpl.class)
-                    .build(RemoteMdibAccessFactory.class));
+                        .implement(RemoteMdibAccess.class, RemoteMdibAccessImpl.class)
+                        .build(RemoteMdibAccessFactory.class));
             }
         }
 
@@ -144,25 +143,22 @@ public class MdibHistorian {
                 bind(CommonConfig.ALLOW_STATES_WITHOUT_DESCRIPTORS, Boolean.class, false);
                 bind(CommonConfig.COPY_MDIB_INPUT, Boolean.class, true);
                 bind(CommonConfig.COPY_MDIB_OUTPUT, Boolean.class, true);
-                bind(CommonConfig.CONSUMER_STATE_PREPROCESSING_SEGMENTS,
-                    new TypeLiteral<List<Class<? extends StatePreprocessingSegment>>>() {
-                    },
-                    List.of(DuplicateContextStateHandleHandler.class));
-                bind(CommonConfig.CONSUMER_DESCRIPTION_PREPROCESSING_SEGMENTS,
-                    new TypeLiteral<List<Class<? extends DescriptionPreprocessingSegment>>>() {
-                    },
-                    List.of(DescriptorChildRemover.class, DuplicateChecker.class));
+                bind(
+                        CommonConfig.CONSUMER_STATE_PREPROCESSING_SEGMENTS,
+                        new TypeLiteral<List<Class<? extends StatePreprocessingSegment>>>() {},
+                        List.of(DuplicateContextStateHandleHandler.class));
+                bind(
+                        CommonConfig.CONSUMER_DESCRIPTION_PREPROCESSING_SEGMENTS,
+                        new TypeLiteral<List<Class<? extends DescriptionPreprocessingSegment>>>() {},
+                        List.of(DescriptorChildRemover.class, DuplicateChecker.class));
             }
         }
 
         final var historianBicepsModule = new MdibHistorianBicepsModule();
         final var historianConfiguration = new MdibHistorianConfigurationModule();
 
-        final var injector = Guice.createInjector(
-            new DefaultCommonModule(),
-            historianBicepsModule,
-            historianConfiguration
-        );
+        final var injector =
+                Guice.createInjector(new DefaultCommonModule(), historianBicepsModule, historianConfiguration);
         this.remoteMdibAccessFactory = injector.getInstance(RemoteMdibAccessFactory.class);
     }
 
@@ -178,15 +174,15 @@ public class MdibHistorian {
         final var bodyArray = bodies.toArray(new QName[0]);
         try (final var messages = messageStorage.getInboundMessagesByBodyType(bodyArray)) {
             return messages.getStream()
-                .map(msg -> {
-                    if (msg.getBodyElements().contains(GET_MDIB_RESPONSE.toString())) {
-                        return this.unmarshallMdib(msg).getSequenceId();
-                    } else {
-                        return this.unmarshallReport(msg).getSequenceId();
-                    }
-                })
-                .distinct()
-                .collect(Collectors.toList());
+                    .map(msg -> {
+                        if (msg.getBodyElements().contains(GET_MDIB_RESPONSE.toString())) {
+                            return this.unmarshallMdib(msg).getSequenceId();
+                        } else {
+                            return this.unmarshallReport(msg).getSequenceId();
+                        }
+                    })
+                    .distinct()
+                    .collect(Collectors.toList());
         }
     }
 
@@ -202,10 +198,10 @@ public class MdibHistorian {
         final Mdib initialMdib;
         try (final var messages = messageStorage.getInboundMessagesByBodyType(GET_MDIB_RESPONSE)) {
             initialMdib = messages.getStream()
-                .map(this::unmarshallMdib)
-                .filter(mdib -> sequenceId.equals(mdib.getSequenceId()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError(NO_MDIB_ERROR + " for sequence id " + sequenceId));
+                    .map(this::unmarshallMdib)
+                    .filter(mdib -> sequenceId.equals(mdib.getSequenceId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError(NO_MDIB_ERROR + " for sequence id " + sequenceId));
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());
@@ -239,52 +235,47 @@ public class MdibHistorian {
      * @throws ReportProcessingException if applying reports fails
      */
     public HistorianResult episodicReportBasedHistory(final String sequenceId)
-        throws PreprocessingException, ReportProcessingException {
+            throws PreprocessingException, ReportProcessingException {
 
         // create new storage
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
         reportProcessor.startApplyingReportsOnMdib(storage, null);
-        final var mdibVersionPredicate = new InitialMdibVersionPredicate(
-            ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
+        final var mdibVersionPredicate =
+                new InitialMdibVersionPredicate(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
 
         try {
-            final var messages = messageStorage.getInboundMessagesByBodyType(
-                EPISODIC_REPORT_BODIES.toArray(new QName[0]));
+            final var messages =
+                    messageStorage.getInboundMessagesByBodyType(EPISODIC_REPORT_BODIES.toArray(new QName[0]));
             final var stream = messages.getStream()
-                .map(this::unmarshallReport)
-                .filter(report -> sequenceId.equals(report.getSequenceId()))
-                .filter(mdibVersionPredicate)
-                .map(report -> {
-                    try {
-                        final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
-                            .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
-                        if (cmp > 0) {
-                            fail(
-                                "Cannot apply report older than current storage."
-                                    + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
-                                    + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
-                                    + " " + report.getClass().getSimpleName()
-                            );
-                        } else if (cmp == 0) {
+                    .map(this::unmarshallReport)
+                    .filter(report -> sequenceId.equals(report.getSequenceId()))
+                    .filter(mdibVersionPredicate)
+                    .map(report -> {
+                        try {
+                            final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                                    .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
+                            if (cmp > 0) {
+                                fail("Cannot apply report older than current storage."
+                                        + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                                        + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
+                                        + " " + report.getClass().getSimpleName());
+                            } else if (cmp == 0) {
+                                LOG.debug(
+                                        "Cannot apply report of equal mdib version. This means that another report with the"
+                                                + " same version has already been applied, and is expected behavior when e.g."
+                                                + " descriptors update, as both a report for description and state will arrive.");
+                            }
                             LOG.debug(
-                                "Cannot apply report of equal mdib version. This means that another report with the"
-                                    + " same version has already been applied, and is expected behavior when e.g."
-                                    + " descriptors update, as both a report for description and state will arrive."
-                            );
+                                    "Applying report with mdib version {}, type {}",
+                                    report::getMdibVersion,
+                                    () -> report.getClass().getSimpleName());
+                            reportProcessor.processReport(report);
+                        } catch (final Exception e) {
+                            fail(e);
                         }
-                        LOG.debug(
-                            "Applying report with mdib version {}, type {}",
-                            report::getMdibVersion, () -> report.getClass().getSimpleName()
-                        );
-                        reportProcessor.processReport(report);
-                        // CHECKSTYLE.OFF: IllegalCatch
-                    } catch (final Exception e) {
-                        // CHECKSTYLE.ON: IllegalCatch
-                        fail(e);
-                    }
-                    return storage;
-                });
+                        return storage;
+                    });
 
             // initial mdib stream
             final var initialMdibStream = Stream.of(storage);
@@ -309,11 +300,12 @@ public class MdibHistorian {
      */
     public List<AbstractReport> getAllReports(final String sequenceId) {
         final List<AbstractReport> reports;
-        try (final var messages = messageStorage.getInboundMessagesByBodyType(
-            EPISODIC_REPORT_BODIES.toArray(new QName[0]))) {
-            reports = messages.getStream().map(this::unmarshallReport)
-                .filter(report -> sequenceId.equals(report.getSequenceId()))
-                .collect(Collectors.toCollection(LinkedList::new));
+        try (final var messages =
+                messageStorage.getInboundMessagesByBodyType(EPISODIC_REPORT_BODIES.toArray(new QName[0]))) {
+            reports = messages.getStream()
+                    .map(this::unmarshallReport)
+                    .filter(report -> sequenceId.equals(report.getSequenceId()))
+                    .collect(Collectors.toCollection(LinkedList::new));
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());
@@ -333,16 +325,17 @@ public class MdibHistorian {
      * @param reportType the type of report to retrieve
      * @return list of the reports
      */
-    public List<AbstractReport> getAllReportsOfSpecificType(final String sequenceId, final BigInteger mdibVersion,
-                                                            final QName reportType) {
+    public List<AbstractReport> getAllReportsOfSpecificType(
+            final String sequenceId, final BigInteger mdibVersion, final QName reportType) {
         final List<AbstractReport> reports;
-        try (final var messages = messageStorage.getInboundMessagesByBodyType(
-            reportType)) {
-            reports = messages.getStream().map(this::unmarshallReport)
-                .filter(report -> sequenceId.equals(report.getSequenceId()))
-                .filter(report -> ImpliedValueUtil.getReportMdibVersion(report).compareTo(
-                    ImpliedValueUtil.getMdibMdibVersion(mdibVersion)) > 0)
-                .collect(Collectors.toCollection(LinkedList::new));
+        try (final var messages = messageStorage.getInboundMessagesByBodyType(reportType)) {
+            reports = messages.getStream()
+                    .map(this::unmarshallReport)
+                    .filter(report -> sequenceId.equals(report.getSequenceId()))
+                    .filter(report -> ImpliedValueUtil.getReportMdibVersion(report)
+                                    .compareTo(ImpliedValueUtil.getMdibMdibVersion(mdibVersion))
+                            > 0)
+                    .collect(Collectors.toCollection(LinkedList::new));
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());
@@ -365,30 +358,26 @@ public class MdibHistorian {
      *                                   accessing data from the queue.
      */
     public RemoteMdibAccess applyReportOnStorage(final RemoteMdibAccess storage, final AbstractReport report)
-        throws PreprocessingException, ReportProcessingException {
+            throws PreprocessingException, ReportProcessingException {
         final var reportProcessor = reportProcessorProvider.get();
         reportProcessor.startApplyingReportsOnMdib(storage, null);
 
         final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
-            .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
+                .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
         if (cmp > 0) {
-            fail(
-                "Cannot apply report older than current storage."
+            fail("Cannot apply report older than current storage."
                     + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
                     + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
-                    + " " + report.getClass().getSimpleName()
-            );
+                    + " " + report.getClass().getSimpleName());
         } else if (cmp == 0) {
-            LOG.debug(
-                "Cannot apply report of equal mdib version. This means that another report with the"
+            LOG.debug("Cannot apply report of equal mdib version. This means that another report with the"
                     + " same version has already been applied, and is expected behavior when e.g."
-                    + " descriptors update, as both a report for description and state will arrive."
-            );
+                    + " descriptors update, as both a report for description and state will arrive.");
         }
         LOG.debug(
-            "Applying report with mdib version {}, type {}",
-            ImpliedValueUtil.getReportMdibVersion(report), report.getClass().getSimpleName()
-        );
+                "Applying report with mdib version {}, type {}",
+                ImpliedValueUtil.getReportMdibVersion(report),
+                report.getClass().getSimpleName());
         reportProcessor.processReport(report);
         return storage;
     }
@@ -396,9 +385,8 @@ public class MdibHistorian {
     private AbstractReport unmarshallReport(final MessageContent messageContent) {
         final var failMessage = "Could not unmarshall report in message " + messageContent.getMessageHash();
         try {
-            final var currentMdib = marshalling.unmarshal(new ByteArrayInputStream(
-                messageContent.getBody().getBytes(StandardCharsets.UTF_8)
-            ));
+            final var currentMdib = marshalling.unmarshal(
+                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
             final var reportOpt = soapUtil.getBody(currentMdib, AbstractReport.class);
             if (reportOpt.isEmpty()) {
                 fail(failMessage);
@@ -418,9 +406,8 @@ public class MdibHistorian {
     private Mdib unmarshallMdib(final MessageContent messageContent) {
         final var failMessage = "Could not unmarshall Mdib in message " + messageContent.getMessageHash();
         try {
-            final var currentMdib = marshalling.unmarshal(new ByteArrayInputStream(
-                messageContent.getBody().getBytes(StandardCharsets.UTF_8)
-            ));
+            final var currentMdib = marshalling.unmarshal(
+                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
             final var mdibOpt = soapUtil.getBody(currentMdib, GetMdibResponse.class);
             if (mdibOpt.isEmpty()) {
                 fail(failMessage);
@@ -439,15 +426,15 @@ public class MdibHistorian {
 
     private RemoteMdibAccess convertToRemoteMdib(final Mdib mdib) throws PreprocessingException {
         final var mdibStorage = this.remoteMdibAccessFactory.createRemoteMdibAccess();
-        final var modifications = modificationsBuilderFactory.createModificationsBuilder(mdib).get();
+        final var modifications =
+                modificationsBuilderFactory.createModificationsBuilder(mdib).get();
 
         final var mdStateVersion = ImpliedValueUtil.getMdStateStateVersion(mdib.getMdState());
         final var mdDescriptionVersion = ImpliedValueUtil.getDescriptionVersion(mdib.getMdDescription());
         final MdibVersion mdibVersion = new MdibVersion(
-            mdib.getSequenceId(),
-            ImpliedValueUtil.getMdibMdibVersion(mdib),
-            ImpliedValueUtil.getMdibInstanceId(mdib)
-        );
+                mdib.getSequenceId(),
+                ImpliedValueUtil.getMdibMdibVersion(mdib),
+                ImpliedValueUtil.getMdibInstanceId(mdib));
 
         mdibStorage.writeDescription(mdibVersion, mdDescriptionVersion, mdStateVersion, modifications);
         return mdibStorage;
@@ -464,8 +451,9 @@ public class MdibHistorian {
         private final MessageStorage.GetterResult<MessageContent> messageContent;
         private final Iterator<RemoteMdibAccess> transformedStream;
 
-        HistorianResult(final MessageStorage.GetterResult<MessageContent> messageContent,
-                        final Stream<RemoteMdibAccess> transformedStream) {
+        HistorianResult(
+                final MessageStorage.GetterResult<MessageContent> messageContent,
+                final Stream<RemoteMdibAccess> transformedStream) {
             this.messageContent = messageContent;
             this.transformedStream = transformedStream.iterator();
         }

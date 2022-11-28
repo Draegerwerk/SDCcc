@@ -11,19 +11,18 @@ import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.imageio.ImageIO;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Provides user interactions using either a {@linkplain javax.swing.JOptionPane} or console input.
@@ -41,17 +40,18 @@ public class UserInteraction {
 
     private static final Logger LOG = LogManager.getLogger(UserInteraction.class);
 
-    private static final String CONSOLE_INTERACTION_REQUEST_STRING = "Confirm the interaction with "
-        + "'" + YES + "' if performed successfully, respond with '" + NO + "' otherwise.";
+    private static final String CONSOLE_INTERACTION_REQUEST_STRING = "Confirm the interaction with " + "'" + YES
+            + "' if performed successfully, respond with '" + NO + "' otherwise.";
 
     private final boolean ciMode;
     private final boolean swingPopups;
     private final InputStream interactionInput;
 
     @Inject
-    UserInteraction(@Named(TestSuiteConfig.CI_MODE) final boolean ciMode,
-                    @Named(TestSuiteConfig.GRAPHICAL_POPUPS) final boolean swingPopups,
-                    @Assisted final InputStream interactionInput) {
+    UserInteraction(
+            @Named(TestSuiteConfig.CI_MODE) final boolean ciMode,
+            @Named(TestSuiteConfig.GRAPHICAL_POPUPS) final boolean swingPopups,
+            @Assisted final InputStream interactionInput) {
         this.ciMode = ciMode;
         this.swingPopups = swingPopups;
         this.interactionInput = interactionInput;
@@ -124,10 +124,7 @@ public class UserInteraction {
         return result;
     }
 
-    private boolean displayYesNoConsoleUserInteraction(
-        final String interaction,
-        final Scanner scanner
-    ) {
+    private boolean displayYesNoConsoleUserInteraction(final String interaction, final Scanner scanner) {
 
         boolean result = false;
         boolean inputRead = false;
@@ -175,23 +172,24 @@ public class UserInteraction {
         final var popupText = String.format(
                 "<html><body width='%1s'><h2>Please perform the following action</h2><p>%s</p><br>"
                         + "Confirm with yes if successful, no otherwise.",
-                200, interaction
-        );
+                200, interaction);
 
         // create anchor frame to ensure we have an icon on the taskbar
         final JFrame frame = createJFrame();
         final int result = JOptionPane.showOptionDialog(
-                frame, popupText, INTERVENTION_BOX_TEXT,
+                frame,
+                popupText,
+                INTERVENTION_BOX_TEXT,
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
-                null, WINDOW_OPTIONS, WINDOW_OPTIONS[1]
-        );
+                null,
+                WINDOW_OPTIONS,
+                WINDOW_OPTIONS[1]);
 
         frame.dispose();
 
         return JOptionPane.YES_OPTION == result;
     }
-
 
     String displayStringInputConsoleUserInteraction(final String interaction) {
         String result = "";
@@ -230,24 +228,19 @@ public class UserInteraction {
 
     String displayStringInputSwingUserInteraction(final String interaction) throws HeadlessException {
         final var popupText = String.format(
-            "<html><body width='%1s'><h2>Please perform the following action</h2><p>%s</p><br>"
-                + "Enter your answer in the box below.",
-            200, interaction
-        );
+                "<html><body width='%1s'><h2>Please perform the following action</h2><p>%s</p><br>"
+                        + "Enter your answer in the box below.",
+                200, interaction);
 
         // create anchor frame to ensure we have an icon on the taskbar
         final JFrame frame = createJFrame();
         final String result = (String) JOptionPane.showInputDialog(
-            frame, popupText, INTERVENTION_BOX_TEXT,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null
-        );
+                frame, popupText, INTERVENTION_BOX_TEXT, JOptionPane.QUESTION_MESSAGE, null, null, null);
 
         frame.dispose();
 
         return result;
     }
-
 
     private JFrame createJFrame() {
         final JFrame frame = new JFrame("SDCcc intervention");

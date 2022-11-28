@@ -56,7 +56,8 @@ public class ReportTestData {
     }
 
     public String getReportAction() {
-        return action; }
+        return action;
+    }
 
     /**
      * Setter for reportReceived.

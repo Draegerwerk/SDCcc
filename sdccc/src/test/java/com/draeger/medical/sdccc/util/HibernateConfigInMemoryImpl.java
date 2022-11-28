@@ -8,10 +8,9 @@
 package com.draeger.medical.sdccc.util;
 
 import com.draeger.medical.sdccc.messages.HibernateConfigBase;
-
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.UUID;
 
 /**
  * Hibernate configuration using an in memory database.

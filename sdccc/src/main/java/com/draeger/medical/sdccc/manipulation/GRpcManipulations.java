@@ -35,6 +35,12 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.StringValue;
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import javax.xml.namespace.QName;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -47,13 +53,6 @@ import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.MeasurementValidity;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 
-import javax.xml.namespace.QName;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
 /**
  * Device manipulations calling on a gRPC backend.
  */
@@ -61,19 +60,26 @@ import java.util.function.Function;
 public class GRpcManipulations implements Manipulations {
     private static final Logger LOG = LogManager.getLogger(GRpcManipulations.class);
     private static final Map<QName, DeviceTypes.ReportType> REPORT_TYPE_MAP = Map.of(
-        Constants.MSG_EPISODIC_ALERT_REPORT, DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_ALERT_REPORT,
-        Constants.MSG_EPISODIC_COMPONENT_REPORT, DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_COMPONENT_REPORT,
-        Constants.MSG_EPISODIC_CONTEXT_REPORT, DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_CONTEXT_REPORT,
-        Constants.MSG_EPISODIC_METRIC_REPORT, DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_METRIC_REPORT,
-        Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
-        DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_OPERATIONAL_STATE_REPORT,
-        Constants.MSG_DESCRIPTION_MODIFICATION_REPORT,
-        DeviceTypes.ReportType.REPORT_TYPE_DESCRIPTION_MODIFICATION_REPORT,
-        Constants.MSG_OPERATION_INVOKED_REPORT, DeviceTypes.ReportType.REPORT_TYPE_OPERATION_INVOKED_REPORT,
-        Constants.MSG_SYSTEM_ERROR_REPORT, DeviceTypes.ReportType.REPORT_TYPE_SYSTEM_ERROR_REPORT,
-        Constants.MSG_OBSERVED_VALUE_STREAM, DeviceTypes.ReportType.REPORT_TYPE_OBSERVED_VALUE_STREAM,
-        Constants.MSG_WAVEFORM_STREAM, DeviceTypes.ReportType.REPORT_TYPE_WAVEFORM_STREAM
-    );
+            Constants.MSG_EPISODIC_ALERT_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_ALERT_REPORT,
+            Constants.MSG_EPISODIC_COMPONENT_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_COMPONENT_REPORT,
+            Constants.MSG_EPISODIC_CONTEXT_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_CONTEXT_REPORT,
+            Constants.MSG_EPISODIC_METRIC_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_METRIC_REPORT,
+            Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_EPISODIC_OPERATIONAL_STATE_REPORT,
+            Constants.MSG_DESCRIPTION_MODIFICATION_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_DESCRIPTION_MODIFICATION_REPORT,
+            Constants.MSG_OPERATION_INVOKED_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_OPERATION_INVOKED_REPORT,
+            Constants.MSG_SYSTEM_ERROR_REPORT,
+            DeviceTypes.ReportType.REPORT_TYPE_SYSTEM_ERROR_REPORT,
+            Constants.MSG_OBSERVED_VALUE_STREAM,
+            DeviceTypes.ReportType.REPORT_TYPE_OBSERVED_VALUE_STREAM,
+            Constants.MSG_WAVEFORM_STREAM,
+            DeviceTypes.ReportType.REPORT_TYPE_WAVEFORM_STREAM);
 
     private final ActivationStateServiceGrpc.ActivationStateServiceBlockingStub activationStateStub;
     private final AlertServiceGrpc.AlertServiceBlockingStub alertStub;
@@ -92,15 +98,16 @@ public class GRpcManipulations implements Manipulations {
      * @param manipulationInfoFactory factory to create manipulation info
      */
     @Inject
-    public GRpcManipulations(@Named(TestSuiteConfig.GRPC_SERVER_ADDRESS) final String serverAddress,
-                             final FallbackManipulations fallbackManipulations,
-                             final ManipulationInfoFactory manipulationInfoFactory) {
+    public GRpcManipulations(
+            @Named(TestSuiteConfig.GRPC_SERVER_ADDRESS) final String serverAddress,
+            final FallbackManipulations fallbackManipulations,
+            final ManipulationInfoFactory manipulationInfoFactory) {
         this.fallback = fallbackManipulations;
         this.manipulationInfoFactory = manipulationInfoFactory;
         final Channel channel = ManagedChannelBuilder.forTarget(serverAddress)
-            // Channels are secure by default (via SSL/TLS), which we don't really need
-            .usePlaintext()
-            .build();
+                // Channels are secure by default (via SSL/TLS), which we don't really need
+                .usePlaintext()
+                .build();
 
         activationStateStub = ActivationStateServiceGrpc.newBlockingStub(channel);
         alertStub = AlertServiceGrpc.newBlockingStub(channel);
@@ -114,255 +121,234 @@ public class GRpcManipulations implements Manipulations {
         final var protoLocation = locationDetailToProto(locationDetail);
 
         final var message = ContextRequests.SetLocationDetailRequest.newBuilder()
-            .setLocation(protoLocation)
-            .build();
+                .setLocation(protoLocation)
+                .build();
 
         return performCallWrapper(
-            v -> contextStub.setLocationDetail(message),
-            v -> fallback.setLocationDetail(locationDetail),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_LOCATION_DETAIL,
-                    String.format("poC=%s, "
-                                    + "room=%s, "
-                                    + "bed=%s, "
-                                    + "facility=%s, "
-                                    + "building=%s, "
-                                    + "floor=%s",
-                            locationDetail.getPoC(),
-                            locationDetail.getRoom(),
-                            locationDetail.getBed(),
-                            locationDetail.getFacility(),
-                            locationDetail.getBuilding(),
-                            locationDetail.getFloor())))
-        );
+                v -> contextStub.setLocationDetail(message),
+                v -> fallback.setLocationDetail(locationDetail),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_LOCATION_DETAIL,
+                        String.format(
+                                "poC=%s, " + "room=%s, " + "bed=%s, " + "facility=%s, " + "building=%s, " + "floor=%s",
+                                locationDetail.getPoC(),
+                                locationDetail.getRoom(),
+                                locationDetail.getBed(),
+                                locationDetail.getFacility(),
+                                locationDetail.getBuilding(),
+                                locationDetail.getFloor()))));
     }
 
     @Override
     public List<String> getRemovableDescriptors() {
         return performCallWrapper(
-            v -> deviceStub.getRemovableDescriptors(Empty.getDefaultInstance()),
-            v -> fallback.getRemovableDescriptors(),
-            res -> res.getStatus().getResult(),
-            DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
-            Collections.emptyList()
-        );
+                v -> deviceStub.getRemovableDescriptors(Empty.getDefaultInstance()),
+                v -> fallback.getRemovableDescriptors(),
+                res -> res.getStatus().getResult(),
+                DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
+                Collections.emptyList());
     }
 
     @Override
     public ResponseTypes.Result removeDescriptor(final String handle) {
-        final var request = BasicRequests.BasicHandleRequest.newBuilder()
-            .setHandle(handle)
-            .build();
+        final var request =
+                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
         return performCallWrapper(
-            v -> deviceStub.removeDescriptor(request),
-            v -> fallback.removeDescriptor(handle),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle))
-        );
+                v -> deviceStub.removeDescriptor(request),
+                v -> fallback.removeDescriptor(handle),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle)));
     }
 
     @Override
     public ResponseTypes.Result insertDescriptor(final String handle) {
-        final var request = BasicRequests.BasicHandleRequest.newBuilder()
-            .setHandle(handle)
-            .build();
+        final var request =
+                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
         return performCallWrapper(
-            v -> deviceStub.insertDescriptor(request),
-            v -> fallback.insertDescriptor(handle),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle))
-        );
+                v -> deviceStub.insertDescriptor(request),
+                v -> fallback.insertDescriptor(handle),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle)));
     }
 
     @Override
     public ResponseTypes.Result sendHello() {
         return performCallWrapper(
-            v -> deviceStub.sendHello(Empty.getDefaultInstance()),
-            v -> fallback.sendHello(),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            Collections.emptyList()
-        );
+                v -> deviceStub.sendHello(Empty.getDefaultInstance()),
+                v -> fallback.sendHello(),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                Collections.emptyList());
     }
 
     @Override
     public Optional<String> createContextStateWithAssociation(
-        final String descriptorHandle,
-        final ContextAssociation association
-    ) {
-        final var request = ContextRequests.CreateContextStateWithAssociationRequest
-            .newBuilder()
-            .setDescriptorHandle(descriptorHandle)
-            .setContextAssociation(toApiContextType(association))
-            .build();
+            final String descriptorHandle, final ContextAssociation association) {
+        final var request = ContextRequests.CreateContextStateWithAssociationRequest.newBuilder()
+                .setDescriptorHandle(descriptorHandle)
+                .setContextAssociation(toApiContextType(association))
+                .build();
 
         return performCallWrapper(
-            v -> contextStub.createContextStateWithAssociation(request),
-            v -> fallback.createContextStateWithAssociation(descriptorHandle, association),
-            response -> response.getStatus().getResult(),
-            msg -> {
-                if (msg.getContextStateHandle().isBlank()) {
-                    return Optional.empty();
-                }
-                return Optional.of(msg.getContextStateHandle());
-            },
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, descriptorHandle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION, association.value()))
-        );
+                v -> contextStub.createContextStateWithAssociation(request),
+                v -> fallback.createContextStateWithAssociation(descriptorHandle, association),
+                response -> response.getStatus().getResult(),
+                msg -> {
+                    if (msg.getContextStateHandle().isBlank()) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(msg.getContextStateHandle());
+                },
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, descriptorHandle),
+                        new ImmutablePair<>(
+                                Constants.MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION, association.value())));
     }
 
     @Override
     public ResponseTypes.Result setAlertActivation(final String handle, final AlertActivation activationState) {
-        final var message = ActivationStateRequests.SetAlertActivationRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setActivation(toApiActivationStateType(activationState))
-            .build();
+        final var message = ActivationStateRequests.SetAlertActivationRequest.newBuilder()
+                .setHandle(handle)
+                .setActivation(toApiActivationStateType(activationState))
+                .build();
 
         return performCallWrapper(
-            v -> activationStateStub.setAlertActivation(message),
-            v -> fallback.setAlertActivation(handle, activationState),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activationState.value()))
-        );
+                v -> activationStateStub.setAlertActivation(message),
+                v -> fallback.setAlertActivation(handle, activationState),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(
+                                Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activationState.value())));
     }
 
     @Override
     public ResponseTypes.Result setAlertConditionPresence(final String handle, final boolean presence) {
-        final var message = AlertRequests.SetAlertConditionPresenceRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setPresence(presence)
-            .build();
+        final var message = AlertRequests.SetAlertConditionPresenceRequest.newBuilder()
+                .setHandle(handle)
+                .setPresence(presence)
+                .build();
 
         return performCallWrapper(
-            v -> alertStub.setAlertConditionPresence(message),
-            v -> fallback.setAlertConditionPresence(handle, presence),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_PRESENCE, String.format("%s", presence)))
-        );
+                v -> alertStub.setAlertConditionPresence(message),
+                v -> fallback.setAlertConditionPresence(handle, presence),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_PRESENCE, String.format("%s", presence))));
     }
 
     @Override
-    public ResponseTypes.Result setSystemSignalActivation(final String handle,
-                                                          final AlertSignalManifestation manifestation,
-                                                          final AlertActivation activation) {
-        final var message = ActivationStateRequests.SetSystemSignalActivationRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setManifestation(toApiManifestationType(manifestation))
-            .setActivation(toApiActivationStateType(activation))
-            .build();
+    public ResponseTypes.Result setSystemSignalActivation(
+            final String handle, final AlertSignalManifestation manifestation, final AlertActivation activation) {
+        final var message = ActivationStateRequests.SetSystemSignalActivationRequest.newBuilder()
+                .setHandle(handle)
+                .setManifestation(toApiManifestationType(manifestation))
+                .setActivation(toApiActivationStateType(activation))
+                .build();
 
         return performCallWrapper(
-            v -> activationStateStub.setSystemSignalActivation(message),
-            v -> fallback.setSystemSignalActivation(handle, manifestation, activation),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_ALERT_SIGNAL_ACTIVATION, manifestation.value()),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activation.value()))
-        );
+                v -> activationStateStub.setSystemSignalActivation(message),
+                v -> fallback.setSystemSignalActivation(handle, manifestation, activation),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(
+                                Constants.MANIPULATION_PARAMETER_ALERT_SIGNAL_ACTIVATION, manifestation.value()),
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activation.value())));
     }
 
     @Override
     public ResponseTypes.Result setComponentActivation(final String handle, final ComponentActivation activationState) {
-        final var message = ActivationStateRequests.SetComponentActivationRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setActivation(toApiComponentActivationStateType(activationState))
-            .build();
+        final var message = ActivationStateRequests.SetComponentActivationRequest.newBuilder()
+                .setHandle(handle)
+                .setActivation(toApiComponentActivationStateType(activationState))
+                .build();
 
         return performCallWrapper(
-            v -> activationStateStub.setComponentActivation(message),
-            v -> fallback.setComponentActivation(handle, activationState),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activationState.toString()))
-        );
+                v -> activationStateStub.setComponentActivation(message),
+                v -> fallback.setComponentActivation(handle, activationState),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(
+                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activationState.toString())));
     }
 
     @Override
-    public ResponseTypes.Result setMetricQualityValidity(final String handle,
-                                                         final MeasurementValidity validity) {
-        final var message = MetricRequests.SetMetricQualityValidityRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setValidity(toApiMeasurementValidityType(validity))
-            .build();
+    public ResponseTypes.Result setMetricQualityValidity(final String handle, final MeasurementValidity validity) {
+        final var message = MetricRequests.SetMetricQualityValidityRequest.newBuilder()
+                .setHandle(handle)
+                .setValidity(toApiMeasurementValidityType(validity))
+                .build();
 
         return performCallWrapper(
-            v -> metricStub.setMetricQualityValidity(message),
-            v -> fallback.setMetricQualityValidity(handle, validity),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY, validity.value()))
-        );
+                v -> metricStub.setMetricQualityValidity(message),
+                v -> fallback.setMetricQualityValidity(handle, validity),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY, validity.value())));
     }
 
     @Override
-    public ResponseTypes.Result setMetricStatus(final String handle, final MetricCategory category,
-                                                final ComponentActivation activation) {
+    public ResponseTypes.Result setMetricStatus(
+            final String handle, final MetricCategory category, final ComponentActivation activation) {
         final var metricStatus = getMetricStatus(activation);
         if (metricStatus.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;
-        final var message = MetricRequests.SetMetricStatusRequest
-            .newBuilder()
-            .setHandle(handle)
-            .setStatus(metricStatus.orElseThrow())
-            .build();
+        final var message = MetricRequests.SetMetricStatusRequest.newBuilder()
+                .setHandle(handle)
+                .setStatus(metricStatus.orElseThrow())
+                .build();
 
         return performCallWrapper(
-            v -> metricStub.setMetricStatus(message),
-            v -> fallback.setMetricStatus(handle, category, activation),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.toString()))
-        );
+                v -> metricStub.setMetricStatus(message),
+                v -> fallback.setMetricStatus(handle, category, activation),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
+                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
+                        new ImmutablePair<>(
+                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.toString())));
     }
 
     @Override
     public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
-        final var message = BasicRequests.BasicHandleRequest
-            .newBuilder()
-            .setHandle(handle)
-            .build();
+        final var message =
+                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
 
         return performCallWrapper(
-            v -> deviceStub.triggerDescriptorUpdate(message),
-            v -> fallback.triggerDescriptorUpdate(handle),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, handle))
-        );
+                v -> deviceStub.triggerDescriptorUpdate(message),
+                v -> fallback.triggerDescriptorUpdate(handle),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, handle)));
     }
 
     @Override
     public ResponseTypes.Result triggerReport(final QName report) {
         final var reportType = REPORT_TYPE_MAP.get(report);
         if (reportType == null) return ResponseTypes.Result.RESULT_FAIL;
-        final var message = DeviceRequests.TriggerReportRequest
-            .newBuilder()
-            .setReport(reportType)
-            .build();
+        final var message = DeviceRequests.TriggerReportRequest.newBuilder()
+                .setReport(reportType)
+                .build();
 
         return performCallWrapper(
-            v -> deviceStub.triggerReport(message),
-            v -> fallback.triggerReport(report),
-            BasicResponses.BasicResponse::getResult,
-            BasicResponses.BasicResponse::getResult,
-            List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, report.toString()))
-        );
+                v -> deviceStub.triggerReport(message),
+                v -> fallback.triggerReport(report),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, report.toString())));
     }
 
     private Optional<MetricTypes.MetricStatus> getMetricStatus(final ComponentActivation activation) {
@@ -375,15 +361,15 @@ public class GRpcManipulations implements Manipulations {
                 optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_INITIALIZING);
                 break;
             case STND_BY:
-                optionalOfMetricStatus = Optional.of(
-                    MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
+                optionalOfMetricStatus =
+                        Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
                 break;
             case SHTDN:
                 optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_DE_INITIALIZING);
                 break;
             case OFF:
                 optionalOfMetricStatus = Optional.of(
-                    MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
+                        MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
                 break;
             case FAIL:
                 optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_FAILED);
@@ -408,29 +394,27 @@ public class GRpcManipulations implements Manipulations {
      * @return response
      */
     public <GRES, RES> RES performCallWrapper(
-        final Function<Void, GRES> func,
-        final Function<Void, RES> fallbackFunc,
-        final Function<GRES, ResponseTypes.Result> statusExtractor,
-        final Function<GRES, RES> responseExtractor,
-        final List<Pair<String, String>> parameter
-    ) {
+            final Function<Void, GRES> func,
+            final Function<Void, RES> fallbackFunc,
+            final Function<GRES, ResponseTypes.Result> statusExtractor,
+            final Function<GRES, RES> responseExtractor,
+            final List<Pair<String, String>> parameter) {
         final var startTime = System.nanoTime();
         final var result = performCall(func, fallbackFunc, statusExtractor, responseExtractor);
         final var endTime = System.nanoTime();
-        final var methodName = walker.walk(s ->
-            s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
-        final var manipulation = manipulationInfoFactory.create(startTime, endTime,
-            getResultForPersisting(result), methodName.orElseThrow(), parameter);
+        final var methodName = walker.walk(
+                s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
+        final var manipulation = manipulationInfoFactory.create(
+                startTime, endTime, getResultForPersisting(result), methodName.orElseThrow(), parameter);
         manipulation.addToStorage();
         return result;
     }
 
     private <GRES, RES> RES performCall(
-        final Function<Void, GRES> func,
-        final Function<Void, RES> fallbackFunc,
-        final Function<GRES, ResponseTypes.Result> statusExtractor,
-        final Function<GRES, RES> responseExtractor
-    ) {
+            final Function<Void, GRES> func,
+            final Function<Void, RES> fallbackFunc,
+            final Function<GRES, ResponseTypes.Result> statusExtractor,
+            final Function<GRES, RES> responseExtractor) {
         final GRES response;
         try {
             response = func.apply(null);
@@ -502,8 +486,7 @@ public class GRpcManipulations implements Manipulations {
                 break;
             default:
                 throw new IllegalStateException(
-                    "Unknown ContextAssociation could not be mapped. " + contextAssociation
-                );
+                        "Unknown ContextAssociation could not be mapped. " + contextAssociation);
         }
         return apiType;
     }
@@ -525,8 +508,7 @@ public class GRpcManipulations implements Manipulations {
                 break;
             default:
                 throw new IllegalStateException(
-                    "Unknown AlertSignalManifestation could not be mapped. " + manifestation
-                );
+                        "Unknown AlertSignalManifestation could not be mapped. " + manifestation);
         }
         return apiType;
     }
@@ -544,9 +526,7 @@ public class GRpcManipulations implements Manipulations {
                 apiType = ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_PSD;
                 break;
             default:
-                throw new IllegalStateException(
-                    "Unknown AlertActivation could not be mapped. " + alertActivation
-                );
+                throw new IllegalStateException("Unknown AlertActivation could not be mapped. " + alertActivation);
         }
         return apiType;
     }
@@ -573,9 +553,7 @@ public class GRpcManipulations implements Manipulations {
                 apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_FAILURE;
                 break;
             default:
-                throw new IllegalStateException(
-                    "Unknown ComponentActivation could not be mapped. " + activation
-                );
+                throw new IllegalStateException("Unknown ComponentActivation could not be mapped. " + activation);
         }
         return apiType;
     }
@@ -611,9 +589,7 @@ public class GRpcManipulations implements Manipulations {
                 apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_NA;
                 break;
             default:
-                throw new IllegalStateException(
-                    "Unknown MeasurementValidity could not be mapped. " + validity
-                );
+                throw new IllegalStateException("Unknown MeasurementValidity could not be mapped. " + validity);
         }
         return apiType;
     }
@@ -634,5 +610,4 @@ public class GRpcManipulations implements Manipulations {
     private static StringValue buildStringValue(final String value) {
         return StringValue.newBuilder().setValue(value).build();
     }
-
 }

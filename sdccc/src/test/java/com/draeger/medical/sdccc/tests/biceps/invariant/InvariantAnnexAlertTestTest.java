@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.biceps.model.participant.AbstractAlertState;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.AlertSignalDescriptor;
@@ -28,6 +33,11 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,17 +46,6 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantAnnexAlertTest}.
@@ -93,14 +92,12 @@ public class InvariantAnnexAlertTestTest {
         when(mockClient.isClientRunning()).thenReturn(true);
 
         final Injector injector;
-        injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(mockClient);
-                }
+        injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(mockClient);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
@@ -143,85 +140,113 @@ public class InvariantAnnexAlertTestTest {
     @Test
     public void testRequirementB128Good() throws Exception {
         final var initialSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
 
         final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.VIS, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE3, AlertSignalManifestation.TAN, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE4, AlertSignalManifestation.OTH, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE5, AlertSignalManifestation.VIS, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE_REM, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.REM));
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.VIS,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE3,
+                        AlertSignalManifestation.TAN,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE4,
+                        AlertSignalManifestation.OTH,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE5,
+                        AlertSignalManifestation.VIS,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE_REM,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.REM));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true,
-            initialSystemSignalActivations, alertSignals);
+        final var initial = buildMdib(
+                SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true, initialSystemSignalActivations, alertSignals);
 
         // set alert activation for manifestation AUD to PSD
         final var firstSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
         // set AUD alert signals to PSD
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, firstSystemSignalActivations),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, firstSystemSignalActivations),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
 
         // set alert activation for manifestation VIS to ON
         final var secondSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.ON),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.ON),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
         // set both VIS alert signals to PSD or OFF
-        final var secondUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.TWO,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, secondSystemSignalActivations),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE5, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC));
+        final var secondUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, secondSystemSignalActivations),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE5, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC));
 
         // set alert activation for manifestation AUD to OFF and for OTH to PSD
         final var thirdSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.ON),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.PSD));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.ON),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.PSD));
         // set AUD alert signals to OFF and OTH alert signals to PSD
-        final var thirdUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(3),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, thirdSystemSignalActivations),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE4, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
+        final var thirdUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, thirdSystemSignalActivations),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE4, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
 
         // set alert activation for AUD to PSD, VIS to PSD, TAN to PSD and OTH to OFF
         final var fourthSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
         // set alert signals with manifestation AUD to PSD, VIS to OFF or PSD, TAN to PSD and OTH to OFF
-        final var fourthUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(4),
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, fourthSystemSignalActivations),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE3, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE4, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE5, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
+        final var fourthUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, fourthSystemSignalActivations),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE3, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE4, AlertActivation.OFF, AlertSignalPrimaryLocation.LOC),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE5, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
 
         // set alert activation for AUD to ON for the system signal activations of the mds alert system
-        final var fifthSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON));
+        final var fifthSystemSignalActivations =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON));
         // set alert signals with manifestation AUD to ON
-        final var fifthUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.valueOf(5),
-            buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON, fifthSystemSignalActivations),
-            buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE3, AlertActivation.ON, AlertSignalPrimaryLocation.LOC));
+        final var fifthUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(5),
+                buildAlertSystemState(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON, fifthSystemSignalActivations),
+                buildAlertSignalState(MDS_ALERT_SIGNAL_HANDLE3, AlertActivation.ON, AlertSignalPrimaryLocation.LOC));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -242,21 +267,27 @@ public class InvariantAnnexAlertTestTest {
     @Test
     public void testRequirementB128GoodImpliedValue() throws Exception {
         final var initialSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.TAN, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.OTH, AlertActivation.OFF));
 
         final var alertSignals = List.of(
-            mdibBuilder.buildAlertSignal(
-                VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, false, AlertActivation.OFF),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.VIS, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE_REM, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.REM));
+                mdibBuilder.buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, false, AlertActivation.OFF),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.VIS,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE_REM,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.REM));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true,
-            initialSystemSignalActivations, alertSignals);
+        final var initial = buildMdib(
+                SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true, initialSystemSignalActivations, alertSignals);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -271,50 +302,73 @@ public class InvariantAnnexAlertTestTest {
     @Test
     public void testRequirementB128GoodMultipleSequences() throws Exception {
 
-        final var initialSystemSignalActivationsFirstSequence = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF));
+        final var initialSystemSignalActivationsFirstSequence =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF));
 
-        final var alertSignalsFirstSequence = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.OFF,
+        final var alertSignalsFirstSequence = List.of(buildAlertSignal(
+                VMD_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.AUD,
+                AlertActivation.OFF,
                 AlertSignalPrimaryLocation.REM));
 
-        final var initialUnacceptableSequence = buildMdib(SEQUENCE_ID2, BigInteger.ZERO, BigInteger.ZERO, false,
-            initialSystemSignalActivationsFirstSequence, alertSignalsFirstSequence);
+        final var initialUnacceptableSequence = buildMdib(
+                SEQUENCE_ID2,
+                BigInteger.ZERO,
+                BigInteger.ZERO,
+                false,
+                initialSystemSignalActivationsFirstSequence,
+                alertSignalsFirstSequence);
 
         // set alert activation for manifestation AUD to PSD
-        final var firstSystemSignalActivationsUnacceptableSequence = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
+        final var firstSystemSignalActivationsUnacceptableSequence =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
         // set AUD alert signals to PSD
-        final var firstUpdateUnacceptableSequence = buildEpisodicAlertReport(SEQUENCE_ID2, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON,
-                firstSystemSignalActivationsUnacceptableSequence),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.REM));
+        final var firstUpdateUnacceptableSequence = buildEpisodicAlertReport(
+                SEQUENCE_ID2,
+                BigInteger.ONE,
+                buildAlertSystemState(
+                        VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, firstSystemSignalActivationsUnacceptableSequence),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.REM));
 
         final var initialSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF));
 
         final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.VIS, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE5, AlertSignalManifestation.VIS, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE_REM, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.REM));
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.VIS,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE5,
+                        AlertSignalManifestation.VIS,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE_REM,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.REM));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false,
-            initialSystemSignalActivations, alertSignals);
+        final var initial = buildMdib(
+                SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, initialSystemSignalActivations, alertSignals);
 
         // set alert activation for manifestation AUD to PSD
         final var firstSystemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF));
+                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF));
         // set AUD alert signals to PSD
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, firstSystemSignalActivations),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, firstSystemSignalActivations),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD, AlertSignalPrimaryLocation.LOC));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initialUnacceptableSequence);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdateUnacceptableSequence);
@@ -333,36 +387,54 @@ public class InvariantAnnexAlertTestTest {
      */
     @Test
     public void testRequirementB128GoodMultipleSystemSignalActivationsForSameManifestation() throws Exception {
-        final var systemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
+        final var systemSignalActivations =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
 
         final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE3, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE4, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE_REM, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.LOC));
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE3,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE4,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE_REM,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.LOC));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false,
-            systemSignalActivations, alertSignals);
+        final var initial =
+                buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, systemSignalActivations, alertSignals);
 
         // update with two system signal activations for alert signal manifestation AUD
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, List.of(
-                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON)
-            )));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(
+                        VMD_ALERT_SYSTEM_HANDLE,
+                        AlertActivation.ON,
+                        List.of(
+                                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON))));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
 
         testClass.testRequirementB128();
-
     }
 
     /**
@@ -373,22 +445,30 @@ public class InvariantAnnexAlertTestTest {
      */
     @Test
     public void testRequirementB128GoodSettingRemoteAlertSignal() throws Exception {
-        final var systemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF));
+        final var systemSignalActivations =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.OFF));
 
         final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.REM),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.AUD, AlertActivation.OFF,
-                AlertSignalPrimaryLocation.REM));
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.REM),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.OFF,
+                        AlertSignalPrimaryLocation.REM));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true,
-            systemSignalActivations, alertSignals);
+        final var initial =
+                buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, true, systemSignalActivations, alertSignals);
 
         // update the system signal activations for remote alert signals
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.ON, AlertSignalPrimaryLocation.REM),
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.PSD, AlertSignalPrimaryLocation.REM));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.ON, AlertSignalPrimaryLocation.REM),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE2, AlertActivation.PSD, AlertSignalPrimaryLocation.REM));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -404,37 +484,57 @@ public class InvariantAnnexAlertTestTest {
      */
     @Test
     public void testRequirementB128BadMultipleSystemSignalActivationForSameManifestation() throws Exception {
-        final var systemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
+        final var systemSignalActivations =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD));
 
         final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE3, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE4, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC),
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE_REM, AlertSignalManifestation.AUD, AlertActivation.PSD,
-                AlertSignalPrimaryLocation.LOC));
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE2,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE3,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE4,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC),
+                buildAlertSignal(
+                        VMD_ALERT_SIGNAL_HANDLE_REM,
+                        AlertSignalManifestation.AUD,
+                        AlertActivation.PSD,
+                        AlertSignalPrimaryLocation.LOC));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false,
-            systemSignalActivations, alertSignals);
+        final var initial =
+                buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, systemSignalActivations, alertSignals);
 
         // update with two system signal activations for alert signal manifestation AUD
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON, List.of(
-                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
-                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON)
-            )));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSystemState(
+                        VMD_ALERT_SYSTEM_HANDLE,
+                        AlertActivation.ON,
+                        List.of(
+                                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.PSD),
+                                createSystemSignalActivation(AlertSignalManifestation.AUD, AlertActivation.ON))));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
 
-        assertThrows(AssertionError.class, testClass::testRequirementB128, "Should have failed, since all"
-            + " alert signal alert activation states are set to PSD.");
-
+        assertThrows(
+                AssertionError.class,
+                testClass::testRequirementB128,
+                "Should have failed, since all" + " alert signal alert activation states are set to PSD.");
     }
 
     /**
@@ -445,33 +545,38 @@ public class InvariantAnnexAlertTestTest {
      */
     @Test
     public void testRequirementB128Bad() throws Exception {
-        final var systemSignalActivations = List.of(
-            createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF)
-        );
+        final var systemSignalActivations =
+                List.of(createSystemSignalActivation(AlertSignalManifestation.VIS, AlertActivation.OFF));
 
-        final var alertSignals = List.of(
-            buildAlertSignal(VMD_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.VIS,
-                AlertActivation.OFF, AlertSignalPrimaryLocation.LOC));
+        final var alertSignals = List.of(buildAlertSignal(
+                VMD_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.VIS,
+                AlertActivation.OFF,
+                AlertSignalPrimaryLocation.LOC));
 
-        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false,
-            systemSignalActivations, alertSignals);
+        final var initial =
+                buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ZERO, false, systemSignalActivations, alertSignals);
 
-        final var firstUpdate = buildEpisodicAlertReport(SEQUENCE_ID, BigInteger.ONE,
-            buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.ON, AlertSignalPrimaryLocation.LOC));
+        final var firstUpdate = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.ON, AlertSignalPrimaryLocation.LOC));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
 
-        final var error = assertThrows(AssertionError.class, testClass::testRequirementB128,
-            "Should have failed, alert activation of alert system state is OFF, alert activation of alert"
-                + " signal should be OFF");
+        final var error = assertThrows(
+                AssertionError.class,
+                testClass::testRequirementB128,
+                "Should have failed, alert activation of alert system state is OFF, alert activation of alert"
+                        + " signal should be OFF");
         assertTrue(error.getMessage().contains(VMD_ALERT_SIGNAL_HANDLE));
-
     }
 
-    private AbstractAlertState buildAlertSystemState(final String handle,
-                                                     final AlertActivation activation,
-                                                     final List<SystemSignalActivation> systemSignalActivations) {
+    private AbstractAlertState buildAlertSystemState(
+            final String handle,
+            final AlertActivation activation,
+            final List<SystemSignalActivation> systemSignalActivations) {
         final var alertSystemState = mdibBuilder.buildAlertSystemState(handle, activation);
 
         alertSystemState.getSystemSignalActivation().clear();
@@ -479,26 +584,25 @@ public class InvariantAnnexAlertTestTest {
         return alertSystemState;
     }
 
-    private AbstractAlertState buildAlertSignalState(final String handle,
-                                                     final AlertActivation activation,
-                                                     final AlertSignalPrimaryLocation location) {
+    private AbstractAlertState buildAlertSignalState(
+            final String handle, final AlertActivation activation, final AlertSignalPrimaryLocation location) {
         final var alertSignalState = mdibBuilder.buildAlertSignalState(handle, activation);
         alertSignalState.setLocation(location);
         return alertSignalState;
     }
 
-    private Pair<AlertSignalDescriptor, AlertSignalState> buildAlertSignal(final String handle,
-                                                                           final AlertSignalManifestation manifestation,
-                                                                           final AlertActivation alertActivation,
-                                                                           final AlertSignalPrimaryLocation location) {
-        final var alertSignal = mdibBuilder.buildAlertSignal(
-            handle, manifestation, false, alertActivation);
+    private Pair<AlertSignalDescriptor, AlertSignalState> buildAlertSignal(
+            final String handle,
+            final AlertSignalManifestation manifestation,
+            final AlertActivation alertActivation,
+            final AlertSignalPrimaryLocation location) {
+        final var alertSignal = mdibBuilder.buildAlertSignal(handle, manifestation, false, alertActivation);
         alertSignal.getRight().setLocation(location);
         return alertSignal;
     }
 
-    private SystemSignalActivation createSystemSignalActivation(final AlertSignalManifestation manifestation,
-                                                                final AlertActivation alertActivation) {
+    private SystemSignalActivation createSystemSignalActivation(
+            final AlertSignalManifestation manifestation, final AlertActivation alertActivation) {
         final var systemSignalActivation = participantModelFactory.createSystemSignalActivation();
         systemSignalActivation.setManifestation(manifestation);
         systemSignalActivation.setState(alertActivation);
@@ -506,12 +610,12 @@ public class InvariantAnnexAlertTestTest {
     }
 
     private Envelope buildMdib(
-        final String sequenceId,
-        final @Nullable BigInteger vmdVersion,
-        final @Nullable BigInteger mdsVersion,
-        final boolean multipleAlertSystems,
-        final List<SystemSignalActivation> systemSignalActivations,
-        final List<Pair<AlertSignalDescriptor, AlertSignalState>> alertSignals) {
+            final String sequenceId,
+            final @Nullable BigInteger vmdVersion,
+            final @Nullable BigInteger mdsVersion,
+            final boolean multipleAlertSystems,
+            final List<SystemSignalActivation> systemSignalActivations,
+            final List<Pair<AlertSignalDescriptor, AlertSignalState>> alertSignals) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         final var mdState = mdib.getMdState();
@@ -523,8 +627,10 @@ public class InvariantAnnexAlertTestTest {
         vmdAlertSystem.getRight().getSystemSignalActivation().clear();
         vmdAlertSystem.getRight().getSystemSignalActivation().addAll(systemSignalActivations);
         vmdAlertSystem.getLeft().getAlertSignal().clear();
-        vmdAlertSystem.getLeft().getAlertSignal().addAll(
-                alertSignals.stream().map(Pair::getLeft).collect(Collectors.toList()));
+        vmdAlertSystem
+                .getLeft()
+                .getAlertSignal()
+                .addAll(alertSignals.stream().map(Pair::getLeft).collect(Collectors.toList()));
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         vmd.getLeft().setDescriptorVersion(vmdVersion);
@@ -539,55 +645,42 @@ public class InvariantAnnexAlertTestTest {
         if (multipleAlertSystems) {
             final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.OFF);
             final var mdsAlertSignal = mdibBuilder.buildAlertSignal(
-                MDS_ALERT_SIGNAL_HANDLE,
-                AlertSignalManifestation.OTH,
-                false,
-                AlertActivation.OFF);
+                    MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.OTH, false, AlertActivation.OFF);
             mdsAlertSignal.getRight().setLocation(AlertSignalPrimaryLocation.REM);
 
             final var mdsSecondAlertSignal = mdibBuilder.buildAlertSignal(
-                MDS_ALERT_SIGNAL_HANDLE2,
-                AlertSignalManifestation.AUD,
-                true,
-                AlertActivation.OFF);
+                    MDS_ALERT_SIGNAL_HANDLE2, AlertSignalManifestation.AUD, true, AlertActivation.OFF);
             mdsSecondAlertSignal.getRight().setLocation(AlertSignalPrimaryLocation.REM);
 
             final var mdsThirdAlertSignal = mdibBuilder.buildAlertSignal(
-                MDS_ALERT_SIGNAL_HANDLE3,
-                AlertSignalManifestation.AUD,
-                true,
-                AlertActivation.OFF);
+                    MDS_ALERT_SIGNAL_HANDLE3, AlertSignalManifestation.AUD, true, AlertActivation.OFF);
             mdsThirdAlertSignal.getRight().setLocation(AlertSignalPrimaryLocation.LOC);
 
             mdsAlertSystem.getLeft().getAlertSignal().clear();
-            mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(
-                    mdsAlertSignal.getLeft(),
-                    mdsSecondAlertSignal.getLeft(),
-                    mdsThirdAlertSignal.getLeft()));
+            mdsAlertSystem
+                    .getLeft()
+                    .getAlertSignal()
+                    .addAll(List.of(
+                            mdsAlertSignal.getLeft(), mdsSecondAlertSignal.getLeft(), mdsThirdAlertSignal.getLeft()));
             mdsAlertSystem.getRight().getSystemSignalActivation().clear();
             mdsAlertSystem.getRight().getSystemSignalActivation().addAll(systemSignalActivations);
             mdsDescriptor.setAlertSystem(mdsAlertSystem.getLeft());
-            mdState.getState().addAll(List.of(
-                mdsAlertSystem.getRight(),
-                mdsAlertSignal.getRight(),
-                mdsSecondAlertSignal.getRight(),
-                mdsThirdAlertSignal.getRight()));
-
+            mdState.getState()
+                    .addAll(List.of(
+                            mdsAlertSystem.getRight(),
+                            mdsAlertSignal.getRight(),
+                            mdsSecondAlertSignal.getRight(),
+                            mdsThirdAlertSignal.getRight()));
         }
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
 
         return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            getMdibResponse
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
     private Envelope buildEpisodicAlertReport(
-        final String sequenceId,
-        final @Nullable BigInteger mdibVersion,
-        final AbstractAlertState... alertStates
-    ) {
+            final String sequenceId, final @Nullable BigInteger mdibVersion, final AbstractAlertState... alertStates) {
         final var report = messageBuilder.buildEpisodicAlertReport(sequenceId);
 
         final var reportPart = messageBuilder.buildAbstractAlertReportReportPart();
@@ -597,9 +690,6 @@ public class InvariantAnnexAlertTestTest {
 
         report.setMdibVersion(mdibVersion);
         report.getReportPart().add(reportPart);
-        return messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-            report
-        );
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_ALERT_REPORT, report);
     }
 }

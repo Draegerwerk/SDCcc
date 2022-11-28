@@ -7,22 +7,17 @@
 
 package com.draeger.medical.sdccc.manipulation;
 
-import com.google.common.util.concurrent.SettableFuture;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import com.google.common.util.concurrent.SettableFuture;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
@@ -41,16 +36,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * Unit tests for the user interaction handler.
@@ -89,52 +88,54 @@ public class UserInteractionTest {
     @Timeout(TEST_TIMEOUT_SECONDS)
     public void testConsoleSuccess() throws IOException {
         final String resultInput = "TestInput"
-            + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n"
-            + UserInteraction.YES
-            + "\n";
+                + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n"
+                + UserInteraction.YES
+                + "\n";
 
         final InputStream closeableInputStreamHandler =
-            new FilterInputStream(new ByteArrayInputStream(resultInput.getBytes(StandardCharsets.UTF_8))) {
-                private boolean closed;
+                new FilterInputStream(new ByteArrayInputStream(resultInput.getBytes(StandardCharsets.UTF_8))) {
+                    private boolean closed;
 
-                @Override
-                public int read(final byte[] b, final int off, final int len) throws IOException {
-                    if (this.closed) {
-                        throw new IOException("Stream has been closed");
+                    @Override
+                    public int read(final byte[] b, final int off, final int len) throws IOException {
+                        if (this.closed) {
+                            throw new IOException("Stream has been closed");
+                        }
+
+                        return super.read(b, off, len);
                     }
 
-                    return super.read(b, off, len);
-                }
-
-                @Override
-                public void close() {
-                    System.out.println("close called");
-                    this.closed = true;
-                }
-            };
+                    @Override
+                    public void close() {
+                        System.out.println("close called");
+                        this.closed = true;
+                    }
+                };
 
         final var interactionHandler = new UserInteraction(false, false, closeableInputStreamHandler);
         final String interactionText = "DO NOT INTERACT WITH THIS POPUP, IT IS FOR UNIT TESTING!";
-        assertTrue(interactionHandler.displayYesNoConsoleUserInteraction(interactionText),
-            "User interaction should have succeeded, failed instead");
+        assertTrue(
+                interactionHandler.displayYesNoConsoleUserInteraction(interactionText),
+                "User interaction should have succeeded, failed instead");
         closeableInputStreamHandler.reset();
-        assertFalse(interactionHandler.displayYesNoConsoleUserInteraction(interactionText),
-            "User interaction should have succeeded, failed instead");
+        assertFalse(
+                interactionHandler.displayYesNoConsoleUserInteraction(interactionText),
+                "User interaction should have succeeded, failed instead");
 
         final InputStream nonCloseableInputStream =
-            new FilterInputStream(new ByteArrayInputStream(resultInput.getBytes(StandardCharsets.UTF_8))) {
-                @Override
-                public void close() {
-                }
-            };
+                new FilterInputStream(new ByteArrayInputStream(resultInput.getBytes(StandardCharsets.UTF_8))) {
+                    @Override
+                    public void close() {}
+                };
 
-        final var nonCloseableInputStreamHandler = new UserInteraction(false, false,
-            nonCloseableInputStream);
-        assertTrue(nonCloseableInputStreamHandler.displayYesNoConsoleUserInteraction(interactionText),
-            "User interaction should have succeeded, failed instead");
+        final var nonCloseableInputStreamHandler = new UserInteraction(false, false, nonCloseableInputStream);
+        assertTrue(
+                nonCloseableInputStreamHandler.displayYesNoConsoleUserInteraction(interactionText),
+                "User interaction should have succeeded, failed instead");
         nonCloseableInputStream.reset();
-        assertTrue(nonCloseableInputStreamHandler.displayYesNoConsoleUserInteraction(interactionText),
-            "User interaction should have succeeded, failed instead");
+        assertTrue(
+                nonCloseableInputStreamHandler.displayYesNoConsoleUserInteraction(interactionText),
+                "User interaction should have succeeded, failed instead");
     }
 
     /**
@@ -144,9 +145,9 @@ public class UserInteractionTest {
     @Timeout(TEST_TIMEOUT_SECONDS)
     public void testConsoleFailure() {
         final var resultInput = "TestInput"
-            + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n"
-            + UserInteraction.NO
-            + "\n";
+                + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n"
+                + UserInteraction.NO
+                + "\n";
         final var input = new ByteArrayInputStream(resultInput.getBytes(StandardCharsets.UTF_8));
 
         final var interactionHandler = new UserInteraction(false, false, input);
@@ -165,7 +166,7 @@ public class UserInteractionTest {
     public void testConsoleBlocking() throws Exception {
         final var waitTime = Duration.ofSeconds(2);
         final var initialInput =
-            "TestInput ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n";
+                "TestInput ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя\n";
         final var finalInput = "y\n";
         final var input = mock(InputStream.class);
         final var answer = new WaitingAnswer(initialInput, finalInput, waitTime);
@@ -260,8 +261,8 @@ public class UserInteractionTest {
     public void testSwingPopupText() throws Exception {
         final var interactionHandler = new UserInteraction(false, true, InputStream.nullInputStream());
         final var interactionText = "DO NOT INTERACT WITH THIS POPUP, IT IS FOR UNIT TESTING!"
-            + "The following string is strange:"
-            + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя";
+                + "The following string is strange:"
+                + " ЁЂЃЄЅІЇЈЉЊЋЌЍЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя";
 
         final SettableFuture<Boolean> result = SettableFuture.create();
         EventQueue.invokeLater(() -> {
@@ -301,8 +302,8 @@ public class UserInteractionTest {
         {
             final SettableFuture<String> result = SettableFuture.create();
             EventQueue.invokeLater(() -> {
-                final var interactionResult = interactionHandler
-                    .displayStringInputSwingUserInteraction(interactionText);
+                final var interactionResult =
+                        interactionHandler.displayStringInputSwingUserInteraction(interactionText);
                 result.set(interactionResult);
             });
 
@@ -390,10 +391,7 @@ public class UserInteractionTest {
      * @return matching child or null of no matching child was found
      */
     private static <T> T findMatchingElement(
-        final Container container,
-        final Class<T> elementType,
-        final Function<T, Boolean> validator
-    ) {
+            final Container container, final Class<T> elementType, final Function<T, Boolean> validator) {
         T result = null;
 
         final List<Container> children = new ArrayList<>();

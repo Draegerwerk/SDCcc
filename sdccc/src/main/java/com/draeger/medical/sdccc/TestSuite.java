@@ -7,6 +7,8 @@
 
 package com.draeger.medical.sdccc;
 
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
+
 import com.draeger.medical.sdccc.configuration.CommandLineOptions;
 import com.draeger.medical.sdccc.configuration.DefaultEnabledTestConfig;
 import com.draeger.medical.sdccc.configuration.DefaultTestSuiteConfig;
@@ -39,6 +41,21 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeoutException;
+import javax.inject.Named;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -63,24 +80,6 @@ import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.common.WsdlConstants;
 
-import javax.inject.Named;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
-
 /**
  * SDCcc main class.
  */
@@ -100,13 +99,14 @@ public class TestSuite {
     private final TestClient client;
 
     @Inject
-    TestSuite(final Injector injector,
-              final TestRunObserver testRunObserver,
-              @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
-              @Named(TestRunConfig.TEST_RUN_DIR) final File testRunDir,
-              final MessageGeneratingUtil messageGenerator,
-              final TestRunInformation testRunInformation,
-              final TestClient client) {
+    TestSuite(
+            final Injector injector,
+            final TestRunObserver testRunObserver,
+            @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
+            @Named(TestRunConfig.TEST_RUN_DIR) final File testRunDir,
+            final MessageGeneratingUtil messageGenerator,
+            final TestRunInformation testRunInformation,
+            final TestClient client) {
         this.injector = injector;
         this.sdcTestDirectories = sdcTestDirectories;
         this.testRunObserver = testRunObserver;
@@ -166,14 +166,14 @@ public class TestSuite {
          */
         // stop client and provider now
         totalTestFailures =
-            phase4(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
+                phase4(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
 
         // close message cache
         postProcessing();
 
         final TestRunObserver observer = injector.getInstance(TestRunObserver.class);
         observer.setTotalNumberOfTestsRun(directSummary.getSummary().getTestsStartedCount()
-            + invariantSummary.getSummary().getTestsStartedCount());
+                + invariantSummary.getSummary().getTestsStartedCount());
 
         return totalTestFailures;
     }
@@ -185,7 +185,7 @@ public class TestSuite {
         } catch (final TimeoutException e) {
             testRunObserver.invalidateTestRun("Could not stop the test client", e);
         }
-        
+
         injector.getInstance(MessageStorage.class).close();
 
         if (testRunObserver.isInvalid()) {
@@ -194,8 +194,12 @@ public class TestSuite {
         }
     }
 
-    private long phase4(final long totalTestFailures, final PrintWriter outWriter, final Launcher invariantTestLauncher,
-                        final TestPlan invariantTestPlan, final SummaryGeneratingListener invariantSummary) {
+    private long phase4(
+            final long totalTestFailures,
+            final PrintWriter outWriter,
+            final Launcher invariantTestLauncher,
+            final TestPlan invariantTestPlan,
+            final SummaryGeneratingListener invariantSummary) {
         LOG.info("Disconnecting TestSuite Client");
         try {
             injector.getInstance(TestClient.class).disconnect();
@@ -208,7 +212,7 @@ public class TestSuite {
         injector.getInstance(MessageStorage.class).flush();
 
         final long result =
-            phase2(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
+                phase2(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
         LOG.debug("Had total failures of {}", totalTestFailures);
         return result;
     }
@@ -217,7 +221,6 @@ public class TestSuite {
         // flush all data so preconditions evaluate most current data
         injector.getInstance(MessageStorage.class).flush();
 
-        // CHECKSTYLE.OFF: IllegalCatch
         final var preconditions = injector.getInstance(PreconditionRegistry.class);
         try {
             preconditions.runPreconditions();
@@ -226,16 +229,20 @@ public class TestSuite {
             LOG.error("Error occurred while running preconditions", e);
             testRunObserver.invalidateTestRun("Error occurred while running preconditions", e);
         }
-        // CHECKSTYLE.ON: IllegalCatch
     }
 
-    private long phase2(final long totalTestFailures, final PrintWriter outWriter, final Launcher directTestLauncher,
-                        final TestPlan directTestPlan, final SummaryGeneratingListener directSummary) {
+    private long phase2(
+            final long totalTestFailures,
+            final PrintWriter outWriter,
+            final Launcher directTestLauncher,
+            final TestPlan directTestPlan,
+            final SummaryGeneratingListener directSummary) {
         directTestLauncher.execute(directTestPlan);
         directSummary.getSummary().printTo(outWriter);
-        directSummary.getSummary().getFailures().forEach(
-            failure -> LOG.error("{}", failure.getTestIdentifier(), failure.getException())
-        );
+        directSummary
+                .getSummary()
+                .getFailures()
+                .forEach(failure -> LOG.error("{}", failure.getTestIdentifier(), failure.getException()));
 
         return totalTestFailures + directSummary.getSummary().getTotalFailureCount();
     }
@@ -333,12 +340,10 @@ public class TestSuite {
     }
 
     private Boolean setupDeviceAndProvider() {
-        final var isConsumerEnabled = injector.getInstance(
-                Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE))
-        );
-        final var isProviderEnabled = injector.getInstance(
-                Key.get(Boolean.class, Names.named(TestSuiteConfig.PROVIDER_ENABLE))
-        );
+        final var isConsumerEnabled =
+                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE)));
+        final var isProviderEnabled =
+                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.PROVIDER_ENABLE)));
 
         if (isConsumerEnabled) {
             LOG.info("Starting TestSuite Client");
@@ -352,15 +357,10 @@ public class TestSuite {
             }
 
             // check the DUT for an archive service, currently needed for MDPWS:R0006
-            this.testRunInformation.setArchiveServicePresent(client
-                .getHostingServiceProxy()
-                .getHostedServices().values()
-                .stream()
-                .anyMatch(service ->
-                    service.getType().getTypes()
-                        .contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)
-                )
-            );
+            this.testRunInformation.setArchiveServicePresent(
+                    client.getHostingServiceProxy().getHostedServices().values().stream()
+                            .anyMatch(service ->
+                                    service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
         }
         if (isProviderEnabled) {
             LOG.info("Starting TestSuite Provider");
@@ -368,7 +368,6 @@ public class TestSuite {
         }
         return isConsumerEnabled;
     }
-
 
     /**
      * Collect all enabled tests with the passed suffix.
@@ -382,11 +381,9 @@ public class TestSuite {
             packages.add(selectPackage(base + suffix));
         }
 
-        final var tests = LauncherDiscoveryRequestBuilder.request().selectors(packages)
-                .filters(
-                        injector.getInstance(TestEnabledFilter.class),
-                        new TestDescriptionFilter()
-                );
+        final var tests = LauncherDiscoveryRequestBuilder.request()
+                .selectors(packages)
+                .filters(injector.getInstance(TestEnabledFilter.class), new TestDescriptionFilter());
         if (filters.length > 0) {
             // cast to ensure all elements are listed, not just the first
             LOG.debug("Registering additional test filters {}", (Object) filters);
@@ -406,39 +403,29 @@ public class TestSuite {
         final Launcher launcher = LauncherFactory.create();
 
         final XmlReportListener xmlListener = injector.getInstance(XmlReportFactory.class)
-                .createXmlReportListener(
-                        reportDirectory.toPath(),
-                        reportFileName
-                );
+                .createXmlReportListener(reportDirectory.toPath(), reportFileName);
         launcher.registerTestExecutionListeners(xmlListener);
 
         return launcher;
     }
 
-
     private static Injector createInjector(final Module... override) {
-        return Guice.createInjector(
-                Modules.override(
-                        new DefaultTestSuiteModule(),
-                        new DefaultTestSuiteConfig(),
-                        new DefaultEnabledTestConfig()
-                ).with(override)
-        );
+        return Guice.createInjector(Modules.override(
+                        new DefaultTestSuiteModule(), new DefaultTestSuiteConfig(), new DefaultEnabledTestConfig())
+                .with(override));
     }
 
-    private static Injector createTestRunInjector(final CommandLineOptions cmdLine,
-                                                  final File testRunDir) throws IOException {
+    private static Injector createTestRunInjector(final CommandLineOptions cmdLine, final File testRunDir)
+            throws IOException {
 
         final AbstractConfigurationModule configModule = new AbstractConfigurationModule() {
             @Override
-            protected void defaultConfigure() {
-            }
+            protected void defaultConfigure() {}
         };
 
         final AbstractConfigurationModule testConfigModule = new AbstractConfigurationModule() {
             @Override
-            protected void defaultConfigure() {
-            }
+            protected void defaultConfigure() {}
         };
 
         final AbstractConfigurationModule cliOverrideModule = new AbstractConfigurationModule() {
@@ -455,17 +442,20 @@ public class TestSuite {
             }
         };
 
-        try (final var configFileStream = new FileInputStream(cmdLine.getConfigPath().toFile())) {
+        try (final var configFileStream =
+                new FileInputStream(cmdLine.getConfigPath().toFile())) {
             final var configModuleParser = new TomlConfigParser(TestSuiteConfig.class);
             configModuleParser.parseToml(configFileStream, configModule);
         }
-        try (final var testConfigFileStream = new FileInputStream(cmdLine.getTestConfigPath().toFile())) {
+        try (final var testConfigFileStream =
+                new FileInputStream(cmdLine.getTestConfigPath().toFile())) {
             final var testConfigModuleParser = new TomlConfigParser(EnabledTestConfig.class);
             testConfigModuleParser.parseToml(testConfigFileStream, testConfigModule);
         }
 
         // cli overrides
-        final var configurationModule = Modules.override(configModule, testConfigModule).with(cliOverrideModule);
+        final var configurationModule =
+                Modules.override(configModule, testConfigModule).with(cliOverrideModule);
 
         return createInjector(configurationModule, new TestRunConfig(testRunDir));
     }
@@ -477,9 +467,7 @@ public class TestSuite {
             printVerdict(exitCode, testRunDir, injector);
 
             injector.getInstance(MessageStorage.class).close();
-            // CHECKSTYLE.OFF: IllegalCatch
         } catch (final RuntimeException | Error e) {
-            // CHECKSTYLE.ON: IllegalCatch
 
             LOG.error("Unchecked exception during cleanup", e);
             printVerdict(1, testRunDir, injector);
@@ -493,12 +481,13 @@ public class TestSuite {
         final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
 
         if (exitCode == 0) {
-            LOG.info("Test run with {} Tests was completed successfully."
-                    + " No problems were found.",
-                testRunObserver.getTotalNumberOfTestsRun());
+            LOG.info(
+                    "Test run with {} Tests was completed successfully." + " No problems were found.",
+                    testRunObserver.getTotalNumberOfTestsRun());
         } else {
-            LOG.info("Test run found problems. Please consult the logfiles in {}"
-                + " for further information.", testRunDir);
+            LOG.info(
+                    "Test run found problems. Please consult the logfiles in {}" + " for further information.",
+                    testRunDir);
         }
 
         if (testRunObserver.isInvalid()) {
@@ -520,8 +509,8 @@ public class TestSuite {
      * @throws IllegalAccessException          if the selected style could not be instantiated.
      */
     public static void setupSwingTheme()
-            throws ClassNotFoundException, UnsupportedLookAndFeelException,
-            InstantiationException, IllegalAccessException {
+            throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException,
+                    IllegalAccessException {
         if (SystemUtils.IS_OS_LINUX) {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
         } else if (SystemUtils.IS_OS_WINDOWS) {
@@ -542,7 +531,8 @@ public class TestSuite {
         final var cmdLine = new CommandLineOptions(args);
 
         // setup logging
-        final var testRunDir = TestRunConfig.createTestRunDirectory(cmdLine.getTestRunDirectory().orElse(null));
+        final var testRunDir = TestRunConfig.createTestRunDirectory(
+                cmdLine.getTestRunDirectory().orElse(null));
         final var logConfig = LoggingConfigurator.loggerConfig(testRunDir);
         checkLogConfig(logConfig);
 
@@ -555,15 +545,17 @@ public class TestSuite {
 
         try {
             setupSwingTheme();
-        } catch (final ClassNotFoundException | UnsupportedLookAndFeelException
-                | InstantiationException | IllegalAccessException e) {
+        } catch (final ClassNotFoundException
+                | UnsupportedLookAndFeelException
+                | InstantiationException
+                | IllegalAccessException e) {
             LOG.warn("Error while setting swing look and feel options.", e);
         }
 
         final Injector injector = createTestRunInjector(cmdLine, testRunDir);
 
         final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
-            findTriggerOnErrorOrWorseLogAppender(logConfig);
+                findTriggerOnErrorOrWorseLogAppender(logConfig);
         if (triggerOnErrorOrWorseLogAppender == null) {
             // should never happen
             throw new IllegalStateException("Could not find an TriggerOnErrorOrWorseLogAppender in the logConfig.");
@@ -574,8 +566,8 @@ public class TestSuite {
             triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler(null);
             // invalidate test run
             testRunObserver.invalidateTestRun("TriggerOnErrorOrWorseLogAppender observed an ERROR or worse."
-                + " Invalidating TestRun."
-                + " Please see the Log for more Details.");
+                    + " Invalidating TestRun."
+                    + " Please see the Log for more Details.");
         });
 
         LOG.info("Starting SDCcc");
@@ -590,9 +582,7 @@ public class TestSuite {
             } else {
                 TestSuite.exit(1, injector, testRunDir);
             }
-            // CHECKSTYLE.OFF: IllegalCatch
         } catch (final RuntimeException | Error e) {
-            // CHECKSTYLE.ON: IllegalCatch
 
             LOG.error("Unchecked exception while setting up or running the TestSuite", e);
             TestSuite.exit(1, injector, testRunDir);
@@ -600,7 +590,7 @@ public class TestSuite {
     }
 
     private static TriggerOnErrorOrWorseLogAppender findTriggerOnErrorOrWorseLogAppender(
-        final BuiltConfiguration logConfig) {
+            final BuiltConfiguration logConfig) {
         for (Map.Entry<String, Appender> entry : logConfig.getAppenders().entrySet()) {
             final Appender appender = entry.getValue();
             if (appender instanceof TriggerOnErrorOrWorseLogAppender) {
@@ -625,7 +615,7 @@ public class TestSuite {
 
         if (count != 1) {
             throw new IllegalStateException("Precondition violated: There must be exactly 1"
-                + "TriggerOnErrorOrWorseLogAppender in the Log4j config.");
+                    + "TriggerOnErrorOrWorseLogAppender in the Log4j config.");
         }
 
         // 2. Each Logger must append to the TriggerOnErrorOrWorseLogAppender
@@ -638,14 +628,11 @@ public class TestSuite {
                 }
             }
             if (!found) {
-                throw new IllegalStateException(
-                    String.format("Precondition violated: Logger '%s' does not append to the"
-                            + " TriggerOnErrorOrWorseLogAppender '%s'",
-                        entry.getKey(),
-                        triggerOnErrorOrWorseLogAppenderName));
+                throw new IllegalStateException(String.format(
+                        "Precondition violated: Logger '%s' does not append to the"
+                                + " TriggerOnErrorOrWorseLogAppender '%s'",
+                        entry.getKey(), triggerOnErrorOrWorseLogAppenderName));
             }
         }
-
     }
-
 }

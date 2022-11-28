@@ -7,6 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.dpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -18,6 +24,13 @@ import com.draeger.medical.sdccc.util.MdibBuilder;
 import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import javax.xml.namespace.QName;
 import org.apache.http.HttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,20 +54,6 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * Unit test for the DPWS {@linkplain DirectMessagingTest}.
  */
@@ -63,7 +62,7 @@ public class DirectMessagingTestTest {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
     private static final String INVALID_ADDRESSING_HEADER = "InvalidAddressingHeader";
     private static final String INVALID_ADDRESSING_HEADER_REASON =
-        "A header representing a Message Addressing Property is not valid and the message cannot be processed";
+            "A header representing a Message Addressing Property is not valid and the message cannot be processed";
 
     private static MdibBuilder mdibBuilder;
     private static MessageBuilder messageBuilder;
@@ -84,8 +83,8 @@ public class DirectMessagingTestTest {
         final Injector marshallingInjector = MarshallingUtil.createMarshallingTestInjector(true);
         mdibBuilder = marshallingInjector.getInstance(MdibBuilder.class);
         messageBuilder = marshallingInjector.getInstance(MessageBuilder.class);
-        soapMarshallingForHttpClient = marshallingInjector
-            .getInstance(com.draeger.medical.sdccc.marshalling.SoapMarshalling.class);
+        soapMarshallingForHttpClient =
+                marshallingInjector.getInstance(com.draeger.medical.sdccc.marshalling.SoapMarshalling.class);
     }
 
     @BeforeEach
@@ -96,33 +95,30 @@ public class DirectMessagingTestTest {
         httpClientUtil = mock(HttpClientUtil.class);
         mockApacheFactory = mock(ApacheTransportBindingFactoryImpl.class);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
             }
-        );
+        });
         InjectorTestBase.setInjector(injector);
 
         // setup the injector used by sdcri
         final var clientInjector = TestClientUtil.createClientInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(HttpClientUtil.class).toInstance(httpClientUtil);
-                    bind(ApacheTransportBindingFactoryImpl.class).toInstance(mockApacheFactory);
-                }
-            },
-            new AbstractConfigurationModule() {
-                @Override
-                protected void defaultConfigure() {
-                    bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
-                    bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
-                }
-            }
-        );
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(HttpClientUtil.class).toInstance(httpClientUtil);
+                        bind(ApacheTransportBindingFactoryImpl.class).toInstance(mockApacheFactory);
+                    }
+                },
+                new AbstractConfigurationModule() {
+                    @Override
+                    protected void defaultConfigure() {
+                        bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
+                        bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
+                    }
+                });
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         soapUtil = clientInjector.getInstance(SoapUtil.class);
@@ -167,9 +163,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(httpClientUtil.postMessageWithHttpResponse(any(), any(), any())).thenReturn(mockResponse);
 
         final var map = Map.of("hostedService", hostedService);
@@ -192,9 +186,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(httpClientUtil.postMessageWithHttpResponse(any(), any(), any())).thenReturn(mockResponse);
 
         final var map = Map.of("hostedService", hostedService);
@@ -217,9 +209,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(httpClientUtil.postMessageWithHttpResponse(any(), any(), any())).thenReturn(mockResponse);
 
         final var map = Map.of("hostedService", hostedService);
@@ -242,9 +232,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(httpClientUtil.postMessageWithHttpResponse(any(), any(), any())).thenReturn(mockResponse);
 
         final var map = Map.of("hostedService", hostedService);
@@ -265,9 +253,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(hostedService.sendRequestResponse(any())).thenReturn(mockResponse);
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
@@ -286,9 +272,7 @@ public class DirectMessagingTestTest {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class, RETURNS_DEEP_STUBS);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
         when(hostedService.sendRequestResponse(any())).thenThrow(MarshallingException.class);
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
@@ -314,10 +298,10 @@ public class DirectMessagingTestTest {
     public void testRequirementR0031Good() throws Exception {
         final var goodResponse = createMdibResponseMessage();
         final var faultResponse = soapFaultFactory.createFault(
-            WsAddressingConstants.FAULT_ACTION,
-            SoapConstants.SENDER,
-            new QName(WsAddressingConstants.NAMESPACE, INVALID_ADDRESSING_HEADER),
-            INVALID_ADDRESSING_HEADER_REASON);
+                WsAddressingConstants.FAULT_ACTION,
+                SoapConstants.SENDER,
+                new QName(WsAddressingConstants.NAMESPACE, INVALID_ADDRESSING_HEADER),
+                INVALID_ADDRESSING_HEADER_REASON);
         testRequirementR0031(goodResponse, faultResponse, goodResponse);
     }
 
@@ -330,10 +314,10 @@ public class DirectMessagingTestTest {
     public void testRequirementR0031BadPrecondition() throws Exception {
         final var goodResponse = createMdibResponseMessage();
         final var faultResponse = soapFaultFactory.createFault(
-            WsAddressingConstants.FAULT_ACTION,
-            SoapConstants.SENDER,
-            SoapConstants.DEFAULT_SUBCODE,
-            INVALID_ADDRESSING_HEADER_REASON);
+                WsAddressingConstants.FAULT_ACTION,
+                SoapConstants.SENDER,
+                SoapConstants.DEFAULT_SUBCODE,
+                INVALID_ADDRESSING_HEADER_REASON);
         assertThrows(AssertionError.class, () -> testRequirementR0031(goodResponse, faultResponse, goodResponse));
     }
 
@@ -346,19 +330,19 @@ public class DirectMessagingTestTest {
     public void testRequirementR0031Bad() throws Exception {
         final var goodResponse = createMdibResponseMessage();
         final var faultResponse = soapFaultFactory.createFault(
-            WsAddressingConstants.FAULT_ACTION,
-            SoapConstants.SENDER,
-            new QName(WsAddressingConstants.NAMESPACE, INVALID_ADDRESSING_HEADER),
-            INVALID_ADDRESSING_HEADER_REASON);
+                WsAddressingConstants.FAULT_ACTION,
+                SoapConstants.SENDER,
+                new QName(WsAddressingConstants.NAMESPACE, INVALID_ADDRESSING_HEADER),
+                INVALID_ADDRESSING_HEADER_REASON);
 
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
-        when(httpClientUtil.postMessage(any(), any(), any())).thenReturn(goodResponse)
-            .thenThrow(new SoapFaultException(faultResponse)).thenThrow(new SoapFaultException(faultResponse));
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
+        when(httpClientUtil.postMessage(any(), any(), any()))
+                .thenReturn(goodResponse)
+                .thenThrow(new SoapFaultException(faultResponse))
+                .thenThrow(new SoapFaultException(faultResponse));
 
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
@@ -368,15 +352,15 @@ public class DirectMessagingTestTest {
     }
 
     private void testRequirementR0031(final SoapMessage one, final SoapMessage two, final SoapMessage three)
-        throws Exception {
+            throws Exception {
         final var hostedServiceTypeMock = mock(HostedServiceType.class);
         final var hostedService = mock(HostedServiceProxy.class);
         when(hostedService.getType()).thenReturn(hostedServiceTypeMock);
-        when(hostedService.getType().getTypes()).thenReturn(List.of(
-            WsdlConstants.PORT_TYPE_GET_QNAME
-        ));
-        when(httpClientUtil.postMessage(any(), any(), any())).thenReturn(one)
-            .thenThrow(new SoapFaultException(two)).thenReturn(three);
+        when(hostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_GET_QNAME));
+        when(httpClientUtil.postMessage(any(), any(), any()))
+                .thenReturn(one)
+                .thenThrow(new SoapFaultException(two))
+                .thenReturn(three);
 
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
@@ -387,8 +371,7 @@ public class DirectMessagingTestTest {
 
     private SoapMessage createMdibResponseMessage() {
         return soapUtil.createMessage(
-            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
-            messageModelFactory.createGetMdibResponse()
-        );
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB),
+                messageModelFactory.createGetMdibResponse());
     }
 }
