@@ -7,13 +7,12 @@
 
 package com.draeger.medical.sdccc.util;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Logger;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A {@linkplain OutputStream} which logs to a log4j2 {@linkplain Logger}.

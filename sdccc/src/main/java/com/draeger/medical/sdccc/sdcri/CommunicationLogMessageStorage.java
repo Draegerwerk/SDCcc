@@ -9,12 +9,11 @@ package com.draeger.medical.sdccc.sdcri;
 
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.io.OutputStream;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.CommunicationLogSink;
 import org.somda.sdc.dpws.soap.CommunicationContext;
-
-import java.io.IOException;
-import java.io.OutputStream;
 
 /**
  * Connector between the SDCri {@linkplain CommunicationLog} and SDCcc's {@linkplain MessageStorage}.
@@ -46,8 +45,7 @@ public class CommunicationLogMessageStorage implements CommunicationLogSink {
             final CommunicationLog.TransportType path,
             final CommunicationLog.Direction direction,
             final CommunicationLog.MessageType messageType,
-            final CommunicationContext communicationContext
-    ) {
+            final CommunicationContext communicationContext) {
         try {
             return messageStorage.createMessageStream(path, direction, messageType, communicationContext);
         } catch (final IOException e) {

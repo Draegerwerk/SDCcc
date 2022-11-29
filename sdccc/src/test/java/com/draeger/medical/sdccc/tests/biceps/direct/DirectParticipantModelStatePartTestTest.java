@@ -7,6 +7,14 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -16,6 +24,12 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,21 +56,6 @@ import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.common.WsdlConstants;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain DirectParticipantModelStatePartTest}.
@@ -85,22 +84,19 @@ public class DirectParticipantModelStatePartTestTest {
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         manipulations = mock(Manipulations.class);
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                    bind(Manipulations.class).toInstance(manipulations);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+                bind(Manipulations.class).toInstance(manipulations);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
 
         testClass = new DirectParticipantModelStatePartTest();
         testClass.setUp();
     }
-
 
     /**
      * Tests whether a mdib containing a MdState element is passing the test.
@@ -180,32 +176,50 @@ public class DirectParticipantModelStatePartTestTest {
         when(entity5.getStates(AbstractMetricState.class)).thenReturn(List.of(metric5State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-            .thenReturn(List.of(entity1, entity2, entity3, entity4, entity5));
+                .thenReturn(List.of(entity1, entity2, entity3, entity4, entity5));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, NumericMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(STRING_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric2State));
+                .thenReturn(Optional.of(metric2State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(STRING_METRIC_HANDLE, StringMetricState.class))
-            .thenReturn(Optional.of(metric2State));
+                .thenReturn(Optional.of(metric2State));
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(ENUM_STRING_METRIC_HANDLE,
-            AbstractMetricState.class)).thenReturn(Optional.of(metric3State));
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(ENUM_STRING_METRIC_HANDLE,
-            EnumStringMetricState.class)).thenReturn(Optional.of(metric3State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(ENUM_STRING_METRIC_HANDLE, AbstractMetricState.class))
+                .thenReturn(Optional.of(metric3State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(ENUM_STRING_METRIC_HANDLE, EnumStringMetricState.class))
+                .thenReturn(Optional.of(metric3State));
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(DISTRIBUTION_SAMPLE_ARRAY_METRIC_HANDLE,
-            AbstractMetricState.class)).thenReturn(Optional.of(metric4State));
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(DISTRIBUTION_SAMPLE_ARRAY_METRIC_HANDLE,
-            DistributionSampleArrayMetricState.class)).thenReturn(Optional.of(metric4State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(DISTRIBUTION_SAMPLE_ARRAY_METRIC_HANDLE, AbstractMetricState.class))
+                .thenReturn(Optional.of(metric4State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(DISTRIBUTION_SAMPLE_ARRAY_METRIC_HANDLE, DistributionSampleArrayMetricState.class))
+                .thenReturn(Optional.of(metric4State));
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(REAL_TIME_SAMPLE_ARRAY_METRIC_HANDLE,
-            AbstractMetricState.class)).thenReturn(Optional.of(metric5State));
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getState(REAL_TIME_SAMPLE_ARRAY_METRIC_HANDLE,
-            RealTimeSampleArrayMetricState.class)).thenReturn(Optional.of(metric5State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(REAL_TIME_SAMPLE_ARRAY_METRIC_HANDLE, AbstractMetricState.class))
+                .thenReturn(Optional.of(metric5State));
+        when(testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getState(REAL_TIME_SAMPLE_ARRAY_METRIC_HANDLE, RealTimeSampleArrayMetricState.class))
+                .thenReturn(Optional.of(metric5State));
 
         testClass.testRequirementB61();
     }
@@ -277,9 +291,11 @@ public class DirectParticipantModelStatePartTestTest {
     @Test
     public void testRequirementB61GoodSomeManipulationNotSupported() throws Exception {
         when(manipulations.setMetricQualityValidity(anyString(), eq(MeasurementValidity.NA)))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         when(manipulations.setMetricQualityValidity(anyString(), eq(MeasurementValidity.ONG)))
-            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         final var metric1State = mock(NumericMetricState.class);
         when(metric1State.getDescriptorHandle()).thenReturn(NUMERIC_METRIC_HANDLE);
         final var metric1Quality = mock(NumericMetricValue.MetricQuality.class);
@@ -309,17 +325,17 @@ public class DirectParticipantModelStatePartTestTest {
         when(entity2.getStates(AbstractMetricState.class)).thenReturn(List.of(metric2State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-            .thenReturn(List.of(entity1, entity2));
+                .thenReturn(List.of(entity1, entity2));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, NumericMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(STRING_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric2State));
+                .thenReturn(Optional.of(metric2State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(STRING_METRIC_HANDLE, StringMetricState.class))
-            .thenReturn(Optional.of(metric2State));
+                .thenReturn(Optional.of(metric2State));
 
         testClass.testRequirementB61();
     }
@@ -345,12 +361,12 @@ public class DirectParticipantModelStatePartTestTest {
         when(entity1.getStates(AbstractMetricState.class)).thenReturn(List.of(metric1State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-            .thenReturn(List.of(entity1));
+                .thenReturn(List.of(entity1));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, NumericMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
 
         assertThrows(AssertionError.class, testClass::testRequirementB61);
     }
@@ -376,12 +392,12 @@ public class DirectParticipantModelStatePartTestTest {
         when(entity1.getStates(AbstractMetricState.class)).thenReturn(List.of(metric1State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-            .thenReturn(List.of(entity1));
+                .thenReturn(List.of(entity1));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, NumericMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
 
         assertThrows(AssertionError.class, testClass::testRequirementB61);
     }
@@ -392,9 +408,9 @@ public class DirectParticipantModelStatePartTestTest {
     @Test
     public void testRequirementB61BadNoManipulationSupported() {
         when(manipulations.setMetricQualityValidity(anyString(), eq(MeasurementValidity.NA)))
-            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         when(manipulations.setMetricQualityValidity(anyString(), eq(MeasurementValidity.ONG)))
-            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         final var metric1State = mock(NumericMetricState.class);
         when(metric1State.getDescriptorHandle()).thenReturn(NUMERIC_METRIC_HANDLE);
         final var metric1Quality = mock(NumericMetricValue.MetricQuality.class);
@@ -410,12 +426,12 @@ public class DirectParticipantModelStatePartTestTest {
         when(entity1.getStates(AbstractMetricState.class)).thenReturn(List.of(metric1State));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-            .thenReturn(List.of(entity1));
+                .thenReturn(List.of(entity1));
 
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, AbstractMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
         when(testClient.getSdcRemoteDevice().getMdibAccess().getState(NUMERIC_METRIC_HANDLE, NumericMetricState.class))
-            .thenReturn(Optional.of(metric1State));
+                .thenReturn(Optional.of(metric1State));
 
         assertThrows(NoTestData.class, testClass::testRequirementB61);
     }

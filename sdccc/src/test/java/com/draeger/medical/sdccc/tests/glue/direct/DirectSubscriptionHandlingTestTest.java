@@ -7,6 +7,19 @@
 
 package com.draeger.medical.sdccc.tests.glue.direct;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -18,6 +31,22 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.xml.namespace.QName;
+
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -63,35 +92,6 @@ import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 import org.somda.sdc.glue.provider.SdcDevice;
 
-import javax.annotation.Nullable;
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 /**
  * Unit test for Glue {@linkplain DirectSubscriptionHandlingTest}.
  */
@@ -124,6 +124,7 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
+    private CommunicationLog communicationLog;
 
     private HashSet<String> subscriptionsToCancel;
     private HashSet<String> cancelledSubscriptions;
@@ -140,6 +141,7 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
+        communicationLog = mock(CommunicationLogImpl.class);
         final var communicationLogSink = mock(CommunicationLogSink.class);
 
         // set up the injector used by sdcri
@@ -166,22 +168,20 @@ public class DirectSubscriptionHandlingTestTest {
         final var originalHostedServiceVerifier = new HostedServiceVerifier(testClient);
         hostedServiceVerifier = spy(originalHostedServiceVerifier);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                    bind(HostedServiceVerifier.class).toInstance(hostedServiceVerifier);
-                    bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
-                    bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
-                    bind(Manipulations.class).toInstance(manipulations);
-                    bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+                bind(HostedServiceVerifier.class).toInstance(hostedServiceVerifier);
+                bind(MessageGeneratingUtil.class).toInstance(messageGeneratingUtil);
+                bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
+                bind(Manipulations.class).toInstance(manipulations);
+                bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
+                bind(CommunicationLog.class).toInstance(communicationLog);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
-
 
         jaxbMarshalling = testClient.getInjector().getInstance(JaxbMarshalling.class);
         wsdlMarshalling = testClient.getInjector().getInstance(WsdlMarshalling.class);
@@ -191,7 +191,6 @@ public class DirectSubscriptionHandlingTestTest {
 
         jaxbMarshalling.startAsync().awaitRunning(MAX_WAIT);
         wsdlMarshalling.startAsync().awaitRunning(MAX_WAIT);
-
 
         testUnderTest = new DirectSubscriptionHandlingTest() {
             @Override
@@ -324,6 +323,7 @@ public class DirectSubscriptionHandlingTestTest {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+            assertNotNull(wsdlStream);
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         assertNotNull(wsdl);

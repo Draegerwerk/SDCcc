@@ -7,6 +7,9 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.invariant;
 
+import static com.draeger.medical.sdccc.util.Constants.wsd;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -16,21 +19,17 @@ import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.XPathExtractor;
-import org.junit.jupiter.api.Test;
-import org.somda.sdc.dpws.DpwsConstants;
-import org.somda.sdc.mdpws.common.CommonConstants;
-import org.w3c.dom.Node;
-
-import javax.xml.namespace.QName;
-import javax.xml.xpath.XPathExpressionException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static com.draeger.medical.sdccc.util.Constants.wsd;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.xml.namespace.QName;
+import javax.xml.xpath.XPathExpressionException;
+import org.junit.jupiter.api.Test;
+import org.somda.sdc.dpws.DpwsConstants;
+import org.somda.sdc.mdpws.common.CommonConstants;
+import org.w3c.dom.Node;
 
 /**
  * MDPWS dynamic discovery tests (ch. 5).
@@ -46,11 +45,8 @@ public class InvariantDynamicDiscoveryTest extends InjectorTestBase {
 
         final var messageStorage = getInjector().getInstance(MessageStorage.class);
 
-        final var bodyTypes = List.of(
-            Constants.WSD_HELLO_BODY,
-            Constants.WSD_RESOLVE_MATCHES_BODY,
-            Constants.WSD_PROBE_MATCHES_BODY
-        );
+        final var bodyTypes =
+                List.of(Constants.WSD_HELLO_BODY, Constants.WSD_RESOLVE_MATCHES_BODY, Constants.WSD_PROBE_MATCHES_BODY);
 
         for (final var bodyType : bodyTypes) {
             try (final var messages = messageStorage.getInboundMessagesByBodyType(bodyType)) {
@@ -77,21 +73,21 @@ public class InvariantDynamicDiscoveryTest extends InjectorTestBase {
                     for (final var node : typesNodes) {
                         final Collection<QName> types = retrieveQNames(node);
 
-                        assertTrue(types.contains(DpwsConstants.DEVICE_TYPE), String.format(
-                                "Message %s did not contain %s in Types",
-                                message.getMessageHash(), DpwsConstants.DEVICE_TYPE
-                        ));
+                        assertTrue(
+                                types.contains(DpwsConstants.DEVICE_TYPE),
+                                String.format(
+                                        "Message %s did not contain %s in Types",
+                                        message.getMessageHash(), DpwsConstants.DEVICE_TYPE));
 
-                        assertTrue(types.contains(CommonConstants.MEDICAL_DEVICE_TYPE), String.format(
-                                "Message %s did not contain %s in Types",
-                                message.getMessageHash(), CommonConstants.MEDICAL_DEVICE_TYPE
-                        ));
+                        assertTrue(
+                                types.contains(CommonConstants.MEDICAL_DEVICE_TYPE),
+                                String.format(
+                                        "Message %s did not contain %s in Types",
+                                        message.getMessageHash(), CommonConstants.MEDICAL_DEVICE_TYPE));
                     }
                 });
                 assertTestData(
-                        typesMessages.get(),
-                        "Saw no messages containing wsd:Types element for bodyType " + bodyType
-                );
+                        typesMessages.get(), "Saw no messages containing wsd:Types element for bodyType " + bodyType);
             }
         }
     }
@@ -103,5 +99,4 @@ public class InvariantDynamicDiscoveryTest extends InjectorTestBase {
                 .map(type -> new QName(node.lookupNamespaceURI(type.split(":")[0]), type.split(":")[1]))
                 .collect(Collectors.toList());
     }
-
 }

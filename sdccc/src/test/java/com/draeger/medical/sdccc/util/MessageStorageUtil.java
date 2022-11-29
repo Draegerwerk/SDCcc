@@ -15,17 +15,8 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.inject.Inject;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
-import org.apache.commons.lang3.tuple.Pair;
-import org.somda.sdc.dpws.CommunicationLog;
-import org.somda.sdc.dpws.DpwsConstants;
-import org.somda.sdc.dpws.soap.ApplicationInfo;
-import org.somda.sdc.dpws.soap.CommunicationContext;
-import org.somda.sdc.dpws.soap.HttpApplicationInfo;
-import org.somda.sdc.dpws.soap.TransportInfo;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,6 +25,13 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.DpwsConstants;
+import org.somda.sdc.dpws.soap.ApplicationInfo;
+import org.somda.sdc.dpws.soap.CommunicationContext;
+import org.somda.sdc.dpws.soap.HttpApplicationInfo;
+import org.somda.sdc.dpws.soap.TransportInfo;
 
 /**
  * Utility to add messages to the message storage.
@@ -79,7 +77,7 @@ public class MessageStorageUtil {
      * @throws IOException      passed through from getInboundMessages
      */
     public static void waitForManipulation(final MessageStorage messageStorage, final long i, final String name)
-        throws IOException {
+            throws IOException {
         while (true) {
             try (final var manipulations = messageStorage.getManipulationDataByManipulation(name)) {
                 if (manipulations.getStream().count() < i) {
@@ -101,23 +99,16 @@ public class MessageStorageUtil {
      * @param context        message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs when using try-with-resources, no null check."
-    )
     public void addMessage(
-        final MessageStorage storage,
-        final InputStream resourceStream,
-        final CommunicationLog.TransportType transportType,
-        final CommunicationLog.Direction direction,
-        final CommunicationContext context
-    ) throws IOException {
+            final MessageStorage storage,
+            final InputStream resourceStream,
+            final CommunicationLog.TransportType transportType,
+            final CommunicationLog.Direction direction,
+            final CommunicationContext context)
+            throws IOException {
         assert resourceStream.available() > 0;
-        try (final var message = storage.createMessageStream(
-            transportType,
-            direction,
-            CommunicationLog.MessageType.RESPONSE,
-            context)) {
+        try (final var message =
+                storage.createMessageStream(transportType, direction, CommunicationLog.MessageType.RESPONSE, context)) {
             message.write(resourceStream.readAllBytes());
         }
     }
@@ -132,26 +123,16 @@ public class MessageStorageUtil {
      * @param context       message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs when using try-with-resources, no null check."
-    )
     public void addMessage(
-        final MessageStorage storage,
-        final JAXBElement<Envelope> soapMessage,
-        final CommunicationLog.TransportType transportType,
-        final CommunicationLog.Direction direction,
-        final CommunicationContext context
-    ) throws IOException, JAXBException {
+            final MessageStorage storage,
+            final JAXBElement<Envelope> soapMessage,
+            final CommunicationLog.TransportType transportType,
+            final CommunicationLog.Direction direction,
+            final CommunicationContext context)
+            throws IOException, JAXBException {
         try (final var message = new ByteArrayOutputStream()) {
             marshalling.marshal(soapMessage, message);
-            addMessage(
-                storage,
-                new ByteArrayInputStream(message.toByteArray()),
-                transportType,
-                direction,
-                context
-            );
+            addMessage(storage, new ByteArrayInputStream(message.toByteArray()), transportType, direction, context);
         }
     }
 
@@ -165,24 +146,14 @@ public class MessageStorageUtil {
      * @param context       message context information
      * @throws IOException if the message could not be closed after writing
      */
-    @SuppressFBWarnings(
-        value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs when using try-with-resources, no null check."
-    )
     public void addMessage(
-        final MessageStorage storage,
-        final Envelope soapMessage,
-        final CommunicationLog.TransportType transportType,
-        final CommunicationLog.Direction direction,
-        final CommunicationContext context
-    ) throws IOException, JAXBException {
-        addMessage(
-            storage,
-            messageBuilder.buildEnvelope(soapMessage),
-            transportType,
-            direction,
-            context
-        );
+            final MessageStorage storage,
+            final Envelope soapMessage,
+            final CommunicationLog.TransportType transportType,
+            final CommunicationLog.Direction direction,
+            final CommunicationContext context)
+            throws IOException, JAXBException {
+        addMessage(storage, messageBuilder.buildEnvelope(soapMessage), transportType, direction, context);
     }
 
     /**
@@ -192,8 +163,7 @@ public class MessageStorageUtil {
      * @param message       to write to storage
      * @throws IOException if the message could not be closed after writing
      */
-    public synchronized void addMessage(final MessageStorage storage,
-                                        final Message message) throws IOException {
+    public synchronized void addMessage(final MessageStorage storage, final Message message) throws IOException {
         final long previous_count;
         try (final var messages = storage.getInboundMessages()) {
             previous_count = messages.getStream().count();
@@ -213,12 +183,14 @@ public class MessageStorageUtil {
      * @param parameters    of the manipulation
      * @throws IOException if the message could not be closed after writing
      */
-    public synchronized void addManipulation(final MessageStorage storage,
-                                             final long startTime,
-                                             final long finishTime,
-                                             final ResponseTypes.Result result,
-                                             final String name,
-                                             final List<Pair<String, String>> parameters) throws IOException {
+    public synchronized void addManipulation(
+            final MessageStorage storage,
+            final long startTime,
+            final long finishTime,
+            final ResponseTypes.Result result,
+            final String name,
+            final List<Pair<String, String>> parameters)
+            throws IOException {
         final long previous_count;
         try (final var manipulations = storage.getManipulationDataByManipulation(name)) {
             previous_count = manipulations.getStream().count();
@@ -237,11 +209,11 @@ public class MessageStorageUtil {
      * @throws IOException if the message could not be closed after writing
      */
     public synchronized void addInboundSecureHttpMessage(
-        final MessageStorage storage,
-        final InputStream messageStream,
-        final List<X509Certificate> certificates,
-        final ListMultimap<String, String> httpHeaders
-    ) throws IOException {
+            final MessageStorage storage,
+            final InputStream messageStream,
+            final List<X509Certificate> certificates,
+            final ListMultimap<String, String> httpHeaders)
+            throws IOException {
 
         final long previous_count;
         try (final var inboundMessages = storage.getInboundMessages()) {
@@ -249,21 +221,14 @@ public class MessageStorageUtil {
         }
 
         final CommunicationContext messageContext = new CommunicationContext(
-            new HttpApplicationInfo(httpHeaders, "", ""),
-            new TransportInfo(
-                SECURE_HTTP_SCHEME,
-                null, null,
-                null, null,
-                certificates
-            )
-        );
+                new HttpApplicationInfo(httpHeaders, "", ""),
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates));
         addMessage(
-            storage,
-            messageStream,
-            CommunicationLog.TransportType.HTTP,
-            CommunicationLog.Direction.INBOUND,
-            messageContext
-        );
+                storage,
+                messageStream,
+                CommunicationLog.TransportType.HTTP,
+                CommunicationLog.Direction.INBOUND,
+                messageContext);
 
         waitForInbound(storage, previous_count + 1);
     }
@@ -278,11 +243,11 @@ public class MessageStorageUtil {
      * @throws IOException if the message could not be closed after writing
      */
     public void addInboundSecureHttpMessage(
-        final MessageStorage storage,
-        final Envelope message,
-        final List<X509Certificate> certificates,
-        final ListMultimap<String, String> httpHeaders
-    ) throws IOException, JAXBException {
+            final MessageStorage storage,
+            final Envelope message,
+            final List<X509Certificate> certificates,
+            final ListMultimap<String, String> httpHeaders)
+            throws IOException, JAXBException {
 
         final long previous_count;
         try (final var inboundMessages = storage.getInboundMessages()) {
@@ -290,21 +255,14 @@ public class MessageStorageUtil {
         }
 
         final CommunicationContext messageContext = new CommunicationContext(
-            new HttpApplicationInfo(httpHeaders, "", ""),
-            new TransportInfo(
-                SECURE_HTTP_SCHEME,
-                null, null,
-                null, null,
-                certificates
-            )
-        );
+                new HttpApplicationInfo(httpHeaders, "", ""),
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates));
         addMessage(
-            storage,
-            message,
-            CommunicationLog.TransportType.HTTP,
-            CommunicationLog.Direction.INBOUND,
-            messageContext
-        );
+                storage,
+                message,
+                CommunicationLog.TransportType.HTTP,
+                CommunicationLog.Direction.INBOUND,
+                messageContext);
 
         waitForInbound(storage, previous_count + 1);
     }
@@ -316,16 +274,11 @@ public class MessageStorageUtil {
      * @param messageStream message to write to storage
      * @throws IOException if the message could not be closed after writing or the certificate could not be loaded
      */
-    public void addInboundSecureHttpMessage(
-        final MessageStorage storage,
-        final InputStream messageStream
-    ) throws IOException {
+    public void addInboundSecureHttpMessage(final MessageStorage storage, final InputStream messageStream)
+            throws IOException {
         try {
             addInboundSecureHttpMessage(
-                storage, messageStream,
-                List.of(CertificateUtil.getDummyCert()),
-                ArrayListMultimap.create()
-            );
+                    storage, messageStream, List.of(CertificateUtil.getDummyCert()), ArrayListMultimap.create());
         } catch (final CertificateException e) {
             throw new IOException(e);
         }
@@ -338,16 +291,11 @@ public class MessageStorageUtil {
      * @param message message to write to storage
      * @throws IOException if the message could not be closed after writing or the certificate could not be loaded
      */
-    public void addInboundSecureHttpMessage(
-        final MessageStorage storage,
-        final Envelope message
-    ) throws IOException, JAXBException {
+    public void addInboundSecureHttpMessage(final MessageStorage storage, final Envelope message)
+            throws IOException, JAXBException {
         try {
             addInboundSecureHttpMessage(
-                storage, message,
-                List.of(CertificateUtil.getDummyCert()),
-                ArrayListMultimap.create()
-            );
+                    storage, message, List.of(CertificateUtil.getDummyCert()), ArrayListMultimap.create());
         } catch (final CertificateException e) {
             throw new IOException(e);
         }
@@ -361,7 +309,7 @@ public class MessageStorageUtil {
      * @throws IOException if the message could not be closed after writing or the certificate could not be loaded
      */
     public void addInboundUdpMessage(final MessageStorage storage, final Envelope message)
-        throws IOException, JAXBException {
+            throws IOException, JAXBException {
 
         final long previous_count;
         try (final var inboundMessages = storage.getInboundMessages()) {
@@ -369,21 +317,15 @@ public class MessageStorageUtil {
         }
 
         final CommunicationContext messageContext = new CommunicationContext(
-            new ApplicationInfo(),
-            new TransportInfo(
-                DpwsConstants.URI_SCHEME_SOAP_OVER_UDP,
-                null, null,
-                null, null,
-                Collections.emptyList()
-            )
-        );
+                new ApplicationInfo(),
+                new TransportInfo(
+                        DpwsConstants.URI_SCHEME_SOAP_OVER_UDP, null, null, null, null, Collections.emptyList()));
         addMessage(
-            storage,
-            message,
-            CommunicationLog.TransportType.UDP,
-            CommunicationLog.Direction.INBOUND,
-            messageContext
-        );
+                storage,
+                message,
+                CommunicationLog.TransportType.UDP,
+                CommunicationLog.Direction.INBOUND,
+                messageContext);
 
         waitForInbound(storage, previous_count + 1);
     }

@@ -7,6 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.glue.direct;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
@@ -21,6 +26,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,22 +77,7 @@ import org.somda.sdc.dpws.soap.wseventing.model.SubscribeResponse;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
 
-import javax.xml.namespace.QName;
-import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Glue Communication model binding tests.
@@ -93,7 +93,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private static final String ROOM1 = "123";
     private static final String ROOM2 = "124";
-
 
     private TestClient testClient;
     private HostedServiceVerifier hostedServiceVerifier;
@@ -129,42 +128,45 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     }
 
     @Test
-    @DisplayName("An SDC SERVICE PROVIDER SHALL implement at least those of the following BICEPS SERVICEs that it"
-        + " supports as one MDPWS HOSTED SERVICE:\n"
-        + " - Description Event Service\n"
-        + " - State Event Service\n"
-        + " - Context Service\n"
-        + " - Waveform Service")
+    @DisplayName("""
+        An SDC SERVICE PROVIDER SHALL implement at least those of the following BICEPS SERVICEs that it supports as one MDPWS HOSTED SERVICE:
+         - Description Event Service
+         - State Event Service
+         - Context Service
+         - Waveform Service""")
     @TestIdentifier(EnabledTestConfig.GLUE_R0034_0)
     @TestDescription("Checks whether the DUT has provided a DescriptionEventService, StateEventService, a"
-        + " ContextService or a WaveformService and verifies each service is in the same hosted service and"
-        + " each service endpoint provided by the DUT is conforming with SDC Glue Annex B and only implements SDC"
-        + " services.")
+            + " ContextService or a WaveformService and verifies each service is in the same hosted service and"
+            + " each service endpoint provided by the DUT is conforming with SDC Glue Annex B and only implements SDC"
+            + " services.")
     void testRequirementR0034() {
         final List<QName> seenTypes = List.of(
-            WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME, WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME,
-            WsdlConstants.PORT_TYPE_CONTEXT_QNAME, WsdlConstants.PORT_TYPE_WAVEFORM_QNAME);
+                WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME, WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME,
+                WsdlConstants.PORT_TYPE_CONTEXT_QNAME, WsdlConstants.PORT_TYPE_WAVEFORM_QNAME);
 
         final Set<String> seenHostedServices = new HashSet<>();
 
         final var hostedServices = testClient.getHostingServiceProxy().getHostedServices();
         final var serviceIds = hostedServices.values().stream()
-            .map(hostedServiceProxy -> hostedServiceProxy.getType().getServiceId()).collect(Collectors.toList());
+                .map(hostedServiceProxy -> hostedServiceProxy.getType().getServiceId())
+                .collect(Collectors.toList());
         if (hostedServices.values().size() != new HashSet<>(serviceIds).size()) {
-            fail(String.format("Some Hosted Services share the same service id: %s, test failed.",
-                serviceIds));
+            fail(String.format("Some Hosted Services share the same service id: %s, test failed.", serviceIds));
         }
-        hostedServices.values().forEach(value ->
-            value.getType().getTypes().forEach(type -> {
-                if (seenTypes.contains(type)) {
-                    checkServiceConformance(type);
-                    seenHostedServices.add(value.getType().getServiceId());
-                }
-            }));
+        hostedServices.values().forEach(value -> value.getType().getTypes().forEach(type -> {
+            if (seenTypes.contains(type)) {
+                checkServiceConformance(type);
+                seenHostedServices.add(value.getType().getServiceId());
+            }
+        }));
 
-        assertEquals(1, seenHostedServices.size(), String.format(
-            "The DescriptionEventService, StateEventService, ContextService and WaveformService should be in the same"
-                + " HostedService but they are in different services %s, test failed.", seenHostedServices));
+        assertEquals(
+                1,
+                seenHostedServices.size(),
+                String.format(
+                        "The DescriptionEventService, StateEventService, ContextService and WaveformService should be in the same"
+                                + " HostedService but they are in different services %s, test failed.",
+                        seenHostedServices));
     }
 
     private void checkServiceConformance(final QName targetQName) {
@@ -635,6 +637,4 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         sb.deleteCharAt(sb.length() - 1);
         return sb.toString();
     }
-
-
 }

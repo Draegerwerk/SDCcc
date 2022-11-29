@@ -8,7 +8,6 @@
 package com.draeger.medical.sdccc.manipulation.precondition;
 
 import com.google.inject.Injector;
-
 import java.util.Objects;
 
 /**
@@ -43,8 +42,7 @@ public class SimplePrecondition implements Precondition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final SimplePrecondition that = (SimplePrecondition) o;
-        return preconditionCheck.equals(that.preconditionCheck)
-                && manipulationCall.equals(that.manipulationCall);
+        return preconditionCheck.equals(that.preconditionCheck) && manipulationCall.equals(that.manipulationCall);
     }
 
     @Override

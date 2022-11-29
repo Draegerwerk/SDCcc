@@ -7,6 +7,16 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -14,7 +24,15 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.xml.namespace.QName;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,25 +45,6 @@ import org.somda.sdc.dpws.wsdl.WsdlRetriever;
 import org.somda.sdc.glue.common.WsdlConstants;
 import org.somda.sdc.glue.provider.SdcDevice;
 
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 /**
  * Unit test for the BICEPS DirectServiceModelTest.
  */
@@ -55,19 +54,16 @@ public class DirectServiceModelTestTest {
     private static final String HIGH_PRIORITY_WSDL = "wsdl/IEEE11073-20701-HighPriority-Services.wsdl";
 
     private static final List<QName> HIGH_PRIORITY_SERVICES = List.of(
-        WsdlConstants.PORT_TYPE_GET_QNAME,
-        WsdlConstants.PORT_TYPE_SET_QNAME,
-        WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME,
-        WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME,
-        WsdlConstants.PORT_TYPE_CONTEXT_QNAME,
-        WsdlConstants.PORT_TYPE_WAVEFORM_QNAME,
-        WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME
-    );
+            WsdlConstants.PORT_TYPE_GET_QNAME,
+            WsdlConstants.PORT_TYPE_SET_QNAME,
+            WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME,
+            WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME,
+            WsdlConstants.PORT_TYPE_CONTEXT_QNAME,
+            WsdlConstants.PORT_TYPE_WAVEFORM_QNAME,
+            WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME);
 
-    private static final List<QName> LOW_PRIORITY_SERVICES = List.of(
-        WsdlConstants.PORT_TYPE_ARCHIVE_QNAME,
-        WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME
-    );
+    private static final List<QName> LOW_PRIORITY_SERVICES =
+            List.of(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME, WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME);
 
     private TestClient testClient;
     private DirectServiceModelTest testClass;
@@ -85,31 +81,26 @@ public class DirectServiceModelTestTest {
         wsdlRetriever = mock(WsdlRetriever.class);
 
         // setup the injector used by sdcri
-        final var clientInjector = TestClientUtil.createClientInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(WsdlRetriever.class).toInstance(wsdlRetriever);
-                }
+        final var clientInjector = TestClientUtil.createClientInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(WsdlRetriever.class).toInstance(wsdlRetriever);
             }
-        );
+        });
         when(testClient.getInjector()).thenReturn(clientInjector);
 
         final var originalHostedServiceVerifier = new HostedServiceVerifier(testClient);
         hostedServiceVerifier = spy(originalHostedServiceVerifier);
 
-        final Injector injector = InjectorUtil.setupInjector(
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(TestClient.class).toInstance(testClient);
-                    bind(HostedServiceVerifier.class).toInstance(hostedServiceVerifier);
-                }
+        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(TestClient.class).toInstance(testClient);
+                bind(HostedServiceVerifier.class).toInstance(hostedServiceVerifier);
             }
-        );
+        });
 
         InjectorTestBase.setInjector(injector);
-
 
         jaxbMarshalling = testClient.getInjector().getInstance(JaxbMarshalling.class);
         wsdlMarshalling = testClient.getInjector().getInstance(WsdlMarshalling.class);
@@ -145,7 +136,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0062Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_GET_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0062());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -166,7 +157,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0064Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0064());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -187,7 +178,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0066Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_WAVEFORM_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0066());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -208,7 +199,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0068Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_SET_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0068());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -229,7 +220,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0069Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_CONTEXT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0069());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -250,7 +241,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0100Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0100());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -271,7 +262,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0101Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0101());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -292,7 +283,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0104Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0104());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -313,16 +304,15 @@ public class DirectServiceModelTestTest {
     public void testRequirement0119Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0119());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
-
 
     private void setupServiceModelRequirementTest() throws Exception {
         // create hosted services
         final var hostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
-        when(hostedService.getType().getTypes()).thenReturn(
-            Stream.concat(HIGH_PRIORITY_SERVICES.stream(), LOW_PRIORITY_SERVICES.stream()).collect(Collectors.toList())
-        );
+        when(hostedService.getType().getTypes())
+                .thenReturn(Stream.concat(HIGH_PRIORITY_SERVICES.stream(), LOW_PRIORITY_SERVICES.stream())
+                        .collect(Collectors.toList()));
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(mockHostingService);
@@ -330,29 +320,24 @@ public class DirectServiceModelTestTest {
 
         final String wsdl = loadWsdl(HIGH_PRIORITY_WSDL);
         final String wsdl2 = loadWsdl(LOW_PRIORITY_WSDL);
-        when(wsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of(
-            "hostedService", List.of(wsdl, wsdl2)
-        ));
+        when(wsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of("hostedService", List.of(wsdl, wsdl2)));
     }
 
     private void setupMissingServiceModelRequirementTest(final List<QName> hostedServiceTypes) {
         // create hosted services
         final var hostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
-        when(hostedService.getType().getTypes()).thenReturn(
-            hostedServiceTypes
-        );
+        when(hostedService.getType().getTypes()).thenReturn(hostedServiceTypes);
         final var map = Map.of("hostedService", hostedService);
         final var mockHostingService = mock(HostingServiceProxy.class);
         when(testClient.getHostingServiceProxy()).thenReturn(mockHostingService);
         when(mockHostingService.getHostedServices()).thenReturn(map);
     }
 
-    @SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
-        justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+            assertNotNull(wsdlStream);
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         assertNotNull(wsdl);
@@ -361,7 +346,8 @@ public class DirectServiceModelTestTest {
     }
 
     private List<QName> getQNameList(final QName removedQName) {
-        return Stream.concat(HIGH_PRIORITY_SERVICES.stream(), LOW_PRIORITY_SERVICES.stream()).filter(qname ->
-            !qname.equals(removedQName)).collect(Collectors.toList());
+        return Stream.concat(HIGH_PRIORITY_SERVICES.stream(), LOW_PRIORITY_SERVICES.stream())
+                .filter(qname -> !qname.equals(removedQName))
+                .collect(Collectors.toList());
     }
 }

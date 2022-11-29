@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Java 17 support
 - test for biceps:5-4-7_12_0
 - test for biceps:5-4-7_14
+- test for biceps:5-4-7_16
+- spotless plugin
+- test for glue:8-1-3
+- test for glue:R0078_0
 
 ### Changed
-- updated test case for glue:R0036 to glue:R0036_0
+- checkstyle plugin scope via checkstyle.xml
 
 ### Fixed
 - missing request bodies in glue:R0036 test

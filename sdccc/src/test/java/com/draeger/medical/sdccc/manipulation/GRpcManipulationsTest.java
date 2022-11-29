@@ -7,35 +7,6 @@
 
 package com.draeger.medical.sdccc.manipulation;
 
-import com.draeger.medical.sdccc.messages.ManipulationInfo;
-import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
-import com.draeger.medical.sdccc.tests.annotations.TestDescription;
-import com.draeger.medical.t2iapi.BasicRequests;
-import com.draeger.medical.t2iapi.BasicResponses;
-import com.draeger.medical.t2iapi.ResponseTypes;
-import com.draeger.medical.t2iapi.context.ContextRequests;
-import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
-import com.draeger.medical.t2iapi.context.ContextTypes;
-import com.draeger.medical.t2iapi.device.DeviceResponses;
-import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.somda.sdc.biceps.model.participant.LocationDetail;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.List;
-import java.util.function.BiFunction;
-
 import static com.draeger.medical.t2iapi.context.ContextServiceGrpc.getSetLocationDetailMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getGetRemovableDescriptorsMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getInsertDescriptorMethod;
@@ -56,6 +27,34 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.draeger.medical.sdccc.messages.ManipulationInfo;
+import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
+import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import com.draeger.medical.t2iapi.BasicRequests;
+import com.draeger.medical.t2iapi.BasicResponses;
+import com.draeger.medical.t2iapi.ResponseTypes;
+import com.draeger.medical.t2iapi.context.ContextRequests;
+import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
+import com.draeger.medical.t2iapi.context.ContextTypes;
+import com.draeger.medical.t2iapi.device.DeviceResponses;
+import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.Empty;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.List;
+import java.util.function.BiFunction;
+import javax.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.somda.sdc.biceps.model.participant.LocationDetail;
+
 /**
  * Unit tests for the gRPC {@linkplain Manipulations} implementation.
  */
@@ -75,9 +74,9 @@ public class GRpcManipulationsTest {
         contextHandler = new ContextStub();
         deviceHandler = new DeviceStub();
         server = ServerBuilder.forPort(0)
-            .addService(contextHandler)
-            .addService(deviceHandler)
-            .build();
+                .addService(contextHandler)
+                .addService(deviceHandler)
+                .build();
         server.start();
 
         final String serverAddress = "localhost:" + server.getPort();
@@ -86,7 +85,7 @@ public class GRpcManipulationsTest {
         final ManipulationInfoFactory manipulationInfoFactory = mock(ManipulationInfoFactory.class);
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), any()))
-            .thenReturn(manipulationInfo);
+                .thenReturn(manipulationInfo);
         manipulations = new GRpcManipulations(serverAddress, fallback, manipulationInfoFactory);
     }
 
@@ -113,8 +112,9 @@ public class GRpcManipulationsTest {
             final SettableFuture<ContextTypes.LocationDetail> requestLocation = SettableFuture.create();
             contextHandler.setSetLocationDetailCall((request, responseObserver) -> {
                 requestLocation.set(request.getLocation());
-                final var reply = BasicResponses.BasicResponse.newBuilder().setResult(
-                    ResponseTypes.Result.RESULT_SUCCESS).build();
+                final var reply = BasicResponses.BasicResponse.newBuilder()
+                        .setResult(ResponseTypes.Result.RESULT_SUCCESS)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -132,8 +132,8 @@ public class GRpcManipulationsTest {
             contextHandler.setSetLocationDetailCall((request, responseObserver) -> {
                 requestLocation.set(request.getLocation());
                 final var reply = BasicResponses.BasicResponse.newBuilder()
-                    .setResult(ResponseTypes.Result.RESULT_FAIL)
-                    .build();
+                        .setResult(ResponseTypes.Result.RESULT_FAIL)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -177,15 +177,15 @@ public class GRpcManipulationsTest {
 
         // exception while calling
         contextHandler.setSetLocationDetailCall((request, responseObserver) -> {
-            final var reply = BasicResponses.BasicResponse.newBuilder().setResult(
-                ResponseTypes.Result.RESULT_NOT_IMPLEMENTED).build();
+            final var reply = BasicResponses.BasicResponse.newBuilder()
+                    .setResult(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                    .build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
             return null;
         });
         manipulations.setLocationDetail(location);
         verify(fallback, times(1)).setLocationDetail(location);
-
     }
 
     /**
@@ -195,21 +195,18 @@ public class GRpcManipulationsTest {
     @Timeout(TEST_TIMEOUT)
     @TestDescription("Verifies whether data is correctly transmitted to server and results are sent correctly")
     public void testGetRemovableDescriptors() {
-        final var removableHandles = List.of(
-            "Kakakaka", "Kukuku",
-            "K͔̟̜͖̰̿̌͌ͧ͛ͅȉ̞͍̪̩ͣ̿̽͆͞k̰̙̣͗͒ͯͦi̮̺̪͍͉̇ͨ̏̈̿͆̍k̥̙̞ͪͣͅi͐ͪ"
-        );
+        final var removableHandles =
+                List.of("Kakakaka", "Kukuku", "K͔̟̜͖̰̿̌͌ͧ͛ͅȉ̞͍̪̩ͣ̿̽͆͞k̰̙̣͗͒ͯͦi̮̺̪͍͉̇ͨ̏̈̿͆̍k̥̙̞ͪͣͅi͐ͪ");
 
         // success
         {
             deviceHandler.setGetRemovableDescriptorsCall((request, responseObserver) -> {
                 final var reply = DeviceResponses.GetRemovableDescriptorsResponse.newBuilder()
-                    .setStatus(BasicResponses.BasicResponse.newBuilder()
-                        .setResult(ResponseTypes.Result.RESULT_SUCCESS)
-                        .build()
-                    )
-                    .addAllHandle(removableHandles)
-                    .build();
+                        .setStatus(BasicResponses.BasicResponse.newBuilder()
+                                .setResult(ResponseTypes.Result.RESULT_SUCCESS)
+                                .build())
+                        .addAllHandle(removableHandles)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -219,17 +216,15 @@ public class GRpcManipulationsTest {
             assertNotNull(response, "manipulation failed, but shouldn't have");
             assertEquals(removableHandles, response);
             verifyNoInteractions(fallback);
-
         }
         // failure
         {
             deviceHandler.setGetRemovableDescriptorsCall((request, responseObserver) -> {
                 final var reply = DeviceResponses.GetRemovableDescriptorsResponse.newBuilder()
-                    .setStatus(BasicResponses.BasicResponse.newBuilder()
-                        .setResult(ResponseTypes.Result.RESULT_FAIL)
-                        .build()
-                    )
-                    .build();
+                        .setStatus(BasicResponses.BasicResponse.newBuilder()
+                                .setResult(ResponseTypes.Result.RESULT_FAIL)
+                                .build())
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -259,8 +254,9 @@ public class GRpcManipulationsTest {
             deviceHandler.setInsertDescriptorCall((request, responseObserver) -> {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
-                final var reply = BasicResponses.BasicResponse.newBuilder().setResult(
-                    ResponseTypes.Result.RESULT_SUCCESS).build();
+                final var reply = BasicResponses.BasicResponse.newBuilder()
+                        .setResult(ResponseTypes.Result.RESULT_SUCCESS)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -278,8 +274,8 @@ public class GRpcManipulationsTest {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
                 final var reply = BasicResponses.BasicResponse.newBuilder()
-                    .setResult(ResponseTypes.Result.RESULT_FAIL)
-                    .build();
+                        .setResult(ResponseTypes.Result.RESULT_FAIL)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -297,8 +293,8 @@ public class GRpcManipulationsTest {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
                 final var reply = BasicResponses.BasicResponse.newBuilder()
-                    .setResult(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                    .build();
+                        .setResult(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -328,8 +324,9 @@ public class GRpcManipulationsTest {
             deviceHandler.setRemoveDescriptorCall((request, responseObserver) -> {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
-                final var reply = BasicResponses.BasicResponse.newBuilder().setResult(
-                    ResponseTypes.Result.RESULT_SUCCESS).build();
+                final var reply = BasicResponses.BasicResponse.newBuilder()
+                        .setResult(ResponseTypes.Result.RESULT_SUCCESS)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -347,8 +344,8 @@ public class GRpcManipulationsTest {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
                 final var reply = BasicResponses.BasicResponse.newBuilder()
-                    .setResult(ResponseTypes.Result.RESULT_FAIL)
-                    .build();
+                        .setResult(ResponseTypes.Result.RESULT_FAIL)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -366,8 +363,8 @@ public class GRpcManipulationsTest {
                 assertEquals(requestHandle, request.getHandle());
                 receivedHandle.set(request.getHandle());
                 final var reply = BasicResponses.BasicResponse.newBuilder()
-                    .setResult(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                    .build();
+                        .setResult(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                        .build();
                 responseObserver.onNext(reply);
                 responseObserver.onCompleted();
                 return null;
@@ -381,12 +378,30 @@ public class GRpcManipulationsTest {
     }
 
     private void compareLocation(final LocationDetail location, final ContextTypes.LocationDetail protoLocation) {
-        compareElement(location.getPoC(), protoLocation.hasPoc(), protoLocation.getPoc().getValue());
-        compareElement(location.getRoom(), protoLocation.hasRoom(), protoLocation.getRoom().getValue());
-        compareElement(location.getBed(), protoLocation.hasBed(), protoLocation.getBed().getValue());
-        compareElement(location.getFacility(), protoLocation.hasFacility(), protoLocation.getFacility().getValue());
-        compareElement(location.getBuilding(), protoLocation.hasBuilding(), protoLocation.getBuilding().getValue());
-        compareElement(location.getFloor(), protoLocation.hasFloor(), protoLocation.getFloor().getValue());
+        compareElement(
+                location.getPoC(),
+                protoLocation.hasPoc(),
+                protoLocation.getPoc().getValue());
+        compareElement(
+                location.getRoom(),
+                protoLocation.hasRoom(),
+                protoLocation.getRoom().getValue());
+        compareElement(
+                location.getBed(),
+                protoLocation.hasBed(),
+                protoLocation.getBed().getValue());
+        compareElement(
+                location.getFacility(),
+                protoLocation.hasFacility(),
+                protoLocation.getFacility().getValue());
+        compareElement(
+                location.getBuilding(),
+                protoLocation.hasBuilding(),
+                protoLocation.getBuilding().getValue());
+        compareElement(
+                location.getFloor(),
+                protoLocation.hasFloor(),
+                protoLocation.getFloor().getValue());
     }
 
     private void compareElement(@Nullable final String expected, final boolean presence, final String value) {
@@ -399,90 +414,82 @@ public class GRpcManipulationsTest {
 
     static class ContextStub extends ContextServiceGrpc.ContextServiceImplBase {
         private BiFunction<ContextRequests.SetLocationDetailRequest, StreamObserver<BasicResponses.BasicResponse>, Void>
-            setLocationDetailCall = (request, responseObserver) -> {
-                asyncUnimplementedUnaryCall(getSetLocationDetailMethod(), responseObserver);
-                return null;
-            };
+                setLocationDetailCall = (request, responseObserver) -> {
+                    asyncUnimplementedUnaryCall(getSetLocationDetailMethod(), responseObserver);
+                    return null;
+                };
 
         public void setSetLocationDetailCall(
-            final BiFunction<ContextRequests.SetLocationDetailRequest,
-                StreamObserver<BasicResponses.BasicResponse>,
-                Void> setLocationDetailCallArg
-        ) {
+                final BiFunction<
+                                ContextRequests.SetLocationDetailRequest,
+                                StreamObserver<BasicResponses.BasicResponse>,
+                                Void>
+                        setLocationDetailCallArg) {
             this.setLocationDetailCall = setLocationDetailCallArg;
         }
 
         @Override
         public void setLocationDetail(
-            final ContextRequests.SetLocationDetailRequest request,
-            final StreamObserver<BasicResponses.BasicResponse> responseObserver
-        ) {
+                final ContextRequests.SetLocationDetailRequest request,
+                final StreamObserver<BasicResponses.BasicResponse> responseObserver) {
             setLocationDetailCall.apply(request, responseObserver);
         }
     }
 
     static class DeviceStub extends DeviceServiceGrpc.DeviceServiceImplBase {
         private BiFunction<Empty, StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void>
-            getRemovableDescriptorsCall = (request, responseObserver) -> {
-                asyncUnimplementedUnaryCall(getGetRemovableDescriptorsMethod(), responseObserver);
-                return null;
-            };
+                getRemovableDescriptorsCall = (request, responseObserver) -> {
+                    asyncUnimplementedUnaryCall(getGetRemovableDescriptorsMethod(), responseObserver);
+                    return null;
+                };
 
         private BiFunction<BasicRequests.BasicHandleRequest, StreamObserver<BasicResponses.BasicResponse>, Void>
-            removeDescriptorCall = (request, responseObserver) -> {
-                asyncUnimplementedUnaryCall(getRemoveDescriptorMethod(), responseObserver);
-                return null;
-            };
+                removeDescriptorCall = (request, responseObserver) -> {
+                    asyncUnimplementedUnaryCall(getRemoveDescriptorMethod(), responseObserver);
+                    return null;
+                };
 
         private BiFunction<BasicRequests.BasicHandleRequest, StreamObserver<BasicResponses.BasicResponse>, Void>
-            insertDescriptorCall = (request, responseObserver) -> {
-                asyncUnimplementedUnaryCall(getInsertDescriptorMethod(), responseObserver);
-                return null;
-            };
+                insertDescriptorCall = (request, responseObserver) -> {
+                    asyncUnimplementedUnaryCall(getInsertDescriptorMethod(), responseObserver);
+                    return null;
+                };
 
         public void setGetRemovableDescriptorsCall(
-            final BiFunction<Empty, StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void> arg
-        ) {
+                final BiFunction<Empty, StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void> arg) {
             this.getRemovableDescriptorsCall = arg;
         }
 
         public void setInsertDescriptorCall(
-            final BiFunction<BasicRequests.BasicHandleRequest,
-                StreamObserver<BasicResponses.BasicResponse>,
-                Void> insertDescriptorCall
-        ) {
+                final BiFunction<BasicRequests.BasicHandleRequest, StreamObserver<BasicResponses.BasicResponse>, Void>
+                        insertDescriptorCall) {
             this.insertDescriptorCall = insertDescriptorCall;
         }
 
         public void setRemoveDescriptorCall(
-            final BiFunction<BasicRequests.BasicHandleRequest,
-                StreamObserver<BasicResponses.BasicResponse>,
-                Void> removeDescriptorCall
-        ) {
+                final BiFunction<BasicRequests.BasicHandleRequest, StreamObserver<BasicResponses.BasicResponse>, Void>
+                        removeDescriptorCall) {
             this.removeDescriptorCall = removeDescriptorCall;
         }
 
         @Override
         public void getRemovableDescriptors(
-            final Empty request,
-            final StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse> responseObserver
-        ) {
+                final Empty request,
+                final StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse> responseObserver) {
             getRemovableDescriptorsCall.apply(request, responseObserver);
         }
 
         @Override
         public void insertDescriptor(
-            final BasicRequests.BasicHandleRequest request,
-            final StreamObserver<BasicResponses.BasicResponse> responseObserver
-        ) {
+                final BasicRequests.BasicHandleRequest request,
+                final StreamObserver<BasicResponses.BasicResponse> responseObserver) {
             insertDescriptorCall.apply(request, responseObserver);
         }
 
         @Override
         public void removeDescriptor(
-            final BasicRequests.BasicHandleRequest request,
-            final StreamObserver<BasicResponses.BasicResponse> responseObserver
-        ) {
+                final BasicRequests.BasicHandleRequest request,
+                final StreamObserver<BasicResponses.BasicResponse> responseObserver) {
             removeDescriptorCall.apply(request, responseObserver);
         }
     }

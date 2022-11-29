@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.util;
 
+import javax.annotation.Nullable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Core;
@@ -19,21 +20,15 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
-import javax.annotation.Nullable;
-
 /**
  * Log4j Appender that offers the ability to react when ERROR-Level Messages (or worse) are logged.
  */
-@Plugin(
-    name = "TriggerOnErrorOrWorseLogAppender",
-    category = Core.CATEGORY_NAME,
-    elementType = Appender.ELEMENT_TYPE)
+@Plugin(name = "TriggerOnErrorOrWorseLogAppender", category = Core.CATEGORY_NAME, elementType = Appender.ELEMENT_TYPE)
 public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
 
     private OnErrorOrWorseHandler onErrorOrWorseHandler;
 
-    protected TriggerOnErrorOrWorseLogAppender(final String name,
-                                               final Filter filter) {
+    protected TriggerOnErrorOrWorseLogAppender(final String name, final Filter filter) {
         super(name, filter, null, true, Property.EMPTY_ARRAY);
     }
 
@@ -54,8 +49,7 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
      */
     @PluginFactory
     public static TriggerOnErrorOrWorseLogAppender createAppender(
-        @PluginAttribute("name") final String name,
-        @PluginElement("Filter") final Filter filter) {
+            @PluginAttribute("name") final String name, @PluginElement("Filter") final Filter filter) {
         return new TriggerOnErrorOrWorseLogAppender(name, filter);
     }
 
@@ -79,6 +73,5 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
          * @param event the event that triggered the handler.
          */
         void onErrorOrWorse(LogEvent event);
-
     }
 }
