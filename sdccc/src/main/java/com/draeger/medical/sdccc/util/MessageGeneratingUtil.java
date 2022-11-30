@@ -497,12 +497,25 @@ public class MessageGeneratingUtil {
             service.sendRequestResponse(message);
         } catch (final TransportException e) {
             if (e.getCause() != null && e.getCause() instanceof HttpException) {
-                LOG.debug("TransportException with HttpException cause");
                 if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
                             "TransportException with HttpException cause and {} status code",
                             Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
+                } else {
+                    LOG.debug("TransportException with HttpException cause");
+                }
+            }
+            throw e;
+        } catch (final SoapFaultException e) {
+            if (e.getCause() != null && e.getCause() instanceof HttpException) {
+                if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
+                    LOG.debug(
+                        "TransportException with HttpException cause and {} status code",
+                        Constants.HTTP_PAYLOAD_TOO_LARGE);
+                    return;
+                } else {
+                    LOG.debug("SoapFaultException with HttpException cause");
                 }
             }
             throw e;
