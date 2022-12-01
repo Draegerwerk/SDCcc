@@ -1296,7 +1296,7 @@ public class MessageStorage implements AutoCloseable {
      * @throws IOException if storage is closed
      */
     public GetterResult<MessageContent> getInboundMessagesByBodyTypeAndSequenceId(
-            final String sequenceId, final QName... bodyTypes) throws IOException { // TODO: add unittest for this
+            final String sequenceId, final QName... bodyTypes) throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
             throw new IOException(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
