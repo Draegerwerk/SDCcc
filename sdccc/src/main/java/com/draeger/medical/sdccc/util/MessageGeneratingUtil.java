@@ -499,8 +499,9 @@ public class MessageGeneratingUtil {
             if (e.getCause() instanceof HttpException cause) {
                 if (cause.getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
-                            String.format("%s with HttpException cause and {} status code",
-                                e.getClass().getSimpleName()),
+                            String.format(
+                                    "%s with HttpException cause and {} status code",
+                                    e.getClass().getSimpleName()),
                             Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
                 } else {

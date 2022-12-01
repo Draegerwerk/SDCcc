@@ -208,8 +208,7 @@ public class MessageGeneratingUtilTest {
     @Test
     public void testGetLocalizedTextPayloadTooLarge3() throws Exception {
         final var mockHostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
-        when(mockHostedService.sendRequestResponse(any()))
-            .thenThrow(new TransportException());
+        when(mockHostedService.sendRequestResponse(any())).thenThrow(new TransportException());
 
         when(mockHostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
         when(client.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("loc", mockHostedService));
