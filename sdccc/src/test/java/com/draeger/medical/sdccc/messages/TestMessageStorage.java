@@ -104,10 +104,10 @@ public class TestMessageStorage {
                     + "</msg:ReportPart>"
                     + "</msg:EpisodicMetricReport>";
     private static final String SEQUENCE_ID_ALERT_BODY_STRING =
-        "<msg:EpisodicAlertReport MdibVersion=\"%s\" SequenceId=\"urn:uuid:%s\">"
-            + "<msg:ReportPart>"
-            + "</msg:ReportPart>"
-            + "</msg:EpisodicAlertReport>";
+            "<msg:EpisodicAlertReport MdibVersion=\"%s\" SequenceId=\"urn:uuid:%s\">"
+                    + "<msg:ReportPart>"
+                    + "</msg:ReportPart>"
+                    + "</msg:EpisodicAlertReport>";
     private CommunicationContext messageContext;
     private CommunicationContext insecureMessageContext;
     private CommunicationContext udpMessageContext;
@@ -184,7 +184,7 @@ public class TestMessageStorage {
     @Test
     public void testMdibVersionCloseToOverflow(@TempDir final File dir) throws IOException, CertificateException {
         try (final MessageStorage messageStorage =
-                 new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             final String transactionId = "transactionId";
@@ -192,25 +192,27 @@ public class TestMessageStorage {
 
             final X509Certificate certificate = CertificateUtil.getDummyCert();
             final CommunicationContext headerContext = new CommunicationContext(
-                new HttpApplicationInfo(multimap, transactionId, requestUri),
-                new TransportInfo(
-                    Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)));
+                    new HttpApplicationInfo(multimap, transactionId, requestUri),
+                    new TransportInfo(
+                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)));
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.INBOUND,
-                CommunicationLog.MessageType.REQUEST,
-                headerContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
                 message.write(String.format(
-                        BASE_MESSAGE_STRING,
-                        "action",
-                        String.format(SEQUENCE_ID_METRIC_BODY_STRING, "9223372036854775807", "1"))
-                    .getBytes(StandardCharsets.UTF_8));
+                                BASE_MESSAGE_STRING,
+                                "action",
+                                String.format(SEQUENCE_ID_METRIC_BODY_STRING, "9223372036854775807", "1"))
+                        .getBytes(StandardCharsets.UTF_8));
             }
             messageStorage.flush();
 
-            final MessageContent messageContent = messageStorage.getInboundMessages().getStream().toList().get(0);
-            final long mdibVersion = messageContent.getMdibVersionGroups().get(0).getMdibVersion();
+            final MessageContent messageContent =
+                    messageStorage.getInboundMessages().getStream().toList().get(0);
+            final long mdibVersion =
+                    messageContent.getMdibVersionGroups().get(0).getMdibVersion();
             assertTrue(mdibVersion > 0);
         }
     }
@@ -242,9 +244,9 @@ public class TestMessageStorage {
                     CommunicationLog.MessageType.REQUEST,
                     headerContext,
                     messageStorage)) {
-                message.write(
-                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
-                                .getBytes(StandardCharsets.UTF_8));
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
+                        .getBytes(StandardCharsets.UTF_8));
             }
             messageStorage.flush();
 
@@ -253,9 +255,9 @@ public class TestMessageStorage {
                     CommunicationLog.MessageType.REQUEST,
                     headerContext,
                     messageStorage)) {
-                message.write(
-                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "2"))
-                                .getBytes(StandardCharsets.UTF_8));
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "2"))
+                        .getBytes(StandardCharsets.UTF_8));
             }
             messageStorage.flush();
 
@@ -264,9 +266,9 @@ public class TestMessageStorage {
                     CommunicationLog.MessageType.REQUEST,
                     headerContext,
                     messageStorage)) {
-                message.write(
-                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
-                                .getBytes(StandardCharsets.UTF_8));
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
+                        .getBytes(StandardCharsets.UTF_8));
             }
             messageStorage.flush();
 
@@ -1126,80 +1128,72 @@ public class TestMessageStorage {
     @Test
     public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage =
-                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+                new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
             final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
             final var expectedQName2 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicMetricReport", "msg");
 
             final String messageContent1 = String.format(
-                    BASE_MESSAGE_STRING,
-                    "action",
-                    String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s1"));
+                    BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s1"));
 
             final String messageContent2 = String.format(
-                    BASE_MESSAGE_STRING,
-                    "action",
-                    String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s2"));
+                    BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s2"));
 
             final String messageContent3 = String.format(
-                BASE_MESSAGE_STRING,
-                "action",
-                String.format(SEQUENCE_ID_ALERT_BODY_STRING, "1", "s1"));
+                    BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_ALERT_BODY_STRING, "1", "s1"));
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.OUTBOUND,
-                CommunicationLog.MessageType.RESPONSE,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.OUTBOUND,
+                    CommunicationLog.MessageType.RESPONSE,
+                    this.messageContext,
+                    messageStorage)) {
 
                 message.write(messageContent2.getBytes(StandardCharsets.UTF_8));
             }
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.INBOUND,
-                CommunicationLog.MessageType.RESPONSE,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.RESPONSE,
+                    this.messageContext,
+                    messageStorage)) {
 
                 message.write(messageContent1.getBytes(StandardCharsets.UTF_8));
             }
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.INBOUND,
-                CommunicationLog.MessageType.REQUEST,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    this.messageContext,
+                    messageStorage)) {
 
                 message.write(messageContent2.getBytes(StandardCharsets.UTF_8));
             }
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.INBOUND,
-                CommunicationLog.MessageType.RESPONSE,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.RESPONSE,
+                    this.messageContext,
+                    messageStorage)) {
 
                 message.write(messageContent2.getBytes(StandardCharsets.UTF_8));
             }
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.INBOUND,
-                CommunicationLog.MessageType.RESPONSE,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.RESPONSE,
+                    this.messageContext,
+                    messageStorage)) {
 
-                message.write(messageContent3
-                    .getBytes(StandardCharsets.UTF_8));
+                message.write(messageContent3.getBytes(StandardCharsets.UTF_8));
             }
 
             try (final Message message = new Message(
-                CommunicationLog.Direction.OUTBOUND,
-                CommunicationLog.MessageType.RESPONSE,
-                this.messageContext,
-                messageStorage)) {
+                    CommunicationLog.Direction.OUTBOUND,
+                    CommunicationLog.MessageType.RESPONSE,
+                    this.messageContext,
+                    messageStorage)) {
 
-                message.write(messageContent3
-                    .getBytes(StandardCharsets.UTF_8));
+                message.write(messageContent3.getBytes(StandardCharsets.UTF_8));
             }
 
             {
@@ -1208,13 +1202,13 @@ public class TestMessageStorage {
 
             {
                 try (final var inboundMessages =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s1", expectedQName1)) {
+                        messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s1", expectedQName1)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent3, message.getBody());
                         assertTrue(message.getMdibVersionGroups().stream()
-                            .anyMatch(mdibVersionGroup ->
-                                mdibVersionGroup.getBodyElement().equals(expectedQName1.toString())));
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName1.toString())));
                         count.incrementAndGet();
                     });
                     assertEquals(1, count.get());
@@ -1222,13 +1216,13 @@ public class TestMessageStorage {
             }
             {
                 try (final var inboundMessages =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
+                        messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent2, message.getBody());
                         assertTrue(message.getMdibVersionGroups().stream()
-                            .anyMatch(mdibVersionGroup ->
-                                mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
                         count.incrementAndGet();
                     });
                     assertEquals(2, count.get());
@@ -1236,22 +1230,22 @@ public class TestMessageStorage {
             }
             {
                 // multiple body types
-                try (final var inboundMessages =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s1", expectedQName1, expectedQName2)) {
+                try (final var inboundMessages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                        "urn:uuid:s1", expectedQName1, expectedQName2)) {
                     assertEquals(2, inboundMessages.getStream().count());
                 }
             }
             {
                 // multiple body types
-                try (final var inboundMessages =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName1, expectedQName2)) {
+                try (final var inboundMessages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                        "urn:uuid:s2", expectedQName1, expectedQName2)) {
                     assertEquals(2, inboundMessages.getStream().count());
                 }
             }
             {
                 // same types multiple times
-                try (final var inboundMessages =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s1", expectedQName1, expectedQName1)) {
+                try (final var inboundMessages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                        "urn:uuid:s1", expectedQName1, expectedQName1)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent3, message.getBody());
