@@ -495,7 +495,7 @@ public class MessageGeneratingUtil {
             throws SoapFaultException, MarshallingException, InterceptorException, TransportException {
         try {
             service.sendRequestResponse(message);
-        } catch (final TransportException e) {
+        } catch (final TransportException | SoapFaultException e) {
             if (e.getCause() != null && e.getCause() instanceof HttpException) {
                 if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
@@ -504,18 +504,6 @@ public class MessageGeneratingUtil {
                     return;
                 } else {
                     LOG.debug("TransportException with HttpException cause");
-                }
-            }
-            throw e;
-        } catch (final SoapFaultException e) {
-            if (e.getCause() != null && e.getCause() instanceof HttpException) {
-                if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
-                    LOG.debug(
-                            "TransportException with HttpException cause and {} status code",
-                            Constants.HTTP_PAYLOAD_TOO_LARGE);
-                    return;
-                } else {
-                    LOG.debug("SoapFaultException with HttpException cause");
                 }
             }
             throw e;
