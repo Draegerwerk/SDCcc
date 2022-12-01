@@ -1070,10 +1070,10 @@ public class MessageStorage implements AutoCloseable {
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.and(
                             criteriaBuilder.equal(
-                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerKey)),
                                     HTTP_HEADER_NAME_CONTENT_TYPE),
                             criteriaBuilder.like(
-                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerValue)),
                                     criteriaBuilder.literal("%application/soap+xml%")))));
 
             messageContentQuery.where(criteriaBuilder.and(
@@ -1127,10 +1127,10 @@ public class MessageStorage implements AutoCloseable {
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.and(
                             criteriaBuilder.equal(
-                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerKey)),
                                     HTTP_HEADER_NAME_CONTENT_TYPE),
                             criteriaBuilder.like(
-                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerValue)),
                                     criteriaBuilder.literal("%application/soap+xml%")))));
 
             messageContentQuery.where(criteriaBuilder.and(
@@ -1205,10 +1205,10 @@ public class MessageStorage implements AutoCloseable {
             for (final AbstractMap.SimpleImmutableEntry<String, String> header : headers) {
                 headerPredicates.add(criteriaBuilder.and(
                         criteriaBuilder.equal(
-                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
+                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerKey)),
                                 header.getKey()),
                         criteriaBuilder.equal(
-                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
+                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.headerValue)),
                                 header.getValue())));
             }
             headerSubQuery.where(criteriaBuilder.and(

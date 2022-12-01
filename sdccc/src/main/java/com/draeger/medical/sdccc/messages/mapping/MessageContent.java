@@ -186,10 +186,10 @@ public class MessageContent {
         final HashMap<String, List<String>> headersMap = new HashMap<>();
 
         for (final HTTPHeaderEntity httpHeaderEntity : this.headers) {
-            if (!headersMap.containsKey(httpHeaderEntity.getEntryKey())) {
-                headersMap.put(httpHeaderEntity.getEntryKey(), new ArrayList<>());
+            if (!headersMap.containsKey(httpHeaderEntity.getHeaderKey())) {
+                headersMap.put(httpHeaderEntity.getHeaderKey(), new ArrayList<>());
             }
-            headersMap.get(httpHeaderEntity.getEntryKey()).add(httpHeaderEntity.getEntryValue());
+            headersMap.get(httpHeaderEntity.getHeaderKey()).add(httpHeaderEntity.getHeaderValue());
         }
 
         return headersMap;

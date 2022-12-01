@@ -27,12 +27,12 @@ public class HTTPHeaderEntity {
     @GeneratedValue(generator = "HTTPHeaderIDGen")
     private long incId;
 
-    private String entryKey;
+    private String headerKey;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MessageContent messageContent;
 
-    private String entryValue;
+    private String headerValue;
 
     /**
      * This will be used by hibernate when creating the POJO from database entries.
@@ -42,21 +42,21 @@ public class HTTPHeaderEntity {
     /**
      * This will be used when creating the POJO before loading it into the database.
      *
-     * @param entryKey       the key string
-     * @param entryValue     the string the key gets mapped to
+     * @param headerKey       the key string
+     * @param headerValue     the string the key gets mapped to
      * @param messageContent row to link to
      */
-    public HTTPHeaderEntity(final String entryKey, final String entryValue, final MessageContent messageContent) {
-        this.entryKey = entryKey;
-        this.entryValue = entryValue;
+    public HTTPHeaderEntity(final String headerKey, final String headerValue, final MessageContent messageContent) {
+        this.headerKey = headerKey;
+        this.headerValue = headerValue;
         this.messageContent = messageContent;
     }
 
-    public String getEntryKey() {
-        return entryKey;
+    public String getHeaderKey() {
+        return headerKey;
     }
 
-    public String getEntryValue() {
-        return entryValue;
+    public String getHeaderValue() {
+        return headerValue;
     }
 }

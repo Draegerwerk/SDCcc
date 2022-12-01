@@ -21,8 +21,8 @@ import javax.persistence.metamodel.StaticMetamodel;
 public final class HTTPHeaderEntity_ {
 
     public static volatile SingularAttribute<HTTPHeaderEntity, Long> incId;
-    public static volatile SingularAttribute<HTTPHeaderEntity, String> entryKey;
-    public static volatile SingularAttribute<HTTPHeaderEntity, String> entryValue;
+    public static volatile SingularAttribute<HTTPHeaderEntity, String> headerKey;
+    public static volatile SingularAttribute<HTTPHeaderEntity, String> headerValue;
     public static volatile SingularAttribute<HTTPHeaderEntity, MessageContent> messageContent;
 
     private HTTPHeaderEntity_() {}
