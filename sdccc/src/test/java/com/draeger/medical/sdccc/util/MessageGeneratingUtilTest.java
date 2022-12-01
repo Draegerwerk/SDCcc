@@ -200,6 +200,24 @@ public class MessageGeneratingUtilTest {
         assertFalse(observer.isInvalid());
     }
 
+    /**
+     * Verifies that TransportExceptions with no cause do invalidate the test run.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testGetLocalizedTextPayloadTooLarge3() throws Exception {
+        final var mockHostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
+        when(mockHostedService.sendRequestResponse(any()))
+            .thenThrow(new TransportException());
+
+        when(mockHostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
+        when(client.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("loc", mockHostedService));
+
+        genUtil.getLocalizedTexts();
+        assertTrue(observer.isInvalid());
+    }
+
     private void verifySentRefs(final SoapMessage message, final List<String> refs) {
         final var body = message.getOriginalEnvelope().getBody().getAny().get(0);
         final GetLocalizedText sentMessage = (GetLocalizedText) body;

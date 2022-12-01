@@ -496,7 +496,7 @@ public class MessageGeneratingUtil {
         try {
             service.sendRequestResponse(message);
         } catch (final TransportException | SoapFaultException e) {
-            if (e.getCause() != null && e.getCause() instanceof HttpException) {
+            if (e.getCause() instanceof HttpException) {
                 if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
                             "TransportException with HttpException cause and {} status code",
