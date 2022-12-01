@@ -55,11 +55,11 @@ public class MessageContent {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
     private List<StringEntryEntity> headers;
 
-    @ElementCollection
-    private Set<String> actions;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
+    private List<MdibVersionGroupEntity> mdibVersionGroups;
 
     @ElementCollection
-    private Set<String> bodyElements;
+    private Set<String> actions;
 
     private CommunicationLog.Direction direction;
     private CommunicationLog.MessageType messageType;
@@ -90,8 +90,8 @@ public class MessageContent {
      * @param timestamp            time point of the stream creation for getting the body
      * @param nanoTimestamp        point in time relative to current jvm start at which message arrived,
      *                             useful for sorting
+     * @param mdibVersionGroups    MdibVersionGroup values
      * @param actions              ws addressing actions
-     * @param bodyElements         QNames of all elements present in the soap body
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
      */
@@ -102,8 +102,8 @@ public class MessageContent {
             final CommunicationLog.MessageType messageType,
             final long timestamp,
             final long nanoTimestamp,
+            final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups,
             final Set<String> actions,
-            final Set<String> bodyElements,
             final String uuid,
             final boolean isSOAP) {
 
@@ -113,7 +113,6 @@ public class MessageContent {
         this.timestamp = timestamp;
         this.nanoTimestamp = nanoTimestamp;
         this.actions = actions;
-        this.bodyElements = bodyElements;
         this.uuid = uuid;
         this.isSOAP = isSOAP;
 
@@ -124,8 +123,7 @@ public class MessageContent {
 
         final List<StringEntryEntity> headersMap;
         // handle http headers
-        if (communicationContext.getApplicationInfo() instanceof HttpApplicationInfo) {
-            final HttpApplicationInfo httpAppInfo = (HttpApplicationInfo) communicationContext.getApplicationInfo();
+        if (communicationContext.getApplicationInfo() instanceof final HttpApplicationInfo httpAppInfo) {
 
             headersMap = new ArrayList<>();
             for (final Map.Entry<String, Collection<String>> entry :
@@ -142,6 +140,10 @@ public class MessageContent {
             requestUri = null;
         }
         this.headers = headersMap;
+
+        this.mdibVersionGroups = mdibVersionGroups.stream()
+                .map(mdibVersionGroup -> new MdibVersionGroupEntity(mdibVersionGroup, this))
+                .toList();
     }
 
     public String getBody() {
@@ -209,7 +211,7 @@ public class MessageContent {
         return this.requestUri;
     }
 
-    public Set<String> getBodyElements() {
-        return bodyElements;
+    public List<MdibVersionGroupEntity> getMdibVersionGroups() {
+        return this.mdibVersionGroups;
     }
 }

@@ -9,6 +9,7 @@ package com.draeger.medical.sdccc.messages;
 
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
+import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.messages.mapping.StringEntryEntity;
 import java.sql.Connection;
@@ -68,6 +69,7 @@ public class HibernateConfigBase implements HibernateConfig {
         config.setProperty(Environment.BATCH_VERSIONED_DATA, TRUE_SETTING_VALUE);
 
         config.addAnnotatedClass(StringEntryEntity.class);
+        config.addAnnotatedClass(MdibVersionGroupEntity.class);
         config.addAnnotatedClass(MessageContent.class);
         config.addAnnotatedClass(ManipulationParameter.class);
         config.addAnnotatedClass(ManipulationData.class);

@@ -15,7 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.biceps.model.participant.ComponentActivation;
@@ -43,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.ByteOrderMark;
@@ -87,6 +91,18 @@ public class TestMessageStorage {
                     + "<wsa:MessageID>urn:uuid:407229f6-a17d-45ae-9e57-d951d55767c3</wsa:MessageID>"
                     + "</s12:Header><s12:Body>%s</s12:Body></s12:Envelope>";
 
+    private static final String SEQUENCE_ID_BODY_STRING =
+            "<msg:EpisodicMetricReport MdibVersion=\"%s\" SequenceId=\"urn:uuid:%s\">"
+                    + "<msg:ReportPart>"
+                    + "<msg:MetricState xsi:type=\"pm:NumericMetricState\" StateVersion=\"1\" "
+                    + "DescriptorHandle=\"H0\" DescriptorVersion=\"0\">"
+                    + "<pm:MetricValue Value=\"10.0\" DeterminationTime=\"1608791424007\">"
+                    + "<pm:MetricQuality Validity=\"Vld\">"
+                    + "</pm:MetricQuality>"
+                    + "</pm:MetricValue>"
+                    + "</msg:MetricState>"
+                    + "</msg:ReportPart>"
+                    + "</msg:EpisodicMetricReport>";
     private CommunicationContext messageContext;
     private CommunicationContext insecureMessageContext;
     private CommunicationContext udpMessageContext;
@@ -114,11 +130,118 @@ public class TestMessageStorage {
     }
 
     /**
+     * Tests whether an MdibVersion can cause an overflow of the long field storing MdibVersion.
+     *
+     * @param dir message storage directory
+     * @throws IOException          on io exceptions
+     * @throws CertificateException on certificate exceptions
+     */
+    @Test
+    public void testMdibVersionOverflow(@TempDir final File dir) throws IOException, CertificateException {
+        try (final MessageStorage messageStorage =
+                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            final ListMultimap<String, String> multimap = ArrayListMultimap.create();
+
+            final String transactionId = "transactionId";
+            final String requestUri = "requestUri";
+
+            final X509Certificate certificate = CertificateUtil.getDummyCert();
+            final CommunicationContext headerContext = new CommunicationContext(
+                    new HttpApplicationInfo(multimap, transactionId, requestUri),
+                    new TransportInfo(
+                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)));
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(String.format(
+                                BASE_MESSAGE_STRING,
+                                "action",
+                                String.format(SEQUENCE_ID_BODY_STRING, "9223372036854775808", "1"))
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            verify(this.testRunObserver, atLeastOnce()).invalidateTestRun(any(NumberFormatException.class));
+        }
+    }
+
+    /**
+     * Tests whether SequenceId values are stored and only distinct values returned on request.
+     *
+     * @param dir message storage directory
+     * @throws IOException          on io exceptions
+     * @throws CertificateException on certificate exceptions
+     */
+    @Test
+    public void testGetUniqueSequenceIds(@TempDir final File dir) throws IOException, CertificateException {
+        try (final MessageStorage messageStorage =
+                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            final ListMultimap<String, String> multimap = ArrayListMultimap.create();
+
+            final String transactionId = "transactionId";
+            final String requestUri = "requestUri";
+
+            final X509Certificate certificate = CertificateUtil.getDummyCert();
+            final CommunicationContext headerContext = new CommunicationContext(
+                    new HttpApplicationInfo(multimap, transactionId, requestUri),
+                    new TransportInfo(
+                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)));
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(
+                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_BODY_STRING, "3", "1"))
+                                .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(
+                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_BODY_STRING, "3", "2"))
+                                .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(
+                        String.format(BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_BODY_STRING, "3", "1"))
+                                .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Stream<String> sequenceIdStream = messageStorage.getUniqueSequenceIds()) {
+                assertEquals(
+                        List.of("urn:uuid:1", "urn:uuid:2"),
+                        sequenceIdStream.sorted().toList());
+            }
+
+            try (final MessageStorage.GetterResult<MessageContent> inboundMessages =
+                    messageStorage.getInboundMessages()) {
+                assertEquals(3, inboundMessages.getStream().count());
+            }
+        }
+    }
+
+    /**
      * Tests whether headers and the transaction id are stored properly.
      *
      * <p>
-     * Adds a message with test headers and test transaction id into storage and verifies whether the content
-     * retrieved from storage is equal.
+     * Adds a message with test headers and test transaction id into storage and verifies whether the content retrieved
+     * from storage is equal.
      *
      * @param dir message storage directory
      * @throws IOException          on io exceptions
@@ -219,8 +342,7 @@ public class TestMessageStorage {
      * Tests whether SOAP body element QNames are extracted properly.
      *
      * <p>
-     * Adds a message with test bodies into storage and verifies whether the content
-     * retrieved from storage is equal.
+     * Adds a message with test bodies into storage and verifies whether the content retrieved from storage is equal.
      *
      * @param dir message storage directory
      * @throws IOException          on io exceptions
@@ -280,11 +402,27 @@ public class TestMessageStorage {
                     // since actions are assigned and known, we can determine the expected body based on actions
                     final var action = m.getActions().stream().findFirst().orElseThrow();
                     if ("1".equals(action)) {
-                        assertTrue(m.getBodyElements().contains(expectedQName1.toString()));
-                        assertEquals(1, m.getBodyElements().size());
+                        assertTrue(m.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName1.toString())));
+                        assertEquals(
+                                1,
+                                m.getMdibVersionGroups().stream()
+                                        .filter(mdibVersionGroup -> !mdibVersionGroup
+                                                .getBodyElement()
+                                                .isEmpty())
+                                        .count());
                     } else if ("2".equals(action)) {
-                        assertTrue(m.getBodyElements().contains(expectedQName2.toString()));
-                        assertEquals(1, m.getBodyElements().size());
+                        assertTrue(m.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
+                        assertEquals(
+                                1,
+                                m.getMdibVersionGroups().stream()
+                                        .filter(mdibVersionGroup -> !mdibVersionGroup
+                                                .getBodyElement()
+                                                .isEmpty())
+                                        .count());
                     } else {
                         fail("Unknown action " + action);
                     }
@@ -790,7 +928,9 @@ public class TestMessageStorage {
                     final var count = new AtomicInteger(0);
                     outboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent1, message.getBody());
-                        assertTrue(message.getBodyElements().contains(expectedQName1.toString()));
+                        assertTrue(message.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName1.toString())));
                         assertFalse(message.getHeaders().isEmpty());
                         count.incrementAndGet();
                     });
@@ -811,16 +951,15 @@ public class TestMessageStorage {
         try (final MessageStorage messageStorage =
                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
-            final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "some_body");
-            final String expectedBody1 = "<msg:some_body><pm:once_told_me>"
+            final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
+            final String expectedBody1 = "<msg:EpisodicAlertReport><pm:once_told_me>"
                     + "the_world_was_macaroni"
-                    + "</pm:once_told_me></msg:some_body>";
+                    + "</pm:once_told_me></msg:EpisodicAlertReport>";
             final String messageContent1 = String.format(BASE_MESSAGE_STRING, "1", expectedBody1);
 
             // test empty tag
-            final var expectedQName2 =
-                    new QName(CommonConstants.NAMESPACE_MESSAGE, "so_i_took_a_bite_out_of_a_tree", "msg");
-            final String expectedBody2 = "<msg:so_i_took_a_bite_out_of_a_tree/>";
+            final var expectedQName2 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicMetricReport", "msg");
+            final String expectedBody2 = "<msg:EpisodicMetricReport/>";
             final String messageContent2 = String.format(BASE_MESSAGE_STRING, "2", expectedBody2);
 
             try (final Message message = new Message(
@@ -888,7 +1027,9 @@ public class TestMessageStorage {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent1, message.getBody());
-                        assertTrue(message.getBodyElements().contains(expectedQName1.toString()));
+                        assertTrue(message.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName1.toString())));
                         count.incrementAndGet();
                     });
                     assertEquals(1, count.get());
@@ -899,7 +1040,9 @@ public class TestMessageStorage {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent2, message.getBody());
-                        assertTrue(message.getBodyElements().contains(expectedQName2.toString()));
+                        assertTrue(message.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
                         count.incrementAndGet();
                     });
                     assertEquals(2, count.get());
@@ -961,8 +1104,8 @@ public class TestMessageStorage {
     }
 
     /**
-     * Tests whether no deadlock occurs when the first and last database entries in the queue have different types.
-     * The test times out after 30 seconds in case of a deadlock.
+     * Tests whether no deadlock occurs when the first and last database entries in the queue have different types. The
+     * test times out after 30 seconds in case of a deadlock.
      *
      * @param dir message storage directory
      * @throws IOException on io exceptions
@@ -1060,16 +1203,15 @@ public class TestMessageStorage {
         try (final MessageStorage messageStorage =
                 new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
-            final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "some_body");
-            final String expectedBody1 = "<msg:some_body><pm:once_told_me>"
+            final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
+            final String expectedBody1 = "<msg:EpisodicAlertReport><pm:once_told_me>"
                     + "the_world_was_macaroni"
-                    + "</pm:once_told_me></msg:some_body>";
+                    + "</pm:once_told_me></msg:EpisodicAlertReport>";
             final String messageContent1 = String.format(BASE_MESSAGE_STRING, "1", expectedBody1);
 
             // test empty tag
-            final var expectedQName2 =
-                    new QName(CommonConstants.NAMESPACE_MESSAGE, "so_i_took_a_bite_out_of_a_tree", "msg");
-            final String expectedBody2 = "<msg:so_i_took_a_bite_out_of_a_tree/>";
+            final var expectedQName2 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicMetricReport", "msg");
+            final String expectedBody2 = "<msg:EpisodicMetricReport/>";
             final String messageContent2 = String.format(BASE_MESSAGE_STRING, "2", expectedBody2);
 
             final var startInterval = System.nanoTime();
@@ -1136,7 +1278,9 @@ public class TestMessageStorage {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(messageContent2, message.getBody());
-                        assertTrue(message.getBodyElements().contains(expectedQName2.toString()));
+                        assertTrue(message.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
                         count.incrementAndGet();
                     });
                     assertEquals(2, count.get());

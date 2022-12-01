@@ -18,6 +18,7 @@ import org.hibernate.annotations.GenericGenerator;
 /**
  * POJO for persisting headers.
  */
+// TODO: rename
 @Entity(name = "StringEntryEntity")
 @Table(name = "string_entry_entity")
 public class StringEntryEntity {

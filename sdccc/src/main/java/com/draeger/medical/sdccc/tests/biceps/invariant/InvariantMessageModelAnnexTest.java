@@ -32,9 +32,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +45,7 @@ import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.model.message.AbstractAlertReport;
 import org.somda.sdc.biceps.model.message.AbstractComponentReport;
 import org.somda.sdc.biceps.model.message.AbstractContextReport;
+import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationType;
 import org.somda.sdc.biceps.model.message.EpisodicAlertReport;
@@ -85,6 +88,97 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         this.mdibHistorianFactory = riInjector.getInstance(MdibHistorianFactory.class);
         this.marshalling = riInjector.getInstance(MarshallingService.class);
         this.soapUtil = riInjector.getInstance(SoapUtil.class);
+    }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_C5)
+    @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
+            + " for each AbstractDescriptor contained in a DescriptionModificationReport "
+            + "that it was inserted or deleted or udpdated by changing"
+            + "at least one child or attribute.")
+    void testRequirementC5() throws NoTestData, IOException {
+        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
+                messageStorage, getInjector().getInstance(TestRunObserver.class));
+
+        final var acceptableSequenceSeen = new AtomicInteger(0);
+
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
+
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof DescriptionModificationReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+
+                            for (var reportPart : ((DescriptionModificationReport) report).getReportPart()) {
+                                for (var modifiedDescriptor : reportPart.getDescriptor()) {
+
+                                    final var descriptorBeforeReportOpt =
+                                            first.getDescriptor(modifiedDescriptor.getHandle());
+                                    final var descriptorAfterReportOpt =
+                                            second.getDescriptor(modifiedDescriptor.getHandle());
+
+                                    final var modificationType = ImpliedValueUtil.getModificationType(reportPart);
+                                    if (modificationType.equals(DescriptionModificationType.UPT)) {
+                                        assertTrue(
+                                                descriptorBeforeReportOpt.isPresent()
+                                                        && descriptorAfterReportOpt.isPresent(),
+                                                String.format(
+                                                        "The descriptor with handle %s is not present",
+                                                        modifiedDescriptor.getHandle()));
+
+                                        assertNotEquals(
+                                                descriptorAfterReportOpt.orElseThrow(),
+                                                descriptorBeforeReportOpt.orElseThrow(),
+                                                String.format(
+                                                        "The descriptor with the handle %s from the report has not changed",
+                                                        modifiedDescriptor.getHandle()));
+
+                                    } else if (modificationType.equals(DescriptionModificationType.CRT)) {
+                                        assertTrue(
+                                                descriptorBeforeReportOpt.isEmpty()
+                                                        && descriptorAfterReportOpt.isPresent(),
+                                                String.format(
+                                                        "The descriptor with handle %s is missing before applying the report:"
+                                                                + " %s and is present after applying the report: %s,"
+                                                                + " for modification type create",
+                                                        modifiedDescriptor.getHandle(),
+                                                        descriptorBeforeReportOpt.isEmpty(),
+                                                        descriptorAfterReportOpt.isPresent()));
+                                    } else {
+                                        assertTrue(
+                                                descriptorBeforeReportOpt.isPresent()
+                                                        && descriptorAfterReportOpt.isEmpty(),
+                                                String.format(
+                                                        "The descriptor with handle %s is present before applying the report:"
+                                                                + " %s and is missing after applying the report: %s,"
+                                                                + " for modification type delete",
+                                                        modifiedDescriptor.getHandle(),
+                                                        descriptorBeforeReportOpt.isPresent(),
+                                                        descriptorAfterReportOpt.isEmpty()));
+                                    }
+                                }
+                            }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+                        }
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
+        assertTestData(
+                acceptableSequenceSeen.get(), "No DescriptionModificationReport seen during test run, test failed.");
     }
 
     @Test
@@ -398,52 +492,52 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"
             + " EpisodicAlertReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicAlertReportPrecondition.class})
-    void testRequirementC11() throws NoTestData, PreprocessingException, ReportProcessingException {
+    void testRequirementC11() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            // get relevant reports
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
-            var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
 
-            for (var report : reports) {
-                if (report instanceof EpisodicAlertReport) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    second = mdibHistorian.applyReportOnStorage(second, report);
-                    for (var reportPart : ((AbstractAlertReport) report).getReportPart()) {
-                        for (var alertState : reportPart.getAlertState()) {
-                            final var stateBeforeReport =
-                                    first.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
-                            final var stateAfterReport =
-                                    second.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
-                            assertTrue(
-                                    stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                    String.format(STATE_ABSENT, alertState.getDescriptorHandle()));
-                            assertNotEquals(
-                                    stateAfterReport.orElseThrow(),
-                                    stateBeforeReport.orElseThrow(),
-                                    String.format(STATE_UNCHANGED, alertState.getDescriptorHandle()));
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
+
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof EpisodicAlertReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+                            for (var reportPart : ((AbstractAlertReport) report).getReportPart()) {
+                                for (var alertState : reportPart.getAlertState()) {
+                                    final var stateBeforeReport =
+                                            first.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
+                                    final var stateAfterReport =
+                                            second.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
+                                    assertTrue(
+                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
+                                            String.format(STATE_ABSENT, alertState.getDescriptorHandle()));
+                                    assertNotEquals(
+                                            stateAfterReport.orElseThrow(),
+                                            stateBeforeReport.orElseThrow(),
+                                            String.format(STATE_UNCHANGED, alertState.getDescriptorHandle()));
+                                }
+                            }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
                         }
                     }
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                } else {
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No AlertReports seen during test run, test failed.");
     }
@@ -455,52 +549,52 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicComponentReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
-    void testRequirementC12() throws NoTestData, PreprocessingException, ReportProcessingException {
+    void testRequirementC12() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            // get relevant reports
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
-            var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
 
-            for (var report : reports) {
-                if (report instanceof EpisodicComponentReport) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    second = mdibHistorian.applyReportOnStorage(second, report);
-                    for (var reportPart : ((AbstractComponentReport) report).getReportPart()) {
-                        for (var componentState : reportPart.getComponentState()) {
-                            final var stateBeforeReport = first.getState(
-                                    componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
-                            final var stateAfterReport = second.getState(
-                                    componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
-                            assertTrue(
-                                    stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                    String.format(STATE_ABSENT, componentState.getDescriptorHandle()));
-                            assertNotEquals(
-                                    stateAfterReport.orElseThrow(),
-                                    stateBeforeReport.orElseThrow(),
-                                    String.format(STATE_UNCHANGED, componentState.getDescriptorHandle()));
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
+
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof EpisodicComponentReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+                            for (var reportPart : ((AbstractComponentReport) report).getReportPart()) {
+                                for (var componentState : reportPart.getComponentState()) {
+                                    final var stateBeforeReport = first.getState(
+                                            componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
+                                    final var stateAfterReport = second.getState(
+                                            componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
+                                    assertTrue(
+                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
+                                            String.format(STATE_ABSENT, componentState.getDescriptorHandle()));
+                                    assertNotEquals(
+                                            stateAfterReport.orElseThrow(),
+                                            stateBeforeReport.orElseThrow(),
+                                            String.format(STATE_UNCHANGED, componentState.getDescriptorHandle()));
+                                }
+                            }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
                         }
                     }
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                } else {
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No ComponentReports seen during test run, test failed.");
     }
@@ -512,62 +606,64 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicContextReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
-    void testRequirementC13() throws NoTestData, PreprocessingException, ReportProcessingException {
+    void testRequirementC13() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            // get relevant reports
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
-            var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
 
-            for (var report : reports) {
-                if (report instanceof EpisodicContextReport) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
 
-                    for (var reportPart : ((AbstractContextReport) report).getReportPart()) {
-                        for (var contextState : reportPart.getContextState()) {
-                            final var beforeReport = first.getEntity(contextState.getDescriptorHandle());
-                            final var afterReport = second.getEntity(contextState.getDescriptorHandle());
-                            final var stateBeforeReport =
-                                    beforeReport.orElseThrow().getStates(AbstractContextState.class).stream()
-                                            .filter(state -> state.getHandle().equals(contextState.getHandle()))
-                                            .findFirst();
-                            final var stateAfterReport =
-                                    afterReport.orElseThrow().getStates(AbstractContextState.class).stream()
-                                            .filter(state -> state.getHandle().equals(contextState.getHandle()))
-                                            .findFirst();
-                            if (stateBeforeReport.isPresent() && stateAfterReport.isPresent()) {
-                                assertNotEquals(
-                                        stateAfterReport.orElseThrow(),
-                                        stateBeforeReport.orElseThrow(),
-                                        String.format(STATE_UNCHANGED, contextState.getDescriptorHandle()));
-                            } else {
-                                assertTrue(
-                                        stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
-                                        String.format(STATE_ABSENT, contextState.getDescriptorHandle()));
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof EpisodicContextReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+
+                            for (var reportPart : ((AbstractContextReport) report).getReportPart()) {
+                                for (var contextState : reportPart.getContextState()) {
+                                    final var beforeReport = first.getEntity(contextState.getDescriptorHandle());
+                                    final var afterReport = second.getEntity(contextState.getDescriptorHandle());
+                                    final var stateBeforeReport =
+                                            beforeReport.orElseThrow().getStates(AbstractContextState.class).stream()
+                                                    .filter(state ->
+                                                            state.getHandle().equals(contextState.getHandle()))
+                                                    .findFirst();
+                                    final var stateAfterReport =
+                                            afterReport.orElseThrow().getStates(AbstractContextState.class).stream()
+                                                    .filter(state ->
+                                                            state.getHandle().equals(contextState.getHandle()))
+                                                    .findFirst();
+                                    if (stateBeforeReport.isPresent() && stateAfterReport.isPresent()) {
+                                        assertNotEquals(
+                                                stateAfterReport.orElseThrow(),
+                                                stateBeforeReport.orElseThrow(),
+                                                String.format(STATE_UNCHANGED, contextState.getDescriptorHandle()));
+                                    } else {
+                                        assertTrue(
+                                                stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
+                                                String.format(STATE_ABSENT, contextState.getDescriptorHandle()));
+                                    }
+                                }
                             }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
                         }
                     }
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                } else {
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No ContextReports seen during test run, test failed.");
     }
@@ -578,53 +674,53 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
             + " EpisodicMetricReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicMetricReportPrecondition.class})
-    void testRequirementC14() throws NoTestData, PreprocessingException, ReportProcessingException {
+    void testRequirementC14() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            // get relevant reports
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
-            var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
 
-            for (var report : reports) {
-                if (report instanceof EpisodicMetricReport) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
 
-                    for (var reportPart : ((EpisodicMetricReport) report).getReportPart()) {
-                        for (var metricState : reportPart.getMetricState()) {
-                            final var stateBeforeReport =
-                                    first.getState(metricState.getDescriptorHandle(), AbstractMetricState.class);
-                            final var stateAfterReport =
-                                    second.getState(metricState.getDescriptorHandle(), AbstractMetricState.class);
-                            assertTrue(
-                                    stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                    String.format(STATE_ABSENT, metricState.getDescriptorHandle()));
-                            assertNotEquals(
-                                    stateAfterReport.orElseThrow(),
-                                    stateBeforeReport.orElseThrow(),
-                                    String.format(STATE_UNCHANGED, metricState.getDescriptorHandle()));
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof EpisodicMetricReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+
+                            for (var reportPart : ((EpisodicMetricReport) report).getReportPart()) {
+                                for (var metricState : reportPart.getMetricState()) {
+                                    final var stateBeforeReport = first.getState(
+                                            metricState.getDescriptorHandle(), AbstractMetricState.class);
+                                    final var stateAfterReport = second.getState(
+                                            metricState.getDescriptorHandle(), AbstractMetricState.class);
+                                    assertTrue(
+                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
+                                            String.format(STATE_ABSENT, metricState.getDescriptorHandle()));
+                                    assertNotEquals(
+                                            stateAfterReport.orElseThrow(),
+                                            stateBeforeReport.orElseThrow(),
+                                            String.format(STATE_UNCHANGED, metricState.getDescriptorHandle()));
+                                }
+                            }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
                         }
                     }
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                } else {
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No MetricReports seen during test run, test failed.");
     }
@@ -636,53 +732,54 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicOperationalStateReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.class})
-    void testRequirementC15() throws NoTestData, PreprocessingException, ReportProcessingException {
+    void testRequirementC15() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            // get relevant reports
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
-            var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
 
-            for (var report : reports) {
-                if (report instanceof EpisodicOperationalStateReport) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                    var first = mdibHistorian.createNewStorage(sequenceId);
+                    var second = mdibHistorian.createNewStorage(sequenceId);
 
-                    for (var reportPart : ((EpisodicOperationalStateReport) report).getReportPart()) {
-                        for (var operationState : reportPart.getOperationState()) {
-                            final var stateBeforeReport =
-                                    first.getState(operationState.getDescriptorHandle(), AbstractOperationState.class);
-                            final var stateAfterReport =
-                                    second.getState(operationState.getDescriptorHandle(), AbstractOperationState.class);
-                            assertTrue(
-                                    stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                    String.format(STATE_ABSENT, operationState.getDescriptorHandle()));
-                            assertNotEquals(
-                                    stateAfterReport.orElseThrow(),
-                                    stateBeforeReport.orElseThrow(),
-                                    String.format(STATE_UNCHANGED, operationState.getDescriptorHandle()));
+                    for (final Iterator<AbstractReport> reportIterator = reports.iterator();
+                            reportIterator.hasNext(); ) {
+                        final AbstractReport report = reportIterator.next();
+
+                        if (report instanceof EpisodicOperationalStateReport) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            second = mdibHistorian.applyReportOnStorage(second, report);
+
+                            for (var reportPart : ((EpisodicOperationalStateReport) report).getReportPart()) {
+                                for (var operationState : reportPart.getOperationState()) {
+                                    final var stateBeforeReport = first.getState(
+                                            operationState.getDescriptorHandle(), AbstractOperationState.class);
+                                    final var stateAfterReport = second.getState(
+                                            operationState.getDescriptorHandle(), AbstractOperationState.class);
+                                    assertTrue(
+                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
+                                            String.format(STATE_ABSENT, operationState.getDescriptorHandle()));
+                                    assertNotEquals(
+                                            stateAfterReport.orElseThrow(),
+                                            stateBeforeReport.orElseThrow(),
+                                            String.format(STATE_UNCHANGED, operationState.getDescriptorHandle()));
+                                }
+                            }
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                        } else {
+                            first = mdibHistorian.applyReportOnStorage(first, report);
+                            second = mdibHistorian.applyReportOnStorage(second, report);
                         }
                     }
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                } else {
-                    first = mdibHistorian.applyReportOnStorage(first, report);
-                    second = mdibHistorian.applyReportOnStorage(second, report);
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No OperationalStateReports seen during test run, test failed.");
     }

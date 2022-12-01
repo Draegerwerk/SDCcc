@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -82,7 +83,7 @@ public class InvariantMultiStateTest extends InjectorTestBase {
             + " to the handles from any descriptor derived from pm:AbstractDescriptor within one mdib sequence.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.AllKindsOfContextStatesAssociatedPrecondition.class})
-    void testRequirement0097() throws NoTestData {
+    void testRequirement0097() throws NoTestData, IOException {
 
         final var descriptorHandles = new HashSet<String>();
         final var multiStateHandles = new HashSet<String>();
@@ -90,43 +91,40 @@ public class InvariantMultiStateTest extends InjectorTestBase {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
         final var seenAcceptableSequence = new AtomicBoolean(false);
-        final List<String> sequenceIds;
 
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
-
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess first = history.next();
-                final var seenMultiStatesMap = initMultiStateMap(first, CONTEXT_DESCRIPTOR_CLASSES);
-                while (first != null) {
-                    final var entities = first.findEntitiesByType(AbstractDescriptor.class);
-                    final var states = first.findContextStatesByType(AbstractContextState.class);
-                    addAllDescriptorHandles(entities, descriptorHandles);
-                    if (states.isEmpty()) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess first = history.next();
+                    final var seenMultiStatesMap = initMultiStateMap(first, CONTEXT_DESCRIPTOR_CLASSES);
+                    while (first != null) {
+                        final var entities = first.findEntitiesByType(AbstractDescriptor.class);
+                        final var states = first.findContextStatesByType(AbstractContextState.class);
+                        addAllDescriptorHandles(entities, descriptorHandles);
+                        if (states.isEmpty()) {
+                            first = history.next();
+                            continue;
+                        }
+                        addAllMultiStateHandles(states, multiStateHandles, seenMultiStatesMap);
+                        areMultiStatesHandlesUnique(states);
+                        areHandlesDisjunctive(descriptorHandles, multiStateHandles, first.getMdibVersion());
                         first = history.next();
-                        continue;
                     }
-                    addAllMultiStateHandles(states, multiStateHandles, seenMultiStatesMap);
-                    areMultiStatesHandlesUnique(states);
-                    areHandlesDisjunctive(descriptorHandles, multiStateHandles, first.getMdibVersion());
-                    first = history.next();
+                    var acceptableSequence = true;
+                    for (var value : seenMultiStatesMap.values()) {
+                        acceptableSequence &= value.size() > 1;
+                    }
+
+                    if (acceptableSequence) {
+                        seenAcceptableSequence.set(acceptableSequence);
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-                var acceptableSequence = true;
-                for (var value : seenMultiStatesMap.values()) {
-                    acceptableSequence &= value.size() > 1;
-                }
-                seenAcceptableSequence.set(acceptableSequence);
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
-            descriptorHandles.clear();
-            multiStateHandles.clear();
+                descriptorHandles.clear();
+                multiStateHandles.clear();
+            });
         }
         assertTestData(
                 seenAcceptableSequence.get(),

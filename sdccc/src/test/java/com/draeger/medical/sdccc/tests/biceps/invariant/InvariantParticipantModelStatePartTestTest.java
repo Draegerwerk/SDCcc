@@ -455,7 +455,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
 
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
@@ -484,7 +484,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -642,7 +642,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5472();
@@ -775,7 +775,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -803,7 +803,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -962,7 +962,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5474();
@@ -1095,7 +1095,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -1123,7 +1123,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
 
@@ -1283,7 +1283,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54760();
@@ -1416,7 +1416,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -1444,7 +1444,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -1606,7 +1606,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5478();
@@ -1739,7 +1739,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -1767,7 +1767,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -1925,7 +1925,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54710();
@@ -2058,7 +2058,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -2086,7 +2086,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
 
@@ -2242,7 +2242,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement547120();
@@ -2375,7 +2375,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -2403,7 +2403,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -2560,7 +2560,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54714();
@@ -2693,7 +2693,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -2721,7 +2721,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
 
@@ -2879,7 +2879,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54716();
@@ -3012,7 +3012,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         // should not fail the test, since the first report in the time interval is relevant for the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
@@ -3040,7 +3040,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
 

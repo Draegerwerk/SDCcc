@@ -35,8 +35,8 @@ public final class MessageContent_ {
     public static volatile SingularAttribute<MessageContent, Long> timestamp;
     public static volatile SingularAttribute<MessageContent, Long> nanoTimestamp;
     public static volatile SingularAttribute<MessageContent, String> messageHash;
+    public static volatile ListAttribute<MessageContent, MdibVersionGroupEntity> mdibVersionGroups;
     public static volatile SetAttribute<MessageContent, String> actions;
-    public static volatile SetAttribute<MessageContent, String> bodyElements;
     public static volatile SingularAttribute<MessageContent, String> scheme;
     public static volatile SingularAttribute<MessageContent, String> uuid;
     public static volatile SingularAttribute<MessageContent, Boolean> isSOAP;

@@ -13,6 +13,8 @@ import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData_;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter_;
+import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
+import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity_;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent_;
 import com.draeger.medical.sdccc.messages.mapping.StringEntryEntity;
@@ -36,6 +38,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +63,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.io.ByteOrderMark;
@@ -110,6 +114,8 @@ public class MessageStorage implements AutoCloseable {
     private static final String HTTP_HEADER_NAME_CONTENT_TYPE = "content-type";
     private static final String CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE =
             "createMessageStream called on closed storage";
+    private static final String GET_UNIQUE_SEQUENCE_IDS_CALLED_ON_CLOSED_STORAGE =
+            "getUniqueSequenceIds called on closed storage";
     private static final String GET_INBOUND_MESSAGES_CALLED_ON_CLOSED_STORAGE =
             "getInboundMessages called on closed storage";
     private static final String GET_OUTBOUND_MESSAGES_CALLED_ON_CLOSED_STORAGE =
@@ -122,6 +128,9 @@ public class MessageStorage implements AutoCloseable {
             "getInboundMessagesByTimeInterval called on closed storage";
     private static final String GET_MANIPULATION_DATA_BY_MANIPULATION =
             "getManipulationDataByManipulation called on closed storage";
+    private static final String FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED =
+            "Filtering for the given element name is not supported due to MdibVersionGroups "
+                    + "not being parsed for elements with the name %s .";
     private static final String INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS =
             "MessageID=%s: Inconsistent charset" + " declaration: %s, but %s";
     private static final String HTTP_HEADER_ORIGIN = "HTTP Header states '%s'";
@@ -244,13 +253,13 @@ public class MessageStorage implements AutoCloseable {
         boolean isSOAP = false;
         String body = "";
         final Set<String> actions = new HashSet<>();
-        final Set<String> bodyElements = new HashSet<>();
+        final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups = new LinkedList<>();
         final byte[] bodyBytes = message.getFinalMemory();
         if (bodyBytes.length > 0) {
             final Charset charset = determineCharsetFromMessage(message);
             // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
             body = new String(message.getFinalMemory(), charset);
-            isSOAP = processMessageBody(body, actions, bodyElements);
+            isSOAP = processMessageBody(body, actions, mdibVersionGroups);
         }
         return new MessageContent(
                 body,
@@ -259,13 +268,16 @@ public class MessageStorage implements AutoCloseable {
                 message.getMessageType(),
                 message.getTimestamp(),
                 message.getNanoTimestamp(),
+                mdibVersionGroups,
                 actions,
-                bodyElements,
                 message.getID(),
                 isSOAP);
     }
 
-    private boolean processMessageBody(final String body, final Set<String> actions, final Set<String> bodyElements) {
+    private boolean processMessageBody(
+            final String body,
+            final Set<String> actions,
+            final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups) {
         var isSOAP = false;
         try {
             final XMLEventReader reader = this.getXmlInputFactory().createXMLEventReader(new StringReader(body));
@@ -280,7 +292,7 @@ public class MessageStorage implements AutoCloseable {
                         handleActionEvent(actions, reader);
                     } else if (startElement.getName().getLocalPart().equals("Body")
                             && startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)) {
-                        handleSoapBodyEvent(bodyElements, reader);
+                        handleSoapBodyEvent(mdibVersionGroups, reader);
                     } else if (startElement.getName().getLocalPart().equals("Envelope")
                             && startElement.getName().getNamespaceURI().equals(SoapConstants.NAMESPACE)) {
                         isSOAP = true;
@@ -582,8 +594,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
-     * Utility method to check if one byte array starts with a specified sequence
-     * of bytes.
+     * Utility method to check if one byte array starts with a specified sequence of bytes.
      *
      * @param array  The array to check
      * @param prefix The prefix bytes to test for
@@ -680,8 +691,15 @@ public class MessageStorage implements AutoCloseable {
         }
     }
 
-    private void handleSoapBodyEvent(final Set<String> bodyElements, final XMLEventReader reader)
+    private boolean checkElementSupportsMdibVersionSorting(final QName name) {
+        return Constants.RELEVANT_REPORT_BODIES.contains(name) || Constants.MSG_GET_MDIB_RESPONSE.equals(name);
+    }
+
+    private void handleSoapBodyEvent(
+            final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups, final XMLEventReader reader)
             throws XMLStreamException {
+        long childCounter = 0;
+
         XMLEvent nextEvent;
         var level = 0;
         while (level >= 0) {
@@ -690,11 +708,60 @@ public class MessageStorage implements AutoCloseable {
                 level++;
                 // only add elements on level 1, i.e. direct children of the SOAP body
                 if (level == 1) {
-                    bodyElements.add(nextEvent.asStartElement().getName().toString());
+                    childCounter++;
+
+                    final StartElement startElement = nextEvent.asStartElement();
+
+                    final String bodyElementNameString = startElement.getName().toString();
+
+                    long mdibVersion = -3L;
+                    String sequenceId = null;
+
+                    if (this.checkElementSupportsMdibVersionSorting(startElement.getName())) {
+
+                        final Attribute mdibVersionAttribute = startElement.getAttributeByName(Constants.MDIB_VERSION);
+
+                        if (mdibVersionAttribute == null) {
+                            mdibVersion = 0L;
+                        } else if (mdibVersionAttribute.getValue() == null) {
+                            mdibVersion = -2L;
+                            this.testRunObserver.invalidateTestRun(
+                                    "Calling getValue on mdibVersionAttribute resulted in null. "
+                                            + "Saved -2L as a replacement value.");
+                        } else if (mdibVersionAttribute.getValue().equals("")) {
+                            mdibVersion = -1L;
+                            this.testRunObserver.invalidateTestRun(
+                                    "Encountered MdibVersion attribute that has an empty string as its value"
+                                            + "and saved -1L as a replacement value.");
+                        } else {
+                            try {
+                                mdibVersion = Long.parseLong(mdibVersionAttribute.getValue());
+                            } catch (NumberFormatException e) {
+                                this.testRunObserver.invalidateTestRun(e);
+                            }
+                        }
+
+                        final Attribute sequenceIdAttribute = startElement.getAttributeByName(Constants.SEQUENCE_ID);
+
+                        if (sequenceIdAttribute != null) {
+                            sequenceId = sequenceIdAttribute.getValue();
+                        } else {
+                            this.testRunObserver.invalidateTestRun(String.format(
+                                    "Encountered body with the QName %s " + "without a SequenceId attribute.",
+                                    startElement.getName()));
+                        }
+                    }
+                    mdibVersionGroups.add(new MdibVersionGroupEntity.MdibVersionGroup(
+                            mdibVersion, sequenceId, bodyElementNameString));
                 }
             } else if (nextEvent.isEndElement()) {
                 level--;
             }
+        }
+
+        if (childCounter > 1) {
+            this.testRunObserver.invalidateTestRun(
+                    "Encountered multiple elements in soap body, but more than one are not allowed.");
         }
     }
 
@@ -718,7 +785,6 @@ public class MessageStorage implements AutoCloseable {
             LOG.error(CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE);
             throw new IOException(CREATE_MESSAGE_STREAM_CALLED_ON_CLOSED_STORAGE);
         }
-
         return messageFactory.create(direction, messageType, communicationContext);
     }
 
@@ -880,6 +946,32 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
+     * Retrieves all SequenceId attribute values that have been seen.
+     *
+     * @return stream of all SequenceId attribute values that have been seen
+     * @throws IOException if storage is closed
+     */
+    public Stream<String> getUniqueSequenceIds() throws IOException {
+
+        if (this.closed.get()) {
+            LOG.error(GET_UNIQUE_SEQUENCE_IDS_CALLED_ON_CLOSED_STORAGE);
+            throw new IOException(GET_UNIQUE_SEQUENCE_IDS_CALLED_ON_CLOSED_STORAGE);
+        }
+
+        final CriteriaQuery<String> criteria;
+
+        try (final Session session = sessionFactory.openSession()) {
+            final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            criteria = criteriaBuilder.createQuery(String.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot = criteria.from(MdibVersionGroupEntity.class);
+            criteria.select(mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.sequenceId));
+            criteria.distinct(true);
+        }
+
+        return this.getQueryResult(criteria);
+    }
+
+    /**
      * Retrieves all incoming messages.
      *
      * @return container with stream of all inbound {@linkplain MessageContent}s
@@ -947,8 +1039,8 @@ public class MessageStorage implements AutoCloseable {
      * Retrieves all incoming SOAP messages.
      *
      * <p>
-     * SOAP messages are considered messages in storage which have a SOAP 1.2 envelope element or
-     * application/soap+xml content type.
+     * SOAP messages are considered messages in storage which have a SOAP 1.2 envelope element or application/soap+xml
+     * content type.
      *
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
@@ -1004,8 +1096,8 @@ public class MessageStorage implements AutoCloseable {
      * Retrieves all incoming SOAP response messages.
      *
      * <p>
-     * SOAP messages are considered messages in storage which have a SOAP 1.2 envelope element or
-     * application/soap+xml content type.
+     * SOAP messages are considered messages in storage which have a SOAP 1.2 envelope element or application/soap+xml
+     * content type.
      *
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
@@ -1088,11 +1180,23 @@ public class MessageStorage implements AutoCloseable {
             final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
             messageContentQuery.select(messageContentRoot);
 
-            final var bodyPredicates = new ArrayList<Predicate>();
-            for (final var bodyType : bodyTypes) {
-                bodyPredicates.add(criteriaBuilder.isMember(
-                        bodyType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
+            final Subquery<MdibVersionGroupEntity> mdibVersionGroupSubQuery =
+                    messageContentQuery.subquery(MdibVersionGroupEntity.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot =
+                    mdibVersionGroupSubQuery.from(MdibVersionGroupEntity.class);
+            mdibVersionGroupSubQuery.select(mdibVersionGroupEntityRoot);
+            final List<Predicate> bodyElementPredicates = new ArrayList<>();
+
+            for (final QName bodyElement : bodyTypes) {
+                bodyElementPredicates.add(criteriaBuilder.equal(
+                        mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.bodyElement), bodyElement.toString()));
             }
+
+            mdibVersionGroupSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
 
             final Subquery<StringEntryEntity> headerSubQuery = messageContentQuery.subquery(StringEntryEntity.class);
             final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
@@ -1123,7 +1227,7 @@ public class MessageStorage implements AutoCloseable {
                             criteriaBuilder.equal(
                                     criteriaBuilder.lower(messageContentRoot.get(MessageContent_.scheme)),
                                     Constants.HTTPS_SCHEME)),
-                    criteriaBuilder.or(bodyPredicates.toArray(new Predicate[0])),
+                    criteriaBuilder.exists(mdibVersionGroupSubQuery),
                     criteriaBuilder.exists(headerSubQuery)));
         }
 
@@ -1179,56 +1283,179 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
+     * Retrieves all incoming messages which match any of the provided body element QNames and at the same time belong
+     * to the given SequenceId.
+     *
+     * <p>
+     * Messages are sorted by MdibVersion on the inner join result.
+     * </p>
+     *
+     * @param sequenceId SequenceId attribute value to filter for
+     * @param bodyTypes  to match messages against
+     * @return container with stream of all matching inbound {@linkplain MessageContent}s
+     * @throws IOException if storage is closed
+     */
+    public GetterResult<MessageContent> getInboundMessagesByBodyTypeAndSequenceId(
+            final String sequenceId, final QName... bodyTypes) throws IOException { // TODO: add unittest for this
+        if (this.closed.get()) {
+            LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
+            throw new IOException(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
+        }
+
+        for (final QName qname : bodyTypes) {
+            if (!this.checkElementSupportsMdibVersionSorting(qname)) {
+
+                final String localErrorMessage = String.format(FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED, qname);
+                this.testRunObserver.invalidateTestRun(localErrorMessage);
+                throw new UnsupportedOperationException(localErrorMessage);
+            }
+        }
+
+        final CriteriaQuery<MessageContent> messageContentQuery;
+        try (final Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+
+            final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            messageContentQuery = criteriaBuilder.createQuery(MessageContent.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(messageContentRoot);
+
+            final Subquery<MdibVersionGroupEntity> mdibVersionGroupSubQuery =
+                    messageContentQuery.subquery(MdibVersionGroupEntity.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot =
+                    mdibVersionGroupSubQuery.from(MdibVersionGroupEntity.class);
+            mdibVersionGroupSubQuery.select(mdibVersionGroupEntityRoot);
+            final List<Predicate> bodyElementPredicates = new ArrayList<>();
+
+            for (final QName bodyElement : bodyTypes) {
+                bodyElementPredicates.add(criteriaBuilder.and(
+                        criteriaBuilder.equal(
+                                mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.bodyElement),
+                                bodyElement.toString()),
+                        criteriaBuilder.equal(
+                                mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.sequenceId), sequenceId)));
+            }
+
+            mdibVersionGroupSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
+
+            messageContentQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
+                    criteriaBuilder.exists(mdibVersionGroupSubQuery)));
+
+            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
+                    .join(MessageContent_.mdibVersionGroups)
+                    .get(MdibVersionGroupEntity_.mdibVersion)));
+        }
+
+        final boolean present;
+        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+            present = countingStream.findAny().isPresent();
+        }
+
+        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+    }
+
+    /**
      * Retrieves all incoming messages which match any of the provided body element QNames.
      *
      * <p>
-     * Messages are sorted by their timestamp.
+     * Messages are sorted by MdibVersion on the inner join result.
+     *
+     * @param enableSorting switch to turn off or turn on MdibVersion based sorting
+     * @param bodyTypes  to match messages against
+     * @return container with stream of all matching inbound {@linkplain MessageContent}s
+     * @throws IOException if storage is closed
+     */
+    public GetterResult<MessageContent> getInboundMessagesByBodyType(
+            final boolean enableSorting, final QName... bodyTypes) throws IOException {
+        if (this.closed.get()) {
+            LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
+            throw new IOException(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
+        }
+
+        if (enableSorting) {
+            for (final QName qname : bodyTypes) {
+                if (!this.checkElementSupportsMdibVersionSorting(qname)) {
+
+                    final String localErrorMessage =
+                            String.format(FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED, qname);
+                    this.testRunObserver.invalidateTestRun(localErrorMessage);
+                    throw new UnsupportedOperationException(localErrorMessage);
+                }
+            }
+        }
+
+        final CriteriaQuery<MessageContent> messageContentQuery;
+        try (final Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+
+            final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            messageContentQuery = criteriaBuilder.createQuery(MessageContent.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(messageContentRoot);
+
+            final Subquery<MdibVersionGroupEntity> mdibVersionGroupSubQuery =
+                    messageContentQuery.subquery(MdibVersionGroupEntity.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot =
+                    mdibVersionGroupSubQuery.from(MdibVersionGroupEntity.class);
+            mdibVersionGroupSubQuery.select(mdibVersionGroupEntityRoot);
+            final List<Predicate> bodyElementPredicates = new ArrayList<>();
+
+            for (final QName bodyElement : bodyTypes) {
+                bodyElementPredicates.add(criteriaBuilder.equal(
+                        mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.bodyElement), bodyElement.toString()));
+            }
+
+            mdibVersionGroupSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
+
+            messageContentQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
+                    criteriaBuilder.exists(mdibVersionGroupSubQuery)));
+
+            if (enableSorting) {
+                messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
+                        .join(MessageContent_.mdibVersionGroups)
+                        .get(MdibVersionGroupEntity_.mdibVersion)));
+            }
+        }
+
+        final boolean present;
+        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+            present = countingStream.findAny().isPresent();
+        }
+
+        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+    }
+
+    /**
+     * Retrieves all incoming messages which match any of the provided body element QNames.
+     *
+     * <p>
+     * Messages are sorted by MdibVersion on the inner join result.
      *
      * @param bodyTypes to match messages against
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
     public GetterResult<MessageContent> getInboundMessagesByBodyType(final QName... bodyTypes) throws IOException {
-        if (this.closed.get()) {
-            LOG.error(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
-            throw new IOException(GET_INBOUND_MESSAGE_BY_BODY_TYPE_CALLED_ON_CLOSED_STORAGE);
-        }
-
-        final CriteriaQuery<MessageContent> criteria;
-        try (final Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-
-            final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            criteria = criteriaBuilder.createQuery(MessageContent.class);
-            final Root<MessageContent> messageContentRoot = criteria.from(MessageContent.class);
-            criteria.select(messageContentRoot);
-            final var predicates = new ArrayList<Predicate>();
-            for (final var bodyType : bodyTypes) {
-                predicates.add(criteriaBuilder.isMember(
-                        bodyType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
-            }
-            criteria.where(criteriaBuilder.and(
-                    criteriaBuilder.equal(
-                            messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
-                    criteriaBuilder.or(predicates.toArray(new Predicate[0]))));
-            // the answer should still adhere to the order the messages arrived,
-            // even when mixing bodies
-            criteria.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
-        }
-
-        final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(criteria)) {
-            present = countingStream.findAny().isPresent();
-        }
-
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return this.getInboundMessagesByBodyType(true, bodyTypes);
     }
 
     /**
      * Retrieves all manipulation data from storage.
      *
      * <p>
-     * Manipulations are sorted by their timestamp.
+     * Messages are sorted by MdibVersion on the inner join result.
      *
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
@@ -1265,7 +1492,7 @@ public class MessageStorage implements AutoCloseable {
      * time interval.
      *
      * <p>
-     * Messages are sorted by their timestamp.
+     * Messages are sorted by MdibVersion on the inner join result.
      *
      * @param startTimestamp  of relevant time interval
      * @param finishTimestamp of relevant time interval
@@ -1280,20 +1507,43 @@ public class MessageStorage implements AutoCloseable {
             throw new IOException(GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE);
         }
 
-        final CriteriaQuery<MessageContent> criteria;
+        for (final QName qname : reportTypes) {
+            if (!this.checkElementSupportsMdibVersionSorting(qname)) {
+
+                final String localErrorMessage = String.format(FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED, qname);
+                this.testRunObserver.invalidateTestRun(localErrorMessage);
+                throw new UnsupportedOperationException(localErrorMessage);
+            }
+        }
+
+        final CriteriaQuery<MessageContent> messageContentQuery;
         try (final Session session = sessionFactory.openSession()) {
             session.beginTransaction();
 
             final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            criteria = criteriaBuilder.createQuery(MessageContent.class);
-            final Root<MessageContent> messageContentRoot = criteria.from(MessageContent.class);
-            criteria.select(messageContentRoot);
-            final var predicates = new ArrayList<Predicate>();
-            for (final var reportType : reportTypes) {
-                predicates.add(criteriaBuilder.isMember(
-                        reportType.toString(), messageContentRoot.get(MessageContent_.bodyElements)));
+            messageContentQuery = criteriaBuilder.createQuery(MessageContent.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(messageContentRoot);
+
+            final Subquery<MdibVersionGroupEntity> mdibVersionGroupSubQuery =
+                    messageContentQuery.subquery(MdibVersionGroupEntity.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot =
+                    mdibVersionGroupSubQuery.from(MdibVersionGroupEntity.class);
+            mdibVersionGroupSubQuery.select(mdibVersionGroupEntityRoot);
+            final List<Predicate> bodyElementPredicates = new ArrayList<>();
+
+            for (final QName bodyElement : reportTypes) {
+                bodyElementPredicates.add(criteriaBuilder.equal(
+                        mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.bodyElement), bodyElement.toString()));
             }
-            criteria.where(criteriaBuilder.and(
+
+            mdibVersionGroupSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
+
+            messageContentQuery.where(criteriaBuilder.and(
                     criteriaBuilder.and(
                             criteriaBuilder.ge(messageContentRoot.get(MessageContent_.nanoTimestamp), startTimestamp),
                             criteriaBuilder.le(messageContentRoot.get(MessageContent_.nanoTimestamp), finishTimestamp)),
@@ -1301,18 +1551,19 @@ public class MessageStorage implements AutoCloseable {
                             criteriaBuilder.equal(
                                     messageContentRoot.get(MessageContent_.direction),
                                     CommunicationLog.Direction.INBOUND),
-                            criteriaBuilder.or(predicates.toArray(new Predicate[0])))));
-            // the answer should still adhere to the order the messages arrived,
-            // even when mixing bodies
-            criteria.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
+                            criteriaBuilder.exists(mdibVersionGroupSubQuery))));
+
+            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
+                    .join(MessageContent_.mdibVersionGroups)
+                    .get(MdibVersionGroupEntity_.mdibVersion)));
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1498,8 +1749,8 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
-     * Container for the query result stream and the information on whether or not the objects are present.
-     * This shall always be closed after usage!
+     * Container for the query result stream and the information on whether or not the objects are present. This shall
+     * always be closed after usage!
      *
      * @param <T> query result stream type
      */
@@ -1549,7 +1800,11 @@ public class MessageStorage implements AutoCloseable {
         @Override
         public T next() {
             if (this.currentElement != null) {
-                this.session.evict(this.currentElement);
+                try {
+                    this.session.evict(this.currentElement);
+                } catch (IllegalArgumentException e) {
+                    this.session.clear();
+                }
             }
 
             this.currentElement = this.iterator.next();
