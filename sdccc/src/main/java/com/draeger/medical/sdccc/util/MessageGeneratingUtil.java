@@ -496,10 +496,11 @@ public class MessageGeneratingUtil {
         try {
             service.sendRequestResponse(message);
         } catch (final TransportException | SoapFaultException e) {
-            if (e.getCause() instanceof HttpException) {
-                if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
+            if (e.getCause() instanceof HttpException cause) {
+                if (cause.getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
-                            "TransportException with HttpException cause and {} status code",
+                            String.format("%s with HttpException cause and {} status code",
+                                e.getClass().getSimpleName()),
                             Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
                 } else {
