@@ -18,14 +18,13 @@ import org.hibernate.annotations.GenericGenerator;
 /**
  * POJO for persisting headers.
  */
-// TODO: rename
-@Entity(name = "StringEntryEntity")
-@Table(name = "string_entry_entity")
-public class StringEntryEntity {
+@Entity(name = "HTTPHeaderEntity")
+@Table(name = "http_header_entity")
+public class HTTPHeaderEntity {
 
     @Id
-    @GenericGenerator(name = "StringEntryIDGen", strategy = "increment")
-    @GeneratedValue(generator = "StringEntryIDGen")
+    @GenericGenerator(name = "HTTPHeaderIDGen", strategy = "increment")
+    @GeneratedValue(generator = "HTTPHeaderIDGen")
     private long incId;
 
     private String entryKey;
@@ -38,7 +37,7 @@ public class StringEntryEntity {
     /**
      * This will be used by hibernate when creating the POJO from database entries.
      */
-    public StringEntryEntity() {}
+    public HTTPHeaderEntity() {}
 
     /**
      * This will be used when creating the POJO before loading it into the database.
@@ -47,7 +46,7 @@ public class StringEntryEntity {
      * @param entryValue     the string the key gets mapped to
      * @param messageContent row to link to
      */
-    public StringEntryEntity(final String entryKey, final String entryValue, final MessageContent messageContent) {
+    public HTTPHeaderEntity(final String entryKey, final String entryValue, final MessageContent messageContent) {
         this.entryKey = entryKey;
         this.entryValue = entryValue;
         this.messageContent = messageContent;

@@ -17,8 +17,8 @@ import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
 import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity_;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent_;
-import com.draeger.medical.sdccc.messages.mapping.StringEntryEntity;
-import com.draeger.medical.sdccc.messages.mapping.StringEntryEntity_;
+import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity;
+import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity_;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.XPathExtractor;
@@ -1060,20 +1060,20 @@ public class MessageStorage implements AutoCloseable {
             final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
             messageContentQuery.select(messageContentRoot);
 
-            final Subquery<StringEntryEntity> headerSubQuery = messageContentQuery.subquery(StringEntryEntity.class);
-            final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
-            headerSubQuery.select(stringEntryEntityRoot);
+            final Subquery<HTTPHeaderEntity> headerSubQuery = messageContentQuery.subquery(HTTPHeaderEntity.class);
+            final Root<HTTPHeaderEntity> httpHeaderEntityRoot = headerSubQuery.from(HTTPHeaderEntity.class);
+            headerSubQuery.select(httpHeaderEntityRoot);
 
             headerSubQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            httpHeaderEntityRoot.get(HTTPHeaderEntity_.messageContent),
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.and(
                             criteriaBuilder.equal(
-                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
                                     HTTP_HEADER_NAME_CONTENT_TYPE),
                             criteriaBuilder.like(
-                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
                                     criteriaBuilder.literal("%application/soap+xml%")))));
 
             messageContentQuery.where(criteriaBuilder.and(
@@ -1117,20 +1117,20 @@ public class MessageStorage implements AutoCloseable {
             final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
             messageContentQuery.select(messageContentRoot);
 
-            final Subquery<StringEntryEntity> headerSubQuery = messageContentQuery.subquery(StringEntryEntity.class);
-            final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
-            headerSubQuery.select(stringEntryEntityRoot);
+            final Subquery<HTTPHeaderEntity> headerSubQuery = messageContentQuery.subquery(HTTPHeaderEntity.class);
+            final Root<HTTPHeaderEntity> httpHeaderEntityRoot = headerSubQuery.from(HTTPHeaderEntity.class);
+            headerSubQuery.select(httpHeaderEntityRoot);
 
             headerSubQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            httpHeaderEntityRoot.get(HTTPHeaderEntity_.messageContent),
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.and(
                             criteriaBuilder.equal(
-                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
                                     HTTP_HEADER_NAME_CONTENT_TYPE),
                             criteriaBuilder.like(
-                                    criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                    criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
                                     criteriaBuilder.literal("%application/soap+xml%")))));
 
             messageContentQuery.where(criteriaBuilder.and(
@@ -1198,22 +1198,22 @@ public class MessageStorage implements AutoCloseable {
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
 
-            final Subquery<StringEntryEntity> headerSubQuery = messageContentQuery.subquery(StringEntryEntity.class);
-            final Root<StringEntryEntity> stringEntryEntityRoot = headerSubQuery.from(StringEntryEntity.class);
-            headerSubQuery.select(stringEntryEntityRoot);
+            final Subquery<HTTPHeaderEntity> headerSubQuery = messageContentQuery.subquery(HTTPHeaderEntity.class);
+            final Root<HTTPHeaderEntity> httpHeaderEntityRoot = headerSubQuery.from(HTTPHeaderEntity.class);
+            headerSubQuery.select(httpHeaderEntityRoot);
             final var headerPredicates = new ArrayList<Predicate>();
             for (final AbstractMap.SimpleImmutableEntry<String, String> header : headers) {
                 headerPredicates.add(criteriaBuilder.and(
                         criteriaBuilder.equal(
-                                criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryKey)),
+                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryKey)),
                                 header.getKey()),
                         criteriaBuilder.equal(
-                                criteriaBuilder.lower(stringEntryEntityRoot.get(StringEntryEntity_.entryValue)),
+                                criteriaBuilder.lower(httpHeaderEntityRoot.get(HTTPHeaderEntity_.entryValue)),
                                 header.getValue())));
             }
             headerSubQuery.where(criteriaBuilder.and(
                     criteriaBuilder.equal(
-                            stringEntryEntityRoot.get(StringEntryEntity_.messageContent),
+                            httpHeaderEntityRoot.get(HTTPHeaderEntity_.messageContent),
                             messageContentRoot.get(MessageContent_.incId)),
                     criteriaBuilder.or(headerPredicates.toArray(new Predicate[0]))));
 

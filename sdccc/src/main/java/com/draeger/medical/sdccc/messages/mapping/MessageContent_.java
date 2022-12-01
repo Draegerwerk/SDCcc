@@ -27,7 +27,7 @@ public final class MessageContent_ {
     public static volatile SingularAttribute<MessageContent, Long> incId;
     public static volatile SingularAttribute<MessageContent, String> body;
     public static volatile ListAttribute<MessageContent, X509Certificate> certs;
-    public static volatile ListAttribute<MessageContent, StringEntryEntity> headers;
+    public static volatile ListAttribute<MessageContent, HTTPHeaderEntity> headers;
     public static volatile SingularAttribute<MessageContent, CommunicationLog.Direction> direction;
     public static volatile SingularAttribute<MessageContent, CommunicationLog.MessageType> messageType;
     public static volatile SingularAttribute<MessageContent, String> transactionId;

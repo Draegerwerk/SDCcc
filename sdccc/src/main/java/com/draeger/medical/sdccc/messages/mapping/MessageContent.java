@@ -53,7 +53,7 @@ public class MessageContent {
     private List<X509Certificate> certs;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
-    private List<StringEntryEntity> headers;
+    private List<HTTPHeaderEntity> headers;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
     private List<MdibVersionGroupEntity> mdibVersionGroups;
@@ -121,25 +121,25 @@ public class MessageContent {
 
         this.certs = communicationContext.getTransportInfo().getX509Certificates();
 
-        final List<StringEntryEntity> headersMap;
+        final List<HTTPHeaderEntity> httpHeaderEntityList;
         // handle http headers
         if (communicationContext.getApplicationInfo() instanceof final HttpApplicationInfo httpAppInfo) {
 
-            headersMap = new ArrayList<>();
+            httpHeaderEntityList = new ArrayList<>();
             for (final Map.Entry<String, Collection<String>> entry :
                     httpAppInfo.getHeaders().asMap().entrySet()) {
                 final String key = entry.getKey();
                 final Collection<String> value = entry.getValue();
-                value.forEach(element -> headersMap.add(new StringEntryEntity(key, element, this)));
+                value.forEach(element -> httpHeaderEntityList.add(new HTTPHeaderEntity(key, element, this)));
             }
             transactionId = httpAppInfo.getTransactionId();
             requestUri = httpAppInfo.getRequestUri().orElse(null);
         } else {
-            headersMap = Collections.emptyList();
+            httpHeaderEntityList = Collections.emptyList();
             transactionId = null;
             requestUri = null;
         }
-        this.headers = headersMap;
+        this.headers = httpHeaderEntityList;
 
         this.mdibVersionGroups = mdibVersionGroups.stream()
                 .map(mdibVersionGroup -> new MdibVersionGroupEntity(mdibVersionGroup, this))
@@ -185,11 +185,11 @@ public class MessageContent {
     public Map<String, List<String>> getHeaders() {
         final HashMap<String, List<String>> headersMap = new HashMap<>();
 
-        for (final StringEntryEntity entry : this.headers) {
-            if (!headersMap.containsKey(entry.getEntryKey())) {
-                headersMap.put(entry.getEntryKey(), new ArrayList<>());
+        for (final HTTPHeaderEntity httpHeaderEntity : this.headers) {
+            if (!headersMap.containsKey(httpHeaderEntity.getEntryKey())) {
+                headersMap.put(httpHeaderEntity.getEntryKey(), new ArrayList<>());
             }
-            headersMap.get(entry.getEntryKey()).add(entry.getEntryValue());
+            headersMap.get(httpHeaderEntity.getEntryKey()).add(httpHeaderEntity.getEntryValue());
         }
 
         return headersMap;
