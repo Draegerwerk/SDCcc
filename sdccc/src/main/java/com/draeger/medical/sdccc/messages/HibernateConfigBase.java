@@ -7,11 +7,11 @@
 
 package com.draeger.medical.sdccc.messages;
 
+import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
 import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
-import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

@@ -9,6 +9,8 @@ package com.draeger.medical.sdccc.messages;
 
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.guice.MessageFactory;
+import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity;
+import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity_;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData_;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
@@ -17,8 +19,6 @@ import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
 import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity_;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent_;
-import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity;
-import com.draeger.medical.sdccc.messages.mapping.HTTPHeaderEntity_;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.XPathExtractor;
