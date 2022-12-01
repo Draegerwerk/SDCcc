@@ -511,8 +511,8 @@ public class MessageGeneratingUtil {
             if (e.getCause() != null && e.getCause() instanceof HttpException) {
                 if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
-                        "TransportException with HttpException cause and {} status code",
-                        Constants.HTTP_PAYLOAD_TOO_LARGE);
+                            "TransportException with HttpException cause and {} status code",
+                            Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
                 } else {
                     LOG.debug("SoapFaultException with HttpException cause");
