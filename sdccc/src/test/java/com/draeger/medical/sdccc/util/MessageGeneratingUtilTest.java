@@ -11,13 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.biceps.model.participant.LocalizedText;
+import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
-import javax.xml.bind.JAXBElement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -186,11 +185,8 @@ public class MessageGeneratingUtilTest {
     @Test
     public void testGetLocalizedTextPayloadTooLarge2() throws Exception {
         final var mockHostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
-        final SoapMessage soapMessage = mock(SoapMessage.class, RETURNS_DEEP_STUBS);
-        final JAXBElement<?> body = mock(JAXBElement.class);
-        when(soapMessage.getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(body);
-        final SoapFaultException soapFaultException =
-                new SoapFaultException(soapMessage, new HttpException(Constants.HTTP_PAYLOAD_TOO_LARGE));
+        final SoapFaultException soapFaultException = mock(SoapFaultException.class);
+        when(soapFaultException.getCause()).thenReturn(new HttpException(Constants.HTTP_PAYLOAD_TOO_LARGE));
         when(mockHostedService.sendRequestResponse(any())).thenThrow(soapFaultException);
 
         when(mockHostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
@@ -228,7 +224,7 @@ public class MessageGeneratingUtilTest {
         assertEquals(refs.size(), intersection);
     }
 
-    com.draeger.medical.dpws.soap.model.Envelope createSystemErrorReportWithRef(
+    Envelope createSystemErrorReportWithRef(
             @Nullable final String ref, @Nullable final String lang, final BigInteger version) {
         final var errorCode = mdibBuilder.buildCodedValue("errorcode");
         final var reportPart = messageBuilder.buildSystemErrorReportReportPart(errorCode);

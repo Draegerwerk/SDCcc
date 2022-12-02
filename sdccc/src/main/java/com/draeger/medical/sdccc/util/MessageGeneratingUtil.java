@@ -505,7 +505,8 @@ public class MessageGeneratingUtil {
                             Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
                 } else {
-                    LOG.debug("TransportException with HttpException cause");
+                    LOG.debug(String.format(
+                            "%s with HttpException cause", e.getClass().getSimpleName()));
                 }
             }
             throw e;
