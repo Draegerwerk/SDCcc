@@ -179,6 +179,7 @@
             <groupId>com.draeger.medical</groupId>
             <artifactId>biceps-model</artifactId>
             <version>${revision}${changelist}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

@@ -209,11 +209,13 @@ public class TestMessageStorage {
             }
             messageStorage.flush();
 
-            final MessageContent messageContent =
-                    messageStorage.getInboundMessages().getStream().toList().get(0);
-            final long mdibVersion =
+            try(final MessageStorage.GetterResult<MessageContent> messageContentGetterResult =
+                    messageStorage.getInboundMessages()) {
+                final MessageContent messageContent = messageContentGetterResult.getStream().toList().get(0);
+                final long mdibVersion =
                     messageContent.getMdibVersionGroups().get(0).getMdibVersion();
-            assertTrue(mdibVersion > 0);
+                assertTrue(mdibVersion > 0);
+            }
         }
     }
 

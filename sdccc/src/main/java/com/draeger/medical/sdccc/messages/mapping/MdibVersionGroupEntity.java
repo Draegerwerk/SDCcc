@@ -17,7 +17,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.GenericGenerator;
 
 /**
- * POJO for persisting headers.
+ * POJO for persisting MdibVersionGroups.
  */
 @Entity(name = "MdibVersionGroupEntity")
 @Table(name = "mdib_version_groups")
