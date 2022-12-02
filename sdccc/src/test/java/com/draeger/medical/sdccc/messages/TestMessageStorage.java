@@ -216,6 +216,11 @@ public class TestMessageStorage {
                     messageContent.getMdibVersionGroups().get(0).getMdibVersion();
                 assertTrue(mdibVersion > 0);
             }
+
+            try(final MessageStorage.GetterResult<MessageContent> messageContentGetterResult =
+                    messageStorage.getInboundMessages()) {
+                assertEquals(1, messageContentGetterResult.getStream().count());
+            }
         }
     }
 
