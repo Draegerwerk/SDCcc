@@ -25,6 +25,7 @@ import com.draeger.medical.biceps.model.message.GetMdibResponse;
 import com.draeger.medical.biceps.model.message.InvocationInfo;
 import com.draeger.medical.biceps.model.message.InvocationState;
 import com.draeger.medical.biceps.model.message.ObjectFactory;
+import com.draeger.medical.biceps.model.message.OperationInvokedReport;
 import com.draeger.medical.biceps.model.message.PeriodicContextReport;
 import com.draeger.medical.biceps.model.message.SetContextStateResponse;
 import com.draeger.medical.biceps.model.message.SetStringResponse;
@@ -469,6 +470,18 @@ public class MessageBuilder {
     }
 
     /**
+     * Creates a new operation invoked report element.
+     *
+     * @param sequenceId  of current mdib
+     * @return new operation invoked report
+     */
+    public OperationInvokedReport buildOperationInvokedReport(final String sequenceId) {
+        final var report = messageModelFactory.createOperationInvokedReport();
+        report.setSequenceId(sequenceId);
+        return report;
+    }
+
+    /**
      * Creates a new abstract metric report report part element.
      *
      * @return new report part
@@ -520,6 +533,15 @@ public class MessageBuilder {
      */
     public DescriptionModificationReport.ReportPart buildDescriptionModificationReportReportPart() {
         return messageModelFactory.createDescriptionModificationReportReportPart();
+    }
+
+    /**
+     * Creates a new operation invoked report report part element.
+     *
+     * @return new report part
+     */
+    public OperationInvokedReport.ReportPart buildOperationInvokedReportReportPart() {
+        return messageModelFactory.createOperationInvokedReportReportPart();
     }
 
     /**

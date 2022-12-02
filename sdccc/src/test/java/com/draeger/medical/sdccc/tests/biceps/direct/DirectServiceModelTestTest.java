@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -135,7 +136,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0062Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_GET_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0062());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -156,7 +157,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0064Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_STATE_EVENT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0064());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -177,7 +178,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0066Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_WAVEFORM_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0066());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -198,7 +199,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0068Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_SET_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0068());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -219,7 +220,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0069Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_CONTEXT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0069());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -240,7 +241,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0100Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0100());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -261,7 +262,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0101Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0101());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -282,7 +283,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0104Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_DESCRIPTION_EVENT_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0104());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     /**
@@ -303,7 +304,7 @@ public class DirectServiceModelTestTest {
     public void testRequirement0119Bad() {
         setupMissingServiceModelRequirementTest(getQNameList(WsdlConstants.PORT_TYPE_CONTAINMENT_TREE_QNAME));
         assertThrows(AssertionError.class, () -> testClass.testRequirement0119());
-        verifyNoInteractions(hostedServiceVerifier);
+        verify(hostedServiceVerifier, never()).verifyHostedService(any());
     }
 
     private void setupServiceModelRequirementTest() throws Exception {
@@ -336,6 +337,7 @@ public class DirectServiceModelTestTest {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+            assertNotNull(wsdlStream);
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         assertNotNull(wsdl);
