@@ -17,8 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - checkstyle plugin scope via checkstyle.xml
-
-### Changed
 - updated test case for glue:R0036 to glue:R0036_0
 
 ### Fixed
