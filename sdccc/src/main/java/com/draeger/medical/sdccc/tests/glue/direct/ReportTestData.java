@@ -46,6 +46,7 @@ public class ReportTestData {
         this.syncPoint = new Object();
         this.subscribe = subscribe;
         this.trigger = trigger; // TODO: it would be simpler to pass the trigger as an override
+        // see: https://github.com/Draegerwerk/SDCcc/issues/42
     }
 
     public Boolean getReportReceived() {
