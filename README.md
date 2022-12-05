@@ -157,6 +157,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li><li>content-type: multipart/related</li></ul> |
 | The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                                                       |
 | SDCcc only supports decoding messages encoded in UTF-8.                                                                                                                                                                                         |
+| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                                                           |
 
 [MDPWS]
 
