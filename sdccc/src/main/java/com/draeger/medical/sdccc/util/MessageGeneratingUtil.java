@@ -495,14 +495,18 @@ public class MessageGeneratingUtil {
             throws SoapFaultException, MarshallingException, InterceptorException, TransportException {
         try {
             service.sendRequestResponse(message);
-        } catch (final TransportException e) {
-            if (e.getCause() != null && e.getCause() instanceof HttpException) {
-                LOG.debug("TransportException with HttpException cause");
-                if (((HttpException) e.getCause()).getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
+        } catch (final TransportException | SoapFaultException e) {
+            if (e.getCause() instanceof HttpException cause) {
+                if (cause.getStatusCode() == Constants.HTTP_PAYLOAD_TOO_LARGE) {
                     LOG.debug(
-                            "TransportException with HttpException cause and {} status code",
+                            String.format(
+                                    "%s with HttpException cause and {} status code",
+                                    e.getClass().getSimpleName()),
                             Constants.HTTP_PAYLOAD_TOO_LARGE);
                     return;
+                } else {
+                    LOG.debug(String.format(
+                            "%s with HttpException cause", e.getClass().getSimpleName()));
                 }
             }
             throw e;
