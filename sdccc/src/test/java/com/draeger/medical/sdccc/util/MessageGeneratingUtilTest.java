@@ -44,6 +44,7 @@ import org.somda.sdc.dpws.http.HttpException;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.dpws.soap.SoapMessage;
+import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.common.WsdlConstants;
@@ -91,7 +92,7 @@ public class MessageGeneratingUtilTest {
     }
 
     @AfterEach
-    void tearDown() throws TimeoutException, IOException {
+    void tearDown() throws TimeoutException {
         final var riMarshalling = riInjector.getInstance(SoapMarshalling.class);
         riMarshalling.stopAsync().awaitTerminated(DEFAULT_TIMEOUT);
 
@@ -174,6 +175,42 @@ public class MessageGeneratingUtilTest {
 
         genUtil.getLocalizedTexts();
         assertFalse(observer.isInvalid());
+    }
+
+    /**
+     * Verifies that 413 SOAPFault payload too large errors do not invalidate the test run.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testGetLocalizedTextPayloadTooLarge2() throws Exception {
+        final var mockHostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
+        final SoapFaultException soapFaultException = mock(SoapFaultException.class);
+        when(soapFaultException.getCause()).thenReturn(new HttpException(Constants.HTTP_PAYLOAD_TOO_LARGE));
+        when(mockHostedService.sendRequestResponse(any())).thenThrow(soapFaultException);
+
+        when(mockHostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
+        when(client.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("loc", mockHostedService));
+
+        genUtil.getLocalizedTexts();
+        assertFalse(observer.isInvalid());
+    }
+
+    /**
+     * Verifies that TransportExceptions with no cause do invalidate the test run.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testGetLocalizedTextPayloadTooLarge3() throws Exception {
+        final var mockHostedService = mock(HostedServiceProxy.class, Mockito.RETURNS_DEEP_STUBS);
+        when(mockHostedService.sendRequestResponse(any())).thenThrow(new TransportException());
+
+        when(mockHostedService.getType().getTypes()).thenReturn(List.of(WsdlConstants.PORT_TYPE_LOCALIZATION_QNAME));
+        when(client.getHostingServiceProxy().getHostedServices()).thenReturn(Map.of("loc", mockHostedService));
+
+        genUtil.getLocalizedTexts();
+        assertTrue(observer.isInvalid());
     }
 
     private void verifySentRefs(final SoapMessage message, final List<String> refs) {
