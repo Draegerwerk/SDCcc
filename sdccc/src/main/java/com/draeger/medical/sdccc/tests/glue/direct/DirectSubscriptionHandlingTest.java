@@ -586,7 +586,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         return String.format("https://%s:0", this.adapterAddress);
     }
 
-    class InterceptorWithTheAbilityToFailReports implements Interceptor {
+    private class InterceptorWithTheAbilityToFailReports implements Interceptor {
 
         private final List<ReportTestData> reportsToFail = new ArrayList<>();
 
