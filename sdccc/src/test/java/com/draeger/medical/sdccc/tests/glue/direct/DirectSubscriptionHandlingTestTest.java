@@ -28,6 +28,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
+import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -53,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -701,6 +703,24 @@ public class DirectSubscriptionHandlingTestTest {
     }
 
     /**
+     * Tests whether a device that does not support any Episodic Report fails the test.
+     * NOTE: AFAIK, there is no requirement that forces a DUT to support at least one Report.
+     *       However, the Test case does not work, when the EpisodicContextReport is not supported,
+     *       which is why a NoTestData is thrown instead of an AssertionError.
+     */
+    @Test
+    public void testRequirementR00360NoReports() throws Exception {
+        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
+        supportedReports = new HashSet<>(Set.of(
+            ));
+        testDeviceForR00360(true,
+            0,
+            true,
+            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED,
+            NoTestData.class);
+    }
+
+    /**
      * Tests whether a device that does not support the EpisodicOperationalStateReport can still pass the test.
      */
     @Test
@@ -805,13 +825,27 @@ public class DirectSubscriptionHandlingTestTest {
             final boolean sendSubscriptionEnd,
             final String subscriptionEndStatus)
             throws Exception {
+        testDeviceForR00360(
+            expectFailure,
+            delayBeforeCancellingInSeconds,
+            sendSubscriptionEnd,
+            subscriptionEndStatus,
+            AssertionError.class);
+    }
+
+    private void testDeviceForR00360(
+        final boolean expectFailure,
+        final int delayBeforeCancellingInSeconds,
+        final boolean sendSubscriptionEnd,
+        final String subscriptionEndStatus,
+        final Class<? extends Throwable> exceptionClass) throws Exception {
         // given
         setupTestScenarioForR00360(true, delayBeforeCancellingInSeconds, sendSubscriptionEnd, subscriptionEndStatus);
         this.cancelledReports = new HashSet<>();
 
         // when & then
         if (expectFailure) {
-            assertThrows(AssertionError.class, testUnderTest::testRequirementR00360);
+            assertThrows(exceptionClass, testUnderTest::testRequirementR00360);
         } else {
             testUnderTest.testRequirementR00360();
         }

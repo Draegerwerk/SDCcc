@@ -20,6 +20,7 @@ import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
+import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.MessagingException;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -184,7 +185,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             + " triggers an EpisodicContextReport and intentionally fails to receive it. Afterwards,"
             + " it checks that the Subscription to the EpisodicContextReport has been cancelled by"
             + " the provider while all other subscriptions are still active.")
-    void testRequirementR00360() throws InterruptedException {
+    void testRequirementR00360() throws InterruptedException, NoTestData {
 
         // preparation
         final LocationContextState locationContext = getOrCreateLocationContextState();
@@ -351,6 +352,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         reports.addAll(otherReports);
 
         subscribeToAllReports(reports);
+        if (triggerableReport.getSubscription() == null) {
+            throw new NoTestData("Sorry, the Test Case for Glue:R0036_0 does not work for "
+                + "devices not supporting EpisodicContextReport.");
+        }
 
         checkSubscriptionsAreActive(reports);
 
