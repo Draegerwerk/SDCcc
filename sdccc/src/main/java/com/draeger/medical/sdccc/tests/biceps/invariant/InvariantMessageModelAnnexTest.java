@@ -96,6 +96,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " for each AbstractDescriptor contained in a DescriptionModificationReport "
             + "that it was inserted or deleted or udpdated by changing"
             + "at least one child or attribute.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionChangedPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
