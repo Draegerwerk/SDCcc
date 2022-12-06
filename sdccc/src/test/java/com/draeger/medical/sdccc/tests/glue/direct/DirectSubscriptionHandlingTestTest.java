@@ -737,7 +737,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels the subscriptions after a large delay fails the test.
      */
     @Test
-    public void testRequirementR0036WithStronglyDelayedCancellations() throws Exception {
+    public void testRequirementR00360WithStronglyDelayedCancellations() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
