@@ -92,7 +92,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private static final String ROOM1 = "123";
     private static final String ROOM2 = "124";
-    private final InterceptorWithTheAbilityToFailReports interceptor = new InterceptorWithTheAbilityToFailReports();
 
     private TestClient testClient;
     private HostedServiceVerifier hostedServiceVerifier;
@@ -492,7 +491,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         "encountered exception while querying the subscription status of report "
                                 + report.getReportName(),
                         e);
-                // TODO: be more strict. Do not tolerate Errors any more.
                 // do nothing here. Returning null will suffice to indicate failure.
             }
         }
@@ -568,6 +566,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             }
         });
         if (addAbilityToFail) {
+            final InterceptorWithTheAbilityToFailReports interceptor = new InterceptorWithTheAbilityToFailReports();
             interceptor.addReportToFail(reportTestData);
             notificationSink.register(interceptor);
         }
