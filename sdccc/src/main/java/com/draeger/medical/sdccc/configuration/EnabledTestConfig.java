@@ -43,7 +43,6 @@ public final class EnabledTestConfig {
     public static final String BICEPS_B_6_0 = BICEPS + "B-6_0";
     public static final String BICEPS_B_61 = BICEPS + "B-61";
     public static final String BICEPS_B_128 = BICEPS + "B-128";
-    public static final String BICEPS_R5006 = BICEPS + "R5006";
     public static final String BICEPS_B_284_0 = BICEPS + "B-284_0";
     public static final String BICEPS_B_402_0 = BICEPS + "B-402_0";
     public static final String BICEPS_C11 = BICEPS + "C-11";
@@ -52,7 +51,9 @@ public final class EnabledTestConfig {
     public static final String BICEPS_C14 = BICEPS + "C-14";
     public static final String BICEPS_C15 = BICEPS + "C-15";
     public static final String BICEPS_C55_0 = BICEPS + "C-55_0";
+    public static final String BICEPS_C_62 = BICEPS + "C-62";
 
+    public static final String BICEPS_R5006 = BICEPS + "R5006";
     public static final String BICEPS_R5024 = BICEPS + "R5024";
     public static final String BICEPS_R5025_0 = BICEPS + "R5025_0";
     public static final String BICEPS_R5039 = BICEPS + "R5039";
@@ -61,8 +62,6 @@ public final class EnabledTestConfig {
     public static final String BICEPS_R5042 = BICEPS + "R5042";
     public static final String BICEPS_R5051 = BICEPS + "R5051";
     public static final String BICEPS_R5052 = BICEPS + "R5052";
-
-    public static final String BICEPS_C_62 = BICEPS + "C-62";
 
     public static final String BICEPS_547_0_0 = BICEPS + "5-4-7_0_0";
     public static final String BICEPS_547_2 = BICEPS + "5-4-7_2";
