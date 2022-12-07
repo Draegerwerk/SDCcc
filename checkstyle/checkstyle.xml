@@ -76,7 +76,6 @@
         <module name="MissingJavadocType"/>
         <module name="NonEmptyAtclauseDescription"/>
 
-        <module name="EmptyForIteratorPad"/>
         <module name="MethodParamPad"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
