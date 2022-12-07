@@ -15,13 +15,14 @@ import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
  */
 public class ReportTestData {
 
-    private String reportName;
-    private String action;
+    private final String reportName;
+    private final String action;
     private Boolean reportReceived;
     private Boolean failOnReceivingReport;
+    private Boolean subscriptionEndWithStatusDeliveryFailedReceived;
     private final Object syncPoint;
-    private ReportTriggerClosure trigger;
-    private ReportSubscribeClosure subscribe;
+    private final ReportTriggerClosure trigger;
+    private final ReportSubscribeClosure subscribe;
     private SubscribeResult subscription;
     private EventSink eventSink;
 
@@ -41,9 +42,11 @@ public class ReportTestData {
         this.action = action;
         this.reportReceived = false;
         this.failOnReceivingReport = false;
+        this.subscriptionEndWithStatusDeliveryFailedReceived = false;
         this.syncPoint = new Object();
         this.subscribe = subscribe;
-        this.trigger = trigger;
+        this.trigger = trigger; // TODO: it would be simpler to pass the trigger as an override
+        // see: https://github.com/Draegerwerk/SDCcc/issues/42
     }
 
     public Boolean getReportReceived() {
@@ -118,5 +121,30 @@ public class ReportTestData {
      */
     public void setEventSink(final EventSink eventSink) {
         this.eventSink = eventSink;
+    }
+
+    /**
+     * Returns true if the given notificationBody could belong to this subscription.
+     * @param notificationBody the notificationBody to check
+     * @return true, if it is of the right type, false otherwise.
+     */
+    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
+        return false; // default implementation - please override
+    }
+
+    /**
+     * Set the Value of SubscriptionEndWithStatusDeliveryFailedReceived.
+     * @param b the new value.
+     */
+    public void setSubscriptionEndWithStatusDeliveryFailedReceived(final boolean b) {
+        this.subscriptionEndWithStatusDeliveryFailedReceived = b;
+    }
+
+    /**
+     * Gets the value of SubscriptionEndWithStatusDeliveryFailedReceived.
+     * @return the value.
+     */
+    public boolean getSubscriptionEndWithStatusDeliveryFailedReceived() {
+        return this.subscriptionEndWithStatusDeliveryFailedReceived;
     }
 }
