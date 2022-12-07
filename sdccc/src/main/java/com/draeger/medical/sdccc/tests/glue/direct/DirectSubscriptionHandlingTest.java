@@ -370,7 +370,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         }
     }
 
-    private void unsubscribeReports(List<ReportTestData> reports) {
+    private void unsubscribeReports(final List<ReportTestData> reports) {
         for (ReportTestData report : reports) {
             final EventSink eventSink = report.getEventSink();
             if (eventSink != null) {
