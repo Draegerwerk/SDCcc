@@ -445,7 +445,7 @@ public class MessageStorage implements AutoCloseable {
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
                     this.testRunObserver.invalidateTestRun(String.format(
                             "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
-                                    + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and"
+                                    + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and "
                                     + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1.",
                             mimeType));
                 }
