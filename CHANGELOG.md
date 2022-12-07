@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - checkstyle plugin scope via checkstyle.xml
+- update to SDCri 3.0.0
 
 ### Fixed
 - missing request bodies in glue:R0036 test
