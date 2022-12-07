@@ -24,10 +24,10 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,51 +71,48 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestIdentifier(EnabledTestConfig.GLUE_R0010_0)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and"
             + " verifies for each mds that a clock descriptor and a clock state are present.")
-    void testRequirementR0010() throws NoTestData {
+    void testRequirementR0010() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess remoteMdibAccess = history.next();
 
-                while (remoteMdibAccess != null) {
-                    final var entities = remoteMdibAccess.findEntitiesByType(MdsDescriptor.class);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess remoteMdibAccess = history.next();
 
-                    for (var entity : entities) {
-                        acceptableSequenceSeen.incrementAndGet();
-                        final var children = entity.getChildren();
-                        final var clockDescriptorSeen = new AtomicBoolean(false);
-                        for (var child : children) {
-                            final var clockOpt = remoteMdibAccess.getDescriptor(child, ClockDescriptor.class);
-                            if (clockOpt.isPresent()) {
-                                clockDescriptorSeen.set(true);
-                                final var clockStateOpt = remoteMdibAccess.getState(child, ClockState.class);
-                                assertTrue(
-                                        clockStateOpt.isPresent(),
-                                        String.format(
-                                                "No clock state present for mds with handle %s.", entity.getHandle()));
+                    while (remoteMdibAccess != null) {
+                        final var entities = remoteMdibAccess.findEntitiesByType(MdsDescriptor.class);
+
+                        for (var entity : entities) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            final var children = entity.getChildren();
+                            final var clockDescriptorSeen = new AtomicBoolean(false);
+                            for (var child : children) {
+                                final var clockOpt = remoteMdibAccess.getDescriptor(child, ClockDescriptor.class);
+                                if (clockOpt.isPresent()) {
+                                    clockDescriptorSeen.set(true);
+                                    final var clockStateOpt = remoteMdibAccess.getState(child, ClockState.class);
+                                    assertTrue(
+                                            clockStateOpt.isPresent(),
+                                            String.format(
+                                                    "No clock state present for mds with handle %s.",
+                                                    entity.getHandle()));
+                                }
                             }
+                            assertTrue(
+                                    clockDescriptorSeen.get(),
+                                    String.format(
+                                            "No clock descriptor present for mds with handle %s.", entity.getHandle()));
                         }
-                        assertTrue(
-                                clockDescriptorSeen.get(),
-                                String.format(
-                                        "No clock descriptor present for mds with handle %s.", entity.getHandle()));
+                        remoteMdibAccess = history.next();
                     }
-                    remoteMdibAccess = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No mds seen during test run, test failed.");
     }
@@ -124,116 +121,114 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestIdentifier(EnabledTestConfig.GLUE_R0011)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and "
             + "verifies for each metric that if a value is present, a timestamp is also present.")
-    void testRequirementR0011() throws NoTestData {
+    void testRequirementR0011() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess remoteMdibAccess = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                while (remoteMdibAccess != null) {
-                    final var entities = remoteMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class);
+                    RemoteMdibAccess remoteMdibAccess = history.next();
 
-                    for (var entity : entities) {
+                    while (remoteMdibAccess != null) {
+                        final var entities = remoteMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class);
 
-                        if (entity.getDescriptor() instanceof RealTimeSampleArrayMetricDescriptor) {
-                            final var metricValue = entity.getFirstState(RealTimeSampleArrayMetricState.class)
-                                    .orElseThrow()
-                                    .getMetricValue();
+                        for (var entity : entities) {
 
-                            if (metricValue != null && !metricValue.getSamples().isEmpty()) {
-                                acceptableSequenceSeen.incrementAndGet();
+                            if (entity.getDescriptor() instanceof RealTimeSampleArrayMetricDescriptor) {
+                                final var metricValue = entity.getFirstState(RealTimeSampleArrayMetricState.class)
+                                        .orElseThrow()
+                                        .getMetricValue();
 
-                                assertNotNull(
-                                        metricValue.getDeterminationTime(),
-                                        String.format(
-                                                "No DeterminationTime for the metric with the handle %s "
-                                                        + "even though it has a non-empty sample attribute.",
-                                                entity.getHandle()));
+                                if (metricValue != null
+                                        && !metricValue.getSamples().isEmpty()) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    assertNotNull(
+                                            metricValue.getDeterminationTime(),
+                                            String.format(
+                                                    "No DeterminationTime for the metric with the handle %s "
+                                                            + "even though it has a non-empty sample attribute.",
+                                                    entity.getHandle()));
+                                }
+                            } else if (entity.getDescriptor() instanceof DistributionSampleArrayMetricDescriptor) {
+                                final var metricValue = entity.getFirstState(DistributionSampleArrayMetricState.class)
+                                        .orElseThrow()
+                                        .getMetricValue();
+
+                                if (metricValue != null
+                                        && !metricValue.getSamples().isEmpty()) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    assertNotNull(
+                                            metricValue.getDeterminationTime(),
+                                            String.format(
+                                                    "No DeterminationTime for the metric with the handle %s "
+                                                            + "even though it has a non-empty sample attribute.",
+                                                    entity.getHandle()));
+                                }
+                            } else if (entity.getDescriptor() instanceof NumericMetricDescriptor) {
+                                final var metricValue = entity.getFirstState(NumericMetricState.class)
+                                        .orElseThrow()
+                                        .getMetricValue();
+
+                                if (metricValue != null && metricValue.getValue() != null) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    assertNotNull(
+                                            metricValue.getDeterminationTime(),
+                                            String.format(
+                                                    "No DeterminationTime for the metric with the handle %s "
+                                                            + "even though it has a non-empty value attribute.",
+                                                    entity.getHandle()));
+                                }
+                            } else if (entity.getDescriptor() instanceof EnumStringMetricDescriptor) {
+                                final var metricValue = entity.getFirstState(EnumStringMetricState.class)
+                                        .orElseThrow()
+                                        .getMetricValue();
+
+                                if (metricValue != null && metricValue.getValue() != null) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    assertNotNull(
+                                            metricValue.getDeterminationTime(),
+                                            String.format(
+                                                    "No DeterminationTime for the metric with the handle %s "
+                                                            + "even though it has a non-empty value attribute.",
+                                                    entity.getHandle()));
+                                }
+                            } else if (entity.getDescriptor() instanceof StringMetricDescriptor) {
+                                final var metricValue = entity.getFirstState(StringMetricState.class)
+                                        .orElseThrow()
+                                        .getMetricValue();
+
+                                if (metricValue != null && metricValue.getValue() != null) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    assertNotNull(
+                                            metricValue.getDeterminationTime(),
+                                            String.format(
+                                                    "No DeterminationTime for the metric with the handle %s "
+                                                            + "even though it has a non-empty value attribute.",
+                                                    entity.getHandle()));
+                                }
+                            } else {
+                                fail(String.format(
+                                        "Object of type %s is not supported by the test.",
+                                        entity.getDescriptor().getClass()));
                             }
-                        } else if (entity.getDescriptor() instanceof DistributionSampleArrayMetricDescriptor) {
-                            final var metricValue = entity.getFirstState(DistributionSampleArrayMetricState.class)
-                                    .orElseThrow()
-                                    .getMetricValue();
-
-                            if (metricValue != null && !metricValue.getSamples().isEmpty()) {
-                                acceptableSequenceSeen.incrementAndGet();
-
-                                assertNotNull(
-                                        metricValue.getDeterminationTime(),
-                                        String.format(
-                                                "No DeterminationTime for the metric with the handle %s "
-                                                        + "even though it has a non-empty sample attribute.",
-                                                entity.getHandle()));
-                            }
-                        } else if (entity.getDescriptor() instanceof NumericMetricDescriptor) {
-                            final var metricValue = entity.getFirstState(NumericMetricState.class)
-                                    .orElseThrow()
-                                    .getMetricValue();
-
-                            if (metricValue != null && metricValue.getValue() != null) {
-                                acceptableSequenceSeen.incrementAndGet();
-
-                                assertNotNull(
-                                        metricValue.getDeterminationTime(),
-                                        String.format(
-                                                "No DeterminationTime for the metric with the handle %s "
-                                                        + "even though it has a non-empty value attribute.",
-                                                entity.getHandle()));
-                            }
-                        } else if (entity.getDescriptor() instanceof EnumStringMetricDescriptor) {
-                            final var metricValue = entity.getFirstState(EnumStringMetricState.class)
-                                    .orElseThrow()
-                                    .getMetricValue();
-
-                            if (metricValue != null && metricValue.getValue() != null) {
-                                acceptableSequenceSeen.incrementAndGet();
-
-                                assertNotNull(
-                                        metricValue.getDeterminationTime(),
-                                        String.format(
-                                                "No DeterminationTime for the metric with the handle %s "
-                                                        + "even though it has a non-empty value attribute.",
-                                                entity.getHandle()));
-                            }
-                        } else if (entity.getDescriptor() instanceof StringMetricDescriptor) {
-                            final var metricValue = entity.getFirstState(StringMetricState.class)
-                                    .orElseThrow()
-                                    .getMetricValue();
-
-                            if (metricValue != null && metricValue.getValue() != null) {
-                                acceptableSequenceSeen.incrementAndGet();
-
-                                assertNotNull(
-                                        metricValue.getDeterminationTime(),
-                                        String.format(
-                                                "No DeterminationTime for the metric with the handle %s "
-                                                        + "even though it has a non-empty value attribute.",
-                                                entity.getHandle()));
-                            }
-                        } else {
-                            fail(String.format(
-                                    "Object of type %s is not supported by the test.",
-                                    entity.getDescriptor().getClass()));
                         }
-                    }
 
-                    remoteMdibAccess = history.next();
+                        remoteMdibAccess = history.next();
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No metric with a value has been seen.");
     }
@@ -245,22 +240,18 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib"
             + " and verifies for every alert condition state, that its @DeterminationTime is updated"
             + " whenever its @Presence changes.")
-    void testRequirementR001200() throws NoTestData {
+    void testRequirementR001200() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
+
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (var sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                try (final MdibHistorian.HistorianResult prevHistory =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId);
+                        final MdibHistorian.HistorianResult prevHistory =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
                     history.next(); // history must be one element ahead of prevHistory
                     RemoteMdibAccess last = prevHistory.next();
                     RemoteMdibAccess current = history.next();
@@ -298,10 +289,11 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                         last = prevHistory.next();
                         current = history.next();
                     }
+
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No AlertConditionState seen during the test run, test failed.");
     }
@@ -311,44 +303,40 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies for every context state, that the BindingStartTime is set, when the BindingMdibVersion is"
             + " present.")
-    void testRequirementR0013() throws NoTestData {
+    void testRequirementR0013() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess first = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                while (first != null) {
-                    final var contextStates = first.getStatesByType(AbstractContextState.class);
-                    for (var contextState : contextStates) {
-                        final var bindingMdibVersion = contextState.getBindingMdibVersion();
-                        if (bindingMdibVersion != null) {
-                            final var bindingStartTime = contextState.getBindingStartTime();
-                            assertNotNull(
-                                    bindingStartTime,
-                                    String.format(
-                                            "The binding start time should not be null for state %s.",
-                                            contextState.getHandle()));
-                            acceptableSequenceSeen.incrementAndGet();
+                    RemoteMdibAccess first = history.next();
+
+                    while (first != null) {
+                        final var contextStates = first.getStatesByType(AbstractContextState.class);
+                        for (var contextState : contextStates) {
+                            final var bindingMdibVersion = contextState.getBindingMdibVersion();
+                            if (bindingMdibVersion != null) {
+                                final var bindingStartTime = contextState.getBindingStartTime();
+                                assertNotNull(
+                                        bindingStartTime,
+                                        String.format(
+                                                "The binding start time should not be null for state %s.",
+                                                contextState.getHandle()));
+                                acceptableSequenceSeen.incrementAndGet();
+                            }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
-                }
 
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No suitable context states seen, test failed.");
     }
@@ -358,44 +346,40 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies for every context state, that the BindingEndTime is set, when the UnbindingMdibVersion is"
             + " present.")
-    void testRequirementR0072() throws NoTestData {
+    void testRequirementR0072() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess first = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                while (first != null) {
-                    final var contextStates = first.getStatesByType(AbstractContextState.class);
-                    for (var contextState : contextStates) {
-                        final var unbindingMdibVersion = contextState.getUnbindingMdibVersion();
-                        if (unbindingMdibVersion != null) {
-                            final var bindingEndTime = contextState.getBindingEndTime();
-                            assertNotNull(
-                                    bindingEndTime,
-                                    String.format(
-                                            "The binding end time should not be null for state %s.",
-                                            contextState.getHandle()));
-                            acceptableSequenceSeen.incrementAndGet();
+                    RemoteMdibAccess first = history.next();
+
+                    while (first != null) {
+                        final var contextStates = first.getStatesByType(AbstractContextState.class);
+                        for (var contextState : contextStates) {
+                            final var unbindingMdibVersion = contextState.getUnbindingMdibVersion();
+                            if (unbindingMdibVersion != null) {
+                                final var bindingEndTime = contextState.getBindingEndTime();
+                                assertNotNull(
+                                        bindingEndTime,
+                                        String.format(
+                                                "The binding end time should not be null for state %s.",
+                                                contextState.getHandle()));
+                                acceptableSequenceSeen.incrementAndGet();
+                            }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
-                }
 
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No suitable context states seen, test failed.");
     }

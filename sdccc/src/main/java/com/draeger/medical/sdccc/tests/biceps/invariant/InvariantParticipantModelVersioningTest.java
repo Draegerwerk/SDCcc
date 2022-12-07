@@ -30,10 +30,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,26 +75,19 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies that descriptor versions are incremented whenever a child has changed.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionChangedPrecondition.class})
-    void testRequirementR0033() throws NoTestData {
+    void testRequirementR0033() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var descriptorChanges = new AtomicInteger(0);
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
-
-        for (String sequenceId : sequenceIds) {
-            final var impliedValueMap = new InitialImpliedValue();
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                try (final MdibHistorian.HistorianResult historyNext =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                final var impliedValueMap = new InitialImpliedValue();
+                try (final MdibHistorian.HistorianResult history =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId);
+                        final MdibHistorian.HistorianResult historyNext =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
                     // skip the first entry so that history and historyNext are off by one entry
                     final var skippedElement = historyNext.next();
@@ -134,10 +127,14 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                         first = history.next();
                         second = historyNext.next();
                     }
+
+                } catch (PreprocessingException
+                        | ReportProcessingException
+                        | InitialImpliedValueException
+                        | NoTestData e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException | InitialImpliedValueException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(descriptorChanges.get(), "No descriptor changed during the test run.");
     }
@@ -151,26 +148,19 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             + " verifies that descriptor versions are incremented whenever the descriptors attributes or content changes,\n"
             + " except for changes to children of any Type that extends AbstractDescriptor.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionChangedPrecondition.class})
-    void testRequirementR0034() throws NoTestData {
+    void testRequirementR0034() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var descriptorChanges = new AtomicInteger(0);
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
-
-        for (final String sequenceId : sequenceIds) {
-            final var impliedValueMap = new InitialImpliedValue();
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                try (final MdibHistorian.HistorianResult historyNext =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                final var impliedValueMap = new InitialImpliedValue();
+                try (final MdibHistorian.HistorianResult history =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId);
+                        final MdibHistorian.HistorianResult historyNext =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
                     // skip the first entry so that history and historyNext are off by one entry
                     final var skippedElement = historyNext.next();
@@ -210,10 +200,14 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                         first = history.next();
                         second = historyNext.next();
                     }
+
+                } catch (PreprocessingException
+                        | ReportProcessingException
+                        | InitialImpliedValueException
+                        | NoTestData e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException | InitialImpliedValueException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(descriptorChanges.get(), "No descriptor changed during the test run.");
     }
@@ -226,28 +220,20 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             + " verifies that state versions are incremented whenever the state attributes or the content of the state"
             + " changed.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.StateChangedPrecondition.class})
-    void testRequirementR0038() throws NoTestData {
+    void testRequirementR0038() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var stateChanges = new AtomicInteger(0);
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
 
-        assertTestData(sequenceIds, "No data to perform tests on.");
-
-        for (String sequenceId : sequenceIds) {
-            final var impliedValueMap = new InitialImpliedValue();
-            final var removedStatesMap = new HashMap<String, AbstractState>();
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                try (final MdibHistorian.HistorianResult historyNext =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                final var impliedValueMap = new InitialImpliedValue();
+                final var removedStatesMap = new HashMap<String, AbstractState>();
+                try (final MdibHistorian.HistorianResult history =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId);
+                        final MdibHistorian.HistorianResult historyNext =
+                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
                     // skip the first entry so that history and historyNext are off by one entry
                     final var skippedElement = historyNext.next();
                     assertTestData(skippedElement != null, "Not enough input to compare mdib revisions");
@@ -311,11 +297,15 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                         first = history.next();
                         second = historyNext.next();
                     }
+
+                } catch (PreprocessingException
+                        | ReportProcessingException
+                        | InitialImpliedValueException
+                        | NoTestData e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException | InitialImpliedValueException e) {
-                fail(e);
-            }
-            removedStatesMap.clear();
+                removedStatesMap.clear();
+            });
         }
         assertTestData(stateChanges.get(), "No state changed during the test run.");
     }
@@ -323,105 +313,105 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5003)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
-            + " verifies that no version counter is decremented, by comparing their value before and after applying each"
-            + " report. This also applies to the deletion and re-insertion of descriptors or states.")
-    void testRequirementR5003() throws NoTestData {
+            + " verifies that no version counter other than MdibVersion is decremented, "
+            + "by comparing their value before and after applying each"
+            + " report. This also applies to the deletion and re-insertion of descriptors or states."
+            + "MdibVersion is excluded from this, because it is used for ordering the reports that have been received.")
+    void testRequirementR5003() throws IOException, NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
+        final AtomicInteger stateVersionsSeen = new AtomicInteger(0);
 
-        assertTestData(sequenceIds, "No data to perform tests on, test failed.");
-        for (String sequenceId : sequenceIds) {
-            final var impliedValueMap = new InitialImpliedValue();
-            final var previousDescriptorVersionMap = new HashMap<String, BigInteger>();
-            final var previousStateVersionMap = new HashMap<String, BigInteger>();
-            var previousMdDescriptionVersion = BigInteger.valueOf(-1);
-            var previousMdStateVersion = BigInteger.valueOf(-1);
-            var previousMdibVersion = BigInteger.valueOf(-1);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                final var impliedValueMap = new InitialImpliedValue();
+                final var previousDescriptorVersionMap = new HashMap<String, BigInteger>();
+                final var previousStateVersionMap = new HashMap<String, BigInteger>();
+                var previousMdDescriptionVersion = BigInteger.valueOf(-1);
+                var previousMdStateVersion = BigInteger.valueOf(-1);
+                var previousMdibVersion = BigInteger.valueOf(-1);
 
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess current = history.next();
-                while (current != null) {
-                    final var currentMdibVersion = ImpliedValueUtil.getMdibVersion(current.getMdibVersion());
-                    for (var entity : current.findEntitiesByType(AbstractDescriptor.class)) {
-                        final var handle = entity.getHandle();
-                        final var currentDescriptorVersion =
-                                ImpliedValueUtil.getDescriptorVersion(entity.getDescriptor(), impliedValueMap);
-                        if (previousDescriptorVersionMap.containsKey(handle)) {
-                            assertTrue(
-                                    isNotDecrementedVersion(
-                                            previousDescriptorVersionMap.get(handle), currentDescriptorVersion),
-                                    String.format(
-                                            DECREMENTED_VERSION_ERROR_MESSAGE,
-                                            handle,
-                                            currentMdibVersion,
-                                            previousDescriptorVersionMap.get(handle),
-                                            currentDescriptorVersion));
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess current = history.next();
+                    while (current != null) {
+                        final var currentMdibVersion = ImpliedValueUtil.getMdibVersion(current.getMdibVersion());
+                        for (var entity : current.findEntitiesByType(AbstractDescriptor.class)) {
+                            final var handle = entity.getHandle();
+                            final var currentDescriptorVersion =
+                                    ImpliedValueUtil.getDescriptorVersion(entity.getDescriptor(), impliedValueMap);
+                            if (previousDescriptorVersionMap.containsKey(handle)) {
+                                assertTrue(
+                                        isNotDecrementedVersion(
+                                                previousDescriptorVersionMap.get(handle), currentDescriptorVersion),
+                                        String.format(
+                                                DECREMENTED_VERSION_ERROR_MESSAGE,
+                                                handle,
+                                                currentMdibVersion,
+                                                previousDescriptorVersionMap.get(handle),
+                                                currentDescriptorVersion));
+                            }
+                            previousDescriptorVersionMap.put(handle, currentDescriptorVersion);
                         }
-                        previousDescriptorVersionMap.put(handle, currentDescriptorVersion);
+                        final var states = current.getStatesByType(AbstractState.class);
+                        for (var state : states) {
+                            final String stateHandle;
+                            final var currentStateVersion = ImpliedValueUtil.getStateVersion(state, impliedValueMap);
+                            if (state instanceof AbstractMultiState) {
+                                stateHandle = ((AbstractMultiState) state).getHandle();
+                            } else {
+                                stateHandle = state.getDescriptorHandle();
+                            }
+                            if (previousStateVersionMap.containsKey(stateHandle)) {
+                                assertTrue(
+                                        isNotDecrementedVersion(
+                                                previousStateVersionMap.get(stateHandle), currentStateVersion),
+                                        String.format(
+                                                DECREMENTED_VERSION_ERROR_MESSAGE,
+                                                stateHandle,
+                                                currentMdibVersion,
+                                                previousStateVersionMap.get(stateHandle),
+                                                currentStateVersion));
+                            }
+                            previousStateVersionMap.put(stateHandle, currentStateVersion);
+                            stateVersionsSeen.incrementAndGet();
+                        }
+                        final var currentMdDescriptionVersion =
+                                ImpliedValueUtil.getMdibAccessDescriptionVersion(current);
+                        final var currentMdStateVersion = ImpliedValueUtil.getMdibAccessMdStateVersion(current);
+                        assertTrue(
+                                isNotDecrementedVersion(previousMdDescriptionVersion, currentMdDescriptionVersion),
+                                String.format(
+                                        DECREMENTED_VERSION_ERROR_MESSAGE,
+                                        "MdDescription",
+                                        currentMdibVersion,
+                                        previousMdDescriptionVersion,
+                                        currentMdDescriptionVersion));
+                        assertTrue(
+                                isNotDecrementedVersion(previousMdStateVersion, currentMdStateVersion),
+                                String.format(
+                                        DECREMENTED_VERSION_ERROR_MESSAGE,
+                                        "MdState",
+                                        currentMdibVersion,
+                                        previousMdStateVersion,
+                                        currentMdStateVersion));
+                        assertTrue(
+                                isNotDecrementedVersion(previousMdibVersion, currentMdibVersion),
+                                String.format(
+                                        "The mdib version has been decremented. It was %s and is now %s.",
+                                        previousMdibVersion, currentMdibVersion));
+                        previousMdDescriptionVersion = currentMdDescriptionVersion;
+                        previousMdStateVersion = currentMdStateVersion;
+                        previousMdibVersion = currentMdibVersion;
+                        current = history.next();
                     }
-                    final var states = current.getStatesByType(AbstractState.class);
-                    for (var state : states) {
-                        final String stateHandle;
-                        final var currentStateVersion = ImpliedValueUtil.getStateVersion(state, impliedValueMap);
-                        if (state instanceof AbstractMultiState) {
-                            stateHandle = ((AbstractMultiState) state).getHandle();
-                        } else {
-                            stateHandle = state.getDescriptorHandle();
-                        }
-                        if (previousStateVersionMap.containsKey(stateHandle)) {
-                            assertTrue(
-                                    isNotDecrementedVersion(
-                                            previousStateVersionMap.get(stateHandle), currentStateVersion),
-                                    String.format(
-                                            DECREMENTED_VERSION_ERROR_MESSAGE,
-                                            stateHandle,
-                                            currentMdibVersion,
-                                            previousStateVersionMap.get(stateHandle),
-                                            currentStateVersion));
-                        }
-                        previousStateVersionMap.put(stateHandle, currentStateVersion);
-                    }
-                    final var currentMdDescriptionVersion = ImpliedValueUtil.getMdibAccessDescriptionVersion(current);
-                    final var currentMdStateVersion = ImpliedValueUtil.getMdibAccessMdStateVersion(current);
-                    assertTrue(
-                            isNotDecrementedVersion(previousMdDescriptionVersion, currentMdDescriptionVersion),
-                            String.format(
-                                    DECREMENTED_VERSION_ERROR_MESSAGE,
-                                    "MdDescription",
-                                    currentMdibVersion,
-                                    previousMdDescriptionVersion,
-                                    currentMdDescriptionVersion));
-                    assertTrue(
-                            isNotDecrementedVersion(previousMdStateVersion, currentMdStateVersion),
-                            String.format(
-                                    DECREMENTED_VERSION_ERROR_MESSAGE,
-                                    "MdState",
-                                    currentMdibVersion,
-                                    previousMdStateVersion,
-                                    currentMdStateVersion));
-                    assertTrue(
-                            isNotDecrementedVersion(previousMdibVersion, currentMdibVersion),
-                            String.format(
-                                    "The mdib version has been decremented. It was %s and is now %s.",
-                                    previousMdibVersion, currentMdibVersion));
-                    previousMdDescriptionVersion = currentMdDescriptionVersion;
-                    previousMdStateVersion = currentMdStateVersion;
-                    previousMdibVersion = currentMdibVersion;
-                    current = history.next();
+                } catch (PreprocessingException | ReportProcessingException | InitialImpliedValueException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException | InitialImpliedValueException e) {
-                fail(e);
-            }
+            });
         }
+        assertTestData(stateVersionsSeen.get(), "No state versions have been verified.");
     }
 
     /**

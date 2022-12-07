@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - spotless plugin
 - test for glue:8-1-3
 - test for glue:R0078_0
+- test for biceps:c-5
 
 ### Changed
 - checkstyle plugin scope via checkstyle.xml

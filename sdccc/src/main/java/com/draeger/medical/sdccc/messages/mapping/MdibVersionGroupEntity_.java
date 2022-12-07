@@ -18,12 +18,13 @@ import javax.persistence.metamodel.StaticMetamodel;
         value = {"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD"},
         justification = "This is a commonly made design choice for persistence meta models.")
 @StaticMetamodel(MessageContent.class)
-public final class StringEntryEntity_ {
+public final class MdibVersionGroupEntity_ {
 
-    public static volatile SingularAttribute<StringEntryEntity, Long> incId;
-    public static volatile SingularAttribute<StringEntryEntity, String> entryKey;
-    public static volatile SingularAttribute<StringEntryEntity, String> entryValue;
-    public static volatile SingularAttribute<StringEntryEntity, MessageContent> messageContent;
+    public static volatile SingularAttribute<MdibVersionGroupEntity, Long> incId;
+    public static volatile SingularAttribute<MdibVersionGroupEntity, Long> mdibVersion;
+    public static volatile SingularAttribute<MdibVersionGroupEntity, String> sequenceId;
+    public static volatile SingularAttribute<MdibVersionGroupEntity, String> bodyElement;
+    public static volatile SingularAttribute<MdibVersionGroupEntity, MessageContent> messageContent;
 
-    private StringEntryEntity_() {}
+    private MdibVersionGroupEntity_() {}
 }

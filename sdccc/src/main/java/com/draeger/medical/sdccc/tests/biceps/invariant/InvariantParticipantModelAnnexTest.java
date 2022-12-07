@@ -23,14 +23,17 @@ import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
+import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.participant.AbstractOperationDescriptor;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MdsState;
@@ -62,46 +65,49 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies that the OperationTarget of every AbstractOperationDescriptor is at any point set to the"
             + " descriptor of the parent of the sco or any child descriptor of that parent.")
-    void testRequirementB6() throws PreprocessingException, NoTestData, ReportProcessingException {
+    void testRequirementB6() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
 
-            final var reports = mdibHistorian.getAllReports(sequenceId);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                    var first = mdibHistorian.createNewStorage(sequenceId);
 
-            var first = mdibHistorian.createNewStorage(sequenceId);
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
 
-            for (var report : reports) {
-                first = mdibHistorian.applyReportOnStorage(first, report);
+                        first = mdibHistorian.applyReportOnStorage(first, report);
 
-                final var operationEntities = first.findEntitiesByType(AbstractOperationDescriptor.class);
+                        final var operationEntities = first.findEntitiesByType(AbstractOperationDescriptor.class);
 
-                for (var entity : operationEntities) {
-                    acceptableSequenceSeen.incrementAndGet();
-                    final var parentHandle = entity.getParent().orElseThrow();
-                    final var scoDescriptor = first.getEntity(parentHandle).orElseThrow();
-                    final var scoParentHandle = scoDescriptor.getParent().orElseThrow();
-                    final var scoParent = first.getEntity(scoParentHandle).orElseThrow();
-                    final var possibleTargets =
-                            getAllChildrenHandles(first, scoParent.getHandle(), scoParent.getChildren());
-                    final var target = entity.getDescriptor(AbstractOperationDescriptor.class)
-                            .orElseThrow()
-                            .getOperationTarget();
-                    assertTrue(
-                            possibleTargets.contains(target),
-                            String.format(
-                                    "%s is not a valid target, the valid targets are: %s", target, possibleTargets));
+                        for (var entity : operationEntities) {
+                            acceptableSequenceSeen.incrementAndGet();
+                            final var parentHandle = entity.getParent().orElseThrow();
+                            final var scoDescriptor =
+                                    first.getEntity(parentHandle).orElseThrow();
+                            final var scoParentHandle =
+                                    scoDescriptor.getParent().orElseThrow();
+                            final var scoParent =
+                                    first.getEntity(scoParentHandle).orElseThrow();
+                            final var possibleTargets =
+                                    getAllChildrenHandles(first, scoParent.getHandle(), scoParent.getChildren());
+                            final var target = entity.getDescriptor(AbstractOperationDescriptor.class)
+                                    .orElseThrow()
+                                    .getOperationTarget();
+                            assertTrue(
+                                    possibleTargets.contains(target),
+                                    String.format(
+                                            "%s is not a valid target, the valid targets are: %s",
+                                            target, possibleTargets));
+                        }
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            }
+            });
         }
         assertTestData(
                 acceptableSequenceSeen.get(), "No AbstractOperationDescriptors seen during test run, test failed.");
@@ -114,44 +120,40 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Based on the initially retrieved mdib, applies each episodic report to the mdib and verifies that"
             + " no OperatingJurisdiction is set for an MdsState at any time if the corresponding MdsDescriptor does not"
             + " maintain an ApprovedJurisdiction list.")
-    void testRequirementB284() throws NoTestData {
+    void testRequirementB284() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess first = history.next();
 
-                while (first != null) {
-                    final var mdsEntities = first.findEntitiesByType(MdsDescriptor.class);
-                    for (var mdsEntity : mdsEntities) {
-                        final var descriptor =
-                                mdsEntity.getDescriptor(MdsDescriptor.class).orElseThrow();
-                        final var state = mdsEntity.getStates(MdsState.class);
-                        final var approvedJurisdictions = descriptor.getApprovedJurisdictions();
-                        if (approvedJurisdictions == null) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            assertNull(
-                                    state.get(0).getOperatingJurisdiction(),
-                                    String.format(
-                                            "OperatingJurisdiction for %s is set, although ApprovedJurisdictions is missing.",
-                                            state.get(0).getDescriptorHandle()));
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess first = history.next();
+
+                    while (first != null) {
+                        final var mdsEntities = first.findEntitiesByType(MdsDescriptor.class);
+                        for (var mdsEntity : mdsEntities) {
+                            final var descriptor =
+                                    mdsEntity.getDescriptor(MdsDescriptor.class).orElseThrow();
+                            final var state = mdsEntity.getStates(MdsState.class);
+                            final var approvedJurisdictions = descriptor.getApprovedJurisdictions();
+                            if (approvedJurisdictions == null) {
+                                acceptableSequenceSeen.incrementAndGet();
+                                assertNull(
+                                        state.get(0).getOperatingJurisdiction(),
+                                        String.format(
+                                                "OperatingJurisdiction for %s is set, although ApprovedJurisdictions is missing.",
+                                                state.get(0).getDescriptorHandle()));
+                            }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No acceptable sequence seen, test failed.");
     }
@@ -163,46 +165,41 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Based on the initially retrieved mdib, applies each episodic report to the mdib and verifies that"
             + " no OperatingJurisdiction is set for an VmdState at any time if the corresponding VmdDescriptor does not"
             + " maintain an ApprovedJurisdiction list.")
-    void testRequirementB402() throws NoTestData {
+    void testRequirementB402() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess first = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess first = history.next();
 
-                while (first != null) {
-                    final var vmdEntities = first.findEntitiesByType(VmdDescriptor.class);
-                    for (var vmd : vmdEntities) {
-                        final var descriptor = vmd.getDescriptor(VmdDescriptor.class);
-                        final var state = vmd.getFirstState(VmdState.class);
-                        final var approvedJurisdiction =
-                                descriptor.orElseThrow().getApprovedJurisdictions();
-                        if (approvedJurisdiction == null) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            assertNull(
-                                    state.orElseThrow().getOperatingJurisdiction(),
-                                    String.format(
-                                            "OperatingJurisdiction should not be present, because ApprovedJurisdiction is not"
-                                                    + " present for vmd with handle %s",
-                                            descriptor.orElseThrow().getHandle()));
+                    while (first != null) {
+                        final var vmdEntities = first.findEntitiesByType(VmdDescriptor.class);
+                        for (var vmd : vmdEntities) {
+                            final var descriptor = vmd.getDescriptor(VmdDescriptor.class);
+                            final var state = vmd.getFirstState(VmdState.class);
+                            final var approvedJurisdiction =
+                                    descriptor.orElseThrow().getApprovedJurisdictions();
+                            if (approvedJurisdiction == null) {
+                                acceptableSequenceSeen.incrementAndGet();
+                                assertNull(
+                                        state.orElseThrow().getOperatingJurisdiction(),
+                                        String.format(
+                                                "OperatingJurisdiction should not be present, because ApprovedJurisdiction is not"
+                                                        + " present for vmd with handle %s",
+                                                descriptor.orElseThrow().getHandle()));
+                            }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(
                 acceptableSequenceSeen.get(),
