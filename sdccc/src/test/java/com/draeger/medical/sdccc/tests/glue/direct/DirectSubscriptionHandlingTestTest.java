@@ -54,7 +54,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -711,13 +710,8 @@ public class DirectSubscriptionHandlingTestTest {
     @Test
     public void testRequirementR00360NoReports() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-            ));
-        testDeviceForR00360(true,
-            0,
-            true,
-            SUBSCRIPTION_END_STATUS_DELIVERY_FAILED,
-            NoTestData.class);
+        supportedReports = new HashSet<>(Set.of());
+        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED, NoTestData.class);
     }
 
     /**
@@ -826,19 +820,20 @@ public class DirectSubscriptionHandlingTestTest {
             final String subscriptionEndStatus)
             throws Exception {
         testDeviceForR00360(
-            expectFailure,
-            delayBeforeCancellingInSeconds,
-            sendSubscriptionEnd,
-            subscriptionEndStatus,
-            AssertionError.class);
+                expectFailure,
+                delayBeforeCancellingInSeconds,
+                sendSubscriptionEnd,
+                subscriptionEndStatus,
+                AssertionError.class);
     }
 
     private void testDeviceForR00360(
-        final boolean expectFailure,
-        final int delayBeforeCancellingInSeconds,
-        final boolean sendSubscriptionEnd,
-        final String subscriptionEndStatus,
-        final Class<? extends Throwable> exceptionClass) throws Exception {
+            final boolean expectFailure,
+            final int delayBeforeCancellingInSeconds,
+            final boolean sendSubscriptionEnd,
+            final String subscriptionEndStatus,
+            final Class<? extends Throwable> exceptionClass)
+            throws Exception {
         // given
         setupTestScenarioForR00360(true, delayBeforeCancellingInSeconds, sendSubscriptionEnd, subscriptionEndStatus);
         this.cancelledReports = new HashSet<>();

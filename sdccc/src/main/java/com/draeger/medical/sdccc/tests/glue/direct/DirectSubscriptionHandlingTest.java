@@ -355,7 +355,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             subscribeToAllReports(reports);
             if (triggerableReport.getSubscription() == null) {
                 throw new NoTestData("Sorry, the Test Case for Glue:R0036_0 does not work for "
-                    + "devices not supporting EpisodicContextReport.");
+                        + "devices not supporting EpisodicContextReport.");
             }
 
             checkSubscriptionsAreActive(reports);
