@@ -93,10 +93,10 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " for each AbstractDescriptor contained in a DescriptionModificationReport "
-            + "that it was inserted or deleted or udpdated by changing"
-            + "at least one child or attribute.")
-    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionChangedPrecondition.class)
+            + " for each AbstractDescriptor contained in a DescriptionModificationReport"
+            + " that it was inserted or deleted or udpdated by changing"
+            + " at least one child or attribute.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationUptPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
@@ -114,11 +114,11 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
 
-                        if (report instanceof DescriptionModificationReport) {
+                        if (report instanceof DescriptionModificationReport descriptionModificationReport) {
                             acceptableSequenceSeen.incrementAndGet();
                             second = mdibHistorian.applyReportOnStorage(second, report);
 
-                            for (var reportPart : ((DescriptionModificationReport) report).getReportPart()) {
+                            for (var reportPart : descriptionModificationReport.getReportPart()) {
                                 for (var modifiedDescriptor : reportPart.getDescriptor()) {
 
                                     final var descriptorBeforeReportOpt =
