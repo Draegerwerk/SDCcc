@@ -8,6 +8,7 @@
 package com.draeger.medical.sdccc.util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
@@ -111,6 +112,8 @@ public final class Constants {
     public static final int HANDLE_UNICODE_LOWER_BOUND = 0x0021;
     public static final int HANDLE_UNICODE_UPPER_BOUND = 0x10ffff;
     public static final int HANDLE_UNICODE_EXCEPTION = 0xfffd;
+    public static final QName MDIB_VERSION = new QName("MdibVersion");
+    public static final QName SEQUENCE_ID = new QName("SequenceId");
 
     /*
     XML constants
@@ -188,6 +191,18 @@ public final class Constants {
             new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_OBSERVED_VALUE_STREAM);
     public static final QName MSG_WAVEFORM_STREAM =
             new QName(CommonConstants.NAMESPACE_MESSAGE, WsdlConstants.OPERATION_WAVEFORM_STREAM);
+
+    // Periodic*Reports are not supported
+    public static final List<QName> RELEVANT_REPORT_BODIES = List.of(
+            Constants.MSG_EPISODIC_ALERT_REPORT,
+            Constants.MSG_EPISODIC_COMPONENT_REPORT,
+            Constants.MSG_EPISODIC_CONTEXT_REPORT,
+            Constants.MSG_EPISODIC_METRIC_REPORT,
+            Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT,
+            Constants.MSG_DESCRIPTION_MODIFICATION_REPORT,
+            Constants.MSG_OPERATION_INVOKED_REPORT,
+            Constants.MSG_WAVEFORM_STREAM,
+            Constants.MSG_OBSERVED_VALUE_STREAM);
 
     // Manipulation Names for Hibernation
     public static final String MANIPULATION_NAME_SET_LOCATION_DETAIL = "setLocationDetail";

@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,70 +71,65 @@ public class InvariantAlertStateTest extends InjectorTestBase {
             + " set to 'true'.")
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.AlertConditionPresenceManipulation.class})
-    void testRequirementR00290() throws NoTestData {
+    void testRequirementR00290() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var presenceOnSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess mdibAccess = history.next();
+                    RemoteMdibAccess mdibAccess = history.next();
 
-                while (mdibAccess != null) {
-                    final var alertConditionStates = mdibAccess.getStatesByType(AlertConditionState.class);
-                    for (var alertConditionState : alertConditionStates) {
-                        final var isPresence = ImpliedValueUtil.isPresence(alertConditionState);
-                        if (isPresence) {
-                            presenceOnSeen.incrementAndGet();
-                            final var descriptorHandle = alertConditionState.getDescriptorHandle();
-                            final var alertSystemStateHandle = mdibAccess
-                                    .getEntity(descriptorHandle)
-                                    .orElseThrow()
-                                    .getParent()
-                                    .orElseThrow();
-                            final var alertSystemState = mdibAccess
-                                    .getState(alertSystemStateHandle, AlertSystemState.class)
-                                    .orElseThrow();
+                    while (mdibAccess != null) {
+                        final var alertConditionStates = mdibAccess.getStatesByType(AlertConditionState.class);
+                        for (var alertConditionState : alertConditionStates) {
+                            final var isPresence = ImpliedValueUtil.isPresence(alertConditionState);
+                            if (isPresence) {
+                                presenceOnSeen.incrementAndGet();
+                                final var descriptorHandle = alertConditionState.getDescriptorHandle();
+                                final var alertSystemStateHandle = mdibAccess
+                                        .getEntity(descriptorHandle)
+                                        .orElseThrow()
+                                        .getParent()
+                                        .orElseThrow();
+                                final var alertSystemState = mdibAccess
+                                        .getState(alertSystemStateHandle, AlertSystemState.class)
+                                        .orElseThrow();
 
-                            assertEquals(
-                                    AlertActivation.ON,
-                                    alertConditionState.getActivationState(),
-                                    String.format(
-                                            "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
-                                                    + "The AlertConditionState/@Activation state should be 'On' but is '%s'",
-                                            descriptorHandle,
-                                            alertConditionState
-                                                    .getActivationState()
-                                                    .value()));
-                            assertEquals(
-                                    AlertActivation.ON,
-                                    alertSystemState.getActivationState(),
-                                    String.format(
-                                            "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
-                                                    + " The AlertSystemState/@Activation "
-                                                    + "state for AlertSystemState with handle %s"
-                                                    + " should be 'On' but is '%s'",
-                                            descriptorHandle,
-                                            alertSystemStateHandle,
-                                            alertSystemState
-                                                    .getActivationState()
-                                                    .value()));
+                                assertEquals(
+                                        AlertActivation.ON,
+                                        alertConditionState.getActivationState(),
+                                        String.format(
+                                                "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
+                                                        + "The AlertConditionState/@Activation state should be 'On' but is '%s'",
+                                                descriptorHandle,
+                                                alertConditionState
+                                                        .getActivationState()
+                                                        .value()));
+                                assertEquals(
+                                        AlertActivation.ON,
+                                        alertSystemState.getActivationState(),
+                                        String.format(
+                                                "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
+                                                        + " The AlertSystemState/@Activation "
+                                                        + "state for AlertSystemState with handle %s"
+                                                        + " should be 'On' but is '%s'",
+                                                descriptorHandle,
+                                                alertSystemStateHandle,
+                                                alertSystemState
+                                                        .getActivationState()
+                                                        .value()));
+                            }
                         }
+                        mdibAccess = history.next();
                     }
-                    mdibAccess = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(presenceOnSeen.get(), NO_PRESENCE_TRUE);
     }
@@ -151,75 +147,71 @@ public class InvariantAlertStateTest extends InjectorTestBase {
             + " value is permitted for AlertConditionState/@ActivationState and AlertSignalState/@ActivationState.")
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.AlertSystemActivationStateManipulation.class})
-    void testRequirementR0116() throws NoTestData {
+    void testRequirementR0116() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
 
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess first = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess first = history.next();
 
-                final var alertActivationStateOffSeen =
-                        initAlertSystemStateMap(first.getStatesByType(AlertSystemState.class));
-                final var alertActivationStatePsdSeen =
-                        initAlertSystemStateMap(first.getStatesByType(AlertSystemState.class));
+                    final var alertActivationStateOffSeen =
+                            initAlertSystemStateMap(first.getStatesByType(AlertSystemState.class));
+                    final var alertActivationStatePsdSeen =
+                            initAlertSystemStateMap(first.getStatesByType(AlertSystemState.class));
 
-                while (first != null) {
-                    final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
+                    while (first != null) {
+                        final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
 
-                    for (var alertSystemState : alertSystemStates) {
-                        final var activationState = alertSystemState.getActivationState();
-                        final var descriptorHandle = alertSystemState.getDescriptorHandle();
+                        for (var alertSystemState : alertSystemStates) {
+                            final var activationState = alertSystemState.getActivationState();
+                            final var descriptorHandle = alertSystemState.getDescriptorHandle();
 
-                        final var children =
-                                first.getEntity(descriptorHandle).orElseThrow().getChildren();
-                        final List<AbstractAlertState> abstractAlertStates = new ArrayList<>();
-                        for (var child : children) {
-                            abstractAlertStates.addAll(
-                                    first.getEntity(child).orElseThrow().getStates(AbstractAlertState.class));
-                        }
-                        if (activationState.equals(AlertActivation.OFF)
-                                || activationState.equals(AlertActivation.PSD)) {
-                            if (activationState.equals(AlertActivation.OFF)) {
-                                alertActivationStateOffSeen
-                                        .computeIfAbsent(descriptorHandle, handle -> new AtomicInteger(0))
-                                        .incrementAndGet();
-                            } else {
-                                alertActivationStatePsdSeen
-                                        .computeIfAbsent(descriptorHandle, handle -> new AtomicInteger(0))
-                                        .incrementAndGet();
+                            final var children = first.getEntity(descriptorHandle)
+                                    .orElseThrow()
+                                    .getChildren();
+                            final List<AbstractAlertState> abstractAlertStates = new ArrayList<>();
+                            for (var child : children) {
+                                abstractAlertStates.addAll(
+                                        first.getEntity(child).orElseThrow().getStates(AbstractAlertState.class));
                             }
-                            for (var state : abstractAlertStates) {
-                                assertEquals(
-                                        activationState,
-                                        state.getActivationState(),
-                                        String.format(
-                                                "The activation state of %s should be: %s but is: %s.",
-                                                state.getDescriptorHandle(),
-                                                activationState,
-                                                state.getActivationState()));
+                            if (activationState.equals(AlertActivation.OFF)
+                                    || activationState.equals(AlertActivation.PSD)) {
+                                if (activationState.equals(AlertActivation.OFF)) {
+                                    alertActivationStateOffSeen
+                                            .computeIfAbsent(descriptorHandle, handle -> new AtomicInteger(0))
+                                            .incrementAndGet();
+                                } else {
+                                    alertActivationStatePsdSeen
+                                            .computeIfAbsent(descriptorHandle, handle -> new AtomicInteger(0))
+                                            .incrementAndGet();
+                                }
+                                for (var state : abstractAlertStates) {
+                                    assertEquals(
+                                            activationState,
+                                            state.getActivationState(),
+                                            String.format(
+                                                    "The activation state of %s should be: %s but is: %s.",
+                                                    state.getDescriptorHandle(),
+                                                    activationState,
+                                                    state.getActivationState()));
+                                }
                             }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
+                    if (verifyActivationStatesWereSeen(alertActivationStatePsdSeen, AlertActivation.PSD)
+                            && verifyActivationStatesWereSeen(alertActivationStateOffSeen, AlertActivation.OFF)) {
+                        acceptableSequenceSeen.incrementAndGet();
+                    }
+                } catch (PreprocessingException | ReportProcessingException | NoTestData e) {
+                    fail(e);
                 }
-                if (verifyActivationStatesWereSeen(alertActivationStatePsdSeen, AlertActivation.PSD)
-                        && verifyActivationStatesWereSeen(alertActivationStateOffSeen, AlertActivation.OFF)) {
-                    acceptableSequenceSeen.incrementAndGet();
-                }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), NO_ACCEPTABLE_SEQUENCE_SEEN);
     }

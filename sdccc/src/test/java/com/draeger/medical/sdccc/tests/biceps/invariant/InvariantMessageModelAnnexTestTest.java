@@ -34,6 +34,8 @@ import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.ContextAssociation;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
 import com.draeger.medical.biceps.model.participant.LocationContextState;
+import com.draeger.medical.biceps.model.participant.MdsDescriptor;
+import com.draeger.medical.biceps.model.participant.MdsState;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
 import com.draeger.medical.biceps.model.participant.NumericMetricValue;
@@ -64,6 +66,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -157,6 +160,86 @@ public class InvariantMessageModelAnnexTestTest {
         baseMarshalling.stopAsync().awaitTerminated(DEFAULT_TIMEOUT);
         marshalling.stopAsync().awaitTerminated(DEFAULT_TIMEOUT);
         storage.close();
+    }
+
+    /**
+     * Tests whether calling the test without any input data causes a failure.
+     */
+    @Test
+    public void testRequirementC5NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementC5);
+    }
+
+    /**
+     * Checks whether a sequence of DescriptionModificationReports,
+     * in which each DescriptionModificationReport
+     * contains only AbstractDescriptors that have been inserted or deleted or updated by changing
+     * at least one child or attribute,
+     * passes the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC5Good() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC5();
+    }
+
+    /**
+     * Checks whether a DescriptionModificationReport
+     * containing an AbstractDescriptor without any change,
+     * fails the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC5Bad() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.ZERO);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        assertThrows(AssertionError.class, testClass::testRequirementC5);
     }
 
     /**

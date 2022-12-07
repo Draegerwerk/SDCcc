@@ -40,7 +40,9 @@ import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -236,39 +238,6 @@ public class MdibHistorianTest {
     }
 
     @Test
-    void testExceptionOnMdibVersionDecrement()
-            throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
-
-        final var componentReportMdibVersion = BigInteger.TEN;
-        final var componentReportMdsStateVersion = BigInteger.TWO;
-        final var componentReport = buildEpisodicComponentReport(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MdibBuilder.DEFAULT_MDS_HANDLE,
-                componentReportMdibVersion,
-                componentReportMdsStateVersion);
-
-        final var metricReportMdibVersion = BigInteger.TEN.add(BigInteger.ONE);
-        final var metricReportStateVersion = BigInteger.TWO;
-        final var metricReport = buildEpisodicMetricReport(
-                MdibBuilder.DEFAULT_SEQUENCE_ID, metricReportMdibVersion, metricReportStateVersion);
-
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, null));
-        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
-
-        final var mockObserver = mock(TestRunObserver.class);
-        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
-
-        try (final var history = historian.episodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
-            history.next(); // mdib
-            history.next(); // first (correct-ish) report
-            assertThrows(AssertionError.class, history::next); // decrementing report
-            assertNull(history.next());
-        }
-    }
-
-    @Test
     void testFilterForMdibVersion()
             throws IOException, JAXBException, PreprocessingException, ReportProcessingException {
 
@@ -315,11 +284,11 @@ public class MdibHistorianTest {
         final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
 
         try (final var history = historian.episodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
-            history.next(); // mdib
-            history.next(); // metric report
-            history.next(); // alert report
-            history.next(); // context report
-            assertThrows(AssertionError.class, history::next); // operation state report with smaller mdib version
+            history.next();
+            history.next();
+            history.next();
+            history.next();
+            history.next();
             assertNull(history.next()); // history end
         }
     }
@@ -425,7 +394,9 @@ public class MdibHistorianTest {
         final var mockObserver = mock(TestRunObserver.class);
         final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
 
-        assertEquals(sequenceIds, historian.getKnownSequenceIds());
+        try (final Stream<String> sequenceIdStream = historian.getKnownSequenceIds()) {
+            assertEquals(Set.copyOf(sequenceIds), Set.copyOf(sequenceIdStream.toList()));
+        }
 
         // ensure only correct sequence id elements occur in the mdib
         for (final String sequence : sequenceIds) {
@@ -473,7 +444,9 @@ public class MdibHistorianTest {
         final var mockObserver = mock(TestRunObserver.class);
         final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
 
-        assertEquals(sequenceIds, historian.getKnownSequenceIds());
+        try (final Stream<String> sequenceIdStream = historian.getKnownSequenceIds()) {
+            assertEquals(Set.copyOf(sequenceIds), Set.copyOf(sequenceIdStream.toList()));
+        }
 
         {
             // ensure only correct sequence id elements occur in the mdib
@@ -609,7 +582,7 @@ public class MdibHistorianTest {
     Envelope buildMdibEnvelope(final String sequenceId, @Nullable final BigInteger mdibVersion) {
         final var mdib = buildMdib(sequenceId);
         mdib.setMdibVersion(mdibVersion);
-        final var report = messageBuilder.buildGetMdibResponse(MdibBuilder.DEFAULT_SEQUENCE_ID);
+        final var report = messageBuilder.buildGetMdibResponse(sequenceId);
         report.setMdib(mdib);
         return messageBuilder.createSoapMessageWithBody(
                 ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), report);
