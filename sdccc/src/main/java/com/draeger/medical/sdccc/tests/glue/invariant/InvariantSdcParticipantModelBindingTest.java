@@ -22,8 +22,8 @@ import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -57,56 +57,52 @@ public class InvariantSdcParticipantModelBindingTest extends InjectorTestBase {
             + " verifies that the Type attribute for every AbstractComplexDeviceComponentDescriptor,"
             + " ChannelDescriptor, AbstractOperationDescriptor, AlertConditionDescriptor and AbstractMetricDescriptor"
             + " is present.")
-    void testRequirementR0080() throws NoTestData {
+    void testRequirementR0080() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicBoolean(false);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess first = history.next();
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                while (first != null) {
-                    acceptableSequenceSeen.compareAndSet(
-                            false,
-                            checkForTypeAttribute(
-                                    first.findEntitiesByType(AbstractComplexDeviceComponentDescriptor.class),
-                                    AbstractComplexDeviceComponentDescriptor.class));
-                    acceptableSequenceSeen.compareAndSet(
-                            false,
-                            checkForTypeAttribute(
-                                    first.findEntitiesByType(ChannelDescriptor.class), ChannelDescriptor.class));
-                    acceptableSequenceSeen.compareAndSet(
-                            false,
-                            checkForTypeAttribute(
-                                    first.findEntitiesByType(AbstractOperationDescriptor.class),
-                                    AbstractOperationDescriptor.class));
-                    acceptableSequenceSeen.compareAndSet(
-                            false,
-                            checkForTypeAttribute(
-                                    first.findEntitiesByType(AlertConditionDescriptor.class),
-                                    AlertConditionDescriptor.class));
-                    acceptableSequenceSeen.compareAndSet(
-                            false,
-                            checkForTypeAttribute(
-                                    first.findEntitiesByType(AbstractMetricDescriptor.class),
-                                    AbstractMetricDescriptor.class));
+                    RemoteMdibAccess first = history.next();
 
-                    first = history.next();
+                    while (first != null) {
+                        acceptableSequenceSeen.compareAndSet(
+                                false,
+                                checkForTypeAttribute(
+                                        first.findEntitiesByType(AbstractComplexDeviceComponentDescriptor.class),
+                                        AbstractComplexDeviceComponentDescriptor.class));
+                        acceptableSequenceSeen.compareAndSet(
+                                false,
+                                checkForTypeAttribute(
+                                        first.findEntitiesByType(ChannelDescriptor.class), ChannelDescriptor.class));
+                        acceptableSequenceSeen.compareAndSet(
+                                false,
+                                checkForTypeAttribute(
+                                        first.findEntitiesByType(AbstractOperationDescriptor.class),
+                                        AbstractOperationDescriptor.class));
+                        acceptableSequenceSeen.compareAndSet(
+                                false,
+                                checkForTypeAttribute(
+                                        first.findEntitiesByType(AlertConditionDescriptor.class),
+                                        AlertConditionDescriptor.class));
+                        acceptableSequenceSeen.compareAndSet(
+                                false,
+                                checkForTypeAttribute(
+                                        first.findEntitiesByType(AbstractMetricDescriptor.class),
+                                        AbstractMetricDescriptor.class));
+
+                        first = history.next();
+                    }
+
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(acceptableSequenceSeen.get(), "No suitable descriptors seen, test failed.");
     }

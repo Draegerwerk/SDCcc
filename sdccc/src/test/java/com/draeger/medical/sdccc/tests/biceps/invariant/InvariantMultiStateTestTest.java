@@ -266,7 +266,7 @@ public class InvariantMultiStateTestTest {
                 buildOperatorContext(
                         OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE, BigInteger.TWO));
 
-        final var fifth = BigInteger.valueOf(4);
+        final var fifth = BigInteger.valueOf(5);
         final var fifthUpdate = buildDescriptionModificationReport(
                 SEQUENCE_ID2,
                 fifth,
@@ -275,7 +275,18 @@ public class InvariantMultiStateTestTest {
                 null,
                 null,
                 buildOperatorContext(
-                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO));
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, OPERATOR_CONTEXT_STATE_HANDLE2, BigInteger.TWO));
+
+        final var sixth = BigInteger.valueOf(5);
+        final var sixthUpdate = buildDescriptionModificationReport(
+                SEQUENCE_ID2,
+                sixth,
+                buildMds(MDS_HANDLE, sixth),
+                buildSystemContext(SYSTEM_CONTEXT_HANDLE, sixth),
+                null,
+                null,
+                buildOperatorContext(
+                        OPERATOR_CONTEXT_DESCRIPTOR_HANDLE2, OPERATOR_CONTEXT_STATE_HANDLE2 + "a", BigInteger.TWO));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, patientUpdate);
@@ -286,6 +297,7 @@ public class InvariantMultiStateTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, thirdUpdate);
         messageStorageUtil.addInboundSecureHttpMessage(storage, fourthUpdate);
         messageStorageUtil.addInboundSecureHttpMessage(storage, fifthUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, sixthUpdate);
 
         testClass.testRequirement0097();
     }

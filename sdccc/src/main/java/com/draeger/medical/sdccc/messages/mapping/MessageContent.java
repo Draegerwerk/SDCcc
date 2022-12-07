@@ -53,13 +53,13 @@ public class MessageContent {
     private List<X509Certificate> certs;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
-    private List<StringEntryEntity> headers;
+    private List<HTTPHeaderEntity> headers;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "messageContent", orphanRemoval = true)
+    private List<MdibVersionGroupEntity> mdibVersionGroups;
 
     @ElementCollection
     private Set<String> actions;
-
-    @ElementCollection
-    private Set<String> bodyElements;
 
     private CommunicationLog.Direction direction;
     private CommunicationLog.MessageType messageType;
@@ -90,8 +90,8 @@ public class MessageContent {
      * @param timestamp            time point of the stream creation for getting the body
      * @param nanoTimestamp        point in time relative to current jvm start at which message arrived,
      *                             useful for sorting
+     * @param mdibVersionGroups    MdibVersionGroup values
      * @param actions              ws addressing actions
-     * @param bodyElements         QNames of all elements present in the soap body
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
      */
@@ -102,8 +102,8 @@ public class MessageContent {
             final CommunicationLog.MessageType messageType,
             final long timestamp,
             final long nanoTimestamp,
+            final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups,
             final Set<String> actions,
-            final Set<String> bodyElements,
             final String uuid,
             final boolean isSOAP) {
 
@@ -113,7 +113,6 @@ public class MessageContent {
         this.timestamp = timestamp;
         this.nanoTimestamp = nanoTimestamp;
         this.actions = actions;
-        this.bodyElements = bodyElements;
         this.uuid = uuid;
         this.isSOAP = isSOAP;
 
@@ -122,26 +121,29 @@ public class MessageContent {
 
         this.certs = communicationContext.getTransportInfo().getX509Certificates();
 
-        final List<StringEntryEntity> headersMap;
+        final List<HTTPHeaderEntity> httpHeaderEntityList;
         // handle http headers
-        if (communicationContext.getApplicationInfo() instanceof HttpApplicationInfo) {
-            final HttpApplicationInfo httpAppInfo = (HttpApplicationInfo) communicationContext.getApplicationInfo();
+        if (communicationContext.getApplicationInfo() instanceof final HttpApplicationInfo httpAppInfo) {
 
-            headersMap = new ArrayList<>();
+            httpHeaderEntityList = new ArrayList<>();
             for (final Map.Entry<String, Collection<String>> entry :
                     httpAppInfo.getHeaders().asMap().entrySet()) {
                 final String key = entry.getKey();
                 final Collection<String> value = entry.getValue();
-                value.forEach(element -> headersMap.add(new StringEntryEntity(key, element, this)));
+                value.forEach(element -> httpHeaderEntityList.add(new HTTPHeaderEntity(key, element, this)));
             }
             transactionId = httpAppInfo.getTransactionId();
             requestUri = httpAppInfo.getRequestUri().orElse(null);
         } else {
-            headersMap = Collections.emptyList();
+            httpHeaderEntityList = Collections.emptyList();
             transactionId = null;
             requestUri = null;
         }
-        this.headers = headersMap;
+        this.headers = httpHeaderEntityList;
+
+        this.mdibVersionGroups = mdibVersionGroups.stream()
+                .map(mdibVersionGroup -> new MdibVersionGroupEntity(mdibVersionGroup, this))
+                .toList();
     }
 
     public String getBody() {
@@ -183,11 +185,11 @@ public class MessageContent {
     public Map<String, List<String>> getHeaders() {
         final HashMap<String, List<String>> headersMap = new HashMap<>();
 
-        for (final StringEntryEntity entry : this.headers) {
-            if (!headersMap.containsKey(entry.getEntryKey())) {
-                headersMap.put(entry.getEntryKey(), new ArrayList<>());
+        for (final HTTPHeaderEntity httpHeaderEntity : this.headers) {
+            if (!headersMap.containsKey(httpHeaderEntity.getHeaderKey())) {
+                headersMap.put(httpHeaderEntity.getHeaderKey(), new ArrayList<>());
             }
-            headersMap.get(entry.getEntryKey()).add(entry.getEntryValue());
+            headersMap.get(httpHeaderEntity.getHeaderKey()).add(httpHeaderEntity.getHeaderValue());
         }
 
         return headersMap;
@@ -209,7 +211,7 @@ public class MessageContent {
         return this.requestUri;
     }
 
-    public Set<String> getBodyElements() {
-        return bodyElements;
+    public List<MdibVersionGroupEntity> getMdibVersionGroups() {
+        return this.mdibVersionGroups;
     }
 }
