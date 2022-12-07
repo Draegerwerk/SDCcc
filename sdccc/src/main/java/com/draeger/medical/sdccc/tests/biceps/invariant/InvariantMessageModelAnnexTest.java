@@ -94,7 +94,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
             + " for each AbstractDescriptor contained in a DescriptionModificationReport"
-            + " that it was inserted or deleted or udpdated by changing"
+            + " that it was inserted or deleted or updated by changing"
             + " at least one child or attribute.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationUptPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
