@@ -15,14 +15,14 @@ import org.somda.sdc.dpws.soap.wseventing.SubscribeResult;
  */
 public class ReportTestData {
 
-    private String reportName;
-    private String action;
+    private final String reportName;
+    private final String action;
     private Boolean reportReceived;
     private Boolean failOnReceivingReport;
     private Boolean subscriptionEndWithStatusDeliveryFailedReceived;
     private final Object syncPoint;
-    private ReportTriggerClosure trigger;
-    private ReportSubscribeClosure subscribe;
+    private final ReportTriggerClosure trigger;
+    private final ReportSubscribeClosure subscribe;
     private SubscribeResult subscription;
     private EventSink eventSink;
 

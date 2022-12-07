@@ -351,18 +351,32 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         reports.add(triggerableReport);
         reports.addAll(otherReports);
 
-        subscribeToAllReports(reports);
-        if (triggerableReport.getSubscription() == null) {
-            throw new NoTestData("Sorry, the Test Case for Glue:R0036_0 does not work for "
-                + "devices not supporting EpisodicContextReport.");
+        try {
+            subscribeToAllReports(reports);
+            if (triggerableReport.getSubscription() == null) {
+                throw new NoTestData("Sorry, the Test Case for Glue:R0036_0 does not work for "
+                    + "devices not supporting EpisodicContextReport.");
+            }
+
+            checkSubscriptionsAreActive(reports);
+
+            triggerReportAndIntentionallyFailReceivingIt(triggerableReport);
+
+            checkThatSubscriptionsHaveBeenCancelled(List.of(triggerableReport));
+            checkThatOtherSubscriptionsHaveNotBeenCancelled(otherReports);
+        } finally {
+            // cleanup
+            unsubscribeReports(reports);
         }
+    }
 
-        checkSubscriptionsAreActive(reports);
-
-        triggerReportAndIntentionallyFailReceivingIt(triggerableReport);
-
-        checkThatSubscriptionsHaveBeenCancelled(List.of(triggerableReport));
-        checkThatOtherSubscriptionsHaveNotBeenCancelled(otherReports);
+    private void unsubscribeReports(List<ReportTestData> reports) {
+        for (ReportTestData report : reports) {
+            final EventSink eventSink = report.getEventSink();
+            if (eventSink != null) {
+                eventSink.unsubscribeAll();
+            }
+        }
     }
 
     private void checkThatOtherSubscriptionsHaveNotBeenCancelled(final List<ReportTestData> reports) {
