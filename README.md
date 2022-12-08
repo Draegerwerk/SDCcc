@@ -176,7 +176,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R0025_0         | SetComponentActivation                                      |
 | R0029           | SetAlertConditionPresence                                   |
 | R0033           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
-| R0034           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
+| R0034_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
 | R0038_0         | TriggerReport                                               |
 | R0097           | CreateContextStateWithAssociation                           |
 | R0116           | SetAlertActivation                                          |
@@ -192,7 +192,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | C-14            | TriggerReport                                               |
 | C-15            | TriggerReport                                               |
 | R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
-| R5052           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
+| R5052           | TriggerDescriptorUpdate                                     |
 | 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_2         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_4         | SetComponentActivation, SetMetricStatus                     |
