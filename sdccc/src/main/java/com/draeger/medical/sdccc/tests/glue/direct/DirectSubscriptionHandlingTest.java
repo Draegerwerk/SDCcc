@@ -199,7 +199,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_CONTEXT,
+                                    WsdlConstants.SERVICE_CONTEXT,
                                     MessageGeneratingUtil::getContextService,
                                     report,
                                     true);
@@ -226,7 +226,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_SET,
+                                    WsdlConstants.SERVICE_SET,
                                     MessageGeneratingUtil::getSetService,
                                     report,
                                     false);
@@ -245,7 +245,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_DESCRIPTION_EVENT,
+                                    WsdlConstants.SERVICE_DESCRIPTION_EVENT,
                                     MessageGeneratingUtil::getDescriptionEventService,
                                     report,
                                     false);
@@ -264,7 +264,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_STATE_EVENT,
+                                    WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
                                     false);
@@ -283,7 +283,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_STATE_EVENT,
+                                    WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
                                     false);
@@ -302,7 +302,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_STATE_EVENT,
+                                    WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
                                     false);
@@ -321,7 +321,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_STATE_EVENT,
+                                    WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
                                     false);
@@ -330,7 +330,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicOperationalStateReport;
                     }
                 },
@@ -340,7 +340,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                WsdlConstants.SERVICE_STATE_EVENT,
+                                    WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
                                     false);
@@ -349,7 +349,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             // does not need to be triggered in this test.
                         }) {
                     @Override
-                    public boolean doesNotificationBodyBelongToThisReport(Object notificationBody) {
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof SystemErrorReport;
                     }
                 });
@@ -537,11 +537,11 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     }
 
     private SubscribeResult subscribeToReport(
-        final String baseURI,
-        final String serviceName,
-        final GetServiceProxyClosure getServiceProxy,
-        final ReportTestData reportTestData,
-        final boolean addAbilityToFail) {
+            final String baseURI,
+            final String serviceName,
+            final GetServiceProxyClosure getServiceProxy,
+            final ReportTestData reportTestData,
+            final boolean addAbilityToFail) {
         final Optional<HostedServiceProxy> hostedServiceProxy = getServiceProxy.execute(testClient);
         if (hostedServiceProxy.isEmpty()) {
             fail("failed to retrieve serviceProxy for " + serviceName);
