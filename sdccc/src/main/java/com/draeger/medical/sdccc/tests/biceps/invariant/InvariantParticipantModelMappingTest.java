@@ -21,8 +21,8 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
@@ -54,47 +54,42 @@ public class InvariantParticipantModelMappingTest extends InjectorTestBase {
             + " The relationship between a state and its descriptor is further verified by checking the naming scheme."
             + " The existence of a descriptor for a state is implicitly tested in MdibHistorian"
             + " and is covered by a unittest.")
-    void testRequirementR0023() throws NoTestData {
+    void testRequirementR0023() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
-
         final var statesSeen = new AtomicInteger(0);
 
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
 
-                RemoteMdibAccess first = history.next();
-                while (first != null) {
-                    final var allStates = first.getStatesByType(AbstractState.class);
-                    for (var state : allStates) {
-                        statesSeen.incrementAndGet();
-                        final var descriptor =
-                                first.getDescriptor(state.getDescriptorHandle()).orElseThrow();
-                        final var stateName = state.getClass().getSimpleName().replaceAll(STATE_SUFFIX, "");
-                        assertEquals(
-                                String.format(DESCRIPTOR_SUFFIX, stateName),
-                                descriptor.getClass().getSimpleName(),
-                                String.format(
-                                        "Non matching naming scheme for handle: %s."
-                                                + " State is %s and Descriptor is %s.",
-                                        state.getDescriptorHandle(),
-                                        state.getClass().getSimpleName(),
-                                        descriptor.getClass().getSimpleName()));
+                    RemoteMdibAccess first = history.next();
+                    while (first != null) {
+                        final var allStates = first.getStatesByType(AbstractState.class);
+                        for (var state : allStates) {
+                            statesSeen.incrementAndGet();
+                            final var descriptor = first.getDescriptor(state.getDescriptorHandle())
+                                    .orElseThrow();
+                            final var stateName =
+                                    state.getClass().getSimpleName().replaceAll(STATE_SUFFIX, "");
+                            assertEquals(
+                                    String.format(DESCRIPTOR_SUFFIX, stateName),
+                                    descriptor.getClass().getSimpleName(),
+                                    String.format(
+                                            "Non matching naming scheme for handle: %s."
+                                                    + " State is %s and Descriptor is %s.",
+                                            state.getDescriptorHandle(),
+                                            state.getClass().getSimpleName(),
+                                            descriptor.getClass().getSimpleName()));
+                        }
+                        first = history.next();
                     }
-                    first = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
         assertTestData(statesSeen.get(), "No Data to perform test on");
     }

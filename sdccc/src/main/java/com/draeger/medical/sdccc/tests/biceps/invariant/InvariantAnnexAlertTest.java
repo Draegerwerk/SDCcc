@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
@@ -69,79 +70,69 @@ public class InvariantAnnexAlertTest extends InjectorTestBase {
             + " and the manifestation matches with the manifestation of the system signal activation.")
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.SystemSignalActivationManipulation.class})
-    void testRequirementB128() throws NoTestData {
+    void testRequirementB128() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
-        final List<String> sequenceIds;
-        try {
-            sequenceIds = mdibHistorian.getKnownSequenceIds();
-        } catch (IOException e) {
-            fail(e);
-            // unreachable
-            throw new RuntimeException(e);
-        }
         final var acceptableSequenceSeen = new AtomicInteger(0);
-        for (String sequenceId : sequenceIds) {
-            try (final MdibHistorian.HistorianResult history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                RemoteMdibAccess first = history.next();
 
-                while (first != null) {
-                    final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history =
+                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                    RemoteMdibAccess first = history.next();
 
-                    for (var alertSystemState : alertSystemStates) {
-                        final var manifestationAndAlertActivationsMap =
-                                createSystemSignalActivationMap(alertSystemState.getSystemSignalActivation());
+                    while (first != null) {
+                        final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
 
-                        final var childAlertSignals =
-                                getChildAlertSignals(first, alertSystemState.getDescriptorHandle());
+                        for (var alertSystemState : alertSystemStates) {
+                            final var manifestationAndAlertActivationsMap =
+                                    createSystemSignalActivationMap(alertSystemState.getSystemSignalActivation());
 
-                        for (var manifestationAndState : manifestationAndAlertActivationsMap.entrySet()) {
-                            final var currentActivationStates = manifestationAndState.getValue();
-                            final var onSeen = new AtomicBoolean(false);
-                            final var allPsd = new AtomicInteger(0);
-                            final var allOff = new AtomicInteger(0);
-                            final var childrenWithSameManifestation =
-                                    getChildrenWithSameManifestation(childAlertSignals, manifestationAndState.getKey());
-                            for (var entry : childrenWithSameManifestation) {
-                                acceptableSequenceSeen.incrementAndGet();
-                                final var alertSignalActivationState = entry.getActivationState();
-                                for (var currentActivationState : currentActivationStates) {
-                                    verifyAlertSignalActivationState(
-                                            currentActivationState,
-                                            alertSignalActivationState,
-                                            entry.getDescriptorHandle());
+                            final var childAlertSignals =
+                                    getChildAlertSignals(first, alertSystemState.getDescriptorHandle());
+
+                            for (var manifestationAndState : manifestationAndAlertActivationsMap.entrySet()) {
+                                final var currentActivationStates = manifestationAndState.getValue();
+                                final var onSeen = new AtomicBoolean(false);
+                                final var allPsd = new AtomicInteger(0);
+                                final var allOff = new AtomicInteger(0);
+                                final var childrenWithSameManifestation = getChildrenWithSameManifestation(
+                                        childAlertSignals, manifestationAndState.getKey());
+                                for (var entry : childrenWithSameManifestation) {
+                                    acceptableSequenceSeen.incrementAndGet();
+                                    final var alertSignalActivationState = entry.getActivationState();
+                                    for (var currentActivationState : currentActivationStates) {
+                                        verifyAlertSignalActivationState(
+                                                currentActivationState,
+                                                alertSignalActivationState,
+                                                entry.getDescriptorHandle());
+                                    }
+
+                                    switch (alertSignalActivationState) {
+                                        case ON -> onSeen.set(true);
+                                        case PSD -> allPsd.incrementAndGet();
+                                        case OFF -> allOff.incrementAndGet();
+                                        default -> {}
+                                    }
                                 }
-
-                                switch (alertSignalActivationState) {
-                                    case ON:
-                                        onSeen.set(true);
-                                        break;
-                                    case PSD:
-                                        allPsd.incrementAndGet();
-                                        break;
-                                    case OFF:
-                                        allOff.incrementAndGet();
-                                        break;
-                                    default:
+                                if (onSeen.get()) {
+                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.ON);
+                                } else if (!childrenWithSameManifestation.isEmpty()
+                                        && allPsd.get() == childrenWithSameManifestation.size()) {
+                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.PSD);
+                                } else if (!childrenWithSameManifestation.isEmpty()
+                                        && allOff.get() == childrenWithSameManifestation.size()) {
+                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.OFF);
                                 }
-                            }
-                            if (onSeen.get()) {
-                                checkActivationState(manifestationAndState.getValue(), AlertActivation.ON);
-                            } else if (!childrenWithSameManifestation.isEmpty()
-                                    && allPsd.get() == childrenWithSameManifestation.size()) {
-                                checkActivationState(manifestationAndState.getValue(), AlertActivation.PSD);
-                            } else if (!childrenWithSameManifestation.isEmpty()
-                                    && allOff.get() == childrenWithSameManifestation.size()) {
-                                checkActivationState(manifestationAndState.getValue(), AlertActivation.OFF);
                             }
                         }
+                        first = history.next();
                     }
-                    first = history.next();
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
                 }
-            } catch (PreprocessingException | ReportProcessingException e) {
-                fail(e);
-            }
+            });
         }
 
         assertTestData(acceptableSequenceSeen.get(), "No acceptable sequence seen, test failed");

@@ -49,7 +49,7 @@ public class InvariantDynamicDiscoveryTest extends InjectorTestBase {
                 List.of(Constants.WSD_HELLO_BODY, Constants.WSD_RESOLVE_MATCHES_BODY, Constants.WSD_PROBE_MATCHES_BODY);
 
         for (final var bodyType : bodyTypes) {
-            try (final var messages = messageStorage.getInboundMessagesByBodyType(bodyType)) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyType(false, bodyType)) {
 
                 assertTestData(messages.areObjectsPresent(), "No messages found for bodyType " + bodyType);
 
