@@ -22,6 +22,8 @@ import com.draeger.medical.sdccc.util.HttpClientUtil;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.UUID;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -37,6 +39,7 @@ import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.dpws.soap.exception.SoapFaultException;
 import org.somda.sdc.dpws.soap.exception.TransportException;
+import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingUtil;
 import org.somda.sdc.dpws.soap.wsaddressing.model.AttributedURIType;
 import org.somda.sdc.dpws.soap.wsaddressing.model.EndpointReferenceType;
 import org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory;
@@ -69,6 +72,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     private MessageGeneratingUtil messageGeneratingUtil;
     private ObjectFactory wsaFactory;
     private org.somda.sdc.biceps.model.message.ObjectFactory messageModelFactory;
+    private WsAddressingUtil wsaUtil;
 
     @BeforeEach
     void setUp() {
@@ -86,6 +90,7 @@ public class DirectMessagingTest extends InjectorTestBase {
                 testClient.getInjector().getInstance(org.somda.sdc.dpws.soap.wsaddressing.model.ObjectFactory.class);
         messageModelFactory =
                 testClient.getInjector().getInstance(org.somda.sdc.biceps.model.message.ObjectFactory.class);
+        wsaUtil = testClient.getInjector().getInstance(WsAddressingUtil.class);
     }
 
     /*
@@ -129,6 +134,10 @@ public class DirectMessagingTest extends InjectorTestBase {
         for (final String xAddr : xAddrs) {
 
             final var getMessage = soapUtil.createMessage(wsaAction);
+            final AttributedURIType msgId =
+                wsaUtil.createAttributedURIType(soapUtil.createUriFromUuid(UUID.randomUUID()));
+            getMessage.getWsAddressingHeader().setMessageId(msgId);
+            getMessage.getWsAddressingHeader().setTo(wsaUtil.createAttributedURIType(xAddr));
             final var output = new ByteArrayOutputStream();
 
             try {
