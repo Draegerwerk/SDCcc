@@ -256,9 +256,10 @@ public class MessageStorage implements AutoCloseable {
         final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups = new LinkedList<>();
         final byte[] bodyBytes = message.getFinalMemory();
         if (bodyBytes.length > 0) {
-            final Charset charset = determineCharsetFromMessage(message);
+            // TODO: removed charset determination temporarily (https://github.com/Draegerwerk/SDCcc/issues/48)
+            // final Charset charset = determineCharsetFromMessage(message);
             // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
-            body = new String(message.getFinalMemory(), charset);
+            body = new String(message.getFinalMemory(), StandardCharsets.UTF_8);
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
         }
         return new MessageContent(

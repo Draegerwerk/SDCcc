@@ -78,7 +78,7 @@ DeviceEpr="deviceEpr"
 ```
 
 ### Manipulation API
-The test tool uses *T2IAPI* version `1.3.0.13`. The *T2IAPI* is required for some test cases to put the DUT in a certain
+The test tool uses *T2IAPI* version `1.4.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
 state, or to trigger a certain behavior. When using SDCcc with automated manipulations, it must be ensured that the same
 version of *T2IAPI* is used for the test execution by both parties. It must also be ensured that the device's 
 manipulations are implemented according to the descriptions in the T2IAPI sources. Further information can be found 
@@ -176,7 +176,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R0025_0         | SetComponentActivation                                      |
 | R0029           | SetAlertConditionPresence                                   |
 | R0033           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
-| R0034           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
+| R0034_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
 | R0038_0         | TriggerReport                                               |
 | R0097           | CreateContextStateWithAssociation                           |
 | R0116           | SetAlertActivation                                          |
@@ -192,7 +192,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | C-14            | TriggerReport                                               |
 | C-15            | TriggerReport                                               |
 | R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
-| R5052           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
+| R5052           | TriggerDescriptorUpdate                                     |
 | 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_2         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_4         | SetComponentActivation, SetMetricStatus                     |
