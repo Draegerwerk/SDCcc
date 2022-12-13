@@ -23,7 +23,6 @@ import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -135,7 +134,7 @@ public class DirectMessagingTest extends InjectorTestBase {
 
             final var getMessage = soapUtil.createMessage(wsaAction);
             final AttributedURIType msgId =
-                wsaUtil.createAttributedURIType(soapUtil.createUriFromUuid(UUID.randomUUID()));
+                    wsaUtil.createAttributedURIType(soapUtil.createUriFromUuid(UUID.randomUUID()));
             getMessage.getWsAddressingHeader().setMessageId(msgId);
             getMessage.getWsAddressingHeader().setTo(wsaUtil.createAttributedURIType(xAddr));
             final var output = new ByteArrayOutputStream();
