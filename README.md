@@ -197,6 +197,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | 5-4-7_1         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_2         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_4         | SetComponentActivation, SetMetricStatus                     |
+| 5-4-7_5         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_8         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_10        | SetComponentActivation, SetMetricStatus                     |
