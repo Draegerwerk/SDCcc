@@ -109,15 +109,15 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
 
     @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the "
-        + "METRIC is currently de-initializing, the SERVICE PROVIDER SHALL set "
-        + "pm:AbstractMetricState/@ActivationState = Shtdn.")
+            + "METRIC is currently de-initializing, the SERVICE PROVIDER SHALL set "
+            + "pm:AbstractMetricState/@ActivationState = Shtdn.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_3)
     @TestDescription("For each metric with the category MSRMT, the device is manipulated to de-initialize "
-        + "measurements and then it is verified that the ActivationState of the metric is set to Shtdn.")
+            + "measurements and then it is verified that the ActivationState of the metric is set to Shtdn.")
     @RequirePrecondition(
-        manipulationPreconditions = {
-            ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.class
-        })
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.class
+            })
     void testRequirement5473() throws NoTestData {
         final var metricCategory = MetricCategory.MSRMT;
         final var activationState = ComponentActivation.SHTDN;

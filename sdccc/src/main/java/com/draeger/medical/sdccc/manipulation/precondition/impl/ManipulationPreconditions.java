@@ -1030,8 +1030,7 @@ public class ManipulationPreconditions {
      */
     public static class MetricStatusManipulationMSRMTActivationStateSHTDN extends ManipulationPrecondition {
 
-        private static final Logger LOG =
-            LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateSHTDN.class);
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateSHTDN.class);
 
         /**
          * Creates a metric status precondition.
