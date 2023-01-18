@@ -445,10 +445,6 @@ public class ManipulationPreconditionsTest {
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        // return mock states on request
-        // when(mockDevice.getMdibAccess().getState(metricHandle,
-        // AbstractMetricState.class)).thenReturn(Optional.of(mockMetricState));
-
         // create mock entities to hold the states
         when(mockEntity.getHandle()).thenReturn(metricHandle);
         when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
