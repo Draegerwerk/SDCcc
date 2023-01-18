@@ -195,6 +195,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R5052           | TriggerDescriptorUpdate                                     |
 | 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_2         | SetComponentActivation, SetMetricStatus                     |
+| 5-4-7_3         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_4         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_8         | SetComponentActivation, SetMetricStatus                     |
