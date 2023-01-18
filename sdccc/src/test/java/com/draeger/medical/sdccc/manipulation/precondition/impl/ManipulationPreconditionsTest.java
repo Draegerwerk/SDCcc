@@ -17,7 +17,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.Manipulations;
-import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -332,7 +331,7 @@ public class ManipulationPreconditionsTest {
     @Test
     @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNGood: Set ActivationState "
             + "of all MSRMT-Metrics to SHTDN.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNGood() throws PreconditionException {
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNGood() {
         final ComponentActivation startActivationState = ComponentActivation.ON;
         final MetricCategory metricCategory = MetricCategory.MSRMT;
         final ComponentActivation activationState = ComponentActivation.SHTDN;
@@ -350,15 +349,12 @@ public class ManipulationPreconditionsTest {
         when(mdibEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(metricState));
         when(metricState.getDescriptorHandle()).thenReturn(metricStateHandle);
 
-        final ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN preconditionUnderTest =
-                new ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN();
-
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
-        preconditionUnderTest.verifyPrecondition(injector);
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector));
 
         assertFalse(
                 testRunObserver.isInvalid(),
@@ -371,8 +367,7 @@ public class ManipulationPreconditionsTest {
 
     @Test
     @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: First Manipulation failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadFirstManipulationFailed()
-            throws PreconditionException {
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadFirstManipulationFailed() {
         final ComponentActivation startActivationState = ComponentActivation.ON;
         final MetricCategory metricCategory = MetricCategory.MSRMT;
         final ComponentActivation activationState = ComponentActivation.SHTDN;
@@ -390,23 +385,19 @@ public class ManipulationPreconditionsTest {
         when(mdibEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(metricState));
         when(metricState.getDescriptorHandle()).thenReturn(metricStateHandle);
 
-        final ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN preconditionUnderTest =
-                new ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN();
-
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
-        preconditionUnderTest.verifyPrecondition(injector);
+        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector));
 
         verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
     }
 
     @Test
     @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: Second Manipulation Failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadSecondManipulationFailed()
-            throws PreconditionException {
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadSecondManipulationFailed() {
         final ComponentActivation startActivationState = ComponentActivation.ON;
         final MetricCategory metricCategory = MetricCategory.MSRMT;
         final ComponentActivation activationState = ComponentActivation.SHTDN;
@@ -424,15 +415,12 @@ public class ManipulationPreconditionsTest {
         when(mdibEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(metricState));
         when(metricState.getDescriptorHandle()).thenReturn(metricStateHandle);
 
-        final ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN preconditionUnderTest =
-                new ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN();
-
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        preconditionUnderTest.verifyPrecondition(injector);
+        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector));
 
         verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
 
