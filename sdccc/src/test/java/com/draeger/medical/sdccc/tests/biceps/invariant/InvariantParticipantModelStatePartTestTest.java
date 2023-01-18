@@ -1491,6 +1491,326 @@ public class InvariantParticipantModelStatePartTestTest {
      * Tests whether no test data fails the test.
      */
     @Test
+    public void testRequirement5475NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirement5475);
+    }
+
+    /**
+     * Tests whether the test fails when no manipulation data with ResponseTypes.Result.RESULT_SUCCESS is in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475NoSuccessfulManipulation() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        // add manipulation data with result fail
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                ResponseTypes.Result.RESULT_FAIL,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(NoTestData.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
+    }
+
+    /**
+     * Test whether the test fails, when no manipulation data with category 'Msrmt' is in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475BadWrongMetricCategory() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        // no manipulation with category msrmt in storage
+        final var error = assertThrows(NoTestData.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_SET_METRIC_STATUS_MANIPULATION,
+                        MetricCategory.MSRMT)));
+    }
+
+    /**
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
+     * and is in the time interval of the manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475Good() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                result,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters);
+
+        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
+
+        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        testClass.testRequirement5475();
+    }
+
+    /**
+     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
+     * data with category 'Msrmt'.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475GoodOverlappingTimeInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+
+        final List<Pair<String, String>> parameters2 = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
+
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+
+        testClass.testRequirement5475();
+    }
+
+    /**
+     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475BadNoMetricReportFollowingManipulation() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // this metric report is not in the time interval of the setMetricStatus manipulation
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getCause() instanceof NoTestData);
+        assertTrue(error.getCause()
+                .getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
+                        methodName,
+                        TIMESTAMP_START,
+                        TIMESTAMP_FINISH)));
+    }
+
+    /**
+     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475NoReportsWithExpectedHandle() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                result,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
+     * following metric report.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475BadWrongActivationInFollowingReport() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // activation state should be FAIL
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        MSRMT_METRIC_HANDLE,
+                        ComponentActivation.FAIL,
+                        ComponentActivation.ON)));
+    }
+
+    /**
+     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475GoodMultipleReportsInInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        // good report in time interval
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        // should not fail the test, since the first report in the time interval is relevant for the test
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+
+        testClass.testRequirement5475();
+    }
+
+    /**
+     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
+     * report that would pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475BadMultipleReportsInInterval() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+
+        // the first report in the time interval has the wrong activation state
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
+
+        assertThrows(AssertionError.class, testClass::testRequirement5475);
+    }
+
+    /**
+     * Tests whether no test data fails the test.
+     */
+    @Test
     public void testRequirement54760NoTestData() {
         assertThrows(NoTestData.class, testClass::testRequirement54760);
     }
