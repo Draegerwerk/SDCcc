@@ -998,6 +998,33 @@ public class ManipulationPreconditions {
     }
 
     /**
+     * Sets the activation state for every metric with category 'Msrmt' to 'Off' and then the status to 'measurement is
+     * currently initializing' to trigger an activation state change to 'NotRdy'.
+     */
+    public static class MetricStatusManipulationMSRMTActivationStateNOTRDY extends ManipulationPrecondition {
+
+        private static final Logger LOG =
+                LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateNOTRDY.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationMSRMTActivationStateNOTRDY() {
+            super(MetricStatusManipulationMSRMTActivationStateNOTRDY::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.MSRMT;
+            final var activationState = ComponentActivation.NOT_RDY;
+            final var startingActivationState = ComponentActivation.OFF;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
      * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
      * initialized, but is not being performed' to trigger an activation state change to 'StndBy'.
      */

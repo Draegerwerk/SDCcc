@@ -90,6 +90,23 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName(
+            "If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC  is"
+                    + " currently initializing, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = NotRdy.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_1)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated to initialize measurements and"
+            + " then it is verified that the ActivationState of the metric is set to NotRdy.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.class
+            })
+    void testRequirement5471() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.NOT_RDY;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC has been"
             + " initialized, but is not being performed, the SERVICE PROVIDER SHALL set"
             + " pm:AbstractMetricState/@ActivationState = StndBy.")
