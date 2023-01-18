@@ -1409,7 +1409,7 @@ public class InvariantParticipantModelStatePartTestTest {
                         Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
-        // activation state should be stndby
+        // activation state should be shtdn
         final var metricReport = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
