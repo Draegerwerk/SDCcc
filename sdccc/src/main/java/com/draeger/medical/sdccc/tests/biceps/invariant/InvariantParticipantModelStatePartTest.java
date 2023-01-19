@@ -125,6 +125,23 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the "
+            + "METRIC is currently de-initializing, the SERVICE PROVIDER SHALL set "
+            + "pm:AbstractMetricState/@ActivationState = Shtdn.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_3)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated to de-initialize "
+            + "measurements and then it is verified that the ActivationState of the metric is set to Shtdn.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.class
+            })
+    void testRequirement5473() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.SHTDN;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC is not"
             + " being performed and is de-initialized, the SERVICE PROVIDER SHALL set"
             + " pm:AbstractMetricState/@ActivationState = Off.")
@@ -340,8 +357,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
             final ComponentActivation expectedActivationState) {
 
         final var relevantMetricPresent = new AtomicBoolean(false);
-        if (report instanceof AbstractMetricReport) {
-            final var metricReport = (AbstractMetricReport) report;
+        if (report instanceof final AbstractMetricReport metricReport) {
             for (var part : metricReport.getReportPart()) {
                 final var state = part.getMetricState().stream()
                         .filter(it -> it.getDescriptorHandle().equals(manipulatedHandle))
@@ -358,8 +374,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                                     ImpliedValueUtil.getMetricActivation(abstractMetricState)));
                 });
             }
-        } else if (report instanceof WaveformStream) {
-            final var waveform = (WaveformStream) report;
+        } else if (report instanceof final WaveformStream waveform) {
             final var state = waveform.getState().stream()
                     .filter(it -> it.getDescriptorHandle().equals(manipulatedHandle))
                     .findFirst();

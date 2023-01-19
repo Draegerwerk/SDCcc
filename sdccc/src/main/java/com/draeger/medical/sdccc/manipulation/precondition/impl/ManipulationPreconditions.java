@@ -1053,6 +1053,32 @@ public class ManipulationPreconditions {
 
     /**
      * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
+     * currently de-initializing' to trigger an activation state change to 'Shtdn'.
+     */
+    public static class MetricStatusManipulationMSRMTActivationStateSHTDN extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateSHTDN.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationMSRMTActivationStateSHTDN() {
+            super(MetricStatusManipulationMSRMTActivationStateSHTDN::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.MSRMT;
+            final var activationState = ComponentActivation.SHTDN;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
+     * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
      * not being performed and is de-initialized,' to trigger an activation state change to 'Off'.
      */
     public static class MetricStatusManipulationMSRMTActivationStateOFF extends ManipulationPrecondition {

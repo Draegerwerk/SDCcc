@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - test for biceps:5-4-7_1
+- test for biceps:5-4-7_3
 
 ## [6.0.0] - 2022-12-08
 
