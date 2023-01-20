@@ -560,7 +560,7 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAILGood: Set ActivationState "
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: Set ActivationState "
             + "of all MSRMT-Metrics to FAIL.")
     void testMetricStatusManipulationMSRMTActivationStateFAILGood() {
         setMetricStatusSetup(
@@ -577,8 +577,8 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAILGood: setComponentActivation failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadFirstManipulationFailed() {
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setComponentActivation failed.")
+    void testMetricStatusManipulationMSRMTActivationStateFAILBadFirstManipulationFailed() {
         setMetricStatusSetup(
                 MetricCategory.MSRMT, MSRMT_METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
 
@@ -596,8 +596,8 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAILGood: setMetricStatus failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadSecondManipulationFailed() {
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setMetricStatus failed.")
+    void testMetricStatusManipulationMSRMTActivationStateFAILBadSecondManipulationFailed() {
         setMetricStatusSetup(
                 MetricCategory.MSRMT, MSRMT_METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
 
