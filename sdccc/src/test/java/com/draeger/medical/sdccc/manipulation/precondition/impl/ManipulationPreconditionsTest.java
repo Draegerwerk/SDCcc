@@ -32,12 +32,17 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.somda.sdc.biceps.common.MdibEntity;
+import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
+import org.somda.sdc.biceps.model.participant.AbstractMetricState;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertSystemState;
+import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
@@ -68,6 +73,9 @@ public class ManipulationPreconditionsTest {
     private TestRunObserver testRunObserver;
     private MdibEntity mockEntity;
     private MdibEntity mockEntity2;
+    private MdibAccess mockMdibAccess;
+    private AbstractMetricDescriptor metricDescriptor;
+    private AbstractMetricState metricState;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -81,6 +89,9 @@ public class ManipulationPreconditionsTest {
         mockAlertSystemState2 = mock(AlertSystemState.class);
         mockEntity = mock(MdibEntity.class);
         mockEntity2 = mock(MdibEntity.class);
+        mockMdibAccess = mock(MdibAccess.class);
+        metricDescriptor = mock(AbstractMetricDescriptor.class);
+        metricState = mock(AbstractMetricState.class);
 
         final var mockTestClient = mock(TestClient.class);
         when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
@@ -321,6 +332,105 @@ public class ManipulationPreconditionsTest {
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNGood: Set ActivationState "
+            + "of all MSRMT-Metrics to SHTDN.")
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNGood() {
+
+        // given
+
+        final ComponentActivation startActivationState = ComponentActivation.ON;
+        final MetricCategory metricCategory = MetricCategory.MSRMT;
+        final ComponentActivation activationState = ComponentActivation.SHTDN;
+        final String metricStateHandle = "metricStateHandle";
+
+        setupMetricStatusManipulationMSRMT(metricCategory, metricStateHandle);
+
+        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        // when
+
+        final boolean result =
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
+
+        // then
+
+        assertTrue(result);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
+        verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: First Manipulation failed.")
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadFirstManipulationFailed() {
+
+        // given
+
+        final ComponentActivation startActivationState = ComponentActivation.ON;
+        final MetricCategory metricCategory = MetricCategory.MSRMT;
+        final ComponentActivation activationState = ComponentActivation.SHTDN;
+        final String metricStateHandle = "metricStateHandle";
+
+        setupMetricStatusManipulationMSRMT(metricCategory, metricStateHandle);
+
+        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        // when
+
+        final boolean result =
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
+
+        // then
+        assertFalse(result);
+        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: Second Manipulation Failed.")
+    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadSecondManipulationFailed() {
+
+        // given
+        final ComponentActivation startActivationState = ComponentActivation.ON;
+        final MetricCategory metricCategory = MetricCategory.MSRMT;
+        final ComponentActivation activationState = ComponentActivation.SHTDN;
+        final String metricStateHandle = "metricStateHandle";
+
+        setupMetricStatusManipulationMSRMT(metricCategory, metricStateHandle);
+
+        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        // when
+        final boolean result =
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
+
+        // then
+        assertFalse(result);
+        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
+        verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
+    }
+
+    private void setupMetricStatusManipulationMSRMT(
+            final MetricCategory metricCategory, final String metricStateHandle) {
+        when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
+        when(mockMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class)).thenReturn(List.of(mockEntity));
+        when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(metricDescriptor));
+        when(metricDescriptor.getMetricCategory()).thenReturn(metricCategory);
+        when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(metricState));
+        when(metricState.getDescriptorHandle()).thenReturn(metricStateHandle);
     }
 
     void setActivationStateSetup() {
