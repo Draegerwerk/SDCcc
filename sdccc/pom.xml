@@ -325,7 +325,7 @@
                     </excludes>
                     <!-- workaround for bug in the attach api required for certain JDK builds -->
                     <!-- see also: https://stackoverflow.com/a/25439003 -->
-                    <argLine>-Xmx2048m -XX:+StartAttachListener</argLine>
+                    <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
                 </configuration>
             </plugin>
 
