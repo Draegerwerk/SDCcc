@@ -78,7 +78,6 @@ public class ManipulationPreconditionsTest {
     private MdibEntity mockEntity2;
     private MdibAccess mockMdibAccess;
 
-
     @BeforeEach
     void setUp() throws IOException {
         mockDevice = mock(SdcRemoteDevice.class, Mockito.RETURNS_DEEP_STUBS);
@@ -666,7 +665,7 @@ public class ManipulationPreconditionsTest {
 
     @Test
     @DisplayName("testMetricStatusManipulationSETActivationStateNOTRDYGood: Set ActivationState "
-        + "of all SET-Metrics to NOTRDY.")
+            + "of all SET-Metrics to NOTRDY.")
     void testMetricStatusManipulationSETActivationStateNOTRDYGood() {
 
         // given
@@ -679,21 +678,21 @@ public class ManipulationPreconditionsTest {
         setupMetricStatusManipulationSET(metricCategory, metricStateHandle);
 
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
         // when
 
         final boolean result =
-            ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
 
         // then
 
         assertTrue(result);
         assertFalse(
-            testRunObserver.isInvalid(),
-            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
         verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
         verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
     }
@@ -712,14 +711,14 @@ public class ManipulationPreconditionsTest {
         setupMetricStatusManipulationSET(metricCategory, metricStateHandle);
 
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
         // when
 
         final boolean result =
-            ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
 
         // then
         assertFalse(result);
@@ -739,13 +738,13 @@ public class ManipulationPreconditionsTest {
         setupMetricStatusManipulationSET(metricCategory, metricStateHandle);
 
         when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         // when
         final boolean result =
-            ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY.manipulation(injector);
 
         // then
         assertFalse(result);
@@ -753,8 +752,7 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
     }
 
-    private void setupMetricStatusManipulationSET(
-        final MetricCategory metricCategory, final String metricStateHandle) {
+    private void setupMetricStatusManipulationSET(final MetricCategory metricCategory, final String metricStateHandle) {
         when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
         when(mockMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class)).thenReturn(List.of(mockEntity));
         when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
