@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - references to standards to test_configuration.toml
+- support for SystemErrorReport to test case glue:R0036_0
 - Java 17 support
 - test for biceps:5-4-7_12_0
 - test for biceps:5-4-7_14
