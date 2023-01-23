@@ -60,6 +60,7 @@ public class ManipulationPreconditions {
             final ComponentActivation startingActivationState) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
@@ -82,16 +83,22 @@ public class ManipulationPreconditions {
                             resultStartingActivationState,
                             handle,
                             activationState);
+                    testRunObserver.invalidateTestRun(
+                            String.format("Setting the activation state for metric with handle %s failed", handle));
                     return false;
                 }
                 final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
                 log.debug("Manipulation was {} for metric state with handle {}", manipulationResult, handle);
+                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                    testRunObserver.invalidateTestRun(
+                            String.format("Setting the metric status for metric with handle %s failed", handle));
+                    return false;
+                }
                 manipulationResults.add(manipulationResult);
             }
         }
-        return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS)
-                && !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+        return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }
 
     /**
@@ -1053,6 +1060,32 @@ public class ManipulationPreconditions {
 
     /**
      * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
+     * currently de-initializing' to trigger an activation state change to 'Shtdn'.
+     */
+    public static class MetricStatusManipulationMSRMTActivationStateSHTDN extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateSHTDN.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationMSRMTActivationStateSHTDN() {
+            super(MetricStatusManipulationMSRMTActivationStateSHTDN::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.MSRMT;
+            final var activationState = ComponentActivation.SHTDN;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
+     * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
      * not being performed and is de-initialized,' to trigger an activation state change to 'Off'.
      */
     public static class MetricStatusManipulationMSRMTActivationStateOFF extends ManipulationPrecondition {
@@ -1072,6 +1105,32 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.OFF;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
+     * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
+     * failed' to trigger an activation state change to 'Fail'.
+     */
+    public static class MetricStatusManipulationMSRMTActivationStateFAIL extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateFAIL.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationMSRMTActivationStateFAIL() {
+            super(MetricStatusManipulationMSRMTActivationStateFAIL::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.MSRMT;
+            final var activationState = ComponentActivation.FAIL;
             final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
         }

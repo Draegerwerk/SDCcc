@@ -125,6 +125,23 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the "
+            + "METRIC is currently de-initializing, the SERVICE PROVIDER SHALL set "
+            + "pm:AbstractMetricState/@ActivationState = Shtdn.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_3)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated to de-initialize "
+            + "measurements and then it is verified that the ActivationState of the metric is set to Shtdn.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.class
+            })
+    void testRequirement5473() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.SHTDN;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC is not"
             + " being performed and is de-initialized, the SERVICE PROVIDER SHALL set"
             + " pm:AbstractMetricState/@ActivationState = Off.")
@@ -138,6 +155,22 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     void testRequirement5474() throws NoTestData {
         final var metricCategory = MetricCategory.MSRMT;
         final var activationState = ComponentActivation.OFF;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC has"
+            + " failed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_5)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated so that the measurement of"
+            + " the metric has failed and then it is verified that the ActivationState of the metric is set to Fail.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.class
+            })
+    void testRequirement5475() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.FAIL;
         testRequirement547(metricCategory, activationState);
     }
 
