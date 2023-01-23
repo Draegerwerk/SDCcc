@@ -60,6 +60,7 @@ public class ManipulationPreconditions {
             final ComponentActivation startingActivationState) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
@@ -82,16 +83,22 @@ public class ManipulationPreconditions {
                             resultStartingActivationState,
                             handle,
                             activationState);
+                    testRunObserver.invalidateTestRun(
+                            String.format("Setting the activation state for metric with handle %s failed", handle));
                     return false;
                 }
                 final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
                 log.debug("Manipulation was {} for metric state with handle {}", manipulationResult, handle);
+                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                    testRunObserver.invalidateTestRun(
+                            String.format("Setting the metric status for metric with handle %s failed", handle));
+                    return false;
+                }
                 manipulationResults.add(manipulationResult);
             }
         }
-        return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS)
-                && !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+        return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }
 
     /**
