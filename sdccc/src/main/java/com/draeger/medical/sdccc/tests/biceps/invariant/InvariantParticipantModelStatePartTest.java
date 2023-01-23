@@ -159,6 +159,22 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Msrmt and the measurement for the METRIC has"
+            + " failed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_5)
+    @TestDescription("For each metric with the category MSRMT, the device is manipulated so that the measurement of"
+            + " the metric has failed and then it is verified that the ActivationState of the metric is set to Fail.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.class
+            })
+    void testRequirement5475() throws NoTestData {
+        final var metricCategory = MetricCategory.MSRMT;
+        final var activationState = ComponentActivation.FAIL;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is currently being applied, the"
             + " SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_6_0)
