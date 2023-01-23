@@ -424,8 +424,7 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
     }
 
-    private void setupMetricStatusManipulation(
-            final MetricCategory metricCategory, final String metricStateHandle) {
+    private void setupMetricStatusManipulation(final MetricCategory metricCategory, final String metricStateHandle) {
         when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
         when(mockMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class)).thenReturn(List.of(mockEntity));
         when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
@@ -753,5 +752,4 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
         verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
     }
-
 }
