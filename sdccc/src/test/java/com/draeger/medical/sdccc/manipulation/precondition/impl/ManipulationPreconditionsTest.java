@@ -60,12 +60,7 @@ public class ManipulationPreconditionsTest {
     private static final String LOCATION_CONTEXT_STATE_HANDLE2 = "loclocstate2";
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE = "alerthandle";
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE2 = "alerthandle2";
-
-    private static final String MSRMT_METRIC_HANDLE = "someMsrmtStringMetric";
-    private static final String RTSA_METRIC_HANDLE = "someRealTimeSampleArrayMetric";
-    private static final String SET_METRIC_HANDLE = "someSetStringMetric";
-    private static final String CLC_METRIC_HANDLE = "someClcStringMetric";
-
+    private static final String METRIC_HANDLE = "someMetric";
     private Injector injector;
     private SdcRemoteDevice mockDevice;
     private Manipulations mockManipulations;
@@ -560,59 +555,115 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: Set ActivationState "
-            + "of all MSRMT-Metrics to FAIL.")
-    void testMetricStatusManipulationMSRMTActivationStateFAILGood() {
-        setMetricStatusSetup(
-                MetricCategory.MSRMT, MSRMT_METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateNOTRDY: Set metric with category MSRMT to currently"
+            + " initializing which results in activation state NOT_RDY.")
+    void testMetricStatusManipulationMSRMTActivationStateNOTRDYGood() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
 
-        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.manipulation(injector));
 
         assertFalse(
                 testRunObserver.isInvalid(),
                 "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
-        verify(mockManipulations).setComponentActivation(MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setMetricStatus(MSRMT_METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.FAIL);
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.NOT_RDY);
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setComponentActivation failed.")
-    void testMetricStatusManipulationMSRMTActivationStateFAILBadFirstManipulationFailed() {
-        setMetricStatusSetup(
-                MetricCategory.MSRMT, MSRMT_METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateNOTRDY: setComponentActivation failed.")
+    void testMetricStatusManipulationMSRMTActivationStateNOTRDYBadFirstManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
 
         // let setComponentActivation fail
         when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.manipulation(injector));
 
         assertTrue(
                 testRunObserver.isInvalid(),
                 "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
-        verify(mockManipulations).setComponentActivation(MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
     }
 
     @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setMetricStatus failed.")
-    void testMetricStatusManipulationMSRMTActivationStateFAILBadSecondManipulationFailed() {
-        setMetricStatusSetup(
-                MetricCategory.MSRMT, MSRMT_METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateNOTRDY: setMetricStatus failed.")
+    void testMetricStatusManipulationMSRMTActivationStateNOTRDYBadSecondManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
 
         // let setMetricStatus fail
         when(mockManipulations.setMetricStatus(
                         any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.manipulation(injector));
 
         assertTrue(
                 testRunObserver.isInvalid(),
                 "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
-        verify(mockManipulations).setComponentActivation(MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setMetricStatus(MSRMT_METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.FAIL);
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.NOT_RDY);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: Set ActivationState "
+        + "of all MSRMT-Metrics to FAIL.")
+    void testMetricStatusManipulationMSRMTActivationStateFAILGood() {
+        setMetricStatusSetup(
+            MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+
+        assertFalse(
+            testRunObserver.isInvalid(),
+            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.FAIL);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setComponentActivation failed.")
+    void testMetricStatusManipulationMSRMTActivationStateFAILBadFirstManipulationFailed() {
+        setMetricStatusSetup(
+            MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        // let setComponentActivation fail
+        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+
+        assertTrue(
+            testRunObserver.isInvalid(),
+            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationMSRMTActivationStateFAIL: setMetricStatus failed.")
+    void testMetricStatusManipulationMSRMTActivationStateFAILBadSecondManipulationFailed() {
+        setMetricStatusSetup(
+            MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        // let setMetricStatus fail
+        when(mockManipulations.setMetricStatus(
+            any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL.manipulation(injector));
+
+        assertTrue(
+            testRunObserver.isInvalid(),
+            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.FAIL);
     }
 }
