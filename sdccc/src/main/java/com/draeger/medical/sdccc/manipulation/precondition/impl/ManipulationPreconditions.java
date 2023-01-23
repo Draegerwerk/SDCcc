@@ -1215,6 +1215,32 @@ public class ManipulationPreconditions {
     }
 
     /**
+     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'setting
+     * has failed' to trigger an activation state change to 'Fail'.
+     */
+    public static class MetricStatusManipulationSETActivationStateFAIL extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationSETActivationStateFAIL.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationSETActivationStateFAIL() {
+            super(MetricStatusManipulationSETActivationStateFAIL::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.SET;
+            final var activationState = ComponentActivation.FAIL;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
      * Sets the activation state for every metric with category 'Clc' to 'Off' and then the status to 'calculation is
      * being performed' to trigger an activation state change to 'On'.
      */

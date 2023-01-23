@@ -221,6 +221,21 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting cannot be applied due to a "
+            + "failure, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_11)
+    @TestDescription("For each metric with the category SET, the device is manipulated so that the setting has "
+            + "failed and then it is verified that the ActivationState of the metric is set to Fail.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.class
+            })
+    void testRequirement54711() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.FAIL;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is being"
             + " performed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_12_0)
