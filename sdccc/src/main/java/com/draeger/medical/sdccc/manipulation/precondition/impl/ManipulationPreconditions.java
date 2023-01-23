@@ -1111,6 +1111,32 @@ public class ManipulationPreconditions {
     }
 
     /**
+     * Sets the activation state for every metric with category 'Msrmt' to 'On' and then the status to 'measurement
+     * failed' to trigger an activation state change to 'Fail'.
+     */
+    public static class MetricStatusManipulationMSRMTActivationStateFAIL extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationMSRMTActivationStateFAIL.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationMSRMTActivationStateFAIL() {
+            super(MetricStatusManipulationMSRMTActivationStateFAIL::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.MSRMT;
+            final var activationState = ComponentActivation.FAIL;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
      * Sets the activation state for every metric with category 'Set' to 'Off' and then the status to 'setting is
      * currently being applied' to trigger an activation state change to 'On'.
      */
