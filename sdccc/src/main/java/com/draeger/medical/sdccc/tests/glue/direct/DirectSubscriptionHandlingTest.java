@@ -51,6 +51,7 @@ import org.somda.sdc.biceps.model.message.EpisodicOperationalStateReport;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdibResponse;
 import org.somda.sdc.biceps.model.message.OperationInvokedReport;
+import org.somda.sdc.biceps.model.message.SystemErrorReport;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
@@ -198,8 +199,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_EPISODIC_CONTEXT_REPORT,
-                                    ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                                     WsdlConstants.SERVICE_CONTEXT,
                                     MessageGeneratingUtil::getContextService,
                                     report,
@@ -227,8 +226,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_OPERATION_INVOKED_REPORT,
-                                    ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
                                     WsdlConstants.SERVICE_SET,
                                     MessageGeneratingUtil::getSetService,
                                     report,
@@ -248,8 +245,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_DESCRIPTION_MODIFICATION_REPORT,
-                                    ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
                                     WsdlConstants.SERVICE_DESCRIPTION_EVENT,
                                     MessageGeneratingUtil::getDescriptionEventService,
                                     report,
@@ -269,8 +264,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_EPISODIC_ALERT_REPORT,
-                                    ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                                     WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
@@ -290,8 +283,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_EPISODIC_COMPONENT_REPORT,
-                                    ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                                     WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
@@ -311,8 +302,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_EPISODIC_METRIC_REPORT,
-                                    ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
                                     WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
@@ -332,8 +321,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         report -> { // subscribe to Report
                             return subscribeToReport(
                                     getLocalBaseURI(),
-                                    WsdlConstants.OPERATION_EPISODIC_OPERATIONAL_STATE_REPORT,
-                                    ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
                                     WsdlConstants.SERVICE_STATE_EVENT,
                                     MessageGeneratingUtil::getStateEventService,
                                     report,
@@ -345,6 +332,25 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                     @Override
                     public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
                         return notificationBody instanceof EpisodicOperationalStateReport;
+                    }
+                },
+                new ReportTestData(
+                        WsdlConstants.OPERATION_SYSTEM_ERROR_REPORT,
+                        ActionConstants.ACTION_SYSTEM_ERROR_REPORT,
+                        report -> { // subscribe to Report
+                            return subscribeToReport(
+                                    getLocalBaseURI(),
+                                    WsdlConstants.SERVICE_STATE_EVENT,
+                                    MessageGeneratingUtil::getStateEventService,
+                                    report,
+                                    false);
+                        },
+                        () -> {
+                            // does not need to be triggered in this test.
+                        }) {
+                    @Override
+                    public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {
+                        return notificationBody instanceof SystemErrorReport;
                     }
                 });
         final List<ReportTestData> reports = new ArrayList<>();
@@ -532,8 +538,6 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
 
     private SubscribeResult subscribeToReport(
             final String baseURI,
-            final String reportName,
-            final String action,
             final String serviceName,
             final GetServiceProxyClosure getServiceProxy,
             final ReportTestData reportTestData,
@@ -543,7 +547,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             fail("failed to retrieve serviceProxy for " + serviceName);
         }
 
-        final List<String> actions = List.of(action);
+        final List<String> actions = List.of(reportTestData.getReportAction());
 
         final RequestResponseClient requestResponseClient =
                 hostedServiceProxy.orElseThrow().getRequestResponseClient();
@@ -596,7 +600,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             reportTestData.setSubscription(result);
             reportTestData.setEventSink(eventSink);
         } catch (InterruptedException | ExecutionException e) {
-            fail("encountered exception while subscribing to " + reportName, e);
+            fail("encountered exception while subscribing to " + reportTestData.getReportName(), e);
         }
         return result;
     }

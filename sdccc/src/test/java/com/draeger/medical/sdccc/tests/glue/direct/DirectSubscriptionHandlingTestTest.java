@@ -34,6 +34,7 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
@@ -71,6 +72,8 @@ import org.somda.sdc.biceps.model.participant.MdDescription;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
+import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.CommunicationLogImpl;
 import org.somda.sdc.dpws.CommunicationLogSink;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
@@ -114,6 +117,8 @@ public class DirectSubscriptionHandlingTestTest {
 
     private static final String SUBSCRIPTION_END_STATUS_DELIVERY_FAILED =
             "http://schemas.xmlsoap.org/ws/2004/08/eventing/DeliveryFailure";
+    private static final String SUBSCRIPTION_END_STATUS_CANCELLED =
+            "http://schemas.xmlsoap.org/ws/2004/08/eventing/SourceCancelling";
 
     private static final String LOC_CONTEXT_DESCRIPTOR_HANDLE = "locContextDesc";
     private static final int NANOS_IN_A_MILLISECOND = 1000000;
@@ -133,7 +138,7 @@ public class DirectSubscriptionHandlingTestTest {
     private HttpServerRegistry httpServerRegistry;
     private Manipulations manipulations;
     private WsEventingEventSinkFactory eventSinkFactory;
-    private CommunicationLogFactory communicationLogFactory;
+    private CommunicationLog communicationLog;
 
     @Mock
     private NotificationSinkFactory notificationSinkFactory;
@@ -153,10 +158,10 @@ public class DirectSubscriptionHandlingTestTest {
         eventSinkFactory = mock(WsEventingEventSinkFactory.class);
         manipulations = mock(Manipulations.class);
         wsdlRetriever = mock(WsdlRetriever.class);
-        communicationLogFactory = mock(CommunicationLogFactory.class);
         final var communicationLogSink = mock(CommunicationLogSink.class);
         notificationSinkFactory = mock(
                 NotificationSinkFactory.class); // testClient.getInjector().getInstance(NotificationSinkFactory.class);
+        communicationLog = mock(CommunicationLogImpl.class);
 
         // set up the injector used by sdcri
         final var clientInjector = TestClientUtil.createClientInjector(new AbstractModule() {
@@ -170,7 +175,9 @@ public class DirectSubscriptionHandlingTestTest {
                         .annotatedWith(Names.named("Common.InstanceIdentifier"))
                         .toInstance(FRAMEWORK_IDENTIFIER);
                 bind(CommunicationLogSink.class).toInstance(communicationLogSink);
-                bind(CommunicationLogFactory.class).toInstance(communicationLogFactory);
+                install(new FactoryModuleBuilder()
+                        .implement(CommunicationLog.class, CommunicationLogImpl.class)
+                        .build(CommunicationLogFactory.class));
                 bind(NotificationSinkFactory.class).toInstance(notificationSinkFactory);
             }
         });
@@ -189,6 +196,7 @@ public class DirectSubscriptionHandlingTestTest {
                 bind(HttpServerRegistry.class).toInstance(httpServerRegistry);
                 bind(Manipulations.class).toInstance(manipulations);
                 bind(WsEventingEventSinkFactory.class).toInstance(eventSinkFactory);
+                bind(CommunicationLog.class).toInstance(communicationLog);
                 bind(NotificationSinkFactory.class).toInstance(notificationSinkFactory);
             }
         });
@@ -319,6 +327,9 @@ public class DirectSubscriptionHandlingTestTest {
         when(mockHostingService.getHostedServices()).thenReturn(hostedServices);
     }
 
+    @SuppressFBWarnings(
+            value = {"RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"},
+            justification = "Bug in spotbugs, when using try for resources.")
     private String loadWsdl(final String wsdlPath) throws IOException {
         final String wsdl;
         final var loader = SdcDevice.class.getClassLoader();
@@ -344,15 +355,38 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+    }
+
+    /**
+     * Tests whether a device that does not provide a LocationContextState can also pass the test.
+     */
+    @Test
+    public void testRequirementR00360GoodNoLocationContext() throws Exception {
+        // given
+        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
+        supportedReports = new HashSet<>(Set.of(
+                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
+        setupTestScenarioForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+        cancelledReports = new HashSet<>();
+
+        testUnderTest.testRequirementR00360();
     }
 
     /**
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions1() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsOperationInvokedReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, ActionConstants.ACTION_OPERATION_INVOKED_REPORT));
         supportedReports = new HashSet<>(Set.of(
@@ -362,7 +396,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -370,7 +405,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions2() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsDescriptionModificationReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT));
@@ -381,7 +416,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -389,7 +425,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions3() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsEpisodicAlertReport() throws Exception {
         reportsToCancel = new HashSet<>(
                 Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, ActionConstants.ACTION_EPISODIC_ALERT_REPORT));
         supportedReports = new HashSet<>(Set.of(
@@ -399,7 +435,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -407,7 +444,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions4() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsEpisodicComponentReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT));
         supportedReports = new HashSet<>(Set.of(
@@ -417,7 +454,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -425,7 +463,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions5() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsEpisodicMetricReport() throws Exception {
         reportsToCancel = new HashSet<>(
                 Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, ActionConstants.ACTION_EPISODIC_METRIC_REPORT));
         supportedReports = new HashSet<>(Set.of(
@@ -435,7 +473,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -443,7 +482,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that cancels subscriptions other than EpisodicContextReport fails the test.
      */
     @Test
-    public void testRequirementR00360BadTooManyCancelledSubscriptions6() throws Exception {
+    public void testRequirementR00360BadTooManyCancelledSubscriptionsEpisodicOperationalStateReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
@@ -454,169 +493,26 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
-     * Tests whether a device that does not provide a LocationContextState can also pass the test.
+     * Tests whether a device that does not support the EpisodicAlertReport can still pass the test.
      */
     @Test
-    public void testRequirementR00360NoLocationContext() throws Exception {
-        // given
+    public void testRequirementR0036NoSupportForEpisodicAlertReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
         supportedReports = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        setupTestScenarioForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-        cancelledReports = new HashSet<>();
-
-        testUnderTest.testRequirementR00360();
-    }
-
-    /**
-     * Tests whether a device that continues sending OperationInvokedReports after sending a Report fails is failing
-     * the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelOperationInvokedReportsAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that continues sending EpisodicAlertReports after sending a Report fails is failing
-     * the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelEpisodicAlertReportsAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that does not cancel the EpisodicComponentReport Subscription fails the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelEpisodicComponentReportAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that does not cancel the EpisodicMetricReport Subscription fails the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelEpisodicMetricReportAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that does not cancel the EpisodicOperationalStateReport Subscription fails the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelEpisodicOperationalStateReportAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that does not cancel the DescriptionModificationReport Subscription fails the test.
-     */
-    @Test
-    public void testRequirementR00360DoNotCancelDescriptionModificationReportAfterFailure() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
+        testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     // NOTE: the test does not work when the Device does not support EpisodicContextReport.
@@ -633,23 +529,25 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
-     * Tests whether a device that does not support the EpisodicAlertReport can still pass the test.
+     * Tests whether a device that does not support the DescriptionModificationReport can still pass the test.
      */
     @Test
-    public void testRequirementR00360NoSupportForEpisodicAlertReport() throws Exception {
+    public void testRequirementR0036NoSupportForDescriptionModificationReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
         supportedReports = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -665,7 +563,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -673,7 +572,7 @@ public class DirectSubscriptionHandlingTestTest {
      * Tests whether a device that does not support the EpisodicComponentReport can still pass the test.
      */
     @Test
-    public void testRequirementR00360NoSupportForEpisodicComponentReport() throws Exception {
+    public void testRequirementR0036NoSupportForEpisodicComponentReport() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
         supportedReports = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -681,7 +580,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -697,8 +597,43 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+    }
+
+    /**
+     * Tests whether a device that does not support the EpisodicOperationalStateReport can still pass the test.
+     */
+    @Test
+    public void testRequirementR00360NoSupportForEpisodicOperationalStateReport() throws Exception {
+        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
+        supportedReports = new HashSet<>(Set.of(
+                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
+        testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
+    }
+
+    /**
+     * Tests whether a device that does not support the SystemErrorReport can still pass the test.
+     */
+    @Test
+    public void testRequirementR0036NoSupportForSystemErrorReport() throws Exception {
+        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
+        supportedReports = new HashSet<>(Set.of(
+                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
+                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
+                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
+                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
+                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+        testDeviceForR00360(false, INSIGNIFICANT_DELAY_IN_SECONDS, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
@@ -715,51 +650,11 @@ public class DirectSubscriptionHandlingTestTest {
     }
 
     /**
-     * Tests whether a device that does not support the EpisodicOperationalStateReport can still pass the test.
-     */
-    @Test
-    public void testRequirementR00360NoSupportForEpisodicOperationalStateReport() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT));
-        testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
-     * Tests whether a device that cancels the subscriptions after a small delay passes the test.
-     */
-    @Test
-    public void testRequirementR00360WithDelayedCancellations() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
-        supportedReports = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(false, INSIGNIFICANT_DELAY_IN_SECONDS, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
-    }
-
-    /**
      * Tests whether a device that cancels the subscriptions after a large delay fails the test.
      */
     @Test
     public void testRequirementR00360WithStronglyDelayedCancellations() throws Exception {
-        reportsToCancel = new HashSet<>(Set.of(
-                ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
-                ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
-                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT,
-                ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
-                ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
-                ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+        reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
         supportedReports = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
                 ActionConstants.ACTION_OPERATION_INVOKED_REPORT,
@@ -767,7 +662,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
         testDeviceForR00360(true, SIGNIFICANT_DELAY_IN_SECONDS, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
@@ -784,16 +680,17 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
 
         testDeviceForR00360(true, 0, false, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED);
     }
 
     /**
-     * Tests whether a device that sets a wrong Status in its SubscriptionEnd messages fails the test.
+     * Tests whether a device that does not send a SubscriptionEnd Message when cancelling the Report fails the test.
      */
     @Test
-    public void testRequirementR00360BadWrongSubscriptionEndStatus() throws Exception {
+    public void testRequirementR00360BadCancellationWrongStatus() throws Exception {
         reportsToCancel = new HashSet<>(Set.of(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT));
         supportedReports = new HashSet<>(Set.of(
                 ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT,
@@ -802,8 +699,10 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_ALERT_REPORT,
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
-                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(true, 0, true, "http://schemas.xmlsoap.org/ws/2004/08/eventing/SourceCancelling");
+                ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
+                ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
+
+        testDeviceForR00360(true, 0, true, SUBSCRIPTION_END_STATUS_CANCELLED);
     }
 
     /**
