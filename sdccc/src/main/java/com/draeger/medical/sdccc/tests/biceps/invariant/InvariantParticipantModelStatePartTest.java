@@ -283,6 +283,20 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         testRequirement547(metricCategory, activationState);
     }
 
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC has failed, "
+        + "the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_17)
+    @TestDescription("For each metric with the category CLC, the device is manipulated so that the setting has failed "
+        + "and then it is verified that the ActivationState of the metric is set to Fail.")
+    @RequirePrecondition(
+        manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationCLCActivationStateFAIL.class})
+    void testRequirement54717() throws NoTestData {
+        final var metricCategory = MetricCategory.CLC;
+        final var activationState = ComponentActivation.FAIL;
+        testRequirement547(metricCategory, activationState);
+    }
+
     private void testRequirement547(final MetricCategory category, final ComponentActivation activation)
             throws NoTestData {
         final var successfulReportsSeen = new AtomicBoolean(false);
