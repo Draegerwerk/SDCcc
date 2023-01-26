@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -141,6 +142,44 @@ public class InvariantParticipantModelStatePartTestTest {
         baseMarshalling.stopAsync().awaitTerminated(DEFAULT_TIMEOUT);
         marshalling.stopAsync().awaitTerminated(DEFAULT_TIMEOUT);
         storage.close();
+    }
+
+    /**
+     * This test ensures that the tests for biceps 547 do not ignore manipulation parameters again and lead to
+     * false positive test results.
+     * This test has erroneously not triggered any exception before.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547NotIgnoringParameters() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final List<Pair<String, String>> parameters = List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
+                new ImmutablePair<>(
+                        // Component activation should be ON to be relevant for testRequirement54700.
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters);
+
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+
+        final var error = assertThrows(NoTestData.class, testClass::testRequirement54700);
+        assertEquals(
+                error.getMessage(),
+                String.format(
+                        InvariantParticipantModelStatePartTest.NO_SET_METRIC_STATUS_MANIPULATION,
+                        MetricCategory.MSRMT));
     }
 
     /**
@@ -1189,7 +1228,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
                 new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -1200,7 +1239,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5473);
@@ -3631,7 +3670,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
         assertTrue(error.getMessage()
                 .contains(String.format(
                         InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
