@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for biceps:5-4-7_5
 - test for biceps:5-4-7_7
 - test for biceps:5-4-7_9
+- test for biceps:5-4-7_13
 
 ### Fixed
 - dpws:R0013 sent a request that was not WS-Transfer compliant
