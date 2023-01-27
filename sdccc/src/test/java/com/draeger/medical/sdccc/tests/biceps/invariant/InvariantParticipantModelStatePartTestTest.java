@@ -3533,7 +3533,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
                 new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3654,7 +3654,7 @@ public class InvariantParticipantModelStatePartTestTest {
                         Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
-        // activation state should be OFF
+        // activation state should be FAIL
         final var metricReport = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
