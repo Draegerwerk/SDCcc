@@ -1189,7 +1189,7 @@ public class ManipulationPreconditions {
     }
 
     /**
-     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'measurement
+     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'setting
      * initialized, but is not being performed' to trigger an activation state change to 'StndBy'.
      */
     public static class MetricStatusManipulationSETActivationStateSTNDBY extends ManipulationPrecondition {
@@ -1215,7 +1215,33 @@ public class ManipulationPreconditions {
     }
 
     /**
-     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'measurement
+     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'setting
+     * currently de-initializing' to trigger an activation state change to 'Shtdn'.
+     */
+    public static class MetricStatusManipulationSETActivationStateSHTDN extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(MetricStatusManipulationSETActivationStateSHTDN.class);
+
+        /**
+         * Creates a metric status precondition.
+         */
+        public MetricStatusManipulationSETActivationStateSHTDN() {
+            super(MetricStatusManipulationSETActivationStateSHTDN::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var metricCategory = MetricCategory.SET;
+            final var activationState = ComponentActivation.SHTDN;
+            final var startingActivationState = ComponentActivation.ON;
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    /**
+     * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'setting
      * not being performed and is de-initialized,' to trigger an activation state change to 'Off'.
      */
     public static class MetricStatusManipulationSETActivationStateOFF extends ManipulationPrecondition {
