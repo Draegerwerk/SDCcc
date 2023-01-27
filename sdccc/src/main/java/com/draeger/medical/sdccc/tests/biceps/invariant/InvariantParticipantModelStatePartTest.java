@@ -222,6 +222,21 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is currently de-initializing,"
+            + " the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Shtdn.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_9)
+    @TestDescription("For each metric with the category SET, the device is manipulated to de-initialize the setting of"
+            + " the metric and then it is verified that the ActivationState of the metric is set to Shtdn.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationSETActivationStateSHTDN.class
+            })
+    void testRequirement5479() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.SHTDN;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is not being performed and is"
             + " de-initialized, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Off.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_10)
@@ -247,6 +262,22 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     void testRequirement547120() throws NoTestData {
         final var metricCategory = MetricCategory.CLC;
         final var activationState = ComponentActivation.ON;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is currently"
+            + " initializing, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = NotRdy.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_13)
+    @TestDescription("For each metric with the category CLC, the device is manipulated to initialize calculations and"
+            + " then it is verified that the ActivationState of the metric is set to NotRdy.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY.class
+            })
+    void testRequirement54713() throws NoTestData {
+        final var metricCategory = MetricCategory.CLC;
+        final var activationState = ComponentActivation.NOT_RDY;
         testRequirement547(metricCategory, activationState);
     }
 
