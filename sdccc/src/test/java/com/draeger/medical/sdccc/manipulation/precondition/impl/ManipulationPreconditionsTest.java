@@ -809,15 +809,15 @@ public class ManipulationPreconditionsTest {
 
     @Test
     @DisplayName("testMetricStatusManipulationCLCActivationStateNOTRDY: Set calculations of metrics with category CLC"
-        + " to currently initializing to trigger an ActivationState change to NotRdy.")
+            + " to currently initializing to trigger an ActivationState change to NotRdy.")
     void testMetricStatusManipulationCLCActivationStateNOTRDYGood() {
         setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
 
         assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY.manipulation(injector));
 
         assertFalse(
-            testRunObserver.isInvalid(),
-            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.NOT_RDY);
@@ -830,13 +830,13 @@ public class ManipulationPreconditionsTest {
 
         // let setComponentActivation fail
         when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
-            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         assertFalse(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY.manipulation(injector));
 
         assertTrue(
-            testRunObserver.isInvalid(),
-            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
     }
@@ -848,14 +848,14 @@ public class ManipulationPreconditionsTest {
 
         // let setMetricStatus fail
         when(mockManipulations.setMetricStatus(
-            any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
-            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         assertFalse(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY.manipulation(injector));
 
         assertTrue(
-            testRunObserver.isInvalid(),
-            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.NOT_RDY);
