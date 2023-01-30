@@ -931,7 +931,8 @@ public class ManipulationPreconditionsTest {
         assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateFAIL.manipulation(injector));
 
         // then
-        assertFalse(testRunObserver.isInvalid(), "Test run should not have been invalidated.");
+        assertFalse(testRunObserver.isInvalid(), "Test run should not have been invalidated. Reason(s): "
+            + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.FAIL);
@@ -953,7 +954,7 @@ public class ManipulationPreconditionsTest {
         // then
         assertTrue(
                 testRunObserver.isInvalid(),
-                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                "Test run should have been invalidated.");
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
     }
@@ -972,7 +973,7 @@ public class ManipulationPreconditionsTest {
 
         assertTrue(
                 testRunObserver.isInvalid(),
-                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+                "Test run should have been invalidated.");
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.FAIL);
