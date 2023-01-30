@@ -5347,7 +5347,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
                 new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -5358,7 +5358,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54717);
@@ -5381,11 +5381,11 @@ public class InvariantParticipantModelStatePartTestTest {
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
                 new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
 
         // no manipulation with category clc in storage
@@ -5404,6 +5404,7 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54717Good() throws Exception {
+        // TODO: check if this test passes after the fix is merged into this branch
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -5567,7 +5568,7 @@ public class InvariantParticipantModelStatePartTestTest {
                         Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
-        // activation state should be OFF
+        // activation state should be FAIL
         final var metricReport = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));

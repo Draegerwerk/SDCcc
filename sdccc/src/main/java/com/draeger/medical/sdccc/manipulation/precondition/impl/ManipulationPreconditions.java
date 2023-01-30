@@ -1398,7 +1398,7 @@ public class ManipulationPreconditions {
 
     /**
      * Sets the activation state for every metric with category 'Clc' to 'On' and then the status to 'calculation
-     * not being performed and is de-initialized' to trigger an activation state change to 'Off'.
+     * failed' to trigger an activation state change to 'Fail'.
      */
     public static class MetricStatusManipulationCLCActivationStateFAIL extends ManipulationPrecondition {
 

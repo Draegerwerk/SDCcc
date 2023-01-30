@@ -922,7 +922,7 @@ public class ManipulationPreconditionsTest {
 
     @Test
     @DisplayName(
-            "testMetricStatusManipulationCLCActivationStateFAIL: Set ActivationState " + "of all CLC-Metrics to FAIL.")
+            "testMetricStatusManipulationCLCActivationStateFAIL: Set ActivationState of all CLC-Metrics to FAIL.")
     void testMetricStatusManipulationCLCActivationStateFAILGood() {
         // given
         setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
