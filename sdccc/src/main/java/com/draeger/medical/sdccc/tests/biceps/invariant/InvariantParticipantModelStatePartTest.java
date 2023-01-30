@@ -222,6 +222,21 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is currently de-initializing,"
+            + " the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Shtdn.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_9)
+    @TestDescription("For each metric with the category SET, the device is manipulated to de-initialize the setting of"
+            + " the metric and then it is verified that the ActivationState of the metric is set to Shtdn.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationSETActivationStateSHTDN.class
+            })
+    void testRequirement5479() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.SHTDN;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting is not being performed and is"
             + " de-initialized, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Off.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_10)
@@ -237,6 +252,21 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Set and the setting cannot be applied due to a "
+            + "failure, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_11)
+    @TestDescription("For each metric with the category SET, the device is manipulated so that the setting has "
+            + "failed and then it is verified that the ActivationState of the metric is set to Fail.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.class
+            })
+    void testRequirement54711() throws NoTestData {
+        final var metricCategory = MetricCategory.SET;
+        final var activationState = ComponentActivation.FAIL;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is being"
             + " performed, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = On.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_12_0)
@@ -247,6 +277,22 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     void testRequirement547120() throws NoTestData {
         final var metricCategory = MetricCategory.CLC;
         final var activationState = ComponentActivation.ON;
+        testRequirement547(metricCategory, activationState);
+    }
+
+    @Test
+    @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC is currently"
+            + " initializing, the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = NotRdy.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_547_13)
+    @TestDescription("For each metric with the category CLC, the device is manipulated to initialize calculations and"
+            + " then it is verified that the ActivationState of the metric is set to NotRdy.")
+    @RequirePrecondition(
+            manipulationPreconditions = {
+                ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY.class
+            })
+    void testRequirement54713() throws NoTestData {
+        final var metricCategory = MetricCategory.CLC;
+        final var activationState = ComponentActivation.NOT_RDY;
         testRequirement547(metricCategory, activationState);
     }
 
@@ -285,12 +331,13 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
 
     @Test
     @DisplayName("If pm:AbstractMetricDescriptor/@MetricCategory = Clc and the calculation for the METRIC has failed, "
-        + "the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
+            + "the SERVICE PROVIDER SHALL set pm:AbstractMetricState/@ActivationState = Fail.")
     @TestIdentifier(EnabledTestConfig.BICEPS_547_17)
     @TestDescription("For each metric with the category CLC, the device is manipulated so that the setting has failed "
-        + "and then it is verified that the ActivationState of the metric is set to Fail.")
+            + "and then it is verified that the ActivationState of the metric is set to Fail.")
     @RequirePrecondition(
-        manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationCLCActivationStateFAIL.class})
+            manipulationPreconditions = {ManipulationPreconditions.MetricStatusManipulationCLCActivationStateFAIL.class
+            })
     void testRequirement54717() throws NoTestData {
         final var metricCategory = MetricCategory.CLC;
         final var activationState = ComponentActivation.FAIL;
