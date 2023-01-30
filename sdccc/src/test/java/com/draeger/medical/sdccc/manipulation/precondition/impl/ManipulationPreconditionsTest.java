@@ -862,16 +862,75 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
+    @DisplayName("testMetricStatusManipulationSETActivationStateFAIL: Set ActivationState of all SET-Metrics to FAIL.")
+    void testMetricStatusManipulationSETActivationStateFAILGood() {
+        setMetricStatusSetup(MetricCategory.SET, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        assertTrue(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should have been successful.");
+
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.SET, ComponentActivation.FAIL);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationSETActivationStateFAIL: setComponentActivation failed.")
+    void testMetricStatusManipulationSETActivationStateFAILBadFirstManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.SET, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        // let setComponentActivation fail
+        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should not have been successful.");
+
+        assertTrue(
+                testRunObserver.isInvalid(),
+                "Test run should have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName("testMetricStatusManipulationSETActivationStateFAIL: setMetricStatus failed.")
+    void testMetricStatusManipulationSETActivationStateFAILBadSecondManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.SET, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
+
+        // let setMetricStatus fail
+        when(mockManipulations.setMetricStatus(
+                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should not have been successful.");
+
+        assertTrue(
+                testRunObserver.isInvalid(),
+                "Test run should have been invalidated. Reason(s): " + testRunObserver.getReasons());
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.SET, ComponentActivation.FAIL);
+    }
+
+    @Test
     @DisplayName("MetricStatusManipulationCLCActivationStateSHTDN: Set CLC metrics to a state where the calculation"
-            + " is currently de-initializing to trigger an activation state change to SHTDN.")
+        + " is currently de-initializing to trigger an activation state change to SHTDN.")
     void testMetricStatusManipulationCLCActivationStateSHTDNGood() {
         setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.SHTDN);
 
         assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSHTDN.manipulation(injector));
 
         assertFalse(
-                testRunObserver.isInvalid(),
-                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
+            testRunObserver.isInvalid(),
+            "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.SHTDN);
@@ -884,13 +943,13 @@ public class ManipulationPreconditionsTest {
 
         // let setComponentActivation fail
         when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         assertFalse(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSHTDN.manipulation(injector));
 
         assertTrue(
-                testRunObserver.isInvalid(),
-                "Test run should be invalidated because the setComponentActivation manipulation failed.");
+            testRunObserver.isInvalid(),
+            "Test run should be invalidated because the setComponentActivation manipulation failed.");
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
     }
@@ -902,14 +961,14 @@ public class ManipulationPreconditionsTest {
 
         // let setMetricStatus fail
         when(mockManipulations.setMetricStatus(
-                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+            any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         assertFalse(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSHTDN.manipulation(injector));
 
         assertTrue(
-                testRunObserver.isInvalid(),
-                "Test run should be invalidated because the setMetricStatus manipulation failed.");
+            testRunObserver.isInvalid(),
+            "Test run should be invalidated because the setMetricStatus manipulation failed.");
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.SHTDN);
