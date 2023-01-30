@@ -754,13 +754,13 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
-    @DisplayName(
-            "testMetricStatusManipulationSETActivationStateFAIL: Set ActivationState of all SET-Metrics to FAIL.")
+    @DisplayName("testMetricStatusManipulationSETActivationStateFAIL: Set ActivationState of all SET-Metrics to FAIL.")
     void testMetricStatusManipulationSETActivationStateFAILGood() {
         setMetricStatusSetup(MetricCategory.SET, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
 
-        assertTrue(ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
-            "The manipulation should have been successful.");
+        assertTrue(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should have been successful.");
 
         assertFalse(
                 testRunObserver.isInvalid(),
@@ -779,8 +779,9 @@ public class ManipulationPreconditionsTest {
         when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        assertFalse(ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
-            "The manipulation should not have been successful.");
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should not have been successful.");
 
         assertTrue(
                 testRunObserver.isInvalid(),
@@ -799,8 +800,9 @@ public class ManipulationPreconditionsTest {
                         any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        assertFalse(ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
-            "The manipulation should not have been successful.");
+        assertFalse(
+                ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL.manipulation(injector),
+                "The manipulation should not have been successful.");
 
         assertTrue(
                 testRunObserver.isInvalid(),
