@@ -1368,7 +1368,7 @@ public class MessageStorage implements AutoCloseable {
      * Messages are sorted by MdibVersion on the inner join result.
      *
      * @param enableSorting switch to turn off or turn on MdibVersion based sorting
-     * @param bodyTypes  to match messages against
+     * @param bodyTypes     to match messages against
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
      */
@@ -1645,49 +1645,37 @@ public class MessageStorage implements AutoCloseable {
             final var rootPredicates = new ArrayList<Predicate>();
             rootPredicates.add(criteriaBuilder.equal(root.get(ManipulationData_.methodName), manipulationName));
 
-            final Subquery<ManipulationParameter> parameterSubQuery = criteria.subquery(ManipulationParameter.class);
-            final Root<ManipulationParameter> manipulationParameterRoot =
-                    parameterSubQuery.from(ManipulationParameter.class);
-
-            final var parameterPredicates = new ArrayList<Predicate>();
+            final List<Predicate> parameterExistPredicates = new ArrayList<>();
 
             for (var parameter : parameters) {
-                parameterPredicates.add(criteriaBuilder.and(
-                        criteriaBuilder.equal(
-                                manipulationParameterRoot.get(ManipulationParameter_.parameterName),
-                                parameter.getKey()),
-                        criteriaBuilder.equal(
-                                manipulationParameterRoot.get(ManipulationParameter_.parameterValue),
-                                parameter.getValue())));
+                final var parameterSubquery = criteria.subquery(ManipulationParameter.class);
+                final Root<ManipulationParameter> manipulationParameterRoot =
+                        parameterSubquery.from(ManipulationParameter.class);
+                parameterSubquery
+                        .select(manipulationParameterRoot)
+                        .where(criteriaBuilder.and(
+                                criteriaBuilder.equal(
+                                        manipulationParameterRoot.get(ManipulationParameter_.manipulationData),
+                                        root.get(ManipulationData_.incId)),
+                                criteriaBuilder.and(
+                                        criteriaBuilder.equal(
+                                                manipulationParameterRoot.get(ManipulationParameter_.parameterName),
+                                                parameter.getKey()),
+                                        criteriaBuilder.equal(
+                                                manipulationParameterRoot.get(ManipulationParameter_.parameterValue),
+                                                parameter.getValue()))));
+                parameterExistPredicates.add(criteriaBuilder.exists(parameterSubquery));
             }
-            parameterSubQuery
-                    .select(manipulationParameterRoot)
-                    .where(criteriaBuilder.and(
-                            criteriaBuilder.equal(
-                                    manipulationParameterRoot.get(ManipulationParameter_.manipulationData),
-                                    root.get(ManipulationData_.incId)),
-                            xor(criteriaBuilder, parameterPredicates)));
+
             criteria.where(criteriaBuilder.and(
                     criteriaBuilder.and(rootPredicates.toArray(new Predicate[0])),
-                    criteriaBuilder.exists(parameterSubQuery)));
+                    criteriaBuilder.and(parameterExistPredicates.toArray(new Predicate[0]))));
         }
         final boolean present;
         try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
         return new GetterResult<>(this.getQueryResult(criteria), present);
-    }
-
-    private static Predicate xor(final CriteriaBuilder builder, final List<Predicate> predicates) {
-        if (predicates.size() < 2) return builder.and(predicates.toArray(new Predicate[0]));
-        return predicates.subList(1, predicates.size() - 1).stream()
-                .reduce(predicates.get(0), (subquery, predicate) -> xor(builder, subquery, predicate));
-    }
-
-    private static Predicate xor(
-            final CriteriaBuilder builder, final Predicate predicate1, final Predicate predicate2) {
-        return builder.or(
-                builder.and(predicate1, builder.not(predicate2)), builder.and(predicate2, builder.not(predicate1)));
     }
 
     private <T> Stream<T> getQueryResult(final CriteriaQuery<T> criteriaQuery) {
