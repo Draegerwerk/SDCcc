@@ -68,6 +68,7 @@ R5052=true
 5-4-7_12_0=true
 5-4-7_14=true
 5-4-7_16=true
+5-4-7_17=true
 
 [DPWS]         # OASIS DPWS 1.1 - http://docs.oasis-open.org/ws-dd/dpws/wsdd-dpws-1.1-spec.html
 R0001=false
