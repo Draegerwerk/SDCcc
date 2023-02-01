@@ -544,7 +544,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationDelPrecondition correctly checks for precondition")
     public void testDescriptionModificationDelPreconditionCheck()
-        throws PreconditionException, IOException, JAXBException {
+            throws PreconditionException, IOException, JAXBException {
         // no messages
         assertFalse(ConditionalPreconditions.DescriptionModificationDelPrecondition.preconditionCheck(testInjector));
 
@@ -553,10 +553,10 @@ public class ConditionalPreconditionsTest {
         final var reportPartUpt = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPartUpt.setModificationType(DescriptionModificationType.UPT);
         final var firstReport = messageBuilder.buildDescriptionModificationReport(
-            "SomeSequence", List.of(reportPartCrt, reportPartUpt));
+                "SomeSequence", List.of(reportPartCrt, reportPartUpt));
 
         final var messageWithoutDelReportPart = messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, firstReport);
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, firstReport);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithoutDelReportPart);
         // no report part with modification type del
@@ -565,10 +565,10 @@ public class ConditionalPreconditionsTest {
         final var reportPartDel = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPartDel.setModificationType(DescriptionModificationType.DEL);
         final var secondReport =
-            messageBuilder.buildDescriptionModificationReport("SomeSequence", List.of(reportPartDel));
+                messageBuilder.buildDescriptionModificationReport("SomeSequence", List.of(reportPartDel));
 
         final var messageWithDelReportPart = messageBuilder.createSoapMessageWithBody(
-            ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithDelReportPart);
         assertTrue(ConditionalPreconditions.DescriptionModificationDelPrecondition.preconditionCheck(testInjector));
@@ -584,8 +584,8 @@ public class ConditionalPreconditionsTest {
         final var descriptor2Handle = "handle;Süper;";
 
         final var presenceMap = new HashMap<>(Map.of(
-            descriptor1Handle, false,
-            descriptor2Handle, true));
+                descriptor1Handle, false,
+                descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptors()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
@@ -598,14 +598,14 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(anyString()))
-            .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
-                final String handle = invocation.getArgument(0);
-                if (presenceMap.get(handle)) {
-                    return Optional.of(mock(MdibEntity.class));
-                } else {
-                    return Optional.empty();
-                }
-            });
+                .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(MdibEntity.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
 
         assertTrue(ConditionalPreconditions.DescriptionModificationDelPrecondition.manipulation(testInjector));
 
@@ -616,26 +616,26 @@ public class ConditionalPreconditionsTest {
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
         assertEquals(
-            2,
-            insertCaptor.getAllValues().stream()
-                .filter(descriptor1Handle::equals)
-                .count());
+                2,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
         assertEquals(
-            1,
-            insertCaptor.getAllValues().stream()
-                .filter(descriptor2Handle::equals)
-                .count());
+                1,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
 
         assertEquals(
-            1,
-            removeCaptor.getAllValues().stream()
-                .filter(descriptor1Handle::equals)
-                .count());
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
         assertEquals(
-            1,
-            removeCaptor.getAllValues().stream()
-                .filter(descriptor2Handle::equals)
-                .count());
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
     }
 
     /**

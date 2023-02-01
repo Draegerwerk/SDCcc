@@ -814,7 +814,8 @@ public class InvariantMessageModelAnnexTestTest {
         final var deletePart = buildDescriptionModificationReportPart(DescriptionModificationType.DEL);
         final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT);
         final var updatePart = buildDescriptionModificationReportPart(DescriptionModificationType.UPT);
-        final var descriptionModificationReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart, createPart, updatePart);
+        final var descriptionModificationReport =
+                buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart, createPart, updatePart);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReport);
 
@@ -830,13 +831,14 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5053BadNoDelParts() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
 
         final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition);
         final var updatePart = buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition);
-        final var reportWithoutDelPart = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, createPart, updatePart);
+        final var reportWithoutDelPart =
+                buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, createPart, updatePart);
         messageStorageUtil.addInboundSecureHttpMessage(storage, reportWithoutDelPart);
         // no report part with modification type del
         assertThrows(NoTestData.class, testClass::testRequirementR5053);
@@ -851,7 +853,7 @@ public class InvariantMessageModelAnnexTestTest {
     @Test
     public void testRequirementR5053BadStatesPresent() throws Exception {
         final var alertCondition = mdibBuilder.buildAlertCondition(
-            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
         alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
         alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
 
@@ -860,7 +862,8 @@ public class InvariantMessageModelAnnexTestTest {
         reportPart.getDescriptor().add(alertCondition.getLeft());
         // states should be omitted for description modification type del
         reportPart.getState().add(alertCondition.getRight());
-        messageStorageUtil.addInboundSecureHttpMessage(storage, buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, reportPart));
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, reportPart));
         assertThrows(AssertionError.class, testClass::testRequirementR5053);
     }
 
