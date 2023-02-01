@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for biceps:5-4-7_13
 - support for SystemErrorReport to test case glue:R0036_0
 - test for biceps:5-4-7_15
+- test for biceps:R5053
 
 ### Fixed
 - dpws:R0013 sent a request that was not WS-Transfer compliant
