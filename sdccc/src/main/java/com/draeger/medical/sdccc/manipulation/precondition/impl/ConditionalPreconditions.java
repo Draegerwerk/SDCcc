@@ -317,6 +317,39 @@ public class ConditionalPreconditions {
     }
 
     /**
+     * Precondition that checks whether DescriptionModificationReport messages containing a deletion have been
+     * received, triggering description modifications otherwise.
+     */
+    public static class DescriptionModificationDelPrecondition extends SimplePrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationDelPrecondition.class);
+
+        /**
+         * Creates a description modification del precondition check.
+         */
+        public DescriptionModificationDelPrecondition() {
+            super(
+                    DescriptionModificationDelPrecondition::preconditionCheck,
+                    DescriptionModificationDelPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) throws PreconditionException {
+            return descriptionModificationPreconditionCheck(injector, DescriptionModificationType.DEL);
+        }
+
+        /**
+         * Performs the removal and reinsertion of descriptors in the mdib to trigger reports.
+         *
+         * @param injector to analyze mdib on
+         * @return true if successful, false otherwise
+         * @throws PreconditionException on errors
+         */
+        static boolean manipulation(final Injector injector) throws PreconditionException {
+            return descriptionModificationManipulation(injector, LOG);
+        }
+    }
+
+    /**
      * Precondition which checks whether report messages containing state changes have been received,
      * triggering reports otherwise.
      */
