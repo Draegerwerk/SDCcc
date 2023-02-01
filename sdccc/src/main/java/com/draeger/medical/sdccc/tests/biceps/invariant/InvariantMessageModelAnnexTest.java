@@ -488,6 +488,42 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     }
 
     @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_R5053)
+    @TestDescription("Retrieves every report part with modification type del from every description modification report"
+            + " seen during the test run and checks if the states are excluded from the message.")
+    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationDelPrecondition.class})
+    void testRequirementR5053() throws NoTestData, IOException {
+        try (final var messages =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            final var delReportsSeen = new AtomicInteger(0);
+
+            messages.getStream().forEach(messageContent -> {
+                try {
+                    final var soapMessage = marshalling.unmarshal(
+                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                    final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                    final var delReportParts = reportOpt.orElseThrow().getReportPart().stream()
+                            .filter(part ->
+                                    ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.DEL))
+                            .toList();
+                    for (var part : delReportParts) {
+                        delReportsSeen.incrementAndGet();
+                        assertTrue(
+                                part.getState().isEmpty(),
+                                "State should not be part of the report with modification type delete.");
+                    }
+                } catch (MarshallingException e) {
+                    fail("Error unmarshalling MessageContent " + e);
+                }
+            });
+
+            assertTestData(
+                    delReportsSeen.get(),
+                    "No report parts with description modification type del seen during test run, test failed");
+        }
+    }
+
+    @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C11)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
             + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"

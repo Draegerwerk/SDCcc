@@ -799,6 +799,75 @@ public class InvariantMessageModelAnnexTestTest {
      * Tests whether calling the test without any input data causes a failure.
      */
     @Test
+    public void testRequirementR5053NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementR5053);
+    }
+
+    /**
+     * Tests whether description modification reports with report parts with modification type del, containing
+     * no states, passes the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR5053Good() throws Exception {
+        final var deletePart = buildDescriptionModificationReportPart(DescriptionModificationType.DEL);
+        final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT);
+        final var updatePart = buildDescriptionModificationReportPart(DescriptionModificationType.UPT);
+        final var descriptionModificationReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart, createPart, updatePart);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReport);
+
+        testClass.testRequirementR5053();
+    }
+
+    /**
+     * Tests whether the test fails, when no description modification report parts with modification type del are seen
+     * during the test run.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR5053BadNoDelParts() throws Exception {
+        final var alertCondition = mdibBuilder.buildAlertCondition(
+            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+        alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
+        alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
+
+        final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, alertCondition);
+        final var updatePart = buildDescriptionModificationReportPart(DescriptionModificationType.UPT, alertCondition);
+        final var reportWithoutDelPart = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, createPart, updatePart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportWithoutDelPart);
+        // no report part with modification type del
+        assertThrows(NoTestData.class, testClass::testRequirementR5053);
+    }
+
+    /**
+     * Tests whether the test fails, when states are included in description modification report parts with modification
+     * type del.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR5053BadStatesPresent() throws Exception {
+        final var alertCondition = mdibBuilder.buildAlertCondition(
+            MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
+        alertCondition.getLeft().setDescriptorVersion(BigInteger.ONE);
+        alertCondition.getRight().setDescriptorVersion(BigInteger.ONE);
+
+        final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
+        reportPart.setModificationType(DescriptionModificationType.DEL);
+        reportPart.getDescriptor().add(alertCondition.getLeft());
+        // states should be omitted for description modification type del
+        reportPart.getState().add(alertCondition.getRight());
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, reportPart));
+        assertThrows(AssertionError.class, testClass::testRequirementR5053);
+    }
+
+    /**
+     * Tests whether calling the test without any input data causes a failure.
+     */
+    @Test
     public void testRequirementC11NoTestData() {
         assertThrows(NoTestData.class, testClass::testRequirementC11);
     }
