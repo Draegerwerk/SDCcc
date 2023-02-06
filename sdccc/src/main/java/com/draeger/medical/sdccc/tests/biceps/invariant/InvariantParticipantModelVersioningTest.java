@@ -72,8 +72,9 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R0033)
-    @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
-            + " verifies that descriptor versions are incremented whenever a child has changed.")
+    @TestDescription(
+            "Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
+                    + " verifies that descriptor versions are incremented by 1 whenever a child descriptor is added or deleted.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionChangedPrecondition.class})
     void testRequirementR0033() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
