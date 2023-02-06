@@ -14,12 +14,14 @@ import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.Injector;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -1445,6 +1447,81 @@ public class ManipulationPreconditions {
             final var activationState = ComponentActivation.FAIL;
             final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+        }
+    }
+
+    public static class RemoveAndReinsertDescriptorManipulation extends ManipulationPrecondition {
+        private static final Logger LOG = LogManager.getLogger(RemoveAndReinsertDescriptorManipulation.class);
+
+        public RemoveAndReinsertDescriptorManipulation() {
+            super(RemoveAndReinsertDescriptorManipulation::manipulation);
+        }
+
+        static boolean manipulation(final Injector injector) {
+            final var manipulations = injector.getInstance(Manipulations.class);
+            final var testClient = injector.getInstance(TestClient.class);
+            final var testRunObserver = injector.getInstance(TestRunObserver.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice;
+
+            remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+            if (modifiableDescriptors.isEmpty()) {
+                testRunObserver.invalidateTestRun("No modifiable descriptors available for manipulation");
+                return false;
+            }
+
+            final var manipulationResults = new HashSet<ResponseTypes.Result>();
+            for (String handle : modifiableDescriptors) {
+                // determine if descriptor is currently present
+                var descriptorEntity = mdibAccess.getEntity(handle);
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                // if the descriptor is not present, insert it first
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(manipulations.insertDescriptor(handle));
+                    descriptorEntity = mdibAccess.getEntity(handle);
+                    if (descriptorEntity.isEmpty()) {
+                        manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                    }
+                    LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+                }
+
+                // remove descriptor
+                manipulationResults.add(manipulations.removeDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isPresent()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                // reinsert descriptor
+                manipulationResults.add(manipulations.insertDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
+                    testRunObserver.invalidateTestRun(
+                        String.format("Could not successfully modify descriptor %s, stopping the precondition",
+                            handle));
+                    break;
+                }
+            }
+
+            return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
         }
     }
 }

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,6 +62,7 @@ public class ManipulationPreconditionsTest {
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE = "alerthandle";
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE2 = "alerthandle2";
     private static final String METRIC_HANDLE = "someMetric";
+    private static final String SOME_HANDLE = "someHandle";
 
     private Injector injector;
     private SdcRemoteDevice mockDevice;
@@ -1007,5 +1009,103 @@ public class ManipulationPreconditionsTest {
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.FAIL);
+    }
+
+    @Test
+    @DisplayName("RemoveAndReinsertDescriptorManipulation: Successful")
+    void testRemoveAndReinsertDescriptorManipulation() {
+        setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
+
+        assertTrue(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
+        assertFalse(testRunObserver.isInvalid(),
+            "Test run should not have been invalidated." + testRunObserver.getReasons());
+
+        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).removeDescriptor(SOME_HANDLE);
+        verify(mockManipulations).insertDescriptor(SOME_HANDLE);
+    }
+
+    @Test
+    @DisplayName("RemoveAndReinsertDescriptorManipulation: Removable Descriptor is not present")
+    void testRemoveAndReinsertDescriptorManipulation2() {
+        setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
+
+        when(mockManipulations.insertDescriptor(
+            any(String.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        when(mockDevice.getMdibAccess().getEntity(anyString()))
+            .thenReturn(Optional.empty())
+            .thenReturn(Optional.of(mockEntity))
+            .thenReturn(Optional.empty())
+            .thenReturn(Optional.of(mockEntity));
+
+        assertTrue(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
+        assertFalse(testRunObserver.isInvalid(),
+            "Test run should not have been invalidated." + testRunObserver.getReasons());
+
+        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).removeDescriptor(SOME_HANDLE);
+        verify(mockManipulations, times(2)).insertDescriptor(SOME_HANDLE);
+    }
+
+    @Test
+    @DisplayName("RemoveAndReinsertDescriptorManipulation: No removable descriptors")
+    void testRemoveAndReinsertDescriptorManipulationBad() {
+        setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of());
+
+        assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
+        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
+
+        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations, times(0)).removeDescriptor(SOME_HANDLE);
+        verify(mockManipulations, times(0)).insertDescriptor(SOME_HANDLE);
+    }
+
+    @Test
+    @DisplayName("RemoveAndReinsertDescriptorManipulation: Insert descriptor fails")
+    void testRemoveAndReinsertDescriptorManipulationBad2() {
+        setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
+        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
+
+        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).removeDescriptor(SOME_HANDLE);
+        verify(mockManipulations).insertDescriptor(SOME_HANDLE);
+    }
+
+    @Test
+    @DisplayName("RemoveAndReinsertDescriptorManipulation: Remove descriptor fails")
+    void testRemoveAndReinsertDescriptorManipulationBad3() {
+        setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
+
+        when(mockManipulations.removeDescriptor(anyString())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
+        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
+
+        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).removeDescriptor(SOME_HANDLE);
+        verify(mockManipulations).insertDescriptor(SOME_HANDLE);
+    }
+
+    private void setupRemoveAndReinsertDescriptor(final String descriptorHandle,
+                                                  final List<String> removableDescriptors) {
+        when(mockManipulations.getRemovableDescriptors())
+            .thenReturn(removableDescriptors);
+
+        when(mockManipulations.removeDescriptor(
+            any(String.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        when(mockManipulations.insertDescriptor(
+            any(String.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        when(mockEntity.getHandle()).thenReturn(descriptorHandle);
+        when(mockDevice.getMdibAccess().getEntity(anyString()))
+            .thenReturn(Optional.of(mockEntity)).thenReturn(Optional.empty()).thenReturn(Optional.of(mockEntity));
     }
 }
