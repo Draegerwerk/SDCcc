@@ -1017,8 +1017,9 @@ public class ManipulationPreconditionsTest {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
 
         assertTrue(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
-        assertFalse(testRunObserver.isInvalid(),
-            "Test run should not have been invalidated." + testRunObserver.getReasons());
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated." + testRunObserver.getReasons());
 
         verify(mockManipulations).getRemovableDescriptors();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
@@ -1030,20 +1031,21 @@ public class ManipulationPreconditionsTest {
     void testRemoveAndReinsertDescriptorManipulation2() {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
 
-        when(mockManipulations.insertDescriptor(
-            any(String.class)))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.insertDescriptor(any(String.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         when(mockDevice.getMdibAccess().getEntity(anyString()))
-            .thenReturn(Optional.empty())
-            .thenReturn(Optional.of(mockEntity))
-            .thenReturn(Optional.empty())
-            .thenReturn(Optional.of(mockEntity));
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(mockEntity))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(mockEntity));
 
         assertTrue(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
-        assertFalse(testRunObserver.isInvalid(),
-            "Test run should not have been invalidated." + testRunObserver.getReasons());
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated." + testRunObserver.getReasons());
 
         verify(mockManipulations).getRemovableDescriptors();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
@@ -1091,21 +1093,22 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).insertDescriptor(SOME_HANDLE);
     }
 
-    private void setupRemoveAndReinsertDescriptor(final String descriptorHandle,
-                                                  final List<String> removableDescriptors) {
-        when(mockManipulations.getRemovableDescriptors())
-            .thenReturn(removableDescriptors);
+    private void setupRemoveAndReinsertDescriptor(
+            final String descriptorHandle, final List<String> removableDescriptors) {
+        when(mockManipulations.getRemovableDescriptors()).thenReturn(removableDescriptors);
 
-        when(mockManipulations.removeDescriptor(
-            any(String.class)))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.removeDescriptor(any(String.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
-        when(mockManipulations.insertDescriptor(
-            any(String.class)))
-            .thenReturn(ResponseTypes.Result.RESULT_SUCCESS).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.insertDescriptor(any(String.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         when(mockEntity.getHandle()).thenReturn(descriptorHandle);
         when(mockDevice.getMdibAccess().getEntity(anyString()))
-            .thenReturn(Optional.of(mockEntity)).thenReturn(Optional.empty()).thenReturn(Optional.of(mockEntity));
+                .thenReturn(Optional.of(mockEntity))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(mockEntity));
     }
 }

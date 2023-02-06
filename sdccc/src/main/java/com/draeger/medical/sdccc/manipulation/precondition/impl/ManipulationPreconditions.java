@@ -14,14 +14,12 @@ import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.Injector;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -1450,13 +1448,22 @@ public class ManipulationPreconditions {
         }
     }
 
+    /**
+     * Removes and reinserts descriptors with the same handle.
+     */
     public static class RemoveAndReinsertDescriptorManipulation extends ManipulationPrecondition {
         private static final Logger LOG = LogManager.getLogger(RemoveAndReinsertDescriptorManipulation.class);
 
+        /**
+         * Creates a remove and reinsert precondition.
+         */
         public RemoveAndReinsertDescriptorManipulation() {
             super(RemoveAndReinsertDescriptorManipulation::manipulation);
         }
 
+        /**
+         * @return true if successful, false otherwise
+         */
         static boolean manipulation(final Injector injector) {
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testClient = injector.getInstance(TestClient.class);
@@ -1512,16 +1519,15 @@ public class ManipulationPreconditions {
                 LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
 
                 if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
-                    testRunObserver.invalidateTestRun(
-                        String.format("Could not successfully modify descriptor %s, stopping the precondition",
-                            handle));
+                    testRunObserver.invalidateTestRun(String.format(
+                            "Could not successfully modify descriptor %s, stopping the precondition", handle));
                     break;
                 }
             }
 
             return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+                    && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                    && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
         }
     }
 }

@@ -26,7 +26,6 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -187,29 +185,30 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
 
     @Test
     @DisplayName("If a SERVICE PROVIDER inserts an ELEMENT with a HANDLE that has been used in a previous MDIB version"
-        + " of the same MDIB sequence, this ELEMENT SHALL be of the same XML Schema datatype as every ELEMENT that"
-        + " previously carried the HANDLE.")
+            + " of the same MDIB sequence, this ELEMENT SHALL be of the same XML Schema datatype as every ELEMENT that"
+            + " previously carried the HANDLE.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0098_0)
     @TestDescription("Starting from the initially retrieved mdib, applies each description modification report to the"
-        + " mdib and verifies that each created descriptor in each description modification part that reuses a handle"
-        + " is of the same type as the descriptors that previously used the same handle.")
+            + " mdib and verifies that each created descriptor in each description modification part that reuses a handle"
+            + " is of the same type as the descriptors that previously used the same handle.")
     @RequirePrecondition(
-        manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
+            manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirementR00980() throws NoTestData, IOException {
-        final var sequenceIds = messageStorage.getUniqueSequenceIds().filter(Objects::nonNull).toList();
+        final var sequenceIds =
+                messageStorage.getUniqueSequenceIds().filter(Objects::nonNull).toList();
 
         final var reinsertionSeen = new AtomicInteger(0);
 
         for (var sequenceId : sequenceIds) {
-            try (final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(sequenceId,
-                Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                    sequenceId, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
 
                 final var deletedDescriptors = new HashMap<String, AbstractDescriptor>();
 
                 messages.getStream().forEach(messageContent -> {
                     try {
-                        final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        final var soapMessage = marshalling.unmarshal(new ByteArrayInputStream(
+                                messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                         final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                         final var reportParts = reportOpt.orElseThrow().getReportPart();
                         for (var part : reportParts) {
@@ -233,15 +232,17 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
                 });
             }
         }
-        assertTestData(reinsertionSeen.get(),
-            "No reinsertion of descriptors seen during the test run, test failed.");
+        assertTestData(reinsertionSeen.get(), "No reinsertion of descriptors seen during the test run, test failed.");
     }
 
-    private void checkReinsertedDescriptor(final AbstractDescriptor insertedDescriptor,
-                                           final AbstractDescriptor deletedDescriptor) {
-        assertEquals(deletedDescriptor.getClass(), insertedDescriptor.getClass(), String.format(
-            "The reinserted descriptor with handle %s should have the class %s but has the class %s",
-            insertedDescriptor.getHandle(), deletedDescriptor.getClass(), insertedDescriptor.getClass()));
+    private void checkReinsertedDescriptor(
+            final AbstractDescriptor insertedDescriptor, final AbstractDescriptor deletedDescriptor) {
+        assertEquals(
+                deletedDescriptor.getClass(),
+                insertedDescriptor.getClass(),
+                String.format(
+                        "The reinserted descriptor with handle %s should have the class %s but has the class %s",
+                        insertedDescriptor.getHandle(), deletedDescriptor.getClass(), insertedDescriptor.getClass()));
     }
 
     /**
