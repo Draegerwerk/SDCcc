@@ -91,6 +91,64 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     }
 
     @Test
+    @DisplayName("A SERVICE PROVIDER SHALL include the parent descriptor handle in "
+        + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
+        + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
+        + "is “Crt” (Created).")
+    @TestIdentifier(EnabledTestConfig.BICEPS_R0055_0)
+    @TestDescription("Retrieves all DescriptionModificationReports seen during the TestRun and checks for each "
+        + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
+        + "of its ReportPart is set.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
+    void testRequirementR00550() throws NoTestData, IOException {
+        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
+            messageStorage, getInjector().getInstance(TestRunObserver.class));
+
+        final var acceptableSequenceSeen = new AtomicInteger(0);
+
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+
+                // get DescriptionModification reports
+                try (final var reports =
+                         mdibHistorian.getAllReports(sequenceId)
+                                      .filter((report) -> report instanceof DescriptionModificationReport)) {
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (report instanceof DescriptionModificationReport descriptionModificationReport) {
+
+                            for (var reportPart : descriptionModificationReport.getReportPart()) {
+                                if (DescriptionModificationType.CRT.equals(reportPart.getModificationType())) {
+                                    acceptableSequenceSeen.incrementAndGet();
+
+                                    for (var createdDescriptor : reportPart.getDescriptor()) {
+                                        if (!(createdDescriptor instanceof MdsDescriptor)) {
+                                            final String parentDescriptor = reportPart.getParentDescriptor();
+                                            assertTrue(parentDescriptor != null && !parentDescriptor.isBlank(),
+                                                String.format(
+                                                    "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                    + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                    + "with @ModificationType = \"Crt\" that contains "
+                                                    + "AbstractDescriptors that are not MdsDescriptors"
+                                                    + "(for instance: %s).",
+                                                    createdDescriptor.getHandle())
+                                                );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        assertTestData(
+            acceptableSequenceSeen.get(), "No DescriptionModificationReport with ReportParts with "
+                + "ModificationType=Crt seen during test run, test failed.");
+    }
+
+    @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
             + " for each AbstractDescriptor contained in a DescriptionModificationReport"
@@ -287,24 +345,21 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     private void checkNestedDescriptors(final AbstractDescriptor descriptor) {
         final var handle = descriptor.getHandle();
         final String errorMsg = "%s with handle %s should not have nested descriptor %s";
-        if (descriptor instanceof AlertSystemDescriptor) {
+        if (descriptor instanceof final AlertSystemDescriptor alertSystem) {
             // verify that the alarm system has no alarm signals or alarm conditions
-            final var alertSystem = (AlertSystemDescriptor) descriptor;
             assertTrue(
                     alertSystem.getAlertCondition().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertCondition()));
             assertTrue(
                     alertSystem.getAlertSignal().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertSignal()));
-        } else if (descriptor instanceof ChannelDescriptor) {
+        } else if (descriptor instanceof final ChannelDescriptor channel) {
             // verify that the channel has no metrics
-            final var channel = (ChannelDescriptor) descriptor;
             assertTrue(
                     channel.getMetric().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, channel.getMetric()));
-        } else if (descriptor instanceof MdsDescriptor) {
+        } else if (descriptor instanceof final MdsDescriptor mds) {
             // verify that the mds has no alert system, sco, system context, clock, batteries or vmds
-            final var mds = (MdsDescriptor) descriptor;
             assertNull(
                     mds.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, mds.getAlertSystem()));
             assertNull(mds.getSco(), String.format(errorMsg, descriptor.getClass(), handle, mds.getSco()));
@@ -316,16 +371,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     mds.getBattery().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, mds.getBattery()));
             assertTrue(mds.getVmd().isEmpty(), String.format(errorMsg, descriptor.getClass(), handle, mds.getVmd()));
-        } else if (descriptor instanceof ScoDescriptor) {
+        } else if (descriptor instanceof final ScoDescriptor sco) {
             // verify that the sco has no operations
-            final var sco = (ScoDescriptor) descriptor;
             assertTrue(
                     sco.getOperation().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, sco.getOperation()));
-        } else if (descriptor instanceof SystemContextDescriptor) {
+        } else if (descriptor instanceof final SystemContextDescriptor systemContext) {
             // verify that the system context has no patient and location context and no ensemble, operator
             // workflow and mean contexts
-            final var systemContext = (SystemContextDescriptor) descriptor;
             assertNull(
                     systemContext.getPatientContext(),
                     String.format(errorMsg, descriptor.getClass(), handle, systemContext.getPatientContext()));
@@ -344,9 +397,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             assertTrue(
                     systemContext.getMeansContext().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, systemContext.getMeansContext()));
-        } else if (descriptor instanceof VmdDescriptor) {
+        } else if (descriptor instanceof final VmdDescriptor vmd) {
             // verify that the vmd has no channels, vmd and sco
-            final var vmd = (VmdDescriptor) descriptor;
             assertTrue(
                     vmd.getChannel().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, vmd.getChannel()));
@@ -550,7 +602,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicComponentReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
-    void testRequirementC12() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
+    void testRequirementC12() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
@@ -607,7 +659,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicContextReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
-    void testRequirementC13() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
+    void testRequirementC13() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
@@ -675,7 +727,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
             + " EpisodicMetricReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicMetricReportPrecondition.class})
-    void testRequirementC14() throws NoTestData, PreprocessingException, ReportProcessingException, IOException {
+    void testRequirementC14() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
