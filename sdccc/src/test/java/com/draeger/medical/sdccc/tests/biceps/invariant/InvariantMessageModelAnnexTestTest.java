@@ -166,7 +166,7 @@ public class InvariantMessageModelAnnexTestTest {
      * Tests whether calling the test without any input data causes a failure.
      */
     @Test
-    public void testRequirementR00550_Bad_NoTestData() {
+    public void testRequirementR00550BadNoTestData() {
         assertThrows(NoTestData.class, testClass::testRequirementR00550);
     }
 
@@ -175,7 +175,8 @@ public class InvariantMessageModelAnnexTestTest {
      * ModificationTypes != Crt causes a failure.
      */
     @Test
-    public void testRequirementR00550_Bad_NoDescriptionModificationReportsWithReportPartsWithModificationTypeCrt() throws Exception {
+    public void testRequirementR00550BadNoDescriptionModificationReportsWithReportPartsWithModificationTypeCrt()
+            throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -183,37 +184,38 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT,
-                parentDescriptor,
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.DEL,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         assertThrows(NoTestData.class, testClass::testRequirementR00550);
     }
-
 
     /**
      * Checks whether a sequence of DescriptionModificationReports,
@@ -224,7 +226,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Good() throws Exception {
+    public void testRequirementR00550Good() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -232,32 +234,34 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementR00550();
@@ -265,12 +269,12 @@ public class InvariantMessageModelAnnexTestTest {
 
     /**
      * Checks whether the test fails when a DescriptionModificationReport
-     * contains a ReportPart with @ParentDescriptor=null
+     * contains a ReportPart with @ParentDescriptor=null.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Bad_ReportPartWithParentDescriptorNull() throws Exception {
+    public void testRequirementR00550BadReportPartWithParentDescriptorNull() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -278,32 +282,34 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                (String) null,
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        (String) null,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         assertThrows(AssertionError.class, testClass::testRequirementR00550);
@@ -315,12 +321,12 @@ public class InvariantMessageModelAnnexTestTest {
 
     /**
      * Checks whether the test fails when a DescriptionModificationReport
-     * contains a ReportPart with @ParentDescriptor=" "
+     * contains a ReportPart with @ParentDescriptor=" ".
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Bad_ReportPartWithParentDescriptorEmpty() throws Exception {
+    public void testRequirementR00550BadReportPartWithParentDescriptorEmpty() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -328,32 +334,34 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                " ",
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        " ",
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         assertThrows(AssertionError.class, testClass::testRequirementR00550);
@@ -366,38 +374,37 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Good_ParentDescriptorNullButOnlyMdsDescriptors() throws Exception {
+    public void testRequirementR00550GoodParentDescriptorNullButOnlyMdsDescriptors() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final Pair<MdsDescriptor, MdsState> mdsDescriptor = mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, (String) null, mdsDescriptor));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, (String) null, mdsDescriptor));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementR00550();
@@ -412,7 +419,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Bad_ParentDescriptorNullButNoDescriptors() throws Exception {
+    public void testRequirementR00550BadParentDescriptorNullButNoDescriptors() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -420,30 +427,30 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                (String) null));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, (String) null));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementR00550();
@@ -457,7 +464,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550_Bad_ParentDescriptorNullButModificationTypeNotCrt() throws Exception {
+    public void testRequirementR00550BadParentDescriptorNullButModificationTypeNotCrt() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -465,32 +472,34 @@ public class InvariantMessageModelAnnexTestTest {
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
-        String parentDescriptor = "parentDescriptor";
+        final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, parentDescriptor, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.TWO,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT,
-                (String) null,
-                mdibBuilder.buildChannel("second channel"),
-                mdibBuilder.buildVmd("second vmd")));
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        (String) null,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT,
-                parentDescriptor,
-                mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
-                mdibBuilder.buildSco(SCO_HANDLE)));
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementR00550();

@@ -92,17 +92,17 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
     @Test
     @DisplayName("A SERVICE PROVIDER SHALL include the parent descriptor handle in "
-        + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
-        + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
-        + "is “Crt” (Created).")
+            + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
+            + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
+            + "is “Crt” (Created).")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0055_0)
     @TestDescription("Retrieves all DescriptionModificationReports seen during the TestRun and checks for each "
-        + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
-        + "of its ReportPart is set.")
+            + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
+            + "of its ReportPart is set.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
     void testRequirementR00550() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-            messageStorage, getInjector().getInstance(TestRunObserver.class));
+                messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
@@ -110,9 +110,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             sequenceIds.forEach(sequenceId -> {
 
                 // get DescriptionModification reports
-                try (final var reports =
-                         mdibHistorian.getAllReports(sequenceId)
-                                      .filter((report) -> report instanceof DescriptionModificationReport)) {
+                try (final var reports = mdibHistorian
+                        .getAllReports(sequenceId)
+                        .filter((report) -> report instanceof DescriptionModificationReport)) {
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
 
@@ -125,15 +125,15 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                                     for (var createdDescriptor : reportPart.getDescriptor()) {
                                         if (!(createdDescriptor instanceof MdsDescriptor)) {
                                             final String parentDescriptor = reportPart.getParentDescriptor();
-                                            assertTrue(parentDescriptor != null && !parentDescriptor.isBlank(),
-                                                String.format(
-                                                    "msg:DescriptionModificationReport/msg:ReportPart/"
-                                                    + "@ParentDescriptor attribute is not set for a ReportPart "
-                                                    + "with @ModificationType = \"Crt\" that contains "
-                                                    + "AbstractDescriptors that are not MdsDescriptors"
-                                                    + "(for instance: %s).",
-                                                    createdDescriptor.getHandle())
-                                                );
+                                            assertTrue(
+                                                    parentDescriptor != null && !parentDescriptor.isBlank(),
+                                                    String.format(
+                                                            "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                                    + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                                    + "with @ModificationType = \"Crt\" that contains "
+                                                                    + "AbstractDescriptors that are not MdsDescriptors"
+                                                                    + "(for instance: %s).",
+                                                            createdDescriptor.getHandle()));
                                         }
                                     }
                                 }
@@ -144,8 +144,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
         }
         assertTestData(
-            acceptableSequenceSeen.get(), "No DescriptionModificationReport with ReportParts with "
-                + "ModificationType=Crt seen during test run, test failed.");
+                acceptableSequenceSeen.get(),
+                "No DescriptionModificationReport with ReportParts with "
+                        + "ModificationType=Crt seen during test run, test failed.");
     }
 
     @Test
