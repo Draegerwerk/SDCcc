@@ -113,13 +113,13 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             sequenceIds.forEach(sequenceId -> {
 
                 // get DescriptionModification reports
-                try (final var reports =
-                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId(sequenceId,
-                             Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
-                    for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
+                try (final var reports = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                        sequenceId, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                    for (final Iterator<MessageContent> iterator =
+                                    reports.getStream().iterator();
+                            iterator.hasNext(); ) {
                         final MessageContent messageContent = iterator.next();
-                        final SoapMessage soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(
+                        final SoapMessage soapMessage = marshalling.unmarshal(new ByteArrayInputStream(
                                 messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                         final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
                         final AbstractReport report = reportOpt.orElseThrow();
@@ -149,7 +149,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             }
                         }
                     }
-                } catch (IOException|MarshallingException e) {
+                } catch (IOException | MarshallingException e) {
                     fail("Unexpected Exception", e);
                 }
             });
