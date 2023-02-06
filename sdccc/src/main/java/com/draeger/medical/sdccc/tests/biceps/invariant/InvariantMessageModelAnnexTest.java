@@ -119,7 +119,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                         if (report instanceof DescriptionModificationReport descriptionModificationReport) {
 
                             for (var reportPart : descriptionModificationReport.getReportPart()) {
-                                if (DescriptionModificationType.CRT.equals(reportPart.getModificationType())) {
+                                if (DescriptionModificationType.CRT.equals(
+                                        ImpliedValueUtil.getModificationType(reportPart))) {
                                     acceptableSequenceSeen.incrementAndGet();
 
                                     for (var createdDescriptor : reportPart.getDescriptor()) {
