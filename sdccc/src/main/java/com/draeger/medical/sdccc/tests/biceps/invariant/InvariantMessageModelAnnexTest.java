@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,6 +68,7 @@ import org.somda.sdc.biceps.model.participant.ScoDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
 import org.somda.sdc.biceps.model.participant.VmdDescriptor;
 import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
@@ -110,11 +113,16 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             sequenceIds.forEach(sequenceId -> {
 
                 // get DescriptionModification reports
-                try (final var reports = mdibHistorian
-                        .getAllReports(sequenceId)
-                        .filter((report) -> report instanceof DescriptionModificationReport)) {
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
+                try (final var reports =
+                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId(sequenceId,
+                             Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                    for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
+                        final MessageContent messageContent = iterator.next();
+                        final SoapMessage soapMessage = marshalling.unmarshal(
+                            new ByteArrayInputStream(
+                                messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
+                        final AbstractReport report = reportOpt.orElseThrow();
 
                         if (report instanceof DescriptionModificationReport descriptionModificationReport) {
 
@@ -141,6 +149,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             }
                         }
                     }
+                } catch (IOException|MarshallingException e) {
+                    fail("Unexpected Exception", e);
                 }
             });
         }
