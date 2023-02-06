@@ -7,25 +7,36 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
+import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,9 +45,14 @@ import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
+import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
+import org.somda.sdc.biceps.model.message.DescriptionModificationType;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
+import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapUtil;
+import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
@@ -48,6 +64,8 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
 
     private MessageStorage messageStorage;
     private MdibHistorianFactory mdibHistorianFactory;
+    private MarshallingService marshalling;
+    private SoapUtil soapUtil;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +73,8 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
 
         final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
         this.mdibHistorianFactory = riInjector.getInstance(MdibHistorianFactory.class);
+        this.marshalling = riInjector.getInstance(MarshallingService.class);
+        this.soapUtil = riInjector.getInstance(SoapUtil.class);
     }
 
     @Test
@@ -163,6 +183,65 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
             });
         }
         assertTestData(handlesSeen, "No Data to perform test on");
+    }
+
+    @Test
+    @DisplayName("If a SERVICE PROVIDER inserts an ELEMENT with a HANDLE that has been used in a previous MDIB version"
+        + " of the same MDIB sequence, this ELEMENT SHALL be of the same XML Schema datatype as every ELEMENT that"
+        + " previously carried the HANDLE.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_R0098_0)
+    @TestDescription("Starting from the initially retrieved mdib, applies each description modification report to the"
+        + " mdib and verifies that each created descriptor in each description modification part that reuses a handle"
+        + " is of the same type as the descriptors that previously used the same handle.")
+    @RequirePrecondition(
+        manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
+    void testRequirementR00980() throws NoTestData, IOException {
+        final var sequenceIds = messageStorage.getUniqueSequenceIds().filter(Objects::nonNull).toList();
+
+        final var reinsertionSeen = new AtomicInteger(0);
+
+        for (var sequenceId : sequenceIds) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(sequenceId,
+                Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+
+                final var deletedDescriptors = new HashMap<String, AbstractDescriptor>();
+
+                messages.getStream().forEach(messageContent -> {
+                    try {
+                        final var soapMessage = marshalling.unmarshal(
+                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                        final var reportParts = reportOpt.orElseThrow().getReportPart();
+                        for (var part : reportParts) {
+                            if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.CRT) {
+                                for (var descriptor : part.getDescriptor()) {
+                                    final var handle = descriptor.getHandle();
+                                    if (deletedDescriptors.containsKey(handle)) {
+                                        reinsertionSeen.incrementAndGet();
+                                        checkReinsertedDescriptor(descriptor, deletedDescriptors.get(handle));
+                                    }
+                                }
+                            } else if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.DEL) {
+                                for (var descriptor : part.getDescriptor()) {
+                                    deletedDescriptors.put(descriptor.getHandle(), descriptor);
+                                }
+                            }
+                        }
+                    } catch (MarshallingException e) {
+                        fail("Error unmarshalling MessageContent " + e);
+                    }
+                });
+            }
+        }
+        assertTestData(reinsertionSeen.get(),
+            "No reinsertion of descriptors seen during the test run, test failed.");
+    }
+
+    private void checkReinsertedDescriptor(final AbstractDescriptor insertedDescriptor,
+                                           final AbstractDescriptor deletedDescriptor) {
+        assertEquals(deletedDescriptor.getClass(), insertedDescriptor.getClass(), String.format(
+            "The reinserted descriptor with handle %s should have the class %s but has the class %s",
+            insertedDescriptor.getHandle(), deletedDescriptor.getClass(), insertedDescriptor.getClass()));
     }
 
     /**

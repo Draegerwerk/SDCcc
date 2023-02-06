@@ -7,15 +7,11 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.draeger.medical.biceps.model.message.AbstractContextReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationReport;
 import com.draeger.medical.biceps.model.message.DescriptionModificationType;
+import com.draeger.medical.biceps.model.participant.AbstractDescriptor;
+import com.draeger.medical.biceps.model.participant.AlertSignalManifestation;
 import com.draeger.medical.biceps.model.participant.LocationContextState;
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
@@ -31,12 +27,6 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +37,19 @@ import org.somda.sdc.biceps.provider.preprocessing.HandleDuplicatedException;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the BICEPS {@linkplain InvariantParticipantModelHandleTest}.
@@ -205,56 +208,6 @@ public class InvariantParticipantModelHandleTestTest {
         assertFalse(testClass.isWithinPermittedASCIIRange(new String(Character.toChars(outOfUpperBound))));
     }
 
-    /*
-     * build mdib with configurable handles
-     */
-    Envelope buildMdib(
-            final String mdsHandle,
-            final String vmdHandle,
-            final String channelHandle,
-            final String systemContextHandle,
-            final String locationDescriptorHandle,
-            final String locationStateHandle) {
-        final var mds = mdibBuilder.buildMds(mdsHandle);
-
-        final var mdDescription = mdibBuilder.buildMdDescription();
-        final var mdState = mdibBuilder.buildMdState();
-
-        mdDescription.getMds().add(mds.getLeft());
-        mdState.getState().add(mds.getRight());
-
-        final var mdib = mdibBuilder.buildMdib(InvariantParticipantModelHandleTestTest.SEQUENCE_ID);
-        mdib.setMdDescription(mdDescription);
-        mdib.setMdState(mdState);
-
-        final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
-        mdsDescriptor.setDescriptorVersion(BigInteger.ZERO);
-
-        final var systemContext = mdibBuilder.buildSystemContext(systemContextHandle);
-        mdsDescriptor.setSystemContext(systemContext.getLeft());
-        mdState.getState().add(systemContext.getRight());
-
-        final var locationContext = mdibBuilder.buildLocationContext(locationDescriptorHandle, locationStateHandle);
-        systemContext.getLeft().setLocationContext(locationContext.getLeft());
-        mdState.getState().add(locationContext.getRight());
-
-        final var vmd = mdibBuilder.buildVmd(vmdHandle);
-        vmd.getLeft().setDescriptorVersion(BigInteger.ZERO);
-        vmd.getRight().setDescriptorVersion(BigInteger.ZERO);
-        mdsDescriptor.getVmd().add(vmd.getLeft());
-        mdState.getState().add(vmd.getRight());
-
-        final var channel = mdibBuilder.buildChannel(channelHandle);
-        vmd.getLeft().getChannel().add(channel.getLeft());
-        mdState.getState().add(channel.getRight());
-
-        final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
-        getMdibResponse.setMdib(mdib);
-
-        return messageBuilder.createSoapMessageWithBody(
-                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
-    }
-
     /**
      * Tests whether no test data fails the test.
      */
@@ -328,6 +281,196 @@ public class InvariantParticipantModelHandleTestTest {
         assertTrue(afe.getMessage().startsWith(String.format(ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE, "someVmd")));
     }
 
+    /**
+     * Tests whether mdib versions with non-unique handles are failing. (channel+systemContext)
+     */
+    @Test
+    public void testR0007NonUniqueHandles() throws IOException, JAXBException {
+
+        // channelHandle and systemHandle are the same
+        final var mdib = buildMdib(
+            MDS_HANDLE,
+            VMD_HANDLE,
+            NON_UNIQUE_HANDLE,
+            NON_UNIQUE_HANDLE,
+            LOCATION_DESC_HANDLE,
+            LOCATION_STATE_HANDLE);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
+
+        final RuntimeException exception = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
+        assertTrue(exception.getMessage().contains(NON_UNIQUE_HANDLE));
+        assertTrue(
+            exception.getCause() instanceof HandleDuplicatedException,
+            "Wrong kind of Exception: " + exception.getCause());
+    }
+
+    /**
+     * Tests whether mdib versions with non-unique handles are failing (locationDescriptor+locationState).
+     */
+    @Test
+    public void testR0007NonUniqueHandles2() throws IOException, JAXBException {
+
+        // locationDescHandle and locationStateHandle are the same
+        final var mdib = buildMdib(
+            MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE, SYSTEM_CONTEXT_HANDLE, NON_UNIQUE_HANDLE, NON_UNIQUE_HANDLE);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
+
+        final RuntimeException rte = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
+        assertTrue(rte.getMessage().contains(NON_UNIQUE_HANDLE));
+        assertTrue(rte.getCause() instanceof HandleDuplicatedException, "Wrong kind of Exception: " + rte.getCause());
+    }
+
+    /**
+     * Tests whether no test data fails the test.
+     */
+    @Test
+    public void testRequirementR00980NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementR00980);
+    }
+
+    /**
+     * Tests whether the deletion and reinsertion of an descriptor during the same MDIB sequence having the same handle
+     * and type causes the test to pass.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00980Good() throws Exception {
+        final var descriptor = mdibBuilder.buildVmdDescriptor(VMD_HANDLE);
+        final var deletePart = buildDescriptionModificationReportPart(DescriptionModificationType.DEL, descriptor);
+        final var report = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, descriptor);
+        final var secondReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, createPart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondReport);
+
+        testClass.testRequirementR00980();
+    }
+
+    /**
+     * Tests whether reusing the same handle for a different type of descriptor during another sequence id is not
+     * failing the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00980GoodWrongTypeOtherSequence() throws Exception {
+        final var descriptor = mdibBuilder.buildVmdDescriptor(NON_UNIQUE_HANDLE);
+        final var deletePart = buildDescriptionModificationReportPart(DescriptionModificationType.DEL, descriptor);
+        final var report = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, descriptor);
+        final var secondReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, createPart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondReport);
+
+        final var deleteAgainReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.valueOf(3), deletePart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, deleteAgainReport);
+
+        final var otherDescriptor =
+            mdibBuilder.buildAlertSignalDescriptor(NON_UNIQUE_HANDLE, AlertSignalManifestation.VIS, true);
+        final var createOtherPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, otherDescriptor);
+        final var createSomethingNewReport = buildDescriptionModificationReport("123457", BigInteger.valueOf(4), createOtherPart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, createSomethingNewReport);
+
+        testClass.testRequirementR00980();
+    }
+
+    /**
+     * Tests whether reusing a handle from a previously deleted descriptor for a different type causes the test to fail.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00980BadWrongType() throws Exception {
+        final var descriptor = mdibBuilder.buildVmdDescriptor(NON_UNIQUE_HANDLE);
+        final var deletePart = buildDescriptionModificationReportPart(DescriptionModificationType.DEL, descriptor);
+        final var report = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, deletePart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        final var otherDescriptor =
+            mdibBuilder.buildAlertSignalDescriptor(NON_UNIQUE_HANDLE, AlertSignalManifestation.VIS, true);
+        final var createPart = buildDescriptionModificationReportPart(DescriptionModificationType.CRT, otherDescriptor);
+        final var secondReport = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, createPart);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondReport);
+
+        assertThrows(AssertionError.class, testClass::testRequirementR00980);
+    }
+
+    /*
+     * build mdib with configurable handles
+     */
+    Envelope buildMdib(
+        final String mdsHandle,
+        final String vmdHandle,
+        final String channelHandle,
+        final String systemContextHandle,
+        final String locationDescriptorHandle,
+        final String locationStateHandle) {
+        final var mds = mdibBuilder.buildMds(mdsHandle);
+
+        final var mdDescription = mdibBuilder.buildMdDescription();
+        final var mdState = mdibBuilder.buildMdState();
+
+        mdDescription.getMds().add(mds.getLeft());
+        mdState.getState().add(mds.getRight());
+
+        final var mdib = mdibBuilder.buildMdib(InvariantParticipantModelHandleTestTest.SEQUENCE_ID);
+        mdib.setMdDescription(mdDescription);
+        mdib.setMdState(mdState);
+
+        final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
+        mdsDescriptor.setDescriptorVersion(BigInteger.ZERO);
+
+        final var systemContext = mdibBuilder.buildSystemContext(systemContextHandle);
+        mdsDescriptor.setSystemContext(systemContext.getLeft());
+        mdState.getState().add(systemContext.getRight());
+
+        final var locationContext = mdibBuilder.buildLocationContext(locationDescriptorHandle, locationStateHandle);
+        systemContext.getLeft().setLocationContext(locationContext.getLeft());
+        mdState.getState().add(locationContext.getRight());
+
+        final var vmd = mdibBuilder.buildVmd(vmdHandle);
+        vmd.getLeft().setDescriptorVersion(BigInteger.ZERO);
+        vmd.getRight().setDescriptorVersion(BigInteger.ZERO);
+        mdsDescriptor.getVmd().add(vmd.getLeft());
+        mdState.getState().add(vmd.getRight());
+
+        final var channel = mdibBuilder.buildChannel(channelHandle);
+        vmd.getLeft().getChannel().add(channel.getLeft());
+        mdState.getState().add(channel.getRight());
+
+        final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
+        getMdibResponse.setMdib(mdib);
+
+        return messageBuilder.createSoapMessageWithBody(
+            ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
+    }
+    
+    @SafeVarargs
+    final DescriptionModificationReport.ReportPart buildDescriptionModificationReportPart(
+        final DescriptionModificationType modificationType,
+        final AbstractDescriptor... modifications) {
+        final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
+        reportPart.setModificationType(modificationType);
+        for (var modification : modifications) {
+            reportPart.getDescriptor().add(modification);
+        }
+        return reportPart;
+    }
+
+    Envelope buildDescriptionModificationReport(
+        final String sequenceId,
+        final @Nullable BigInteger mdibVersion,
+        final DescriptionModificationReport.ReportPart... reportParts) {
+        final var report = messageBuilder.buildDescriptionModificationReport(sequenceId, List.of(reportParts));
+        report.setMdibVersion(mdibVersion);
+        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, report);
+    }
+
     Envelope buildDescriptionModificationReport(
             final @Nullable BigInteger mdibVersion,
             final @Nullable BigInteger vmdVersion,
@@ -381,46 +524,5 @@ public class InvariantParticipantModelHandleTestTest {
         report.setMdibVersion(BigInteger.TWO);
         report.getReportPart().addAll(parts);
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
-    }
-
-    /**
-     * Tests whether mdib versions with non-unique handles are failing. (channel+systemContext)
-     */
-    @Test
-    public void testR0007NonUniqueHandles() throws IOException, JAXBException {
-
-        // channelHandle and systemHandle are the same
-        final var mdib = buildMdib(
-                MDS_HANDLE,
-                VMD_HANDLE,
-                NON_UNIQUE_HANDLE,
-                NON_UNIQUE_HANDLE,
-                LOCATION_DESC_HANDLE,
-                LOCATION_STATE_HANDLE);
-
-        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
-
-        final RuntimeException exception = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
-        assertTrue(exception.getMessage().contains(NON_UNIQUE_HANDLE));
-        assertTrue(
-                exception.getCause() instanceof HandleDuplicatedException,
-                "Wrong kind of Exception: " + exception.getCause());
-    }
-
-    /**
-     * Tests whether mdib versions with non-unique handles are failing (locationDescriptor+locationState).
-     */
-    @Test
-    public void testR0007NonUniqueHandles2() throws IOException, JAXBException {
-
-        // locationDescHandle and locationStateHandle are the same
-        final var mdib = buildMdib(
-                MDS_HANDLE, VMD_HANDLE, CHANNEL_HANDLE, SYSTEM_CONTEXT_HANDLE, NON_UNIQUE_HANDLE, NON_UNIQUE_HANDLE);
-
-        messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
-
-        final RuntimeException rte = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
-        assertTrue(rte.getMessage().contains(NON_UNIQUE_HANDLE));
-        assertTrue(rte.getCause() instanceof HandleDuplicatedException, "Wrong kind of Exception: " + rte.getCause());
     }
 }
