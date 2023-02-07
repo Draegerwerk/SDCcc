@@ -535,6 +535,110 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
+     * Tests whether DescriptionModificationCrtPrecondition correctly checks for precondition.
+     *
+     * @throws PreconditionException on precondition exceptions
+     * @throws IOException           on io exceptions
+     * @throws JAXBException         on marshalling failures
+     */
+    @Test
+    @DisplayName("DescriptionModificationDelPrecondition correctly checks for precondition")
+    public void testDescriptionModificationDelPreconditionCheck()
+            throws PreconditionException, IOException, JAXBException {
+        // no messages
+        assertFalse(ConditionalPreconditions.DescriptionModificationDelPrecondition.preconditionCheck(testInjector));
+
+        final var reportPartCrt = messageBuilder.buildDescriptionModificationReportReportPart();
+        reportPartCrt.setModificationType(DescriptionModificationType.CRT);
+        final var reportPartUpt = messageBuilder.buildDescriptionModificationReportReportPart();
+        reportPartUpt.setModificationType(DescriptionModificationType.UPT);
+        final var firstReport = messageBuilder.buildDescriptionModificationReport(
+                "SomeSequence", List.of(reportPartCrt, reportPartUpt));
+
+        final var messageWithoutDelReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, firstReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithoutDelReportPart);
+        // no report part with modification type del
+        assertFalse(ConditionalPreconditions.DescriptionModificationDelPrecondition.preconditionCheck(testInjector));
+
+        final var reportPartDel = messageBuilder.buildDescriptionModificationReportReportPart();
+        reportPartDel.setModificationType(DescriptionModificationType.DEL);
+        final var secondReport =
+                messageBuilder.buildDescriptionModificationReport("SomeSequence", List.of(reportPartDel));
+
+        final var messageWithDelReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithDelReportPart);
+        assertTrue(ConditionalPreconditions.DescriptionModificationDelPrecondition.preconditionCheck(testInjector));
+    }
+
+    /**
+     * Tests whether DescriptionModificationDelPrecondition correctly calls manipulation.
+     */
+    @Test
+    @DisplayName("DescriptionModificationDelPrecondition correctly calls manipulation")
+    public void testDescriptionModificationDelManipulation() throws PreconditionException {
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptors()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(anyString()))
+                .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(MdibEntity.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        assertTrue(ConditionalPreconditions.DescriptionModificationDelPrecondition.manipulation(testInjector));
+
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptors();
+        verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
+
+        assertEquals(
+                2,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+    }
+
+    /**
      * Tests whether DescriptionModificationPrecondition throws exception if no removable descriptors are present.
      */
     @Test

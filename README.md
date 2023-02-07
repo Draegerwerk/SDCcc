@@ -193,6 +193,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | C-15            | TriggerReport                                               |
 | R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
 | R5052           | TriggerDescriptorUpdate                                     |
+| R5053           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
 | 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_1         | SetComponentActivation, SetMetricStatus                     |
 | 5-4-7_2         | SetComponentActivation, SetMetricStatus                     |
