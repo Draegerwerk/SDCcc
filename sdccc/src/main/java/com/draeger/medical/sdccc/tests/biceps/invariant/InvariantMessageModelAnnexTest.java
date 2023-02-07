@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -357,7 +356,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     private void checkNestedDescriptors(final AbstractDescriptor descriptor) {
         final var handle = descriptor.getHandle();
         final String errorMsg = "%s with handle %s should not have nested descriptor %s";
-        if (descriptor instanceof final AlertSystemDescriptor alertSystem) {
+        if (descriptor instanceof AlertSystemDescriptor alertSystem) {
             // verify that the alarm system has no alarm signals or alarm conditions
             assertTrue(
                     alertSystem.getAlertCondition().isEmpty(),
@@ -365,12 +364,12 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             assertTrue(
                     alertSystem.getAlertSignal().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertSignal()));
-        } else if (descriptor instanceof final ChannelDescriptor channel) {
+        } else if (descriptor instanceof ChannelDescriptor channel) {
             // verify that the channel has no metrics
             assertTrue(
                     channel.getMetric().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, channel.getMetric()));
-        } else if (descriptor instanceof final MdsDescriptor mds) {
+        } else if (descriptor instanceof MdsDescriptor mds) {
             // verify that the mds has no alert system, sco, system context, clock, batteries or vmds
             assertNull(
                     mds.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, mds.getAlertSystem()));
@@ -383,12 +382,12 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     mds.getBattery().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, mds.getBattery()));
             assertTrue(mds.getVmd().isEmpty(), String.format(errorMsg, descriptor.getClass(), handle, mds.getVmd()));
-        } else if (descriptor instanceof final ScoDescriptor sco) {
+        } else if (descriptor instanceof ScoDescriptor sco) {
             // verify that the sco has no operations
             assertTrue(
                     sco.getOperation().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, sco.getOperation()));
-        } else if (descriptor instanceof final SystemContextDescriptor systemContext) {
+        } else if (descriptor instanceof SystemContextDescriptor systemContext) {
             // verify that the system context has no patient and location context and no ensemble, operator
             // workflow and mean contexts
             assertNull(
@@ -409,7 +408,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             assertTrue(
                     systemContext.getMeansContext().isEmpty(),
                     String.format(errorMsg, descriptor.getClass(), handle, systemContext.getMeansContext()));
-        } else if (descriptor instanceof final VmdDescriptor vmd) {
+        } else if (descriptor instanceof VmdDescriptor vmd) {
             // verify that the vmd has no channels, vmd and sco
             assertTrue(
                     vmd.getChannel().isEmpty(),
@@ -440,7 +439,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     final var crtReportParts = reportOpt.orElseThrow().getReportPart().stream()
                             .filter(part ->
                                     ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.CRT))
-                            .collect(Collectors.toList());
+                            .toList();
                     for (var part : crtReportParts) {
                         for (var state : part.getState()) {
                             acceptableSequenceSeen.incrementAndGet();
@@ -480,7 +479,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
             assertTestData(
                     acceptableSequenceSeen.get(),
-                    "No report parts with description modification type crt" + " seen during test run, test failed");
+                    "No report parts with description modification type crt seen during test run, test failed");
         }
     }
 
@@ -504,7 +503,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     final var uptReportParts = reportOpt.orElseThrow().getReportPart().stream()
                             .filter(part ->
                                     ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.UPT))
-                            .collect(Collectors.toList());
+                            .toList();
                     for (var part : uptReportParts) {
                         acceptableSequenceSeen.incrementAndGet();
                         for (var state : part.getState()) {
@@ -547,7 +546,43 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
             assertTestData(
                     acceptableSequenceSeen.get(),
-                    "No report parts with description modification type upt" + " seen during test run, test failed");
+                    "No report parts with description modification type upt seen during test run, test failed");
+        }
+    }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_R5053)
+    @TestDescription("Retrieves every report part with modification type del from every description modification report"
+            + " seen during the test run and checks if the states are excluded from the message.")
+    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationDelPrecondition.class})
+    void testRequirementR5053() throws NoTestData, IOException {
+        try (final var messages =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            final var delReportsSeen = new AtomicInteger(0);
+
+            messages.getStream().forEach(messageContent -> {
+                try {
+                    final var soapMessage = marshalling.unmarshal(
+                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                    final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                    final var delReportParts = reportOpt.orElseThrow().getReportPart().stream()
+                            .filter(part ->
+                                    ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.DEL))
+                            .toList();
+                    for (var part : delReportParts) {
+                        delReportsSeen.incrementAndGet();
+                        assertTrue(
+                                part.getState().isEmpty(),
+                                "State should not be part of the report with modification type delete.");
+                    }
+                } catch (MarshallingException e) {
+                    fail("Error unmarshalling MessageContent " + e);
+                }
+            });
+
+            assertTestData(
+                    delReportsSeen.get(),
+                    "No report parts with description modification type del seen during test run, test failed");
         }
     }
 
@@ -757,11 +792,11 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
 
-                        if (report instanceof EpisodicMetricReport) {
+                        if (report instanceof EpisodicMetricReport metricReport) {
                             acceptableSequenceSeen.incrementAndGet();
                             second = mdibHistorian.applyReportOnStorage(second, report);
 
-                            for (var reportPart : ((EpisodicMetricReport) report).getReportPart()) {
+                            for (var reportPart : metricReport.getReportPart()) {
                                 for (var metricState : reportPart.getMetricState()) {
                                     final var stateBeforeReport = first.getState(
                                             metricState.getDescriptorHandle(), AbstractMetricState.class);
@@ -816,11 +851,11 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             reportIterator.hasNext(); ) {
                         final AbstractReport report = reportIterator.next();
 
-                        if (report instanceof EpisodicOperationalStateReport) {
+                        if (report instanceof EpisodicOperationalStateReport operationalStateReport) {
                             acceptableSequenceSeen.incrementAndGet();
                             second = mdibHistorian.applyReportOnStorage(second, report);
 
-                            for (var reportPart : ((EpisodicOperationalStateReport) report).getReportPart()) {
+                            for (var reportPart : operationalStateReport.getReportPart()) {
                                 for (var operationState : reportPart.getOperationState()) {
                                     final var stateBeforeReport = first.getState(
                                             operationState.getDescriptorHandle(), AbstractOperationState.class);
