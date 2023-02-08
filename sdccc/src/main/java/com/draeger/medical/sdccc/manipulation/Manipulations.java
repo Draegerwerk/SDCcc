@@ -11,6 +11,8 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import java.util.List;
 import java.util.Optional;
 import javax.xml.namespace.QName;
+
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
@@ -36,6 +38,11 @@ public interface Manipulations {
      * @return all descriptors which can be removed from and reinserted into the device MDIB.
      */
     List<String> getRemovableDescriptors();
+
+    /**
+     * @return all descriptors of the given type which can be removed from and reinserted into the device MDIB.
+     */
+    List<String> getRemovableDescriptorsOfType(Class<? extends AbstractDescriptor> descriptorType);
 
     /**
      * Removes a descriptor from the device MDIB.

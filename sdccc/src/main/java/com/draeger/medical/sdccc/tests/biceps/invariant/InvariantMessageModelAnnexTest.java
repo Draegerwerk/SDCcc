@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
@@ -65,6 +66,7 @@ import org.somda.sdc.biceps.model.participant.ScoDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
 import org.somda.sdc.biceps.model.participant.VmdDescriptor;
 import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
@@ -179,6 +181,46 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         }
         assertTestData(
                 acceptableSequenceSeen.get(), "No DescriptionModificationReport seen during test run, test failed.");
+    }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_C7)
+    @TestDescription("Checks all DescriptionModificationReports seen during the TestRun for ReportParts whose "
+        + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
+        + "@ParentDescriptor attribute set.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
+    void testRequirementC7() throws NoTestData, IOException, MarshallingException {
+        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
+            messageStorage, getInjector().getInstance(TestRunObserver.class));
+
+        final var acceptableReportsSeen = new AtomicInteger(0);
+
+        final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
+            messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT);
+
+        for (MessageContent messageContent: descriptionModificationReports.getStream().toList()) {
+            final SoapMessage soapMessage = marshalling.unmarshal(
+                new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+            DescriptionModificationReport descriptionModificationReport =
+                (DescriptionModificationReport) soapMessage.getOriginalEnvelope().getBody().getAny().get(0);
+
+            for (DescriptionModificationReport.ReportPart reportPart: descriptionModificationReport.getReportPart()) {
+                if (reportPart.getDescriptor().stream().anyMatch(
+                    (AbstractDescriptor desc) -> desc instanceof MdsDescriptor)) {
+                    acceptableReportsSeen.incrementAndGet();
+                    final String parentDescriptor = reportPart.getParentDescriptor();
+                    assertTrue(parentDescriptor == null || parentDescriptor.isBlank(),
+                        String.format("Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                            + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                            parentDescriptor));
+                }
+            }
+
+        }
+
+        assertTestData(
+            acceptableReportsSeen.get(),
+            "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
     }
 
     @Test

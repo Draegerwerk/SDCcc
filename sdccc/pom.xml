@@ -172,7 +172,8 @@
         <dependency>
             <groupId>com.draeger.medical</groupId>
             <artifactId>t2iapi</artifactId>
-            <version>1.4.0</version>
+            <!-- TODO: use a release version once the changes are released! -->
+            <version>1.4.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>

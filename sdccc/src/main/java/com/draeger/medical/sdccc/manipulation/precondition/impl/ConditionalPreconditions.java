@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
@@ -42,12 +43,14 @@ import org.somda.sdc.biceps.model.message.DescriptionModificationType;
 import org.somda.sdc.biceps.model.message.EpisodicContextReport;
 import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.EnsembleContextDescriptor;
 import org.somda.sdc.biceps.model.participant.EnsembleContextState;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MeansContextDescriptor;
 import org.somda.sdc.biceps.model.participant.MeansContextState;
 import org.somda.sdc.biceps.model.participant.OperatorContextDescriptor;
@@ -346,6 +349,211 @@ public class ConditionalPreconditions {
          */
         static boolean manipulation(final Injector injector) throws PreconditionException {
             return descriptionModificationManipulation(injector, LOG);
+        }
+    }
+
+
+    /**
+     * Precondition which checks whether DescriptionModificationReport messages containing an insertion
+     * update and deletion of an MdsDescriptor have been received, triggering description changes otherwise.
+     */
+    public static class DescriptionModificationMdsDescriptorPrecondition extends SimplePrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationMdsDescriptorPrecondition.class);
+
+        /**
+         * Creates a description changed for mds descriptor precondition check.
+         */
+        public DescriptionModificationMdsDescriptorPrecondition() {
+            super(DescriptionModificationMdsDescriptorPrecondition::preconditionCheck,
+                DescriptionModificationMdsDescriptorPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) throws PreconditionException {
+            final var messageStorage = injector.getInstance(MessageStorage.class);
+            final var testClient = injector.getInstance(TestClient.class);
+            final var clientInjector = testClient.getInjector();
+            final var marshalling = clientInjector.getInstance(MarshallingService.class);
+            final var soapUtil = clientInjector.getInstance(SoapUtil.class);
+            final var crtSeen = new AtomicBoolean(false);
+            final var uptSeen = new AtomicBoolean(false);
+            final var delSeen = new AtomicBoolean(false);
+            try (final var messages = messageStorage
+                .getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                // determine if there were a description insertion, update and deletion for an mds descriptor
+                final var reportParts = messages.getStream()
+                    .map(MessageContent::getBody)
+                    .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
+                    .map(body -> {
+                        try {
+                            return marshalling.unmarshal(body);
+                        } catch (MarshallingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
+                        .orElseThrow(() -> new RuntimeException(
+                            "Could not retrieve description modification report body from message")
+                        ))
+                    .map(DescriptionModificationReport::getReportPart).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+                for (var reportPart : reportParts) {
+                    final var mdsDescriptorPresent = reportPart.getDescriptor().stream().filter(abstractDescriptor
+                        -> abstractDescriptor.getClass().equals(MdsDescriptor.class)).findAny();
+                    if (mdsDescriptorPresent.isPresent()) {
+                        switch (reportPart.getModificationType()) {
+                            case CRT:
+                                crtSeen.set(true);
+                                break;
+                            case UPT:
+                                uptSeen.set(true);
+                                break;
+                            case DEL:
+                                delSeen.set(true);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+                // CHECKSTYLE.OFF: IllegalCatch
+            } catch (IOException | RuntimeException e) {
+                throw new PreconditionException(
+                    "An error occurred while trying to process description modification report messages from storage",
+                    e
+                );
+            }
+            // CHECKSTYLE.ON: IllegalCatch
+            return crtSeen.get() && uptSeen.get() && delSeen.get();
+        }
+
+        static boolean manipulation(final Injector injector) {
+            final var manipulations = injector.getInstance(Manipulations.class);
+            final var testClient = injector.getInstance(TestClient.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice;
+
+            remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                LOG.error("remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final List<String> removableMdsDescriptors = manipulations.getRemovableDescriptorsOfType(
+                MdsDescriptor.class);
+
+            if (removableMdsDescriptors.isEmpty()) {
+                LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
+                    + "manipulation. Please check if the test case applying this precondition is applicable to "
+                    + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
+                    + "correctly.");
+            }
+
+            List<String> absentRemovableMdsDescriptors = new ArrayList<>();
+            List<String> presentRemovableMdsDescriptors = new ArrayList<>();
+            for (String removeableMdsDescriptor: removableMdsDescriptors) {
+                final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removeableMdsDescriptor);
+                if (descOpt.isEmpty()) {
+                    absentRemovableMdsDescriptors.add(removeableMdsDescriptor);
+                } else {
+                    presentRemovableMdsDescriptors.add(removeableMdsDescriptor);
+                }
+            }
+
+            // absent:        present:
+            // 1. insert
+            // 2. update      1. update
+            // 3. remove      2. remove
+            //                3. insert
+
+            // priorities:
+            // 1. try all present descriptors
+            // 2. try all absent descriptors
+            // 3. when none worked -> ERROR
+
+            // 1. try all present descriptors
+            boolean success = false;
+            for (String initiallyPresentMdsDescriptor: presentRemovableMdsDescriptors) {
+                if (triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(initiallyPresentMdsDescriptor,
+                    manipulations)) {
+                    success = true;
+                    break;
+                } else {
+                    continue;
+                }
+            }
+            if (!success) {
+                for (String initiallyAbsentMdsDescriptor: absentRemovableMdsDescriptors) {
+                    if (triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(initiallyAbsentMdsDescriptor,
+                        manipulations)) {
+                        success = true;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+            if (!success) {
+                // all options exhausted
+                LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
+                    + "that can be inserted, updated and removed."
+                    + "Please check if the test case applying this precondition is applicable to your device and if the"
+                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                    + "manipulations have been implemented correctly.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private static boolean triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+            final String initiallyAbsentMdsDescriptor,
+            final Manipulations manipulations) {
+
+            // 1. insert
+            ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+
+            // 2. update
+            result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+
+            // 3. remove
+            result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static boolean triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+            final String initiallyPresentMdsDescriptor, final Manipulations manipulations) {
+
+            // 1. update
+            ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+
+            // 2. remove
+            result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+
+            // 3. re-insert
+            result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
+            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                return false;
+            }
+            return true;
         }
     }
 
