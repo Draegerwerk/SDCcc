@@ -102,56 +102,45 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
             + "of its ReportPart is set.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
-    void testRequirementR00550() throws NoTestData, IOException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
-
+    void testRequirementR00550() throws NoTestData {
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
+        // get DescriptionModification reports
+        try (final var reports =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
+                final MessageContent messageContent = iterator.next();
+                final SoapMessage soapMessage = marshalling.unmarshal(
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
+                final AbstractReport report = reportOpt.orElseThrow();
 
-                // get DescriptionModification reports
-                try (final var reports = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
-                        sequenceId, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
-                    for (final Iterator<MessageContent> iterator =
-                                    reports.getStream().iterator();
-                            iterator.hasNext(); ) {
-                        final MessageContent messageContent = iterator.next();
-                        final SoapMessage soapMessage = marshalling.unmarshal(new ByteArrayInputStream(
-                                messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-                        final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
-                        final AbstractReport report = reportOpt.orElseThrow();
+                if (report instanceof DescriptionModificationReport descriptionModificationReport) {
 
-                        if (report instanceof DescriptionModificationReport descriptionModificationReport) {
+                    for (var reportPart : descriptionModificationReport.getReportPart()) {
+                        if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
+                            acceptableSequenceSeen.incrementAndGet();
 
-                            for (var reportPart : descriptionModificationReport.getReportPart()) {
-                                if (DescriptionModificationType.CRT.equals(
-                                        ImpliedValueUtil.getModificationType(reportPart))) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    for (var createdDescriptor : reportPart.getDescriptor()) {
-                                        if (!(createdDescriptor instanceof MdsDescriptor)) {
-                                            final String parentDescriptor = reportPart.getParentDescriptor();
-                                            assertTrue(
-                                                    parentDescriptor != null && !parentDescriptor.isBlank(),
-                                                    String.format(
-                                                            "msg:DescriptionModificationReport/msg:ReportPart/"
-                                                                    + "@ParentDescriptor attribute is not set for a ReportPart "
-                                                                    + "with @ModificationType = \"Crt\" that contains "
-                                                                    + "AbstractDescriptors that are not MdsDescriptors"
-                                                                    + "(for instance: %s).",
-                                                            createdDescriptor.getHandle()));
-                                        }
-                                    }
+                            for (var createdDescriptor : reportPart.getDescriptor()) {
+                                if (!(createdDescriptor instanceof MdsDescriptor)) {
+                                    final String parentDescriptor = reportPart.getParentDescriptor();
+                                    assertTrue(
+                                            parentDescriptor != null && !parentDescriptor.isBlank(),
+                                            String.format(
+                                                    "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                            + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                            + "with @ModificationType = \"Crt\" that contains "
+                                                            + "AbstractDescriptors that are not MdsDescriptors"
+                                                            + "(for instance: %s).",
+                                                    createdDescriptor.getHandle()));
                                 }
                             }
                         }
                     }
-                } catch (IOException | MarshallingException e) {
-                    fail("Unexpected Exception", e);
                 }
-            });
+            }
+        } catch (IOException | MarshallingException e) {
+            fail("Unexpected Exception", e);
         }
         assertTestData(
                 acceptableSequenceSeen.get(),
