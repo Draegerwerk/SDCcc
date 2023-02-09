@@ -103,47 +103,32 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + "of its ReportPart is set.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
     void testRequirementR00550() throws NoTestData {
-        final var acceptableSequenceSeen = new AtomicInteger(0);
+        final var acceptableReportPartSeen = new AtomicInteger(0);
 
-        // get DescriptionModification reports
-        try (final var reports =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
-            for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
-                final MessageContent messageContent = iterator.next();
-                final SoapMessage soapMessage = marshalling.unmarshal(
-                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-                final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
-                final AbstractReport report = reportOpt.orElseThrow();
+        forEachDescriptionModificationReportSeenDuringTheTestRun((descriptionModificationReport) -> {
+            for (var reportPart : descriptionModificationReport.getReportPart()) {
+                if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
+                    acceptableReportPartSeen.incrementAndGet();
 
-                if (report instanceof DescriptionModificationReport descriptionModificationReport) {
-
-                    for (var reportPart : descriptionModificationReport.getReportPart()) {
-                        if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
-                            acceptableSequenceSeen.incrementAndGet();
-
-                            for (var createdDescriptor : reportPart.getDescriptor()) {
-                                if (!(createdDescriptor instanceof MdsDescriptor)) {
-                                    final String parentDescriptor = reportPart.getParentDescriptor();
-                                    assertTrue(
-                                            parentDescriptor != null && !parentDescriptor.isBlank(),
-                                            String.format(
-                                                    "msg:DescriptionModificationReport/msg:ReportPart/"
-                                                            + "@ParentDescriptor attribute is not set for a ReportPart "
-                                                            + "with @ModificationType = \"Crt\" that contains "
-                                                            + "AbstractDescriptors that are not MdsDescriptors"
-                                                            + "(for instance: %s).",
-                                                    createdDescriptor.getHandle()));
-                                }
-                            }
+                    for (var createdDescriptor : reportPart.getDescriptor()) {
+                        if (!(createdDescriptor instanceof MdsDescriptor)) {
+                            final String parentDescriptor = reportPart.getParentDescriptor();
+                            assertTrue(
+                                    parentDescriptor != null && !parentDescriptor.isBlank(),
+                                    String.format(
+                                            "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                    + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                    + "with @ModificationType = \"Crt\" that contains "
+                                                    + "AbstractDescriptors that are not MdsDescriptors"
+                                                    + "(for instance: %s).",
+                                            createdDescriptor.getHandle()));
                         }
                     }
                 }
             }
-        } catch (IOException | MarshallingException e) {
-            fail("Unexpected Exception", e);
-        }
+        });
         assertTestData(
-                acceptableSequenceSeen.get(),
+                acceptableReportPartSeen.get(),
                 "No DescriptionModificationReport with ReportParts with "
                         + "ModificationType=Crt seen during test run, test failed.");
     }
@@ -871,5 +856,28 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
         }
         assertTestData(acceptableSequenceSeen.get(), "No OperationalStateReports seen during test run, test failed.");
+    }
+
+    private void forEachDescriptionModificationReportSeenDuringTheTestRun(
+            final TakeDescriptionModificationReportArgument body) {
+        try (final var reports =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
+                final MessageContent messageContent = iterator.next();
+                final SoapMessage soapMessage = marshalling.unmarshal(
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final Optional<DescriptionModificationReport> reportOpt =
+                        soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                final DescriptionModificationReport descriptionModificationReport = reportOpt.orElseThrow();
+
+                body.call(descriptionModificationReport);
+            }
+        } catch (IOException | MarshallingException e) {
+            fail("Unexpected Exception", e);
+        }
+    }
+
+    interface TakeDescriptionModificationReportArgument {
+        void call(DescriptionModificationReport report);
     }
 }
