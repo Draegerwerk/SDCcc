@@ -352,7 +352,6 @@ public class ConditionalPreconditions {
         }
     }
 
-
     /**
      * Precondition which checks whether DescriptionModificationReport messages containing an insertion
      * update and deletion of an MdsDescriptor have been received, triggering description changes otherwise.
@@ -365,8 +364,9 @@ public class ConditionalPreconditions {
          * Creates a description changed for mds descriptor precondition check.
          */
         public DescriptionModificationMdsDescriptorPrecondition() {
-            super(DescriptionModificationMdsDescriptorPrecondition::preconditionCheck,
-                DescriptionModificationMdsDescriptorPrecondition::manipulation);
+            super(
+                    DescriptionModificationMdsDescriptorPrecondition::preconditionCheck,
+                    DescriptionModificationMdsDescriptorPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -378,50 +378,44 @@ public class ConditionalPreconditions {
             final var crtSeen = new AtomicBoolean(false);
             final var uptSeen = new AtomicBoolean(false);
             final var delSeen = new AtomicBoolean(false);
-            try (final var messages = messageStorage
-                .getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            try (final var messages =
+                    messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
                 // determine if there were a description insertion, update and deletion for an mds descriptor
                 final var reportParts = messages.getStream()
-                    .map(MessageContent::getBody)
-                    .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
-                    .map(body -> {
-                        try {
-                            return marshalling.unmarshal(body);
-                        } catch (MarshallingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
-                        .orElseThrow(() -> new RuntimeException(
-                            "Could not retrieve description modification report body from message")
-                        ))
-                    .map(DescriptionModificationReport::getReportPart).flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+                        .map(MessageContent::getBody)
+                        .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
+                        .map(body -> {
+                            try {
+                                return marshalling.unmarshal(body);
+                            } catch (MarshallingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Could not retrieve description modification report body from message")))
+                        .map(DescriptionModificationReport::getReportPart)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
                 for (var reportPart : reportParts) {
-                    final var mdsDescriptorPresent = reportPart.getDescriptor().stream().filter(abstractDescriptor
-                        -> abstractDescriptor.getClass().equals(MdsDescriptor.class)).findAny();
+                    final var mdsDescriptorPresent = reportPart.getDescriptor().stream()
+                            .filter(abstractDescriptor ->
+                                    abstractDescriptor.getClass().equals(MdsDescriptor.class))
+                            .findAny();
                     if (mdsDescriptorPresent.isPresent()) {
-                        switch (reportPart.getModificationType()) {
-                            case CRT:
-                                crtSeen.set(true);
-                                break;
-                            case UPT:
-                                uptSeen.set(true);
-                                break;
-                            case DEL:
-                                delSeen.set(true);
-                                break;
-                            default:
-                                break;
+                        switch (ImpliedValueUtil.getModificationType(reportPart)) {
+                            case CRT -> crtSeen.set(true);
+                            case UPT -> uptSeen.set(true);
+                            case DEL -> delSeen.set(true);
+                            default -> {}
                         }
                     }
                 }
                 // CHECKSTYLE.OFF: IllegalCatch
             } catch (IOException | RuntimeException e) {
                 throw new PreconditionException(
-                    "An error occurred while trying to process description modification report messages from storage",
-                    e
-                );
+                        "An error occurred while trying to process description modification report messages from storage",
+                        e);
             }
             // CHECKSTYLE.ON: IllegalCatch
             return crtSeen.get() && uptSeen.get() && delSeen.get();
@@ -441,19 +435,19 @@ public class ConditionalPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final List<String> removableMdsDescriptors = manipulations.getRemovableDescriptorsOfType(
-                MdsDescriptor.class);
+            final List<String> removableMdsDescriptors =
+                    manipulations.getRemovableDescriptorsOfType(MdsDescriptor.class);
 
             if (removableMdsDescriptors.isEmpty()) {
                 LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
-                    + "manipulation. Please check if the test case applying this precondition is applicable to "
-                    + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
-                    + "correctly.");
+                        + "manipulation. Please check if the test case applying this precondition is applicable to "
+                        + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
+                        + "correctly.");
             }
 
-            List<String> absentRemovableMdsDescriptors = new ArrayList<>();
-            List<String> presentRemovableMdsDescriptors = new ArrayList<>();
-            for (String removeableMdsDescriptor: removableMdsDescriptors) {
+            final List<String> absentRemovableMdsDescriptors = new ArrayList<>();
+            final List<String> presentRemovableMdsDescriptors = new ArrayList<>();
+            for (String removeableMdsDescriptor : removableMdsDescriptors) {
                 final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removeableMdsDescriptor);
                 if (descOpt.isEmpty()) {
                     absentRemovableMdsDescriptors.add(removeableMdsDescriptor);
@@ -475,33 +469,29 @@ public class ConditionalPreconditions {
 
             // 1. try all present descriptors
             boolean success = false;
-            for (String initiallyPresentMdsDescriptor: presentRemovableMdsDescriptors) {
-                if (triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(initiallyPresentMdsDescriptor,
-                    manipulations)) {
+            for (String initiallyPresentMdsDescriptor : presentRemovableMdsDescriptors) {
+                if (triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                        initiallyPresentMdsDescriptor, manipulations)) {
                     success = true;
                     break;
-                } else {
-                    continue;
                 }
             }
             if (!success) {
-                for (String initiallyAbsentMdsDescriptor: absentRemovableMdsDescriptors) {
-                    if (triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(initiallyAbsentMdsDescriptor,
-                        manipulations)) {
+                for (String initiallyAbsentMdsDescriptor : absentRemovableMdsDescriptors) {
+                    if (triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                            initiallyAbsentMdsDescriptor, manipulations)) {
                         success = true;
                         break;
-                    } else {
-                        continue;
                     }
                 }
             }
             if (!success) {
                 // all options exhausted
                 LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
-                    + "that can be inserted, updated and removed."
-                    + "Please check if the test case applying this precondition is applicable to your device and if the"
-                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
-                    + "manipulations have been implemented correctly.");
+                        + "that can be inserted, updated and removed."
+                        + "Please check if the test case applying this precondition is applicable to your device and if the"
+                        + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                        + "manipulations have been implemented correctly.");
                 return false;
             }
 
@@ -509,8 +499,7 @@ public class ConditionalPreconditions {
         }
 
         private static boolean triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
-            final String initiallyAbsentMdsDescriptor,
-            final Manipulations manipulations) {
+                final String initiallyAbsentMdsDescriptor, final Manipulations manipulations) {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
@@ -526,15 +515,11 @@ public class ConditionalPreconditions {
 
             // 3. remove
             result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
-            }
-
-            return true;
+            return ResponseTypes.Result.RESULT_SUCCESS.equals(result);
         }
 
         private static boolean triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
-            final String initiallyPresentMdsDescriptor, final Manipulations manipulations) {
+                final String initiallyPresentMdsDescriptor, final Manipulations manipulations) {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
@@ -550,10 +535,7 @@ public class ConditionalPreconditions {
 
             // 3. re-insert
             result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
-            }
-            return true;
+            return ResponseTypes.Result.RESULT_SUCCESS.equals(result);
         }
     }
 

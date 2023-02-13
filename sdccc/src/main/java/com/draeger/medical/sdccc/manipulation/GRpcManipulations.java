@@ -155,15 +155,16 @@ public class GRpcManipulations implements Manipulations {
 
     @Override
     public List<String> getRemovableDescriptorsOfType(final Class<? extends AbstractDescriptor> descriptorType) {
-        DeviceRequests.GetRemovableDescriptorsOfTypeRequest request =
-            DeviceRequests.GetRemovableDescriptorsOfTypeRequest.newBuilder()
-                .setDescriptorType(toApiDescriptorType(descriptorType)).build();
+        final DeviceRequests.GetRemovableDescriptorsOfTypeRequest request =
+                DeviceRequests.GetRemovableDescriptorsOfTypeRequest.newBuilder()
+                        .setDescriptorType(toApiDescriptorType(descriptorType))
+                        .build();
         return performCallWrapper(
-            v -> deviceStub.getRemovableDescriptorsOfType(request),
-            v -> fallback.getRemovableDescriptorsOfType(descriptorType),
-            res -> res.getStatus().getResult(),
-            DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
-            Collections.emptyList());
+                v -> deviceStub.getRemovableDescriptorsOfType(request),
+                v -> fallback.getRemovableDescriptorsOfType(descriptorType),
+                res -> res.getStatus().getResult(),
+                DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
+                Collections.emptyList());
     }
 
     @Override
@@ -371,10 +372,10 @@ public class GRpcManipulations implements Manipulations {
             case ON -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_PERFORMED_OR_APPLIED);
             case NOT_RDY -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_INITIALIZING);
             case STND_BY -> Optional.of(
-                MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
+                    MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
             case SHTDN -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_DE_INITIALIZING);
             case OFF -> Optional.of(
-                MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
+                    MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
             case FAIL -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_FAILED);
         };
     }
@@ -507,7 +508,7 @@ public class GRpcManipulations implements Manipulations {
         };
     }
 
-    private DeviceTypes.DescriptorType toApiDescriptorType(Class<? extends AbstractDescriptor> descriptorType) {
+    private DeviceTypes.DescriptorType toApiDescriptorType(final Class<? extends AbstractDescriptor> descriptorType) {
         if (MdsDescriptor.class.equals(descriptorType)) {
             return DeviceTypes.DescriptorType.DESCRIPTOR_TYPE_MDS;
         } else {

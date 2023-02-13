@@ -267,24 +267,24 @@ public class InvariantMessageModelAnnexTestTest {
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT, (String)null, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, (String) null, new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.DEL, (String)null, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL, (String) null, new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, (String)null, new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, (String) null, new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         testClass.testRequirementC7();
@@ -307,10 +307,10 @@ public class InvariantMessageModelAnnexTestTest {
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT, "  ", new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, "  ", new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         testClass.testRequirementC7();
@@ -333,10 +333,12 @@ public class InvariantMessageModelAnnexTestTest {
         final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT, "parentDescriptor", new ImmutablePair<>(mdsDescriptor, mdsState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        "parentDescriptor",
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         assertThrows(AssertionError.class, testClass::testRequirementC7);

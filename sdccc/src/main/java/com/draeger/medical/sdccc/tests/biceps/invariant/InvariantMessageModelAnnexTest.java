@@ -186,41 +186,41 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C7)
     @TestDescription("Checks all DescriptionModificationReports seen during the TestRun for ReportParts whose "
-        + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
-        + "@ParentDescriptor attribute set.")
-    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
+            + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
+            + "@ParentDescriptor attribute set.")
+    @RequirePrecondition(
+            simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
     void testRequirementC7() throws NoTestData, IOException, MarshallingException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-            messageStorage, getInjector().getInstance(TestRunObserver.class));
-
         final var acceptableReportsSeen = new AtomicInteger(0);
 
         final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
-            messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT);
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT);
 
-        for (MessageContent messageContent: descriptionModificationReports.getStream().toList()) {
+        for (MessageContent messageContent :
+                descriptionModificationReports.getStream().toList()) {
             final SoapMessage soapMessage = marshalling.unmarshal(
-                new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-            DescriptionModificationReport descriptionModificationReport =
-                (DescriptionModificationReport) soapMessage.getOriginalEnvelope().getBody().getAny().get(0);
+                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+            final DescriptionModificationReport descriptionModificationReport = (DescriptionModificationReport)
+                    soapMessage.getOriginalEnvelope().getBody().getAny().get(0);
 
-            for (DescriptionModificationReport.ReportPart reportPart: descriptionModificationReport.getReportPart()) {
-                if (reportPart.getDescriptor().stream().anyMatch(
-                    (AbstractDescriptor desc) -> desc instanceof MdsDescriptor)) {
+            for (DescriptionModificationReport.ReportPart reportPart : descriptionModificationReport.getReportPart()) {
+                if (reportPart.getDescriptor().stream()
+                        .anyMatch((AbstractDescriptor desc) -> desc instanceof MdsDescriptor)) {
                     acceptableReportsSeen.incrementAndGet();
                     final String parentDescriptor = reportPart.getParentDescriptor();
-                    assertTrue(parentDescriptor == null || parentDescriptor.isBlank(),
-                        String.format("Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
-                            + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
-                            parentDescriptor));
+                    assertTrue(
+                            parentDescriptor == null || parentDescriptor.isBlank(),
+                            String.format(
+                                    "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                                            + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                                    parentDescriptor));
                 }
             }
-
         }
 
         assertTestData(
-            acceptableReportsSeen.get(),
-            "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
+                acceptableReportsSeen.get(),
+                "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
     }
 
     @Test

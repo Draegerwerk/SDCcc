@@ -18,7 +18,6 @@ import java.util.Optional;
 import javax.xml.namespace.QName;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.apache.logging.log4j.util.Strings;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
@@ -76,19 +75,19 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfType(Class<? extends AbstractDescriptor> descriptorType) {
+    public List<String> getRemovableDescriptorsOfType(final Class<? extends AbstractDescriptor> descriptorType) {
         final var interactionMessage = "Provide a whitespace-separated list of those removable descriptors "
-            + " that are of type " + descriptorType.getName() + "."
-            + " Includes handles which have been removed already and can be reinserted."
-            + " Handles must stay the same once reinserted into the MDIB."
-            + " The handles shall be representative of the devices capabilities to remove"
-            + " descriptors (at least one of every possible kind).";
+                + " that are of type " + descriptorType.getName() + "."
+                + " Includes handles which have been removed already and can be reinserted."
+                + " Handles must stay the same once reinserted into the MDIB."
+                + " The handles shall be representative of the devices capabilities to remove"
+                + " descriptors (at least one of every possible kind).";
         final var data = interactionFactory
-            .createUserInteraction(new FilterInputStream(System.in) {
-                @Override
-                public void close() {}
-            })
-            .displayStringInputUserInteraction(interactionMessage);
+                .createUserInteraction(new FilterInputStream(System.in) {
+                    @Override
+                    public void close() {}
+                })
+                .displayStringInputUserInteraction(interactionMessage);
         if (data == null || data.isBlank()) {
             return Collections.emptyList();
         }
@@ -265,14 +264,13 @@ public class FallbackManipulations implements Manipulations {
         return switch (activation) {
             case ON -> "The measurement/setting for the metric with handle %s and category %s is being performed/applied.";
             case NOT_RDY -> "The measurement/setting for the metric with handle %s and category %s is"
-                + " currently initializing.";
-            case STND_BY ->
-                "The measurement/setting for the metric with handle %s and category %s has been initialized, but"
+                    + " currently initializing.";
+            case STND_BY -> "The measurement/setting for the metric with handle %s and category %s has been initialized, but"
                     + " is not being performed/applied.";
             case SHTDN -> "The measurement/setting for the metric with handle %s and category %s is currently"
-                + " de-initializing.";
+                    + " de-initializing.";
             case OFF -> "The measurement/setting for the metric with handle %s and category %s is not"
-                + " being performed/applied and is de-initialized.";
+                    + " being performed/applied and is de-initialized.";
             case FAIL -> "The measurement/setting for the metric with handle %s and category %s has" + " failed.";
         };
     }
