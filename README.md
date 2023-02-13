@@ -179,6 +179,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R0034_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R0038_0         | TriggerReport                                                                        |
 | R0097           | CreateContextStateWithAssociation                                                    |
+| R0098_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R0116           | SetAlertActivation                                                                   |
 | R0124           | CreateContextStateWithAssociation                                                    |
 | R0125           | CreateContextStateWithAssociation                                                    |

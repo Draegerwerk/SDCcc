@@ -1447,4 +1447,87 @@ public class ManipulationPreconditions {
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
         }
     }
+
+    /**
+     * Removes and reinserts descriptors with the same handle.
+     */
+    public static class RemoveAndReinsertDescriptorManipulation extends ManipulationPrecondition {
+        private static final Logger LOG = LogManager.getLogger(RemoveAndReinsertDescriptorManipulation.class);
+
+        /**
+         * Creates a remove and reinsert precondition.
+         */
+        public RemoveAndReinsertDescriptorManipulation() {
+            super(RemoveAndReinsertDescriptorManipulation::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            final var manipulations = injector.getInstance(Manipulations.class);
+            final var testClient = injector.getInstance(TestClient.class);
+            final var testRunObserver = injector.getInstance(TestRunObserver.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice;
+
+            remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+            if (modifiableDescriptors.isEmpty()) {
+                testRunObserver.invalidateTestRun("No modifiable descriptors available for manipulation");
+                return false;
+            }
+
+            final var manipulationResults = new HashSet<ResponseTypes.Result>();
+            for (String handle : modifiableDescriptors) {
+                // determine if descriptor is currently present
+                var descriptorEntity = mdibAccess.getEntity(handle);
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                // if the descriptor is not present, insert it first
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(manipulations.insertDescriptor(handle));
+                    descriptorEntity = mdibAccess.getEntity(handle);
+                    if (descriptorEntity.isEmpty()) {
+                        manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                    }
+                    LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+                }
+
+                // remove descriptor
+                manipulationResults.add(manipulations.removeDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isPresent()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                // reinsert descriptor
+                manipulationResults.add(manipulations.insertDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+                if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
+                    testRunObserver.invalidateTestRun(String.format(
+                            "Could not successfully modify descriptor %s, stopping the precondition", handle));
+                    break;
+                }
+            }
+
+            return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                    && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                    && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+        }
+    }
 }
