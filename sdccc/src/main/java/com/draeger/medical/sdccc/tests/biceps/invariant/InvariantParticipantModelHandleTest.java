@@ -189,8 +189,9 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
             + " previously carried the HANDLE.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0098_0)
     @TestDescription("Starting from the initially retrieved mdib, applies each description modification report to the"
-            + " mdib and verifies that each created descriptor in each description modification part that reuses a handle"
-            + " is of the same type as the descriptors that previously used the same handle.")
+            + " mdib and verifies that each created descriptor in each description modification part that"
+            + " reuses a handle is of the same type as the descriptors that previously used the same handle"
+            + " during the same mdib sequence.")
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirementR00980() throws NoTestData, IOException {
