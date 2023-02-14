@@ -395,9 +395,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5051)
-    @TestDescription("Retrieves every report part with modification type crt from every description modification report"
-            + " seen during the test run and compares the descriptor version from each state with the descriptor version"
-            + " of their descriptor.")
+    @TestDescription("Retrieves each report part with modification type crt from each description modification report"
+            + " seen during the test run, and compares the descriptor version from each state to the descriptor version"
+            + " of the respective descriptor.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationCrtPrecondition.class})
     void testRequirementR5051() throws NoTestData, IOException {
         try (final var messages =
