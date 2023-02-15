@@ -193,6 +193,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | C-13            | TriggerReport                                                                        |
 | C-14            | TriggerReport                                                                        |
 | C-15            | TriggerReport                                                                        |
+| R5046_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R5052           | TriggerDescriptorUpdate                                                              |
 | R5053           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
