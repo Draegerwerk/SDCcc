@@ -43,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.message.AbstractAlertReport;
 import org.somda.sdc.biceps.model.message.AbstractComponentReport;
 import org.somda.sdc.biceps.model.message.AbstractContextReport;
@@ -391,6 +392,55 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     vmd.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, vmd.getAlertSystem()));
             assertNull(vmd.getSco(), String.format(errorMsg, descriptor.getClass(), handle, vmd.getSco()));
         }
+    }
+
+    @Test
+    @DisplayName("A SERVICE PROVIDER shall not delete a parent descriptor when it contains child descriptors.")
+    @TestIdentifier(EnabledTestConfig.BICEPS_R5046_0)
+    @TestDescription("Starting from the initially retrieved mdib, applies each report to the mdib and checks that each"
+            + " descriptor in each description modification report part with modification type del does not contain any"
+            + " child descriptors.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationDelPrecondition.class)
+    void testRequirementR50460() throws NoTestData, IOException {
+        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
+                messageStorage, getInjector().getInstance(TestRunObserver.class));
+        final var acceptableSequenceSeen = new AtomicInteger(0);
+        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try {
+                    final var reports = mdibHistorian.getAllReports(sequenceId);
+                    RemoteMdibAccess mdib = mdibHistorian.createNewStorage(sequenceId);
+
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+                        if (report instanceof DescriptionModificationReport descriptionModificationReport) {
+                            final var reportParts = descriptionModificationReport.getReportPart();
+                            for (var part : reportParts) {
+                                if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.DEL) {
+                                    acceptableSequenceSeen.incrementAndGet();
+                                    for (var descriptor : part.getDescriptor()) {
+                                        final var entity = mdib.getEntity(descriptor.getHandle());
+                                        assertTrue(
+                                                entity.isPresent()
+                                                        && entity.orElseThrow()
+                                                                .getChildren()
+                                                                .isEmpty(),
+                                                String.format(
+                                                        "The descriptor with the handle %s still has following child descriptors %s.",
+                                                        entity.orElseThrow().getHandle(),
+                                                        entity.orElseThrow().getChildren()));
+                                    }
+                                }
+                            }
+                        }
+                        mdib = mdibHistorian.applyReportOnStorage(mdib, report);
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
+        assertTestData(acceptableSequenceSeen.get(), "No deletion of descriptors was observed during the test run.");
     }
 
     @Test
