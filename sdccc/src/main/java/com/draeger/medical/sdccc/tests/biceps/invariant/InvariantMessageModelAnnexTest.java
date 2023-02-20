@@ -114,9 +114,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 final MessageContent messageContent = iterator.next();
                 final SoapMessage soapMessage = marshalling.unmarshal(
                         new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-                final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
-                final DescriptionModificationReport descriptionModificationReport =
-                    (DescriptionModificationReport) reportOpt.orElseThrow();
+                final Optional<DescriptionModificationReport> reportOpt =
+                        soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                final DescriptionModificationReport descriptionModificationReport = reportOpt.orElseThrow();
 
                 for (var reportPart : descriptionModificationReport.getReportPart()) {
                     if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
