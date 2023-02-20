@@ -115,27 +115,25 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 final SoapMessage soapMessage = marshalling.unmarshal(
                         new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                 final Optional<AbstractReport> reportOpt = soapUtil.getBody(soapMessage, AbstractReport.class);
-                final AbstractReport report = reportOpt.orElseThrow();
+                final DescriptionModificationReport descriptionModificationReport =
+                    (DescriptionModificationReport) reportOpt.orElseThrow();
 
-                if (report instanceof DescriptionModificationReport descriptionModificationReport) {
+                for (var reportPart : descriptionModificationReport.getReportPart()) {
+                    if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
+                        acceptableReportPartSeen.incrementAndGet();
 
-                    for (var reportPart : descriptionModificationReport.getReportPart()) {
-                        if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
-                            acceptableReportPartSeen.incrementAndGet();
-
-                            for (var createdDescriptor : reportPart.getDescriptor()) {
-                                if (!(createdDescriptor instanceof MdsDescriptor)) {
-                                    final String parentDescriptor = reportPart.getParentDescriptor();
-                                    assertTrue(
-                                            parentDescriptor != null && !parentDescriptor.isBlank(),
-                                            String.format(
-                                                    "msg:DescriptionModificationReport/msg:ReportPart/"
-                                                            + "@ParentDescriptor attribute is not set for a ReportPart "
-                                                            + "with @ModificationType = \"Crt\" that contains "
-                                                            + "AbstractDescriptors that are not MdsDescriptors"
-                                                            + "(for instance: %s).",
-                                                    createdDescriptor.getHandle()));
-                                }
+                        for (var createdDescriptor : reportPart.getDescriptor()) {
+                            if (!(createdDescriptor instanceof MdsDescriptor)) {
+                                final String parentDescriptor = reportPart.getParentDescriptor();
+                                assertTrue(
+                                        parentDescriptor != null && !parentDescriptor.isBlank(),
+                                        String.format(
+                                                "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                        + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                        + "with @ModificationType = \"Crt\" that contains "
+                                                        + "AbstractDescriptors that are not MdsDescriptors"
+                                                        + "(for instance: %s).",
+                                                createdDescriptor.getHandle()));
                             }
                         }
                     }
