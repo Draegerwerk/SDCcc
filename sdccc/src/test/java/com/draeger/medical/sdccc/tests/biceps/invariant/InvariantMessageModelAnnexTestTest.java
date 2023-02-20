@@ -173,6 +173,7 @@ public class InvariantMessageModelAnnexTestTest {
     /**
      * Test whether calling the test when all ReportParts of all DescriptionModificationReports have
      * ModificationTypes != Crt causes a failure.
+     * @throws Exception when something goes wrong in the setup.
      */
     @Test
     public void testRequirementR00550BadNoDescriptionModificationReportsWithReportPartsWithModificationTypeCrt()
@@ -414,12 +415,12 @@ public class InvariantMessageModelAnnexTestTest {
      * Checks whether a sequence of DescriptionModificationReports,
      * in which one ReportPart
      * has @ParentDescriptor=null, but contains no Descriptors
-     * passes the test.
+     * is not failing the test.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550BadParentDescriptorNullButNoDescriptors() throws Exception {
+    public void testRequirementR00550GoodParentDescriptorNullButNoDescriptors() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -459,12 +460,12 @@ public class InvariantMessageModelAnnexTestTest {
     /**
      * Checks whether a sequence of DescriptionModificationReports,
      * in which a ReportPart has @ParentDescriptor=null, but a @ModificationType!=Crt
-     * passes the test.
+     * is not failing the test.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementR00550BadParentDescriptorNullButModificationTypeNotCrt() throws Exception {
+    public void testRequirementR00550GoodParentDescriptorNullButModificationTypeNotCrt() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
