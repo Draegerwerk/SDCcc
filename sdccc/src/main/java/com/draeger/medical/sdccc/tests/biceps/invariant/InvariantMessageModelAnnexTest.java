@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
@@ -66,6 +68,7 @@ import org.somda.sdc.biceps.model.participant.ScoDescriptor;
 import org.somda.sdc.biceps.model.participant.SystemContextDescriptor;
 import org.somda.sdc.biceps.model.participant.VmdDescriptor;
 import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
@@ -88,6 +91,62 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         this.mdibHistorianFactory = riInjector.getInstance(MdibHistorianFactory.class);
         this.marshalling = riInjector.getInstance(MarshallingService.class);
         this.soapUtil = riInjector.getInstance(SoapUtil.class);
+    }
+
+    @Test
+    @DisplayName("A SERVICE PROVIDER SHALL include the parent descriptor handle in "
+            + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
+            + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
+            + "is “Crt” (Created).")
+    @TestIdentifier(EnabledTestConfig.BICEPS_R0055_0)
+    @TestDescription("Retrieves all DescriptionModificationReports seen during the TestRun and checks for each "
+            + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
+            + "of its ReportPart is set.")
+    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
+    void testRequirementR00550() throws NoTestData {
+        final var acceptableReportPartSeen = new AtomicInteger(0);
+
+        // get DescriptionModification reports
+        try (final var reports =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
+
+                final MessageContent messageContent = iterator.next();
+                final SoapMessage soapMessage = marshalling.unmarshal(
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final Optional<DescriptionModificationReport> reportOpt =
+                        soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                final DescriptionModificationReport descriptionModificationReport = reportOpt.orElseThrow();
+
+                for (var reportPart : descriptionModificationReport.getReportPart()) {
+                    if (DescriptionModificationType.CRT.equals(ImpliedValueUtil.getModificationType(reportPart))) {
+                        acceptableReportPartSeen.incrementAndGet();
+
+                        for (var createdDescriptor : reportPart.getDescriptor()) {
+                            if (!(createdDescriptor instanceof MdsDescriptor)) {
+                                final String parentDescriptor = reportPart.getParentDescriptor();
+                                assertTrue(
+                                        parentDescriptor != null && !parentDescriptor.isBlank(),
+                                        String.format(
+                                                "msg:DescriptionModificationReport/msg:ReportPart/"
+                                                        + "@ParentDescriptor attribute is not set for a ReportPart "
+                                                        + "with @ModificationType = \"Crt\" that contains "
+                                                        + "AbstractDescriptors that are not MdsDescriptors"
+                                                        + "(for instance: %s).",
+                                                createdDescriptor.getHandle()));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException | MarshallingException e) {
+            fail("Unexpected Exception", e);
+        }
+
+        assertTestData(
+                acceptableReportPartSeen.get(),
+                "No DescriptionModificationReport with ReportParts with "
+                        + "ModificationType=Crt seen during test run, test failed.");
     }
 
     @Test

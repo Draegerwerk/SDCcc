@@ -166,6 +166,351 @@ public class InvariantMessageModelAnnexTestTest {
      * Tests whether calling the test without any input data causes a failure.
      */
     @Test
+    public void testRequirementR00550BadNoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementR00550);
+    }
+
+    /**
+     * Test whether calling the test when all ReportParts of all DescriptionModificationReports have
+     * ModificationTypes != Crt causes a failure.
+     *
+     * @throws Exception when something goes wrong in the setup.
+     */
+    @Test
+    public void testRequirementR00550BadNoDescriptionModificationReportsWithReportPartsWithModificationTypeCrt()
+            throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        assertThrows(NoTestData.class, testClass::testRequirementR00550);
+    }
+
+    /**
+     * Checks whether a sequence of DescriptionModificationReports,
+     * in which each DescriptionModificationReport
+     * contains only ReportParts with @ModificationType=Crt and @ParentDescriptor attribute set
+     * passes the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550Good() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementR00550();
+    }
+
+    /**
+     * Checks whether the test fails when a DescriptionModificationReport
+     * contains a ReportPart with @ParentDescriptor=null.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550BadReportPartWithParentDescriptorNull() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        (String) null,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        assertThrows(AssertionError.class, testClass::testRequirementR00550);
+    }
+
+    /* NOTE: RequirementR00550_Bad: one ReportPart has @ParentDescriptor = ""  is impossible, as "" violates
+     * the XML Schema constraints
+     */
+
+    /**
+     * Checks whether the test fails when a DescriptionModificationReport
+     * contains a ReportPart with @ParentDescriptor=" ".
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550BadReportPartWithParentDescriptorEmpty() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        " ",
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        assertThrows(AssertionError.class, testClass::testRequirementR00550);
+    }
+
+    /**
+     * Checks whether a DescriptionModificationReport with a ReportPart that has ParentDescriptor=null
+     * passes the test when the ReportPart contains only MdsDescriptors.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550GoodParentDescriptorNullButOnlyMdsDescriptors() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final Pair<MdsDescriptor, MdsState> mdsDescriptor = mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, (String) null, mdsDescriptor));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementR00550();
+    }
+
+    /**
+     * Checks whether a sequence of DescriptionModificationReports,
+     * in which one ReportPart
+     * has @ParentDescriptor=null, but contains no Descriptors
+     * is not failing the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550GoodParentDescriptorNullButNoDescriptors() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(DescriptionModificationType.CRT, (String) null));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementR00550();
+    }
+
+    /**
+     * Checks whether a sequence of DescriptionModificationReports,
+     * in which a ReportPart has @ParentDescriptor=null, but a @ModificationType!=Crt
+     * is not failing the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR00550GoodParentDescriptorNullButModificationTypeNotCrt() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final String parentDescriptor = "parentDescriptor";
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        (String) null,
+                        mdibBuilder.buildChannel("second channel"),
+                        mdibBuilder.buildVmd("second vmd")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        parentDescriptor,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementR00550();
+    }
+
+    /**
+     * Tests whether calling the test without any input data causes a failure.
+     */
+    @Test
     public void testRequirementC5NoTestData() {
         assertThrows(NoTestData.class, testClass::testRequirementC5);
     }
