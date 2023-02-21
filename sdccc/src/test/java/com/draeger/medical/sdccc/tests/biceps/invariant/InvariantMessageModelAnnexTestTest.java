@@ -173,6 +173,7 @@ public class InvariantMessageModelAnnexTestTest {
     /**
      * Test whether calling the test when all ReportParts of all DescriptionModificationReports have
      * ModificationTypes != Crt causes a failure.
+     *
      * @throws Exception when something goes wrong in the setup.
      */
     @Test
