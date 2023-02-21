@@ -489,7 +489,7 @@ public class ConditionalPreconditions {
                 // all options exhausted
                 LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
                         + "that can be inserted, updated and removed."
-                        + "Please check if the test case applying this precondition is applicable to your device and if the"
+                        + "Please check if the test case applying this precondition is applicable to your device and if the "
                         + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
                         + "manipulations have been implemented correctly.");
                 return false;
