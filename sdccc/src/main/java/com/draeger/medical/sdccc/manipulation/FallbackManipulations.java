@@ -56,7 +56,7 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
-    public List<String> getRemovableDescriptors() {
+    public List<String> getRemovableDescriptorsOfClass() {
         final var interactionMessage = "Provide a whitespace-separated list of removable descriptors."
                 + " Includes handles which have been removed already and can be reinserted."
                 + " Handles must stay the same once reinserted into the MDIB."
@@ -75,7 +75,7 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfType(final Class<? extends AbstractDescriptor> descriptorType) {
+    public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorType) {
         final var interactionMessage = "Provide a whitespace-separated list of those removable descriptors "
                 + " that are of type " + descriptorType.getName() + "."
                 + " Includes handles which have been removed already and can be reinserted."

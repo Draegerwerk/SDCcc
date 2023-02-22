@@ -36,7 +36,7 @@ public interface Manipulations {
     /**
      * @return all descriptors which can be removed from and reinserted into the device MDIB.
      */
-    List<String> getRemovableDescriptors();
+    List<String> getRemovableDescriptorsOfClass();
 
     /**
      * Retrieves a list of descriptor handles for descriptors that can be removed from and reinserted into
@@ -46,7 +46,7 @@ public interface Manipulations {
      * @return all descriptors of the given type which can be removed from and reinserted into the device MDIB
      *          and have a type matching descriptorType.
      */
-    List<String> getRemovableDescriptorsOfType(Class<? extends AbstractDescriptor> descriptorType);
+    List<String> getRemovableDescriptorsOfClass(Class<? extends AbstractDescriptor> descriptorType);
 
     /**
      * Removes a descriptor from the device MDIB.

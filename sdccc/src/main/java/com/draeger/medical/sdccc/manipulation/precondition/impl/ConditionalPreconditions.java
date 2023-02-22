@@ -124,7 +124,7 @@ public class ConditionalPreconditions {
         }
         mdibAccess = remoteDevice.getMdibAccess();
 
-        final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
         if (modifiableDescriptors.isEmpty()) {
@@ -436,7 +436,7 @@ public class ConditionalPreconditions {
             mdibAccess = remoteDevice.getMdibAccess();
 
             final List<String> removableMdsDescriptors =
-                    manipulations.getRemovableDescriptorsOfType(MdsDescriptor.class);
+                    manipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class);
 
             if (removableMdsDescriptors.isEmpty()) {
                 LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "

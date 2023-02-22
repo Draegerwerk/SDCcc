@@ -316,7 +316,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptors()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -340,7 +340,7 @@ public class ConditionalPreconditionsTest {
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptors();
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
         verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
@@ -422,7 +422,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptors()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -446,7 +446,7 @@ public class ConditionalPreconditionsTest {
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptors();
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
         verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
@@ -590,7 +590,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptors()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -614,7 +614,7 @@ public class ConditionalPreconditionsTest {
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptors();
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
         verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
 
@@ -674,7 +674,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -708,7 +708,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -738,7 +738,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -772,7 +772,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -802,7 +802,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -841,7 +841,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(2)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -874,7 +874,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -913,7 +913,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -945,7 +945,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -984,7 +984,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -1014,7 +1014,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString()))
@@ -1046,7 +1046,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(2)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -1076,7 +1076,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -1108,7 +1108,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
@@ -1136,7 +1136,7 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptorsOfType(MdsDescriptor.class))
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -1167,7 +1167,7 @@ public class ConditionalPreconditionsTest {
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockManipulations, times(1)).getRemovableDescriptorsOfType(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
         verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(0)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());

@@ -144,24 +144,19 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
-    public List<String> getRemovableDescriptors() {
-        return performCallWrapper(
-                v -> deviceStub.getRemovableDescriptors(Empty.getDefaultInstance()),
-                v -> fallback.getRemovableDescriptors(),
-                res -> res.getStatus().getResult(),
-                DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
-                Collections.emptyList());
+    public List<String> getRemovableDescriptorsOfClass() {
+        return getRemovableDescriptorsOfClass(AbstractDescriptor.class);
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfType(final Class<? extends AbstractDescriptor> descriptorType) {
-        final DeviceRequests.GetRemovableDescriptorsOfTypeRequest request =
-                DeviceRequests.GetRemovableDescriptorsOfTypeRequest.newBuilder()
-                        .setDescriptorType(toApiDescriptorType(descriptorType))
+    public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorClass) {
+        final DeviceRequests.GetRemovableDescriptorsOfClassRequest request =
+                DeviceRequests.GetRemovableDescriptorsOfClassRequest.newBuilder()
+                        .setDescriptorClass(toApiDescriptorClass(descriptorClass))
                         .build();
         return performCallWrapper(
-                v -> deviceStub.getRemovableDescriptorsOfType(request),
-                v -> fallback.getRemovableDescriptorsOfType(descriptorType),
+                v -> deviceStub.getRemovableDescriptorsOfClass(request),
+                v -> fallback.getRemovableDescriptorsOfClass(descriptorClass),
                 res -> res.getStatus().getResult(),
                 DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
                 Collections.emptyList());
@@ -508,11 +503,11 @@ public class GRpcManipulations implements Manipulations {
         };
     }
 
-    private DeviceTypes.DescriptorType toApiDescriptorType(final Class<? extends AbstractDescriptor> descriptorType) {
+    private DeviceTypes.DescriptorClass toApiDescriptorClass(final Class<? extends AbstractDescriptor> descriptorType) {
         if (MdsDescriptor.class.equals(descriptorType)) {
-            return DeviceTypes.DescriptorType.DESCRIPTOR_TYPE_MDS;
+            return DeviceTypes.DescriptorClass.DESCRIPTOR_CLASS_MDS;
         } else {
-            return DeviceTypes.DescriptorType.DESCRIPTOR_TYPE_ABSTRACT;
+            return DeviceTypes.DescriptorClass.DESCRIPTOR_CLASS_ABSTRACT;
         }
     }
 
