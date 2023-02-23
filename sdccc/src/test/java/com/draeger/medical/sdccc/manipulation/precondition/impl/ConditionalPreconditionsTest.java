@@ -316,7 +316,8 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -422,7 +423,8 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -590,7 +592,8 @@ public class ConditionalPreconditionsTest {
                 descriptor1Handle, false,
                 descriptor2Handle, true));
 
-        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);

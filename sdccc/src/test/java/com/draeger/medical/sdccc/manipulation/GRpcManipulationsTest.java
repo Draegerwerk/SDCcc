@@ -437,8 +437,10 @@ public class GRpcManipulationsTest {
     }
 
     static class DeviceStub extends DeviceServiceGrpc.DeviceServiceImplBase {
-        private BiFunction<DeviceRequests.GetRemovableDescriptorsOfClassRequest,
-            StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void>
+        private BiFunction<
+                        DeviceRequests.GetRemovableDescriptorsOfClassRequest,
+                        StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>,
+                        Void>
                 getRemovableDescriptorsCall = (request, responseObserver) -> {
                     asyncUnimplementedUnaryCall(getGetRemovableDescriptorsOfClassMethod(), responseObserver);
                     return null;
@@ -457,8 +459,11 @@ public class GRpcManipulationsTest {
                 };
 
         public void setGetRemovableDescriptorsCall(
-                final BiFunction<DeviceRequests.GetRemovableDescriptorsOfClassRequest,
-                    StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void> arg) {
+                final BiFunction<
+                                DeviceRequests.GetRemovableDescriptorsOfClassRequest,
+                                StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>,
+                                Void>
+                        arg) {
             this.getRemovableDescriptorsCall = arg;
         }
 
@@ -476,11 +481,10 @@ public class GRpcManipulationsTest {
 
         @Override
         public void getRemovableDescriptorsOfClass(
-            DeviceRequests.GetRemovableDescriptorsOfClassRequest request,
-            StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse> responseObserver) {
+                final DeviceRequests.GetRemovableDescriptorsOfClassRequest request,
+                final StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse> responseObserver) {
             getRemovableDescriptorsCall.apply(request, responseObserver);
         }
-
 
         @Override
         public void insertDescriptor(
