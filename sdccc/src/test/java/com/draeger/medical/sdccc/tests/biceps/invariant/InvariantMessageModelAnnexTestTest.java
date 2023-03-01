@@ -616,24 +616,24 @@ public class InvariantMessageModelAnnexTestTest {
         vmdDescriptor.setDescriptorVersion(BigInteger.TEN);
 
         final Envelope first = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.UPT, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
         final Envelope second = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.DEL, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                DescriptionModificationType.CRT, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, (String) null, new ImmutablePair<>(vmdDescriptor, vmdState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
         assertThrows(NoTestData.class, testClass::testRequirementC7);

@@ -252,30 +252,30 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         final var acceptableReportsSeen = new AtomicInteger(0);
 
         try (final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
-                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             for (MessageContent messageContent :
-                descriptionModificationReports.getStream().toList()) {
+                    descriptionModificationReports.getStream().toList()) {
                 final SoapMessage soapMessage = marshalling.unmarshal(
-                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-                final DescriptionModificationReport descriptionModificationReport = (DescriptionModificationReport)
-                    soapMessage.getOriginalEnvelope().getBody().getAny().get(0);
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final DescriptionModificationReport descriptionModificationReport = soapUtil.getBody(
+                                soapMessage, DescriptionModificationReport.class)
+                        .orElseThrow();
 
-                for (DescriptionModificationReport.ReportPart reportPart : descriptionModificationReport.getReportPart()) {
-                    if (reportPart.getDescriptor().stream()
-                        .anyMatch(MdsDescriptor.class::isInstance)) {
+                for (DescriptionModificationReport.ReportPart reportPart :
+                        descriptionModificationReport.getReportPart()) {
+                    if (reportPart.getDescriptor().stream().anyMatch(MdsDescriptor.class::isInstance)) {
                         acceptableReportsSeen.incrementAndGet();
                         final String parentDescriptor = reportPart.getParentDescriptor();
                         assertTrue(
-                            parentDescriptor == null || parentDescriptor.isBlank(),
-                            String.format(
-                                "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
-                                    + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
-                                parentDescriptor));
+                                parentDescriptor == null || parentDescriptor.isBlank(),
+                                String.format(
+                                        "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                                                + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                                        parentDescriptor));
                     }
                 }
             }
         }
-
 
         assertTestData(
                 acceptableReportsSeen.get(),

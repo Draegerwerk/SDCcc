@@ -396,7 +396,7 @@ public class ConditionalPreconditions {
                                         "Could not retrieve description modification report body from message")))
                         .map(DescriptionModificationReport::getReportPart)
                         .flatMap(Collection::stream)
-                        .collect(Collectors.toList());
+                        .toList();
                 for (var reportPart : reportParts) {
                     final var mdsDescriptorPresent = reportPart.getDescriptor().stream()
                             .filter(abstractDescriptor ->
@@ -439,6 +439,7 @@ public class ConditionalPreconditions {
                         + "manipulation. Please check if the test case applying this precondition is applicable to "
                         + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
                         + "correctly.");
+                return false;
             }
 
             final List<String> absentRemovableMdsDescriptors = new ArrayList<>();
