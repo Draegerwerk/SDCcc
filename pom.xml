@@ -58,6 +58,18 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <version>2.0.0</version>
+                <configuration>
+                    <cleanLicensesOutputDirectory>true</cleanLicensesOutputDirectory>
+                    <forceDownload>true</forceDownload>
+                    <removeOrphanLicenseFiles>false</removeOrphanLicenseFiles>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>download-licenses</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
