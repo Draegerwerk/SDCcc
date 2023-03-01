@@ -426,7 +426,7 @@ public class GRpcManipulations implements Manipulations {
             }
             case RESULT_SUCCESS, RESULT_NOT_SUPPORTED, RESULT_FAIL -> responseExtractor.apply(response);
             default -> {
-                LOG.warn("setLocationDetail: Server has not sent a valid result, going to fallback");
+                LOG.warn("Server has not sent a valid result, going to fallback");
                 yield fallbackFunc.apply(null);
             }
         };
@@ -446,8 +446,8 @@ public class GRpcManipulations implements Manipulations {
             } else {
                 response = ResponseTypes.Result.RESULT_SUCCESS;
             }
-        } else if (result instanceof ResponseTypes.Result) {
-            response = (ResponseTypes.Result) result;
+        } else if (result instanceof ResponseTypes.Result castedResult) {
+            response = castedResult;
         }
         return response;
     }

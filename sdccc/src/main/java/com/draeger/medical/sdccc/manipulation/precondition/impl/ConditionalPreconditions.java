@@ -411,7 +411,6 @@ public class ConditionalPreconditions {
                         }
                     }
                 }
-                // CHECKSTYLE.OFF: IllegalCatch
             } catch (IOException | RuntimeException e) {
                 throw new PreconditionException(
                         "An error occurred while trying to process description modification report messages from storage",
@@ -426,9 +425,7 @@ public class ConditionalPreconditions {
             final var testClient = injector.getInstance(TestClient.class);
 
             final MdibAccess mdibAccess;
-            final SdcRemoteDevice remoteDevice;
-
-            remoteDevice = testClient.getSdcRemoteDevice();
+            final SdcRemoteDevice remoteDevice = testClient.getSdcRemoteDevice();
             if (remoteDevice == null) {
                 LOG.error("remote device could not be accessed, likely due to a disconnect");
                 return false;
@@ -437,7 +434,6 @@ public class ConditionalPreconditions {
 
             final List<String> removableMdsDescriptors =
                     manipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class);
-
             if (removableMdsDescriptors.isEmpty()) {
                 LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
                         + "manipulation. Please check if the test case applying this precondition is applicable to "
@@ -447,12 +443,12 @@ public class ConditionalPreconditions {
 
             final List<String> absentRemovableMdsDescriptors = new ArrayList<>();
             final List<String> presentRemovableMdsDescriptors = new ArrayList<>();
-            for (String removeableMdsDescriptor : removableMdsDescriptors) {
-                final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removeableMdsDescriptor);
+            for (String removableMdsDescriptor : removableMdsDescriptors) {
+                final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removableMdsDescriptor);
                 if (descOpt.isEmpty()) {
-                    absentRemovableMdsDescriptors.add(removeableMdsDescriptor);
+                    absentRemovableMdsDescriptors.add(removableMdsDescriptor);
                 } else {
-                    presentRemovableMdsDescriptors.add(removeableMdsDescriptor);
+                    presentRemovableMdsDescriptors.add(removableMdsDescriptor);
                 }
             }
 

@@ -76,12 +76,13 @@ public class FallbackManipulations implements Manipulations {
 
     @Override
     public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorType) {
-        final var interactionMessage = "Provide a whitespace-separated list of those removable descriptors "
+        final var interactionMessage = "Provide a whitespace-separated list of those removable descriptors"
                 + " that are of type " + descriptorType.getName() + "."
                 + " Includes handles which have been removed already and can be reinserted."
                 + " Handles must stay the same once reinserted into the MDIB."
-                + " The handles shall be representative of the devices capabilities to remove"
-                + " descriptors (at least one of every possible kind).";
+                + " It is recommended to first create a list of handles that is representative of the devices"
+                + " capabilities to remove descriptors (at least one of every possible kind) and then to filter"
+                + " this list by descriptorType.";
         final var data = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
                     @Override
