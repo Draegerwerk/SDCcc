@@ -416,7 +416,6 @@ public class ConditionalPreconditions {
                         "An error occurred while trying to process description modification report messages from storage",
                         e);
             }
-            // CHECKSTYLE.ON: IllegalCatch
             return crtSeen.get() && uptSeen.get() && delSeen.get();
         }
 
