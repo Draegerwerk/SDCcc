@@ -442,50 +442,39 @@ public class ConditionalPreconditions {
                 return false;
             }
 
-            final List<String> absentRemovableMdsDescriptors = new ArrayList<>();
-            final List<String> presentRemovableMdsDescriptors = new ArrayList<>();
+            // absent:        present:
+            // 1. insert*
+            // 2. update      1. update
+            // 3. remove      2. remove*
+            //                3. insert
+            //
+            // * = abort when this manipulation fails
+
+            boolean success = false;
+            final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers = new HashMap<>();
+
             for (String removableMdsDescriptor : removableMdsDescriptors) {
                 final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removableMdsDescriptor);
                 if (descOpt.isEmpty()) {
-                    absentRemovableMdsDescriptors.add(removableMdsDescriptor);
+                    // removable MdsDescriptor is absent
+                    triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                            removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers);
                 } else {
-                    presentRemovableMdsDescriptors.add(removableMdsDescriptor);
+                    // removable MdsDescriptor is present
+                    triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                            removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers);
                 }
-            }
-
-            // absent:        present:
-            // 1. insert
-            // 2. update      1. update
-            // 3. remove      2. remove
-            //                3. insert
-
-            // priorities:
-            // 1. try all present descriptors
-            // 2. try all absent descriptors
-            // 3. when none worked -> ERROR
-
-            // 1. try all present descriptors
-            boolean success = false;
-            for (String initiallyPresentMdsDescriptor : presentRemovableMdsDescriptors) {
-                if (triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
-                        initiallyPresentMdsDescriptor, manipulations)) {
+                if (isGoalReached(numberOfSuccessfulTriggers)) {
                     success = true;
                     break;
                 }
             }
-            if (!success) {
-                for (String initiallyAbsentMdsDescriptor : absentRemovableMdsDescriptors) {
-                    if (triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
-                            initiallyAbsentMdsDescriptor, manipulations)) {
-                        success = true;
-                        break;
-                    }
-                }
-            }
+
             if (!success) {
                 // all options exhausted
                 LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
-                        + "that can be inserted, updated and removed."
+                        + "that can be inserted, updated and removed (at least one for each is required for the test "
+                        + "applying this precondition). "
                         + "Please check if the test case applying this precondition is applicable to your device and if the "
                         + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
                         + "manipulations have been implemented correctly.");
@@ -495,44 +484,73 @@ public class ConditionalPreconditions {
             return true;
         }
 
-        private static boolean triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
-                final String initiallyAbsentMdsDescriptor, final Manipulations manipulations) {
+        private static boolean isGoalReached(
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
+            final Integer crt = numberOfSuccessfulTriggers.get(DescriptionModificationType.CRT);
+            final Integer upt = numberOfSuccessfulTriggers.get(DescriptionModificationType.UPT);
+            final Integer del = numberOfSuccessfulTriggers.get(DescriptionModificationType.DEL);
+            return crt != null && crt > 0 && upt != null && upt > 0 && del != null && del > 0;
+        }
+
+        private static void triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                final String initiallyAbsentMdsDescriptor,
+                final Manipulations manipulations,
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+            } else {
+                return;
             }
 
             // 2. update
             result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
             }
 
             // 3. remove
             result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
-            return ResponseTypes.Result.RESULT_SUCCESS.equals(result);
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+            }
         }
 
-        private static boolean triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
-                final String initiallyPresentMdsDescriptor, final Manipulations manipulations) {
+        private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                final String initiallyPresentMdsDescriptor,
+                final Manipulations manipulations,
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
             }
 
             // 2. remove
             result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
-            if (!ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                return false;
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+            } else {
+                return;
             }
 
             // 3. re-insert
             result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
-            return ResponseTypes.Result.RESULT_SUCCESS.equals(result);
+            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
+                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+            }
+        }
+
+        private static void increaseNumberInHash(
+                final HashMap<DescriptionModificationType, Integer> hash, final DescriptionModificationType key) {
+            if (hash.containsKey(key)) {
+                hash.put(key, hash.get(key) + 1);
+            } else {
+                hash.put(key, 1);
+            }
         }
     }
 

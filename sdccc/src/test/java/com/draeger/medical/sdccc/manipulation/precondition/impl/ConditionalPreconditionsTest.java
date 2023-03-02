@@ -716,9 +716,9 @@ public class ConditionalPreconditionsTest {
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, insertCaptor.getValue());
-        assertEquals(descriptor2Handle, removeCaptor.getValue());
-        assertEquals(descriptor2Handle, updateCaptor.getValue());
+        assertEquals(descriptor1Handle, insertCaptor.getValue());
+        assertEquals(descriptor1Handle, removeCaptor.getValue());
+        assertEquals(descriptor1Handle, updateCaptor.getValue());
     }
 
     /**
@@ -799,8 +799,8 @@ public class ConditionalPreconditionsTest {
         final var descriptor2Handle = "handle;Süper;2";
 
         final var presenceMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, true));
+                descriptor1Handle, true,
+                descriptor2Handle, false));
         final var updateMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, false));
@@ -810,7 +810,7 @@ public class ConditionalPreconditionsTest {
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             final String handle = invocation.getArgument(0);
-            if (descriptor2Handle.equals(handle)) {
+            if (descriptor1Handle.equals(handle)) {
                 return ResponseTypes.Result.RESULT_FAIL;
             } else {
                 presenceMap.put(handle, true);
@@ -849,12 +849,12 @@ public class ConditionalPreconditionsTest {
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(1));
-        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(1));
-        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
     }
 
     /**
@@ -886,7 +886,7 @@ public class ConditionalPreconditionsTest {
         });
         when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             final String handle = invocation.getArgument(0);
-            if (descriptor2Handle.equals(handle)) {
+            if (descriptor1Handle.equals(handle)) {
                 return ResponseTypes.Result.RESULT_FAIL;
             } else {
                 presenceMap.put(handle, false);
@@ -917,15 +917,16 @@ public class ConditionalPreconditionsTest {
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
-        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).insertDescriptor(insertCaptor.capture());
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(0));
-        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, insertCaptor.getValue());
-        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(1));
-        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(1));
     }
 
     /**
@@ -962,7 +963,7 @@ public class ConditionalPreconditionsTest {
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
                 .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
                     final String handle = invokation.getArgument(0);
-                    if (descriptor2Handle.equals(handle)) {
+                    if (descriptor1Handle.equals(handle)) {
                         return ResponseTypes.Result.RESULT_FAIL;
                     } else {
                         updateMap.put(handle, true);
@@ -988,14 +989,16 @@ public class ConditionalPreconditionsTest {
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
-        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
-        verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(2)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(1));
-        assertEquals(descriptor1Handle, insertCaptor.getValue());
-        assertEquals(descriptor1Handle, removeCaptor.getValue());
+        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
     }
 
     /**
@@ -1054,8 +1057,8 @@ public class ConditionalPreconditionsTest {
         verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(1));
         assertEquals(descriptor2Handle, removeCaptor.getValue());
         assertEquals(descriptor2Handle, updateCaptor.getValue());
     }
@@ -1116,11 +1119,11 @@ public class ConditionalPreconditionsTest {
         verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(0));
-        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
         assertEquals(descriptor1Handle, insertCaptor.getValue());
-        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(1));
-        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
     }
 
     /**
@@ -1171,16 +1174,17 @@ public class ConditionalPreconditionsTest {
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
         verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
-        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
-        verify(mockManipulations, times(0)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(2)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
         verify(mockManipulations, times(2)).triggerDescriptorUpdate(updateCaptor.capture());
 
-        assertEquals(descriptor1Handle, insertCaptor.getValue());
-        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(0));
-        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, insertCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, insertCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, updateCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
+        assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
+        assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
     }
-
-    // TODO: test Bad cases
 
     /**
      * Tests whether AllKindsOfContextStatesAssociatedPrecondition correctly checks for precondition.
