@@ -30,7 +30,7 @@ public class DirectParticipantModelStatePartTest extends InjectorTestBase {
 
     @BeforeEach
     void setUp() {
-        TestClient testClient = getInjector().getInstance(TestClient.class);
+        final TestClient testClient = getInjector().getInstance(TestClient.class);
         assertTrue(testClient.isClientRunning());
         this.messageGeneratingUtil = getInjector().getInstance(MessageGeneratingUtil.class);
     }
@@ -47,5 +47,4 @@ public class DirectParticipantModelStatePartTest extends InjectorTestBase {
         final var mdState = getMdibResponse.getMdib().getMdState();
         assertNotNull(mdState, "No MdState present, test failed.");
     }
-
 }
