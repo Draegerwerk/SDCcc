@@ -43,7 +43,6 @@ public final class EnabledTestConfig {
     public static final String BICEPS_R5003 = BICEPS + "R5003";
 
     public static final String BICEPS_B_6_0 = BICEPS + "B-6_0";
-    public static final String BICEPS_B_61 = BICEPS + "B-61";
     public static final String BICEPS_B_128 = BICEPS + "B-128";
     public static final String BICEPS_B_284_0 = BICEPS + "B-284_0";
     public static final String BICEPS_B_402_0 = BICEPS + "B-402_0";

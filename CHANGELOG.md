@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - dpws:R0013 sent a request that was not WS-Transfer compliant
+
+### Removed
+- test for biceps:B-61.
  
 ## [6.0.0] - 2022-12-08
 

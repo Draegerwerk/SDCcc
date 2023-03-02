@@ -185,7 +185,6 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R0124           | CreateContextStateWithAssociation                           |
 | R0125           | CreateContextStateWithAssociation                           |
 | R0133           | CreateContextStateWithAssociation                           |
-| B-61            | SetMetricQualityValidity                                    |
 | B-128           | SetSystemSignalActivation, SetAlertActivation               |
 | C-5             | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor |
 | C-11            | TriggerReport                                               |
