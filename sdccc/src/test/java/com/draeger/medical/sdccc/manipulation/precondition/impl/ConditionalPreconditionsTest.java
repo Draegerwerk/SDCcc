@@ -664,7 +664,8 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when a "
             + "RemovableDescriptor is present.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodPresentDescriptors() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodPresentDescriptors()
+            throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -673,9 +674,6 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, true));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
@@ -689,10 +687,7 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -728,16 +723,14 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when all "
             + "RemovableDescriptors are absent.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodAbsentDescriptors() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodAbsentDescriptors()
+            throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
         final var descriptor2Handle = "handle;Süper;2";
 
         final var presenceMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
-        final var updateMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, false));
 
@@ -753,10 +746,7 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -792,7 +782,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be inserted.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertFails() throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -801,9 +791,6 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, true,
                 descriptor2Handle, false));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
@@ -811,7 +798,7 @@ public class ConditionalPreconditionsTest {
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             final String handle = invocation.getArgument(0);
             if (descriptor1Handle.equals(handle)) {
-                return ResponseTypes.Result.RESULT_FAIL;
+                return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
             } else {
                 presenceMap.put(handle, true);
                 return ResponseTypes.Result.RESULT_SUCCESS;
@@ -822,10 +809,7 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -864,7 +848,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when a "
             + "RemovableDescriptor is present but cannot be removed.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveFails() throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -873,9 +857,6 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, true));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
@@ -887,17 +868,14 @@ public class ConditionalPreconditionsTest {
         when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             final String handle = invocation.getArgument(0);
             if (descriptor1Handle.equals(handle)) {
-                return ResponseTypes.Result.RESULT_FAIL;
+                return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
             } else {
                 presenceMap.put(handle, false);
                 return ResponseTypes.Result.RESULT_SUCCESS;
             }
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -936,7 +914,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be updated")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateFails() throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -945,9 +923,6 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, true));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
@@ -961,12 +936,11 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    final String handle = invokation.getArgument(0);
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+                    final String handle = invocation.getArgument(0);
                     if (descriptor1Handle.equals(handle)) {
-                        return ResponseTypes.Result.RESULT_FAIL;
+                        return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
                     } else {
-                        updateMap.put(handle, true);
                         return ResponseTypes.Result.RESULT_SUCCESS;
                     }
                 });
@@ -1007,7 +981,8 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Inserts fail.")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllInsertsFail() {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllInsertsUnsupported()
+            throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1016,24 +991,18 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, true));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
 
         when(mockManipulations.insertDescriptor(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_FAIL);
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1069,7 +1038,8 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Removals fail.")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsFailed() {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsFailed()
+            throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1078,9 +1048,6 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(
                 descriptor1Handle, false,
                 descriptor2Handle, true));
-        final var updateMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
@@ -1090,12 +1057,9 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.removeDescriptor(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_FAIL);
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invokation -> {
-                    updateMap.put(invokation.getArgument(0), true);
-                    return ResponseTypes.Result.RESULT_SUCCESS;
-                });
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1132,7 +1096,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Updates fail")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesFailed() {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesFailed() throws PreconditionException {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1154,7 +1118,7 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_FAIL);
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1184,6 +1148,369 @@ public class ConditionalPreconditionsTest {
         assertEquals(descriptor2Handle, updateCaptor.getAllValues().get(1));
         assertEquals(descriptor1Handle, removeCaptor.getAllValues().get(0));
         assertEquals(descriptor2Handle, removeCaptor.getAllValues().get(1));
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when the
+     * insertDescriptor Manipulation fails an initially absent descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition throws Exception when the insertDescritor "
+            + "manipulation fails an initially absent descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadInsertFailsDescriptorAbsent() {
+
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                return ResponseTypes.Result.RESULT_FAIL;
+            } else {
+                return ResponseTypes.Result.RESULT_SUCCESS;
+            }
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(0)).removeDescriptor(anyString());
+        verify(mockManipulations, times(0)).triggerDescriptorUpdate(anyString());
+
+        assertEquals(descriptor1Handle, insertCaptor.getValue());
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when the triggerDescriptorUpdate
+     * manipulation fails an initially absent descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when triggerDescriptorUpdate()"
+            + "manipulation fails an initially absent descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadUpdateFailsDescriptorAbsent() {
+
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+                    if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                        return ResponseTypes.Result.RESULT_FAIL;
+                    } else {
+                        return ResponseTypes.Result.RESULT_SUCCESS;
+                    }
+                });
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var updateCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(0)).removeDescriptor(anyString());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
+
+        assertEquals(descriptor1Handle, insertCaptor.getValue());
+        assertEquals(descriptor1Handle, updateCaptor.getValue());
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when
+     * the removeDescriptor manipulation fails on an initially absent descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when removeDescriptor manipulation fails"
+            + "on an initially absent descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadRemoveFailsDescriptorAbsent() {
+
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_FAIL;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var updateCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
+
+        assertEquals(descriptor1Handle, insertCaptor.getValue());
+        assertEquals(descriptor1Handle, removeCaptor.getValue());
+        assertEquals(descriptor1Handle, updateCaptor.getValue());
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when the
+     * insertDescriptor Manipulation fails on an initially present descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition throws Exception when the insertDescriptor "
+            + "manipulation fails on an initially present Descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadInsertFailsDescriptorPresent() {
+
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, true,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                return ResponseTypes.Result.RESULT_FAIL;
+            } else {
+                return ResponseTypes.Result.RESULT_SUCCESS;
+            }
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(1)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(1)).removeDescriptor(anyString());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(anyString());
+
+        assertEquals(descriptor1Handle, insertCaptor.getValue());
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when the triggerDescriptorUpdate
+     * manipulation fails on an initially present descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when triggerDescriptorUpdate()"
+            + "manipulation fails on an initially present descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadUpdateFailsDescriptorPresent() {
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, true,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+                    if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                        return ResponseTypes.Result.RESULT_FAIL;
+                    } else {
+                        return ResponseTypes.Result.RESULT_SUCCESS;
+                    }
+                });
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var updateCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(0)).insertDescriptor(anyString());
+        verify(mockManipulations, times(0)).removeDescriptor(anyString());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
+
+        assertEquals(descriptor1Handle, updateCaptor.getValue());
+    }
+
+    /**
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when
+     * the removeDescriptor manipulation fails on an initially present descriptor.
+     */
+    @Test
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when removeDescriptor manipulation fails"
+            + "on an initially present descriptor.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadRemoveFailsDescriptorPresent() {
+
+        // given
+        final var descriptor1Handle = "superHandle1";
+        final var descriptor2Handle = "handle;Süper;2";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, true,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_FAIL;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyString()))
+                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
+                .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
+                    final String handle = invocation.getArgument(0);
+                    if (presenceMap.get(handle)) {
+                        return Optional.of(mock(AbstractDescriptor.class));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        // when
+        assertThrows(
+                PreconditionException.class,
+                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
+                        testInjector));
+
+        // then
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var updateCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass(MdsDescriptor.class);
+        verify(mockManipulations, times(0)).insertDescriptor(anyString());
+        verify(mockManipulations, times(1)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(updateCaptor.capture());
+
+        assertEquals(descriptor1Handle, removeCaptor.getValue());
+        assertEquals(descriptor1Handle, updateCaptor.getValue());
     }
 
     /**

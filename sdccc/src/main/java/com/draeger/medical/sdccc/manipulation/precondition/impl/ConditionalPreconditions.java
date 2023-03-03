@@ -419,7 +419,7 @@ public class ConditionalPreconditions {
             return crtSeen.get() && uptSeen.get() && delSeen.get();
         }
 
-        static boolean manipulation(final Injector injector) {
+        static boolean manipulation(final Injector injector) throws PreconditionException {
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testClient = injector.getInstance(TestClient.class);
 
@@ -494,53 +494,98 @@ public class ConditionalPreconditions {
         private static void triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
                 final String initiallyAbsentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers)
+                throws PreconditionException {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
-            } else {
-                return;
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    return;
+                default:
+                    failDueToUnexpectedResult("insertDescriptor", initiallyAbsentMdsDescriptor, result);
             }
 
             // 2. update
             result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // continue with this descriptor
+                default:
+                    failDueToUnexpectedResult("triggerDescriptorUpdate", initiallyAbsentMdsDescriptor, result);
             }
 
             // 3. remove
             result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // do nothing
+                default:
+                    failDueToUnexpectedResult("removeDescriptor", initiallyAbsentMdsDescriptor, result);
             }
         }
 
+        @SuppressWarnings("checkstyle:EmptyBlock")
         private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
                 final String initiallyPresentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers)
+                throws PreconditionException {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // continue with this descriptor
+                default:
+                    failDueToUnexpectedResult("triggerDescriptorUpdate", initiallyPresentMdsDescriptor, result);
             }
 
             // 2. remove
             result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
-            } else {
-                return;
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    return;
+                default:
+                    failDueToUnexpectedResult("removeDescriptor", initiallyPresentMdsDescriptor, result);
             }
 
             // 3. re-insert
             result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
-            if (ResponseTypes.Result.RESULT_SUCCESS.equals(result)) {
-                increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // do nothing
+                default:
+                    failDueToUnexpectedResult("insertDescriptor", initiallyPresentMdsDescriptor, result);
             }
+        }
+
+        private static void failDueToUnexpectedResult(
+                final String manipulationName,
+                final String initiallyAbsentMdsDescriptor,
+                final ResponseTypes.Result result)
+                throws PreconditionException {
+            throw new PreconditionException(String.format(
+                    "Unexpected manipulation result: " + "The %s(\"%s\") manipulation returned %s.",
+                    manipulationName, initiallyAbsentMdsDescriptor, result));
         }
 
         private static void increaseNumberInHash(
