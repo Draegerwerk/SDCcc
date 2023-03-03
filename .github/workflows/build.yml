@@ -60,7 +60,7 @@ jobs:
 
       - name: Build package and download license information
         run: |
-          mvn package license:download-licenses -X -Dchangelist=${{ env.CHANGELIST }} -DskipTests=true -f pom.xml -Pexecutable
+          mvn package -Dchangelist=${{ env.CHANGELIST }} -DskipTests=true -f pom.xml -Pexecutable
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
