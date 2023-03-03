@@ -59,7 +59,6 @@
                 <artifactId>license-maven-plugin</artifactId>
                 <version>2.0.0</version>
                 <configuration>
-                    <forceDownload>true</forceDownload>
                     <useDefaultUrlReplacements>true</useDefaultUrlReplacements>
                 </configuration>
                 <executions>
