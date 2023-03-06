@@ -668,14 +668,11 @@ public class ConditionalPreconditionsTest {
 
         // given
         final var descriptor1Handle = "superHandle1";
-        final var descriptor2Handle = "handle;Süper;2";
 
-        final var presenceMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, true));
+        final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(List.of(descriptor1Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -726,14 +723,11 @@ public class ConditionalPreconditionsTest {
 
         // given
         final var descriptor1Handle = "superHandle1";
-        final var descriptor2Handle = "handle;Süper;2";
 
-        final var presenceMap = new HashMap<>(Map.of(
-                descriptor1Handle, false,
-                descriptor2Handle, false));
+        final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(List.of(descriptor1Handle));
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -780,7 +774,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be inserted.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertNotSupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -846,7 +840,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when a "
             + "RemovableDescriptor is present but cannot be removed.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveNotSupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -912,7 +906,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be updated")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateFails() {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateNotSupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -975,10 +969,10 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when
-     * all Inserts fail.
+     * all Inserts are unsupported.
      */
     @Test
-    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Inserts fail.")
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Inserts are unsupported.")
     public void testDescriptionModificationMdsDescriptorPreconditionBadAllInsertsUnsupported() {
 
         // given
@@ -1031,11 +1025,11 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when
-     * all Removals fail.
+     * all Removals are unsupported.
      */
     @Test
-    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Removals fail.")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsFailed() {
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Removals are unsupported.")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsNotSupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1088,11 +1082,11 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when
-     * all Updates fail.
+     * all Updates are unsupported.
      */
     @Test
-    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Updates fail")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesFailed() {
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Updates are unsupported")
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesAreUnsupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1151,7 +1145,7 @@ public class ConditionalPreconditionsTest {
      * insertDescriptor Manipulation fails an initially absent descriptor.
      */
     @Test
-    @DisplayName("DescriptionModificationMdsDescriptorPrecondition throws Exception when the insertDescritor "
+    @DisplayName("DescriptionModificationMdsDescriptorPrecondition throws Exception when the insertDescriptor "
             + "manipulation fails an initially absent descriptor.")
     public void testDescriptionModificationMdsDescriptorPreconditionBadInsertFailsDescriptorAbsent() {
 

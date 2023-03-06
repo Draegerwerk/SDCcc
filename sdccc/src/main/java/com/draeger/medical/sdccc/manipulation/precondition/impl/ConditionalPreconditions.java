@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -450,7 +451,8 @@ public class ConditionalPreconditions {
             //
             // * = abort when this manipulation fails
 
-            final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers = new HashMap<>();
+            final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers =
+                    new EnumMap<>(DescriptionModificationType.class);
 
             try {
                 for (String removableMdsDescriptor : removableMdsDescriptors) {
@@ -483,7 +485,7 @@ public class ConditionalPreconditions {
         }
 
         private static boolean isGoalReached(
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
             final Integer crt = numberOfSuccessfulTriggers.get(DescriptionModificationType.CRT);
             final Integer upt = numberOfSuccessfulTriggers.get(DescriptionModificationType.UPT);
             final Integer del = numberOfSuccessfulTriggers.get(DescriptionModificationType.DEL);
@@ -493,15 +495,13 @@ public class ConditionalPreconditions {
         private static void triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
                 final String initiallyAbsentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
                 final TestRunObserver testRunObserver)
                 throws UnexpectedManipulationResultException {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
-            LOG.info("Manipulation insertDescriptor({}) returned result {}",
-                initiallyAbsentMdsDescriptor,
-                result);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
@@ -515,9 +515,10 @@ public class ConditionalPreconditions {
 
             // 2. update
             result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
-            LOG.info("Manipulation triggerDescriptorUpdate({}) returned result {}",
-                initiallyAbsentMdsDescriptor,
-                result);
+            LOG.info(
+                    "Manipulation triggerDescriptorUpdate({}) returned result {}",
+                    initiallyAbsentMdsDescriptor,
+                    result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
@@ -531,9 +532,7 @@ public class ConditionalPreconditions {
 
             // 3. remove
             result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
-            LOG.info("Manipulation removeDescriptor({}) returned result {}",
-                initiallyAbsentMdsDescriptor,
-                result);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
@@ -549,15 +548,16 @@ public class ConditionalPreconditions {
         private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
                 final String initiallyPresentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
                 final TestRunObserver testRunObserver)
                 throws UnexpectedManipulationResultException {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
-            LOG.info("Manipulation triggerDescriptorUpdate({}) returned result {}",
-                initiallyPresentMdsDescriptor,
-                result);
+            LOG.info(
+                    "Manipulation triggerDescriptorUpdate({}) returned result {}",
+                    initiallyPresentMdsDescriptor,
+                    result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
@@ -571,8 +571,7 @@ public class ConditionalPreconditions {
 
             // 2. remove
             result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
-            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyPresentMdsDescriptor,
-                result);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
@@ -586,8 +585,7 @@ public class ConditionalPreconditions {
 
             // 3. re-insert
             result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
-            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyPresentMdsDescriptor,
-                result);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
@@ -607,13 +605,13 @@ public class ConditionalPreconditions {
                 final TestRunObserver testRunObserver)
                 throws UnexpectedManipulationResultException {
             testRunObserver.invalidateTestRun(String.format(
-                    "Unexpected manipulation result: " + "The %s(\"%s\") manipulation returned %s.",
+                    "Unexpected manipulation result: The %s(\"%s\") manipulation returned %s.",
                     manipulationName, argument, result));
             throw new UnexpectedManipulationResultException();
         }
 
         private static void increaseNumberInHash(
-                final HashMap<DescriptionModificationType, Integer> hash, final DescriptionModificationType key) {
+                final EnumMap<DescriptionModificationType, Integer> hash, final DescriptionModificationType key) {
             if (hash.containsKey(key)) {
                 hash.put(key, hash.get(key) + 1);
             } else {
