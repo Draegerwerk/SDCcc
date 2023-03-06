@@ -419,9 +419,10 @@ public class ConditionalPreconditions {
             return crtSeen.get() && uptSeen.get() && delSeen.get();
         }
 
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testClient = injector.getInstance(TestClient.class);
+            final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
 
             final MdibAccess mdibAccess;
             final SdcRemoteDevice remoteDevice = testClient.getSdcRemoteDevice();
@@ -449,38 +450,36 @@ public class ConditionalPreconditions {
             //
             // * = abort when this manipulation fails
 
-            boolean success = false;
             final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers = new HashMap<>();
 
-            for (String removableMdsDescriptor : removableMdsDescriptors) {
-                final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removableMdsDescriptor);
-                if (descOpt.isEmpty()) {
-                    // removable MdsDescriptor is absent
-                    triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
-                            removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers);
-                } else {
-                    // removable MdsDescriptor is present
-                    triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
-                            removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers);
+            try {
+                for (String removableMdsDescriptor : removableMdsDescriptors) {
+                    final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removableMdsDescriptor);
+                    if (descOpt.isEmpty()) {
+                        // removable MdsDescriptor is absent
+                        triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                                removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers, testRunObserver);
+                    } else {
+                        // removable MdsDescriptor is present
+                        triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                                removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers, testRunObserver);
+                    }
+                    if (isGoalReached(numberOfSuccessfulTriggers)) {
+                        return true;
+                    }
                 }
-                if (isGoalReached(numberOfSuccessfulTriggers)) {
-                    success = true;
-                    break;
-                }
-            }
-
-            if (!success) {
-                // all options exhausted
-                LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
-                        + "that can be inserted, updated and removed (at least one for each is required for the test "
-                        + "applying this precondition). "
-                        + "Please check if the test case applying this precondition is applicable to your device and if the "
-                        + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
-                        + "manipulations have been implemented correctly.");
+            } catch (UnexpectedManipulationResultException e) {
                 return false;
             }
 
-            return true;
+            // all options exhausted and the goal is still not reached
+            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
+                    + "that can be inserted, updated and removed (at least one for each is required for the test "
+                    + "applying this precondition). "
+                    + "Please check if the test case applying this precondition is applicable to your device and if the "
+                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                    + "manipulations have been implemented correctly.");
+            return false;
         }
 
         private static boolean isGoalReached(
@@ -494,8 +493,9 @@ public class ConditionalPreconditions {
         private static void triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
                 final String initiallyAbsentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers)
-                throws PreconditionException {
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
@@ -506,7 +506,8 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     return;
                 default:
-                    failDueToUnexpectedResult("insertDescriptor", initiallyAbsentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "insertDescriptor", initiallyAbsentMdsDescriptor, result, testRunObserver);
             }
 
             // 2. update
@@ -518,7 +519,8 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     break; // continue with this descriptor
                 default:
-                    failDueToUnexpectedResult("triggerDescriptorUpdate", initiallyAbsentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "triggerDescriptorUpdate", initiallyAbsentMdsDescriptor, result, testRunObserver);
             }
 
             // 3. remove
@@ -530,7 +532,8 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     break; // do nothing
                 default:
-                    failDueToUnexpectedResult("removeDescriptor", initiallyAbsentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "removeDescriptor", initiallyAbsentMdsDescriptor, result, testRunObserver);
             }
         }
 
@@ -538,8 +541,9 @@ public class ConditionalPreconditions {
         private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
                 final String initiallyPresentMdsDescriptor,
                 final Manipulations manipulations,
-                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers)
-                throws PreconditionException {
+                final HashMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
@@ -550,7 +554,8 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     break; // continue with this descriptor
                 default:
-                    failDueToUnexpectedResult("triggerDescriptorUpdate", initiallyPresentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "triggerDescriptorUpdate", initiallyPresentMdsDescriptor, result, testRunObserver);
             }
 
             // 2. remove
@@ -562,7 +567,8 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     return;
                 default:
-                    failDueToUnexpectedResult("removeDescriptor", initiallyPresentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "removeDescriptor", initiallyPresentMdsDescriptor, result, testRunObserver);
             }
 
             // 3. re-insert
@@ -574,18 +580,21 @@ public class ConditionalPreconditions {
                 case RESULT_NOT_SUPPORTED:
                     break; // do nothing
                 default:
-                    failDueToUnexpectedResult("insertDescriptor", initiallyPresentMdsDescriptor, result);
+                    failDueToUnexpectedResult(
+                            "insertDescriptor", initiallyPresentMdsDescriptor, result, testRunObserver);
             }
         }
 
         private static void failDueToUnexpectedResult(
                 final String manipulationName,
-                final String initiallyAbsentMdsDescriptor,
-                final ResponseTypes.Result result)
-                throws PreconditionException {
-            throw new PreconditionException(String.format(
+                final String argument,
+                final ResponseTypes.Result result,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
+            testRunObserver.invalidateTestRun(String.format(
                     "Unexpected manipulation result: " + "The %s(\"%s\") manipulation returned %s.",
-                    manipulationName, initiallyAbsentMdsDescriptor, result));
+                    manipulationName, argument, result));
+            throw new UnexpectedManipulationResultException();
         }
 
         private static void increaseNumberInHash(
@@ -595,6 +604,11 @@ public class ConditionalPreconditions {
             } else {
                 hash.put(key, 1);
             }
+        }
+
+        static class UnexpectedManipulationResultException extends Exception {
+
+            UnexpectedManipulationResultException() {}
         }
     }
 

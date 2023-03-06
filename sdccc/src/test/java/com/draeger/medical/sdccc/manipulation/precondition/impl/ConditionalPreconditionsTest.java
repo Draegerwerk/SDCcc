@@ -664,8 +664,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when a "
             + "RemovableDescriptor is present.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodPresentDescriptors()
-            throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodPresentDescriptors() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -723,8 +722,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when all "
             + "RemovableDescriptors are absent.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodAbsentDescriptors()
-            throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodAbsentDescriptors() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -782,7 +780,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be inserted.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertFails() throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodInsertFails() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -848,7 +846,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulation when a "
             + "RemovableDescriptor is present but cannot be removed.")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveFails() throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodRemoveFails() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -914,7 +912,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition correctly calls manipulations when a "
             + "RemovableDescriptor is present but cannot be updated")
-    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateFails() throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionGoodUpdateFails() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -981,8 +979,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Inserts fail.")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllInsertsUnsupported()
-            throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllInsertsUnsupported() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1038,8 +1035,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Removals fail.")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsFailed()
-            throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllRemovalsFailed() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1096,7 +1092,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationMdsDescriptorPrecondition fails when all Updates fail")
-    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesFailed() throws PreconditionException {
+    public void testDescriptionModificationMdsDescriptorPreconditionBadAllUpdatesFailed() {
 
         // given
         final var descriptor1Handle = "superHandle1";
@@ -1151,7 +1147,7 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
-     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when the
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when the
      * insertDescriptor Manipulation fails an initially absent descriptor.
      */
     @Test
@@ -1195,10 +1191,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
@@ -1257,10 +1252,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
@@ -1275,7 +1269,7 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
-     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when
      * the removeDescriptor manipulation fails on an initially absent descriptor.
      */
     @Test
@@ -1315,10 +1309,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
@@ -1335,7 +1328,7 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
-     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when the
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when the
      * insertDescriptor Manipulation fails on an initially present descriptor.
      */
     @Test
@@ -1379,10 +1372,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
@@ -1440,10 +1432,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var updateCaptor = ArgumentCaptor.forClass(String.class);
@@ -1456,7 +1447,7 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
-     * Tests whether DescriptionModificationMdsDescriptorPrecondition throws a PreconditionException when
+     * Tests whether DescriptionModificationMdsDescriptorPrecondition fails when
      * the removeDescriptor manipulation fails on an initially present descriptor.
      */
     @Test
@@ -1496,10 +1487,9 @@ public class ConditionalPreconditionsTest {
                 });
 
         // when
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(
-                        testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.manipulation(testInjector));
+        assertTrue(testRunObserver.isInvalid());
 
         // then
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
