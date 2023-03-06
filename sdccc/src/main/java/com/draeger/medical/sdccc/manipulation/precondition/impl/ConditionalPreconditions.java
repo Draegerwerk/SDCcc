@@ -499,6 +499,9 @@ public class ConditionalPreconditions {
 
             // 1. insert
             ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}",
+                initiallyAbsentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
@@ -512,6 +515,9 @@ public class ConditionalPreconditions {
 
             // 2. update
             result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
+            LOG.info("Manipulation triggerDescriptorUpdate({}) returned result {}",
+                initiallyAbsentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
@@ -525,6 +531,9 @@ public class ConditionalPreconditions {
 
             // 3. remove
             result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}",
+                initiallyAbsentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
@@ -537,7 +546,6 @@ public class ConditionalPreconditions {
             }
         }
 
-        @SuppressWarnings("checkstyle:EmptyBlock")
         private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
                 final String initiallyPresentMdsDescriptor,
                 final Manipulations manipulations,
@@ -547,6 +555,9 @@ public class ConditionalPreconditions {
 
             // 1. update
             ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
+            LOG.info("Manipulation triggerDescriptorUpdate({}) returned result {}",
+                initiallyPresentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
@@ -560,6 +571,8 @@ public class ConditionalPreconditions {
 
             // 2. remove
             result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyPresentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
@@ -573,6 +586,8 @@ public class ConditionalPreconditions {
 
             // 3. re-insert
             result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyPresentMdsDescriptor,
+                result);
             switch (result) {
                 case RESULT_SUCCESS:
                     increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
