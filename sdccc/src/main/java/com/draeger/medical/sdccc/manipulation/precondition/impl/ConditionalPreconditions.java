@@ -24,12 +24,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
@@ -42,12 +44,14 @@ import org.somda.sdc.biceps.model.message.DescriptionModificationType;
 import org.somda.sdc.biceps.model.message.EpisodicContextReport;
 import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.EnsembleContextDescriptor;
 import org.somda.sdc.biceps.model.participant.EnsembleContextState;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MeansContextDescriptor;
 import org.somda.sdc.biceps.model.participant.MeansContextState;
 import org.somda.sdc.biceps.model.participant.OperatorContextDescriptor;
@@ -121,7 +125,7 @@ public class ConditionalPreconditions {
         }
         mdibAccess = remoteDevice.getMdibAccess();
 
-        final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
         if (modifiableDescriptors.isEmpty()) {
@@ -346,6 +350,278 @@ public class ConditionalPreconditions {
          */
         static boolean manipulation(final Injector injector) throws PreconditionException {
             return descriptionModificationManipulation(injector, LOG);
+        }
+    }
+
+    /**
+     * Precondition which checks whether DescriptionModificationReport messages containing an insertion
+     * update and deletion of an MdsDescriptor have been received, triggering description changes otherwise.
+     */
+    public static class DescriptionModificationMdsDescriptorPrecondition extends SimplePrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationMdsDescriptorPrecondition.class);
+
+        /**
+         * Creates a description changed for mds descriptor precondition check.
+         */
+        public DescriptionModificationMdsDescriptorPrecondition() {
+            super(
+                    DescriptionModificationMdsDescriptorPrecondition::preconditionCheck,
+                    DescriptionModificationMdsDescriptorPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) throws PreconditionException {
+            final var messageStorage = injector.getInstance(MessageStorage.class);
+            final var testClient = injector.getInstance(TestClient.class);
+            final var clientInjector = testClient.getInjector();
+            final var marshalling = clientInjector.getInstance(MarshallingService.class);
+            final var soapUtil = clientInjector.getInstance(SoapUtil.class);
+            final var crtSeen = new AtomicBoolean(false);
+            final var uptSeen = new AtomicBoolean(false);
+            final var delSeen = new AtomicBoolean(false);
+            try (final var messages =
+                    messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                // determine if there were a description insertion, update and deletion for an mds descriptor
+                final var reportParts = messages.getStream()
+                        .map(MessageContent::getBody)
+                        .map(body -> new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)))
+                        .map(body -> {
+                            try {
+                                return marshalling.unmarshal(body);
+                            } catch (MarshallingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .map(message -> soapUtil.getBody(message, DescriptionModificationReport.class)
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Could not retrieve description modification report body from message")))
+                        .map(DescriptionModificationReport::getReportPart)
+                        .flatMap(Collection::stream)
+                        .toList();
+                for (var reportPart : reportParts) {
+                    final var mdsDescriptorPresent = reportPart.getDescriptor().stream()
+                            .filter(abstractDescriptor ->
+                                    abstractDescriptor.getClass().equals(MdsDescriptor.class))
+                            .findAny();
+                    if (mdsDescriptorPresent.isPresent()) {
+                        switch (ImpliedValueUtil.getModificationType(reportPart)) {
+                            case CRT -> crtSeen.set(true);
+                            case UPT -> uptSeen.set(true);
+                            case DEL -> delSeen.set(true);
+                            default -> {}
+                        }
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                throw new PreconditionException(
+                        "An error occurred while trying to process description modification report messages from storage",
+                        e);
+            }
+            return crtSeen.get() && uptSeen.get() && delSeen.get();
+        }
+
+        static boolean manipulation(final Injector injector) {
+            final var manipulations = injector.getInstance(Manipulations.class);
+            final var testClient = injector.getInstance(TestClient.class);
+            final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                LOG.error("remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final List<String> removableMdsDescriptors =
+                    manipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class);
+            if (removableMdsDescriptors.isEmpty()) {
+                LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
+                        + "manipulation. Please check if the test case applying this precondition is applicable to "
+                        + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
+                        + "correctly.");
+                return false;
+            }
+
+            // absent:        present:
+            // 1. insert*
+            // 2. update      1. update
+            // 3. remove      2. remove*
+            //                3. insert
+            //
+            // * = abort when this manipulation fails
+
+            final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers =
+                    new EnumMap<>(DescriptionModificationType.class);
+
+            try {
+                for (String removableMdsDescriptor : removableMdsDescriptors) {
+                    final Optional<AbstractDescriptor> descOpt = mdibAccess.getDescriptor(removableMdsDescriptor);
+                    if (descOpt.isEmpty()) {
+                        // removable MdsDescriptor is absent
+                        triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                                removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers, testRunObserver);
+                    } else {
+                        // removable MdsDescriptor is present
+                        triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                                removableMdsDescriptor, manipulations, numberOfSuccessfulTriggers, testRunObserver);
+                    }
+                    if (isGoalReached(numberOfSuccessfulTriggers)) {
+                        return true;
+                    }
+                }
+            } catch (UnexpectedManipulationResultException e) {
+                return false;
+            }
+
+            // all options exhausted and the goal is still not reached
+            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
+                    + "that can be inserted, updated and removed (at least one for each is required for the test "
+                    + "applying this precondition). "
+                    + "Please check if the test case applying this precondition is applicable to your device and if the "
+                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                    + "manipulations have been implemented correctly.");
+            return false;
+        }
+
+        private static boolean isGoalReached(
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers) {
+            final Integer crt = numberOfSuccessfulTriggers.get(DescriptionModificationType.CRT);
+            final Integer upt = numberOfSuccessfulTriggers.get(DescriptionModificationType.UPT);
+            final Integer del = numberOfSuccessfulTriggers.get(DescriptionModificationType.DEL);
+            return crt != null && crt > 0 && upt != null && upt > 0 && del != null && del > 0;
+        }
+
+        private static void triggerAllDescriptorUpdatesForInitiallyAbsentMdsDescriptor(
+                final String initiallyAbsentMdsDescriptor,
+                final Manipulations manipulations,
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
+
+            // 1. insert
+            ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    return;
+                default:
+                    failDueToUnexpectedResult(
+                            "insertDescriptor", initiallyAbsentMdsDescriptor, result, testRunObserver);
+            }
+
+            // 2. update
+            result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
+            LOG.info(
+                    "Manipulation triggerDescriptorUpdate({}) returned result {}",
+                    initiallyAbsentMdsDescriptor,
+                    result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // continue with this descriptor
+                default:
+                    failDueToUnexpectedResult(
+                            "triggerDescriptorUpdate", initiallyAbsentMdsDescriptor, result, testRunObserver);
+            }
+
+            // 3. remove
+            result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // do nothing
+                default:
+                    failDueToUnexpectedResult(
+                            "removeDescriptor", initiallyAbsentMdsDescriptor, result, testRunObserver);
+            }
+        }
+
+        private static void triggerAllDescriptorUpdatesForInitiallyPresentMdsDescriptor(
+                final String initiallyPresentMdsDescriptor,
+                final Manipulations manipulations,
+                final EnumMap<DescriptionModificationType, Integer> numberOfSuccessfulTriggers,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
+
+            // 1. update
+            ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
+            LOG.info(
+                    "Manipulation triggerDescriptorUpdate({}) returned result {}",
+                    initiallyPresentMdsDescriptor,
+                    result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.UPT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // continue with this descriptor
+                default:
+                    failDueToUnexpectedResult(
+                            "triggerDescriptorUpdate", initiallyPresentMdsDescriptor, result, testRunObserver);
+            }
+
+            // 2. remove
+            result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
+            LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.DEL);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    return;
+                default:
+                    failDueToUnexpectedResult(
+                            "removeDescriptor", initiallyPresentMdsDescriptor, result, testRunObserver);
+            }
+
+            // 3. re-insert
+            result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
+            LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
+            switch (result) {
+                case RESULT_SUCCESS:
+                    increaseNumberInHash(numberOfSuccessfulTriggers, DescriptionModificationType.CRT);
+                    break;
+                case RESULT_NOT_SUPPORTED:
+                    break; // do nothing
+                default:
+                    failDueToUnexpectedResult(
+                            "insertDescriptor", initiallyPresentMdsDescriptor, result, testRunObserver);
+            }
+        }
+
+        private static void failDueToUnexpectedResult(
+                final String manipulationName,
+                final String argument,
+                final ResponseTypes.Result result,
+                final TestRunObserver testRunObserver)
+                throws UnexpectedManipulationResultException {
+            testRunObserver.invalidateTestRun(String.format(
+                    "Unexpected manipulation result: The %s(\"%s\") manipulation returned %s.",
+                    manipulationName, argument, result));
+            throw new UnexpectedManipulationResultException();
+        }
+
+        private static void increaseNumberInHash(
+                final EnumMap<DescriptionModificationType, Integer> hash, final DescriptionModificationType key) {
+            if (hash.containsKey(key)) {
+                hash.put(key, hash.get(key) + 1);
+            } else {
+                hash.put(key, 1);
+            }
+        }
+
+        static class UnexpectedManipulationResultException extends Exception {
+
+            UnexpectedManipulationResultException() {}
         }
     }
 
