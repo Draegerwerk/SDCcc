@@ -242,6 +242,47 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     }
 
     @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_C7)
+    @TestDescription("Checks all DescriptionModificationReports seen during the TestRun for ReportParts whose "
+            + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
+            + "@ParentDescriptor attribute set.")
+    @RequirePrecondition(
+            simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
+    void testRequirementC7() throws NoTestData, IOException, MarshallingException {
+        final var acceptableReportsSeen = new AtomicInteger(0);
+
+        try (final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            for (MessageContent messageContent :
+                    descriptionModificationReports.getStream().toList()) {
+                final SoapMessage soapMessage = marshalling.unmarshal(
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final DescriptionModificationReport descriptionModificationReport = soapUtil.getBody(
+                                soapMessage, DescriptionModificationReport.class)
+                        .orElseThrow();
+
+                for (DescriptionModificationReport.ReportPart reportPart :
+                        descriptionModificationReport.getReportPart()) {
+                    if (reportPart.getDescriptor().stream().anyMatch(MdsDescriptor.class::isInstance)) {
+                        acceptableReportsSeen.incrementAndGet();
+                        final String parentDescriptor = reportPart.getParentDescriptor();
+                        assertTrue(
+                                parentDescriptor == null || parentDescriptor.isBlank(),
+                                String.format(
+                                        "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                                                + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                                        parentDescriptor));
+                    }
+                }
+            }
+        }
+
+        assertTestData(
+                acceptableReportsSeen.get(),
+                "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
+    }
+
+    @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5024)
     @TestDescription("Retrieves each report part from each description modification report seen during the test run and"
             + " checks that each descriptor does not contain nested descriptors.")

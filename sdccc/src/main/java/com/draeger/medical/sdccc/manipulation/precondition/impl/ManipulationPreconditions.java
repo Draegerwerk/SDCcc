@@ -1480,7 +1480,7 @@ public class ManipulationPreconditions {
 
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+            final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
             if (modifiableDescriptors.isEmpty()) {
                 testRunObserver.invalidateTestRun("No modifiable descriptors available for manipulation");
                 return false;

@@ -172,7 +172,9 @@
         <dependency>
             <groupId>com.draeger.medical</groupId>
             <artifactId>t2iapi</artifactId>
-            <version>1.4.0</version>
+            <!-- TODO: 2.0.0.106 is a development version.
+                       Once t2iapi:2.0.0 is released, use the release version instead -->
+            <version>2.0.0.106</version>
         </dependency>
 
         <dependency>
