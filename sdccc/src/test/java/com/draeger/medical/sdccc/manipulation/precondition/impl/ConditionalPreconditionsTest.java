@@ -669,7 +669,7 @@ public class ConditionalPreconditionsTest {
         // given
         final var descriptor1Handle = "superHandle1";
 
-        final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, false));
+        final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
                 .thenReturn(List.of(descriptor1Handle));
