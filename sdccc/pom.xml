@@ -467,7 +467,7 @@
                                         <fileVersion>${revision}.0</fileVersion>
                                         <txtFileVersion>${revision}${changelist}</txtFileVersion>
                                         <fileDescription>${project.name}</fileDescription>
-                                        <copyright>2022 Draegerwerk AG &amp; Co. KGaA</copyright>
+                                        <copyright>2023 Draegerwerk AG &amp; Co. KGaA</copyright>
                                         <productVersion>${revision}.0</productVersion>
                                         <txtProductVersion>${revision}${changelist}</txtProductVersion>
                                         <productName>${project.name}</productName>
