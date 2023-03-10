@@ -13,6 +13,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.common.eventbus.Subscribe;
 import com.google.inject.Injector;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +25,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.common.access.MdibAccessObserver;
+import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
+import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
@@ -304,12 +308,42 @@ public class ManipulationPreconditions {
     public static class AssociateLocationsManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateLocationsManipulation.class);
+        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS =  5000;
 
         /**
          * Creates a location association precondition.
          */
         public AssociateLocationsManipulation() {
             super(AssociateLocationsManipulation::manipulation);
+        }
+
+        static class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
+
+            private String expectedHandle;
+            private final Object signal = new Object();
+
+            private EpisodicContextReportStateHandleObserver(String expectedStateHandle) {
+                this.expectedHandle = expectedStateHandle;
+            }
+
+            @Subscribe
+            public void onUpdate(ContextStateModificationMessage report) {
+                for (AbstractContextState state : report.getStates()) {
+                    if (this.expectedHandle.equals(state.getHandle())) {
+                        synchronized (signal) {
+                            this.signal.notifyAll();
+                        }
+                    }
+                }
+            }
+
+            public void waitForStateUpdate(long timeoutMillis) throws InterruptedException {
+                signal.wait(timeoutMillis);
+            }
+
+            public Object getSignal() {
+                return signal;
+            }
         }
 
         /**
@@ -320,7 +354,6 @@ public class ManipulationPreconditions {
             final var testClient = injector.getInstance(TestClient.class);
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testRunObserver = injector.getInstance(TestRunObserver.class);
-
             final MdibAccess mdibAccess;
             final SdcRemoteDevice remoteDevice;
 
@@ -343,6 +376,7 @@ public class ManipulationPreconditions {
                 // associate first new location
                 var newStateHandle = associateNewLocationForHandle(
                         testClient.getSdcRemoteDevice(),
+                        testClient,
                         manipulations,
                         locationContextEntity.getHandle(),
                         originalStates);
@@ -353,6 +387,7 @@ public class ManipulationPreconditions {
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewLocationForHandle(
                             testClient.getSdcRemoteDevice(),
+                            testClient,
                             manipulations,
                             locationContextEntity.getHandle(),
                             originalStates);
@@ -378,6 +413,7 @@ public class ManipulationPreconditions {
          */
         static Optional<String> associateNewLocationForHandle(
                 final SdcRemoteDevice device,
+                final TestClient testClient,
                 final Manipulations manipulations,
                 final String handle,
                 final Collection<String> previousStateHandles) {
@@ -387,6 +423,8 @@ public class ManipulationPreconditions {
                 LOG.error("Associating new location failed for handle {}", handle);
                 return Optional.empty();
             }
+            waitForEpisodicContextReportToModifyStateHandle(testClient, stateHandle.orElseThrow());
+
             LOG.debug("New location created, state handle is {}", stateHandle.orElseThrow());
             final var validState =
                     verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
@@ -396,6 +434,28 @@ public class ManipulationPreconditions {
                 stateHandle = Optional.empty();
             }
             return stateHandle;
+        }
+
+        private static void waitForEpisodicContextReportToModifyStateHandle(TestClient testClient, String stateHandle) {
+            EpisodicContextReportStateHandleObserver observer =
+                new EpisodicContextReportStateHandleObserver(stateHandle);
+            testClient.getSdcRemoteDevice().getMdibAccessObservable().registerObserver(observer);
+
+            final long start = System.currentTimeMillis();
+            final long end = start + TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS;
+            long now = System.currentTimeMillis();
+            boolean done = false;
+            synchronized (observer.getSignal()) {
+                while(now < end && !done) {
+                    try {
+                        observer.waitForStateUpdate(end - now);
+                        done = true;
+                    } catch (InterruptedException e) {
+                        // do nothing
+                    }
+                    now = System.currentTimeMillis();
+                }
+            }
         }
 
         /**
