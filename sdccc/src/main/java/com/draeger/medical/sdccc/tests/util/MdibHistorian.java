@@ -123,7 +123,6 @@ public class MdibHistorian {
             protected void defaultConfigure() {
                 bind(org.somda.sdc.common.CommonConfig.INSTANCE_IDENTIFIER, String.class, "");
                 bind(CommonConfig.STORE_NOT_ASSOCIATED_CONTEXT_STATES, Boolean.class, true);
-                bind(CommonConfig.ALLOW_STATES_WITHOUT_DESCRIPTORS, Boolean.class, false);
                 bind(CommonConfig.COPY_MDIB_INPUT, Boolean.class, true);
                 bind(CommonConfig.COPY_MDIB_OUTPUT, Boolean.class, true);
                 bind(
