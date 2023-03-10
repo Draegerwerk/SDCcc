@@ -427,6 +427,7 @@ public class InvariantParticipantModelVersioningTestTest {
 
     /**
      * Test whether the method hasDescriptorChanged() returns false when the descriptor did not change.
+     *
      * @param a - the descriptor.
      */
     private void testHasDescriptorChangedGoodSimple(final org.somda.sdc.biceps.model.participant.AbstractDescriptor a) {
@@ -435,6 +436,7 @@ public class InvariantParticipantModelVersioningTestTest {
 
     /**
      * Test whether the method hasDescriptorChanged() returns false when the descriptor did not change.
+     *
      * @param a - the descriptor.
      */
     private <T extends org.somda.sdc.biceps.model.participant.AbstractDescriptor, V>
@@ -1177,7 +1179,9 @@ public class InvariantParticipantModelVersioningTestTest {
                         buildMds(MDS_HANDLE, BigInteger.valueOf(4), BigInteger.valueOf(4)),
                         buildVmd(VMD_HANDLE, BigInteger.valueOf(4), BigInteger.valueOf(4))),
                 buildDescriptionModificationReportPart(
-                        DescriptionModificationType.CRT, buildChannel(CHANNEL_HANDLE, BigInteger.TWO, BigInteger.TWO)));
+                        DescriptionModificationType.CRT,
+                        VMD_HANDLE,
+                        buildChannel(CHANNEL_HANDLE, BigInteger.TWO, BigInteger.TWO)));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -1557,12 +1561,23 @@ public class InvariantParticipantModelVersioningTestTest {
     final DescriptionModificationReport.ReportPart buildDescriptionModificationReportPart(
             final DescriptionModificationType modificationType,
             final Pair<? extends AbstractDescriptor, ? extends AbstractState>... modifications) {
+        return buildDescriptionModificationReportPart(modificationType, null, modifications);
+    }
+
+    @SafeVarargs
+    final DescriptionModificationReport.ReportPart buildDescriptionModificationReportPart(
+            final DescriptionModificationType modificationType,
+            final @Nullable String parentDescriptor,
+            final Pair<? extends AbstractDescriptor, ? extends AbstractState>... modifications) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(modificationType);
+        reportPart.setParentDescriptor(parentDescriptor);
 
         for (var modification : modifications) {
             reportPart.getDescriptor().add(modification.getLeft());
-            reportPart.getState().add(modification.getRight());
+            if (modificationType != DescriptionModificationType.DEL) {
+                reportPart.getState().add(modification.getRight());
+            }
         }
         return reportPart;
     }
