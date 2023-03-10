@@ -171,51 +171,51 @@ The test tool has the following limitations. If the DUT falls under these limita
 ## Which Manipulation is required for which test
 [BICEPS]
 
-| **Requirement** | **T2IAPI Manipulation**                                                              | 
-|-----------------|--------------------------------------------------------------------------------------|
-| R0025_0         | SetComponentActivation                                                               |
-| R0029           | SetAlertActivation, SetAlertConditionPresence                                        |
-| R0033           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R0034_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R0038_0         | TriggerReport                                                                        |
-| R0055_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R0097           | CreateContextStateWithAssociation                                                    |
-| R0098_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R0116           | SetAlertActivation                                                                   |
-| R0124           | CreateContextStateWithAssociation                                                    |
-| R0125           | CreateContextStateWithAssociation                                                    |
-| R0133           | CreateContextStateWithAssociation                                                    |
-| B-128           | SetSystemSignalActivation, SetAlertActivation                                        |
-| C-5             | TriggerDescriptorUpdate                                                              |
-| C-7             | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor, TriggerDescriptorUpdate |
-| C-11            | TriggerReport                                                                        |
-| C-12            | TriggerReport                                                                        |
-| C-13            | TriggerReport                                                                        |
-| C-14            | TriggerReport                                                                        |
-| C-15            | TriggerReport                                                                        |
-| R5025_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R5046_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| R5052           | TriggerDescriptorUpdate                                                              |
-| R5053           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
-| 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_1         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_2         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_3         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_4         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_5         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_7         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_8         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_9         | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_10        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_11        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_12_0      | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_13        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_14        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_15        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_16        | SetComponentActivation, SetMetricStatus                                              |
-| 5-4-7_17        | SetComponentActivation, SetMetricStatus                                              |
+| **Requirement** | **T2IAPI Manipulation**                                                                     | 
+|-----------------|---------------------------------------------------------------------------------------------|
+| R0025_0         | SetComponentActivation                                                                      |
+| R0029_0         | SetAlertActivation, SetAlertConditionPresence                                               |
+| R0033           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R0034_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R0038_0         | TriggerReport                                                                               |
+| R0055_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R0097           | CreateContextStateWithAssociation                                                           |
+| R0098_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R0116           | SetAlertActivation                                                                          |
+| R0124           | CreateContextStateWithAssociation                                                           |
+| R0125           | CreateContextStateWithAssociation                                                           |
+| R0133           | CreateContextStateWithAssociation                                                           |
+| B-128           | SetSystemSignalActivation, SetAlertActivation                                               |
+| C-5             | TriggerDescriptorUpdate                                                                     |
+| C-7             | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor, TriggerDescriptorUpdate |
+| C-11            | TriggerReport                                                                               |
+| C-12            | TriggerReport                                                                               |
+| C-13            | TriggerReport                                                                               |
+| C-14            | TriggerReport                                                                               |
+| C-15            | TriggerReport                                                                               |
+| R5025_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R5046_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R5051           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R5052           | TriggerDescriptorUpdate                                                                     |
+| R5053           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_1         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_2         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_3         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_4         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_5         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_7         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_8         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_9         | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_10        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_11        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_12_0      | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_13        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_14        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_15        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_16        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_17        | SetComponentActivation, SetMetricStatus                                                     |
 
 [MDPWS]
 
