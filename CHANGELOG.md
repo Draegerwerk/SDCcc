@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for biceps:R5046_0
 - test for biceps:C-7
 
+### Changed
+- t2iapi version to 2.0.0
+
 ### Fixed
 - dpws:R0013 sent a request that was not WS-Transfer compliant
  
