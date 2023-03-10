@@ -542,13 +542,16 @@ public class InvariantMessageModelAnnexTestTest {
                         DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
+        final var crtPart1Handle = "second vmd";
         final Envelope second = buildDescriptionModificationReport(
                 SEQUENCE_ID,
                 BigInteger.TWO,
                 buildDescriptionModificationReportPart(
                         DescriptionModificationType.CRT,
-                        mdibBuilder.buildChannel("second channel"),
-                        mdibBuilder.buildVmd("second vmd")));
+                        MdibBuilder.DEFAULT_MDS_HANDLE,
+                        mdibBuilder.buildVmd(crtPart1Handle)),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, crtPart1Handle, mdibBuilder.buildChannel("second channel")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         final Envelope third = buildDescriptionModificationReport(
