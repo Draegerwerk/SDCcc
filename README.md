@@ -174,7 +174,7 @@ The test tool has the following limitations. If the DUT falls under these limita
 | **Requirement** | **T2IAPI Manipulation**                                                              | 
 |-----------------|--------------------------------------------------------------------------------------|
 | R0025_0         | SetComponentActivation                                                               |
-| R0029           | SetAlertConditionPresence                                                            |
+| R0029           | SetAlertActivation, SetAlertConditionPresence                                        |
 | R0033           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R0034_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R0038_0         | TriggerReport                                                                        |
@@ -185,15 +185,15 @@ The test tool has the following limitations. If the DUT falls under these limita
 | R0124           | CreateContextStateWithAssociation                                                    |
 | R0125           | CreateContextStateWithAssociation                                                    |
 | R0133           | CreateContextStateWithAssociation                                                    |
-| B-61            | SetMetricQualityValidity                                                             |
 | B-128           | SetSystemSignalActivation, SetAlertActivation                                        |
-| C-5             | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
+| C-5             | TriggerDescriptorUpdate                                                              |
 | C-7             | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor, TriggerDescriptorUpdate |
 | C-11            | TriggerReport                                                                        |
 | C-12            | TriggerReport                                                                        |
 | C-13            | TriggerReport                                                                        |
 | C-14            | TriggerReport                                                                        |
 | C-15            | TriggerReport                                                                        |
+| R5025_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R5046_0         | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R5051           | GetRemovableDescriptors, RemoveDescriptor, InsertDescriptor                          |
 | R5052           | TriggerDescriptorUpdate                                                              |
