@@ -1058,7 +1058,9 @@ public class ManipulationPreconditionsTest {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of());
 
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
-        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated." + testRunObserver.getReasons());
 
         verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations, times(0)).removeDescriptor(SOME_HANDLE);
