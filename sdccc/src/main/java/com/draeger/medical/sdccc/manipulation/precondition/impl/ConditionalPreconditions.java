@@ -239,7 +239,7 @@ public class ConditionalPreconditions {
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
             final var messageStorage = injector.getInstance(MessageStorage.class);
-            try (final var messages = messageStorage.getInboundMessagesByBodyType(Constants.WSD_HELLO_BODY)) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyType(false, Constants.WSD_HELLO_BODY)) {
                 return messages.areObjectsPresent();
             } catch (final IOException e) {
                 throw new PreconditionException(

@@ -231,7 +231,7 @@ public class ConditionalPreconditionsTest {
         when(mockGetter.getStream()).thenReturn(Stream.of(mockMessage)).thenReturn(Stream.empty());
         when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
+        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.anyBoolean(), ArgumentMatchers.<QName>any()))
                 .thenReturn(mockGetter);
 
         final var injector = Guice.createInjector(new AbstractModule() {
