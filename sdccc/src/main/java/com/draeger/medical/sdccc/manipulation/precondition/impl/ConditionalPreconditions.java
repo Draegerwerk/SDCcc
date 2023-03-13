@@ -110,8 +110,7 @@ public class ConditionalPreconditions {
         }
     }
 
-    private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger)
-            throws PreconditionException {
+    private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
 
@@ -129,7 +128,8 @@ public class ConditionalPreconditions {
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
         if (modifiableDescriptors.isEmpty()) {
-            throw new PreconditionException("No modifiable descriptors available for manipulation");
+            logger.info("No modifiable descriptors available for manipulation");
+            return false;
         }
 
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
@@ -696,7 +696,7 @@ public class ConditionalPreconditions {
          * @return true if successful, false otherwise
          * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }
