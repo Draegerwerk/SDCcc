@@ -281,9 +281,8 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }
@@ -346,9 +345,8 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }
