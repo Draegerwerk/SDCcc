@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -232,7 +231,7 @@ public class ConditionalPreconditionsTest {
         when(mockGetter.getStream()).thenReturn(Stream.of(mockMessage)).thenReturn(Stream.empty());
         when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
+        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.anyBoolean(), ArgumentMatchers.<QName>any()))
                 .thenReturn(mockGetter);
 
         final var injector = Guice.createInjector(new AbstractModule() {
@@ -651,9 +650,7 @@ public class ConditionalPreconditionsTest {
     @DisplayName("DescriptionModificationPrecondition throws exception if no removable descriptors are present")
     void testDescriptionModificationModificationNoDescriptors() {
         // must fail without any removable descriptors
-        assertThrows(
-                PreconditionException.class,
-                () -> ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
+        assertFalse(ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
         reset(mockManipulations);
     }
 

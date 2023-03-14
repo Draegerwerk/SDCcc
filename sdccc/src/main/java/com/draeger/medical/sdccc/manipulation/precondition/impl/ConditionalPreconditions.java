@@ -110,8 +110,7 @@ public class ConditionalPreconditions {
         }
     }
 
-    private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger)
-            throws PreconditionException {
+    private static boolean descriptionModificationManipulation(final Injector injector, final Logger logger) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
 
@@ -129,7 +128,8 @@ public class ConditionalPreconditions {
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
         if (modifiableDescriptors.isEmpty()) {
-            throw new PreconditionException("No modifiable descriptors available for manipulation");
+            logger.info("No modifiable descriptors available for manipulation");
+            return false;
         }
 
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
@@ -239,7 +239,7 @@ public class ConditionalPreconditions {
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
             final var messageStorage = injector.getInstance(MessageStorage.class);
-            try (final var messages = messageStorage.getInboundMessagesByBodyType(Constants.WSD_HELLO_BODY)) {
+            try (final var messages = messageStorage.getInboundMessagesByBodyType(false, Constants.WSD_HELLO_BODY)) {
                 return messages.areObjectsPresent();
             } catch (final IOException e) {
                 throw new PreconditionException(
@@ -281,9 +281,8 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }
@@ -346,9 +345,8 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }
@@ -696,7 +694,7 @@ public class ConditionalPreconditions {
          * @return true if successful, false otherwise
          * @throws PreconditionException on errors
          */
-        static boolean manipulation(final Injector injector) throws PreconditionException {
+        static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
         }
     }

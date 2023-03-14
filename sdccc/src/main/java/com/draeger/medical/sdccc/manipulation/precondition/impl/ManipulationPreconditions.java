@@ -1482,7 +1482,7 @@ public class ManipulationPreconditions {
 
             final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
             if (modifiableDescriptors.isEmpty()) {
-                testRunObserver.invalidateTestRun("No modifiable descriptors available for manipulation");
+                LOG.info("No modifiable descriptors available for manipulation");
                 return false;
             }
 
