@@ -81,8 +81,7 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
                     fail(e);
                 }
 
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {

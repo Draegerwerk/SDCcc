@@ -266,7 +266,7 @@ public class MdibHistorian {
             final var iter = messages.getStream().map(this::unmarshallReport);
             if (minimumMdibVersion != null) {
                 return iter.filter(it ->
-                        ImpliedValueUtil.getMdibMdibVersion(it.getMdibVersion()).compareTo(minimumMdibVersion) >= 1);
+                        ImpliedValueUtil.getReportMdibVersion(it).compareTo(minimumMdibVersion) >= 1);
             }
             return iter;
         } catch (IOException e) {

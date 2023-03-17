@@ -174,8 +174,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 }
 
                 // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
@@ -478,8 +477,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     fail(e);
                 }
 
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        mdib.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdib.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
@@ -768,8 +766,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 }
 
                 // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
@@ -832,8 +829,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 }
 
                 // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
@@ -907,8 +903,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 }
 
                 // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
@@ -972,8 +967,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 }
 
                 // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
-                        first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> reportIterator = reports.iterator();
