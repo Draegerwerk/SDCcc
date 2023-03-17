@@ -20,12 +20,14 @@ import com.google.inject.assistedinject.AssistedInject;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.inject.Provider;
 import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
@@ -252,14 +254,21 @@ public class MdibHistorian {
      * Retrieves all episodic reports for a given sequence id.
      *
      * @param sequenceId of the sequence to retrieve reports for
+     * @param minimumMdibVersion optional minimum mdib version to retrieve for the reports, if null all are returned
      * @return list of the reports
      */
-    public Stream<AbstractReport> getAllReports(final String sequenceId) {
+    public Stream<AbstractReport> getAllReports(
+            final String sequenceId, @Nullable final BigInteger minimumMdibVersion) {
         try {
             final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
                     sequenceId, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
 
-            return messages.getStream().map(this::unmarshallReport);
+            final var iter = messages.getStream().map(this::unmarshallReport);
+            if (minimumMdibVersion != null) {
+                return iter.filter(
+                        it -> ImpliedValueUtil.getReportMdibVersion(it).compareTo(minimumMdibVersion) >= 1);
+            }
+            return iter;
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());

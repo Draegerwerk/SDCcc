@@ -44,6 +44,8 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -152,6 +154,34 @@ public class InvariantParticipantModelAnnexTestTest {
      */
     @Test
     public void testRequirementB6NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementB6);
+    }
+
+    /**
+     * Tests whether calling the tests with only outdated input data causes the test to fail.
+     */
+    @Test
+    public void testRequirementB6NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ONE);
+
+        final var first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                null,
+                mdibBuilder.buildSetStringOperation(SET_STRING_OPERATION_HANDLE, VMD_HANDLE, OperatingMode.EN));
+
+        final var second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                null,
+                mdibBuilder.buildActivateOperation(ACTIVATE_OPERATION_HANDLE, CHANNEL_HANDLE, OperatingMode.DIS),
+                mdibBuilder.buildSetStringOperation(
+                        SET_STRING_OPERATION_HANDLE, VMD_ALERT_CONDITION_HANDLE, OperatingMode.NA));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
         assertThrows(NoTestData.class, testClass::testRequirementB6);
     }
 
@@ -397,7 +427,12 @@ public class InvariantParticipantModelAnnexTestTest {
     }
 
     private Envelope buildMdib(final String sequenceId) {
+        return buildMdib(sequenceId, null);
+    }
+
+    private Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdibVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
+        mdib.setMdibVersion(mdibVersion);
 
         final var mdState = mdib.getMdState();
         final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
