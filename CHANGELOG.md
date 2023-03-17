@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.1] - 2023-03-17
+
+### Fixed
+- biceps:C-5, biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14, biceps:C-15, biceps:R5046_0, biceps:B-6_0 failing when reports received before the initial mdib are applied
+
 ## [7.0.0] - 2023-03-15
 
 ### Added
