@@ -165,10 +165,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -463,9 +471,16 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         final var acceptableSequenceSeen = new AtomicInteger(0);
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+
+                RemoteMdibAccess mdib = null;
                 try {
-                    final var reports = mdibHistorian.getAllReports(sequenceId);
-                    RemoteMdibAccess mdib = mdibHistorian.createNewStorage(sequenceId);
+                    mdib = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(mdib.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -681,11 +696,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
-                // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                final var minimumMdibVersion = first.getMdibVersion().getVersion();
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -738,11 +760,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
-                // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -795,11 +824,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
-                // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -863,11 +899,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
-                // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -921,11 +964,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
 
-                // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                // get relevant reports
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> reportIterator = reports.iterator();
                             reportIterator.hasNext(); ) {

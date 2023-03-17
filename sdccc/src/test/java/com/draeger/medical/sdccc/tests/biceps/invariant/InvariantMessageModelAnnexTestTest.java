@@ -517,6 +517,36 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC5);
     }
 
+
+    /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC5NoTestData2() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        assertThrows(NoTestData.class, testClass::testRequirementC5);
+    }
+
     /**
      * Checks whether a sequence of DescriptionModificationReports,
      * in which each DescriptionModificationReport
@@ -1053,6 +1083,28 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether calling the test without only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementR50460NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
+
+        final var alertSignal = mdibBuilder.buildAlertSignal(
+                MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, true, AlertActivation.ON);
+        final var reportOnePart = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertSignal);
+
+        final var reportOne = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ZERO, reportOnePart);
+        final var reportTwo = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, reportOnePart);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportOne);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportTwo);
+
+        assertThrows(NoTestData.class, testClass::testRequirementR50460);
+    }
+
+    /**
      * Tests if deleting descriptors without child descriptors passes the test.
      *
      * @throws Exception on any exception
@@ -1440,6 +1492,35 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC11);
     }
 
+
+    /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC11NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE);
+
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        assertThrows(NoTestData.class, testClass::testRequirementC11);
+    }
+
     /**
      * Tests whether EpisodicAlertReports which contain only AbstractAlertStates with at least one changed child
      * element or attribute passes the test.
@@ -1564,6 +1645,34 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC12NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
+
+        final var first = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
+
+        final var second = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.OFF, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.ON),
+                buildScoState(SCO_HANDLE, ComponentActivation.OFF));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        assertThrows(NoTestData.class, testClass::testRequirementC12);
+    }
+
+    /**
      * Tests whether EpisodicComponentReports which contain only AbstractComponentState with at least one changed child
      * element or attribute passes the test.
      *
@@ -1681,6 +1790,40 @@ public class InvariantMessageModelAnnexTestTest {
     public void testRequirementC13NoTestData() {
         assertThrows(NoTestData.class, testClass::testRequirementC13);
     }
+
+
+    /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC13NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
+
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
+
+        final var second = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.DIS,
+                        mdibBuilder.buildCodedValue("initial")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        assertThrows(NoTestData.class, testClass::testRequirementC13);
+    }
+
 
     /**
      * Tests whether EpisodicContextReports which contain only AbstractContextStates with at least one changed child
@@ -1854,6 +1997,36 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC14NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
+
+        final var first = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
+
+        final var second = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("otherValue"),
+                        ComponentActivation.SHTDN));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        assertThrows(NoTestData.class, testClass::testRequirementC14);
+    }
+
+    /**
      * Tests whether EpisodicMetricReports which contain only AbstractMetricStates with at least one changed child
      * element or attribute passes the test.
      *
@@ -1985,6 +2158,29 @@ public class InvariantMessageModelAnnexTestTest {
      */
     @Test
     public void testRequirementC15NoTestData() {
+        assertThrows(NoTestData.class, testClass::testRequirementC15);
+    }
+
+
+    /**
+     * Tests whether calling the test with only outdated input data causes a failure.
+     */
+    @Test
+    public void testRequirementC15NoTestData2() throws JAXBException, IOException {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE);
+
+        final var first = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ZERO,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
+
+        final var second = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID, BigInteger.ONE, buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
         assertThrows(NoTestData.class, testClass::testRequirementC15);
     }
 
@@ -2193,7 +2389,13 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     private Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdsVersion) {
+        return buildMdib(sequenceId, mdsVersion, null);
+    }
+
+    private Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdsVersion, final @Nullable BigInteger mdibVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
+
+        mdib.setMdibVersion(mdibVersion);
 
         final var mdState = mdib.getMdState();
         final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
