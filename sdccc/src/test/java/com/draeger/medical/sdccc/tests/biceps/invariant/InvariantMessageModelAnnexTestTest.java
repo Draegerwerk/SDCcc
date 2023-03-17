@@ -517,7 +517,6 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC5);
     }
 
-
     /**
      * Tests whether calling the test with only outdated input data causes a failure.
      */
@@ -1492,7 +1491,6 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC11);
     }
 
-
     /**
      * Tests whether calling the test with only outdated input data causes a failure.
      */
@@ -1791,7 +1789,6 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC13);
     }
 
-
     /**
      * Tests whether calling the test with only outdated input data causes a failure.
      */
@@ -1823,7 +1820,6 @@ public class InvariantMessageModelAnnexTestTest {
 
         assertThrows(NoTestData.class, testClass::testRequirementC13);
     }
-
 
     /**
      * Tests whether EpisodicContextReports which contain only AbstractContextStates with at least one changed child
@@ -2161,7 +2157,6 @@ public class InvariantMessageModelAnnexTestTest {
         assertThrows(NoTestData.class, testClass::testRequirementC15);
     }
 
-
     /**
      * Tests whether calling the test with only outdated input data causes a failure.
      */
@@ -2392,7 +2387,8 @@ public class InvariantMessageModelAnnexTestTest {
         return buildMdib(sequenceId, mdsVersion, null);
     }
 
-    private Envelope buildMdib(final String sequenceId, final @Nullable BigInteger mdsVersion, final @Nullable BigInteger mdibVersion) {
+    private Envelope buildMdib(
+            final String sequenceId, final @Nullable BigInteger mdsVersion, final @Nullable BigInteger mdibVersion) {
         final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
 
         mdib.setMdibVersion(mdibVersion);

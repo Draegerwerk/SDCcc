@@ -258,16 +258,15 @@ public class MdibHistorian {
      * @return list of the reports
      */
     public Stream<AbstractReport> getAllReports(
-            final String sequenceId,
-            @Nullable final BigInteger minimumMdibVersion
-    ) {
+            final String sequenceId, @Nullable final BigInteger minimumMdibVersion) {
         try {
             final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
                     sequenceId, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
 
             final var iter = messages.getStream().map(this::unmarshallReport);
             if (minimumMdibVersion != null) {
-                return iter.filter(it -> ImpliedValueUtil.getMdibMdibVersion(it.getMdibVersion()).compareTo(minimumMdibVersion) >= 1);
+                return iter.filter(it ->
+                        ImpliedValueUtil.getMdibMdibVersion(it.getMdibVersion()).compareTo(minimumMdibVersion) >= 1);
             }
             return iter;
         } catch (IOException e) {

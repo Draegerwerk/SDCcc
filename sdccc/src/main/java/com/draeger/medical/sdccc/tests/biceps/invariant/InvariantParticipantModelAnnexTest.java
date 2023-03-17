@@ -74,7 +74,6 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-
                 RemoteMdibAccess first = null;
                 try {
                     first = mdibHistorian.createNewStorage(sequenceId);
@@ -82,7 +81,8 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
                     fail(e);
                 }
 
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(first.getMdibVersion().getVersion());
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibMdibVersion(
+                        first.getMdibVersion().getVersion());
                 try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
