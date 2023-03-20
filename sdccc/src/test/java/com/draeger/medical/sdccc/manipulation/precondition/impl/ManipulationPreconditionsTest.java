@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -1021,7 +1021,7 @@ public class ManipulationPreconditionsTest {
                 testRunObserver.isInvalid(),
                 "Test run should not have been invalidated." + testRunObserver.getReasons());
 
-        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
         verify(mockManipulations).insertDescriptor(SOME_HANDLE);
     }
@@ -1047,7 +1047,7 @@ public class ManipulationPreconditionsTest {
                 testRunObserver.isInvalid(),
                 "Test run should not have been invalidated." + testRunObserver.getReasons());
 
-        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
         verify(mockManipulations, times(2)).insertDescriptor(SOME_HANDLE);
     }
@@ -1058,9 +1058,11 @@ public class ManipulationPreconditionsTest {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of());
 
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
-        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalidated." + testRunObserver.getReasons());
 
-        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations, times(0)).removeDescriptor(SOME_HANDLE);
         verify(mockManipulations, times(0)).insertDescriptor(SOME_HANDLE);
     }
@@ -1074,7 +1076,7 @@ public class ManipulationPreconditionsTest {
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
 
-        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
         verify(mockManipulations).insertDescriptor(SOME_HANDLE);
     }
@@ -1088,14 +1090,14 @@ public class ManipulationPreconditionsTest {
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
 
-        verify(mockManipulations).getRemovableDescriptors();
+        verify(mockManipulations).getRemovableDescriptorsOfClass();
         verify(mockManipulations).removeDescriptor(SOME_HANDLE);
         verify(mockManipulations).insertDescriptor(SOME_HANDLE);
     }
 
     private void setupRemoveAndReinsertDescriptor(
             final String descriptorHandle, final List<String> removableDescriptors) {
-        when(mockManipulations.getRemovableDescriptors()).thenReturn(removableDescriptors);
+        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(removableDescriptors);
 
         when(mockManipulations.removeDescriptor(any(String.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)

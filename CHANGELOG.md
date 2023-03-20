@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.1] - 2023-03-17
+
+### Fixed
+- biceps:C-5, biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14, biceps:C-15, biceps:R5046_0, biceps:B-6_0 failing when reports received before the initial mdib are applied
+
+## [7.0.0] - 2023-03-15
+
 ### Added
 - test for biceps:5-4-7_1
 - test for biceps:5-4-7_3
@@ -21,9 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for biceps:R5053
 - test for biceps:R0098_0
 - test for biceps:R5046_0
+- test for biceps:C-7
+
+### Changed
+- t2iapi version to 2.0.0
+- SDCri version 4.0.0
 
 ### Fixed
 - dpws:R0013 sent a request that was not WS-Transfer compliant
+
+### Removed
+- test for biceps:B-61.
  
 ## [6.0.0] - 2022-12-08
 

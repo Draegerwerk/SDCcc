@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -8,7 +8,7 @@
 package com.draeger.medical.sdccc.manipulation;
 
 import static com.draeger.medical.t2iapi.context.ContextServiceGrpc.getSetLocationDetailMethod;
-import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getGetRemovableDescriptorsMethod;
+import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getGetRemovableDescriptorsOfClassMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getInsertDescriptorMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getRemoveDescriptorMethod;
 import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
@@ -36,10 +36,10 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.draeger.medical.t2iapi.context.ContextRequests;
 import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
 import com.draeger.medical.t2iapi.context.ContextTypes;
+import com.draeger.medical.t2iapi.device.DeviceRequests;
 import com.draeger.medical.t2iapi.device.DeviceResponses;
 import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -212,7 +212,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.getRemovableDescriptors();
+            final var response = manipulations.getRemovableDescriptorsOfClass();
             assertNotNull(response, "manipulation failed, but shouldn't have");
             assertEquals(removableHandles, response);
             verifyNoInteractions(fallback);
@@ -230,7 +230,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.getRemovableDescriptors();
+            final var response = manipulations.getRemovableDescriptorsOfClass();
             // fallback should not have been called here
             verifyNoInteractions(fallback);
             assertTrue(response.isEmpty(), "manipulation succeeded but shouldn't have");
@@ -437,9 +437,12 @@ public class GRpcManipulationsTest {
     }
 
     static class DeviceStub extends DeviceServiceGrpc.DeviceServiceImplBase {
-        private BiFunction<Empty, StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void>
+        private BiFunction<
+                        DeviceRequests.GetRemovableDescriptorsOfClassRequest,
+                        StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>,
+                        Void>
                 getRemovableDescriptorsCall = (request, responseObserver) -> {
-                    asyncUnimplementedUnaryCall(getGetRemovableDescriptorsMethod(), responseObserver);
+                    asyncUnimplementedUnaryCall(getGetRemovableDescriptorsOfClassMethod(), responseObserver);
                     return null;
                 };
 
@@ -456,7 +459,11 @@ public class GRpcManipulationsTest {
                 };
 
         public void setGetRemovableDescriptorsCall(
-                final BiFunction<Empty, StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>, Void> arg) {
+                final BiFunction<
+                                DeviceRequests.GetRemovableDescriptorsOfClassRequest,
+                                StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse>,
+                                Void>
+                        arg) {
             this.getRemovableDescriptorsCall = arg;
         }
 
@@ -473,8 +480,8 @@ public class GRpcManipulationsTest {
         }
 
         @Override
-        public void getRemovableDescriptors(
-                final Empty request,
+        public void getRemovableDescriptorsOfClass(
+                final DeviceRequests.GetRemovableDescriptorsOfClassRequest request,
                 final StreamObserver<DeviceResponses.GetRemovableDescriptorsResponse> responseObserver) {
             getRemovableDescriptorsCall.apply(request, responseObserver);
         }

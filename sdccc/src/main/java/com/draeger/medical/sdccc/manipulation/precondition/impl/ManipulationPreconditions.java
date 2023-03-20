@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -1540,9 +1540,9 @@ public class ManipulationPreconditions {
 
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final var modifiableDescriptors = manipulations.getRemovableDescriptors();
+            final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
             if (modifiableDescriptors.isEmpty()) {
-                testRunObserver.invalidateTestRun("No modifiable descriptors available for manipulation");
+                LOG.info("No modifiable descriptors available for manipulation");
                 return false;
             }
 

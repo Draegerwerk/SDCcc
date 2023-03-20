@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -45,11 +45,13 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MeasurementValidity;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 
@@ -142,10 +144,19 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
-    public List<String> getRemovableDescriptors() {
+    public List<String> getRemovableDescriptorsOfClass() {
+        return getRemovableDescriptorsOfClass(AbstractDescriptor.class);
+    }
+
+    @Override
+    public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorClass) {
+        final DeviceRequests.GetRemovableDescriptorsOfClassRequest request =
+                DeviceRequests.GetRemovableDescriptorsOfClassRequest.newBuilder()
+                        .setDescriptorClass(toApiDescriptorClass(descriptorClass))
+                        .build();
         return performCallWrapper(
-                v -> deviceStub.getRemovableDescriptors(Empty.getDefaultInstance()),
-                v -> fallback.getRemovableDescriptors(),
+                v -> deviceStub.getRemovableDescriptorsOfClass(request),
+                v -> fallback.getRemovableDescriptorsOfClass(descriptorClass),
                 res -> res.getStatus().getResult(),
                 DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
                 Collections.emptyList());
@@ -352,33 +363,16 @@ public class GRpcManipulations implements Manipulations {
     }
 
     private Optional<MetricTypes.MetricStatus> getMetricStatus(final ComponentActivation activation) {
-        final Optional<MetricTypes.MetricStatus> optionalOfMetricStatus;
-        switch (activation) {
-            case ON:
-                optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_PERFORMED_OR_APPLIED);
-                break;
-            case NOT_RDY:
-                optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_INITIALIZING);
-                break;
-            case STND_BY:
-                optionalOfMetricStatus =
-                        Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
-                break;
-            case SHTDN:
-                optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_DE_INITIALIZING);
-                break;
-            case OFF:
-                optionalOfMetricStatus = Optional.of(
-                        MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
-                break;
-            case FAIL:
-                optionalOfMetricStatus = Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_FAILED);
-                break;
-            default:
-                optionalOfMetricStatus = Optional.empty();
-                break;
-        }
-        return optionalOfMetricStatus;
+        return switch (activation) {
+            case ON -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_PERFORMED_OR_APPLIED);
+            case NOT_RDY -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_INITIALIZING);
+            case STND_BY -> Optional.of(
+                    MetricTypes.MetricStatus.METRIC_STATUS_INITIALIZED_BUT_NOT_PERFORMING_OR_APPLYING);
+            case SHTDN -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_CURRENTLY_DE_INITIALIZING);
+            case OFF -> Optional.of(
+                    MetricTypes.MetricStatus.METRIC_STATUS_DE_INITIALIZED_AND_NOT_PERFORMING_OR_APPLYING);
+            case FAIL -> Optional.of(MetricTypes.MetricStatus.METRIC_STATUS_FAILED);
+        };
     }
 
     /**
@@ -425,173 +419,96 @@ public class GRpcManipulations implements Manipulations {
             return fallbackFunc.apply(null);
         }
 
-        final RES result;
-
-        switch (statusExtractor.apply(response)) {
-            case RESULT_NOT_IMPLEMENTED:
+        return switch (statusExtractor.apply(response)) {
+            case RESULT_NOT_IMPLEMENTED -> {
                 LOG.warn("Server has not implemented method");
-                result = fallbackFunc.apply(null);
-                break;
-            case RESULT_SUCCESS:
-            case RESULT_NOT_SUPPORTED:
-            case RESULT_FAIL:
-                result = responseExtractor.apply(response);
-                break;
-            case UNRECOGNIZED:
-            default:
-                LOG.warn("setLocationDetail: Server has not sent a valid result, going to fallback");
-                result = fallbackFunc.apply(null);
-                break;
-        }
-
-        return result;
+                yield fallbackFunc.apply(null);
+            }
+            case RESULT_SUCCESS, RESULT_NOT_SUPPORTED, RESULT_FAIL -> responseExtractor.apply(response);
+            default -> {
+                LOG.warn("Server has not sent a valid result, going to fallback");
+                yield fallbackFunc.apply(null);
+            }
+        };
     }
 
     private <RES> ResponseTypes.Result getResultForPersisting(final RES result) {
         ResponseTypes.Result response = ResponseTypes.Result.UNRECOGNIZED;
-        if (result instanceof List) {
-            final var resultList = (List) result;
+        if (result instanceof final List resultList) {
             if (resultList.isEmpty()) {
                 response = ResponseTypes.Result.RESULT_FAIL;
             } else {
                 response = ResponseTypes.Result.RESULT_SUCCESS;
             }
-        } else if (result instanceof Optional) {
-            final var resultOptional = (Optional) result;
+        } else if (result instanceof final Optional<?> resultOptional) {
             if (resultOptional.isEmpty()) {
                 response = ResponseTypes.Result.RESULT_FAIL;
             } else {
                 response = ResponseTypes.Result.RESULT_SUCCESS;
             }
-        } else if (result instanceof ResponseTypes.Result) {
-            response = (ResponseTypes.Result) result;
+        } else if (result instanceof ResponseTypes.Result castedResult) {
+            response = castedResult;
         }
         return response;
     }
 
     ContextTypes.ContextAssociation toApiContextType(final ContextAssociation contextAssociation) {
-        final ContextTypes.ContextAssociation apiType;
-        switch (contextAssociation) {
-            case NO:
-                apiType = ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_NOT_ASSOCIATED;
-                break;
-            case DIS:
-                apiType = ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_DISASSOCIATED;
-                break;
-            case PRE:
-                apiType = ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_PRE_ASSOCIATED;
-                break;
-            case ASSOC:
-                apiType = ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_ASSOCIATED;
-                break;
-            default:
-                throw new IllegalStateException(
-                        "Unknown ContextAssociation could not be mapped. " + contextAssociation);
-        }
-        return apiType;
+        return switch (contextAssociation) {
+            case NO -> ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_NOT_ASSOCIATED;
+            case DIS -> ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_DISASSOCIATED;
+            case PRE -> ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_PRE_ASSOCIATED;
+            case ASSOC -> ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_ASSOCIATED;
+        };
     }
 
     ActivationStateTypes.AlertSignalManifestation toApiManifestationType(final AlertSignalManifestation manifestation) {
-        final ActivationStateTypes.AlertSignalManifestation apiType;
-        switch (manifestation) {
-            case VIS:
-                apiType = ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_VIS;
-                break;
-            case AUD:
-                apiType = ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_AUD;
-                break;
-            case TAN:
-                apiType = ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_TAN;
-                break;
-            case OTH:
-                apiType = ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_OTH;
-                break;
-            default:
-                throw new IllegalStateException(
-                        "Unknown AlertSignalManifestation could not be mapped. " + manifestation);
-        }
-        return apiType;
+        return switch (manifestation) {
+            case VIS -> ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_VIS;
+            case AUD -> ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_AUD;
+            case TAN -> ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_TAN;
+            case OTH -> ActivationStateTypes.AlertSignalManifestation.ALERT_SIGNAL_MANIFESTATION_OTH;
+        };
     }
 
     ActivationStateTypes.AlertActivation toApiActivationStateType(final AlertActivation alertActivation) {
-        final ActivationStateTypes.AlertActivation apiType;
-        switch (alertActivation) {
-            case ON:
-                apiType = ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_ON;
-                break;
-            case OFF:
-                apiType = ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_OFF;
-                break;
-            case PSD:
-                apiType = ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_PSD;
-                break;
-            default:
-                throw new IllegalStateException("Unknown AlertActivation could not be mapped. " + alertActivation);
-        }
-        return apiType;
+        return switch (alertActivation) {
+            case ON -> ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_ON;
+            case OFF -> ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_OFF;
+            case PSD -> ActivationStateTypes.AlertActivation.ALERT_ACTIVATION_PSD;
+        };
     }
 
     ActivationStateTypes.ComponentActivation toApiComponentActivationStateType(final ComponentActivation activation) {
-        final ActivationStateTypes.ComponentActivation apiType;
-        switch (activation) {
-            case ON:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_ON;
-                break;
-            case NOT_RDY:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_NOT_READY;
-                break;
-            case STND_BY:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_STANDBY;
-                break;
-            case SHTDN:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_SHUTDOWN;
-                break;
-            case OFF:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_OFF;
-                break;
-            case FAIL:
-                apiType = ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_FAILURE;
-                break;
-            default:
-                throw new IllegalStateException("Unknown ComponentActivation could not be mapped. " + activation);
-        }
-        return apiType;
+        return switch (activation) {
+            case ON -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_ON;
+            case NOT_RDY -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_NOT_READY;
+            case STND_BY -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_STANDBY;
+            case SHTDN -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_SHUTDOWN;
+            case OFF -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_OFF;
+            case FAIL -> ActivationStateTypes.ComponentActivation.COMPONENT_ACTIVATION_FAILURE;
+        };
     }
 
     MetricTypes.MeasurementValidity toApiMeasurementValidityType(final MeasurementValidity validity) {
-        final MetricTypes.MeasurementValidity apiType;
-        switch (validity) {
-            case VLD:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_VALID;
-                break;
-            case VLDATED:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_VALIDATED_DATA;
-                break;
-            case ONG:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_MEASUREMENT_ONGOING;
-                break;
-            case QST:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_QUESTIONABLE;
-                break;
-            case CALIB:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_CALIBRATION_ONGOING;
-                break;
-            case INV:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_INVALID;
-                break;
-            case OFLW:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_OVERFLOW;
-                break;
-            case UFLW:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_UNDERFLOW;
-                break;
-            case NA:
-                apiType = MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_NA;
-                break;
-            default:
-                throw new IllegalStateException("Unknown MeasurementValidity could not be mapped. " + validity);
+        return switch (validity) {
+            case VLD -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_VALID;
+            case VLDATED -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_VALIDATED_DATA;
+            case ONG -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_MEASUREMENT_ONGOING;
+            case QST -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_QUESTIONABLE;
+            case CALIB -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_CALIBRATION_ONGOING;
+            case INV -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_INVALID;
+            case OFLW -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_OVERFLOW;
+            case UFLW -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_UNDERFLOW;
+            case NA -> MetricTypes.MeasurementValidity.MEASUREMENT_VALIDITY_NA;
+        };
+    }
+
+    private DeviceTypes.DescriptorClass toApiDescriptorClass(final Class<? extends AbstractDescriptor> descriptorType) {
+        if (MdsDescriptor.class.equals(descriptorType)) {
+            return DeviceTypes.DescriptorClass.DESCRIPTOR_CLASS_MDS;
+        } else {
+            return DeviceTypes.DescriptorClass.DESCRIPTOR_CLASS_ABSTRACT;
         }
-        return apiType;
     }
 
     private static ContextTypes.LocationDetail locationDetailToProto(final LocationDetail locationDetail) {

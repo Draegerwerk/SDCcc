@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -43,12 +43,12 @@ public final class EnabledTestConfig {
     public static final String BICEPS_R5003 = BICEPS + "R5003";
 
     public static final String BICEPS_B_6_0 = BICEPS + "B-6_0";
-    public static final String BICEPS_B_61 = BICEPS + "B-61";
     public static final String BICEPS_B_128 = BICEPS + "B-128";
     public static final String BICEPS_B_284_0 = BICEPS + "B-284_0";
     public static final String BICEPS_B_402_0 = BICEPS + "B-402_0";
 
     public static final String BICEPS_C5 = BICEPS + "C-5";
+    public static final String BICEPS_C7 = BICEPS + "C-7";
     public static final String BICEPS_C11 = BICEPS + "C-11";
     public static final String BICEPS_C12 = BICEPS + "C-12";
     public static final String BICEPS_C13 = BICEPS + "C-13";

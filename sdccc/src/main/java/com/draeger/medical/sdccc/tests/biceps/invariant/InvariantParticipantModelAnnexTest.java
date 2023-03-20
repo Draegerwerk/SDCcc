@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -17,6 +17,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
+import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
@@ -73,8 +74,15 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-                    var first = mdibHistorian.createNewStorage(sequenceId);
+                RemoteMdibAccess first = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();

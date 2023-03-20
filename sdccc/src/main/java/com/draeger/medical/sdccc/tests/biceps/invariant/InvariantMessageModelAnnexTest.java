@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2022 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -164,11 +164,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -239,6 +246,47 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         }
         assertTestData(
                 acceptableSequenceSeen.get(), "No DescriptionModificationReport seen during test run, test failed.");
+    }
+
+    @Test
+    @TestIdentifier(EnabledTestConfig.BICEPS_C7)
+    @TestDescription("Checks all DescriptionModificationReports seen during the TestRun for ReportParts whose "
+            + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
+            + "@ParentDescriptor attribute set.")
+    @RequirePrecondition(
+            simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
+    void testRequirementC7() throws NoTestData, IOException, MarshallingException {
+        final var acceptableReportsSeen = new AtomicInteger(0);
+
+        try (final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
+                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+            for (MessageContent messageContent :
+                    descriptionModificationReports.getStream().toList()) {
+                final SoapMessage soapMessage = marshalling.unmarshal(
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                final DescriptionModificationReport descriptionModificationReport = soapUtil.getBody(
+                                soapMessage, DescriptionModificationReport.class)
+                        .orElseThrow();
+
+                for (DescriptionModificationReport.ReportPart reportPart :
+                        descriptionModificationReport.getReportPart()) {
+                    if (reportPart.getDescriptor().stream().anyMatch(MdsDescriptor.class::isInstance)) {
+                        acceptableReportsSeen.incrementAndGet();
+                        final String parentDescriptor = reportPart.getParentDescriptor();
+                        assertTrue(
+                                parentDescriptor == null || parentDescriptor.isBlank(),
+                                String.format(
+                                        "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                                                + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                                        parentDescriptor));
+                    }
+                }
+            }
+        }
+
+        assertTestData(
+                acceptableReportsSeen.get(),
+                "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
     }
 
     @Test
@@ -422,9 +470,15 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         final var acceptableSequenceSeen = new AtomicInteger(0);
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess mdib = null;
                 try {
-                    final var reports = mdibHistorian.getAllReports(sequenceId);
-                    RemoteMdibAccess mdib = mdibHistorian.createNewStorage(sequenceId);
+                    mdib = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdib.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -639,12 +693,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -696,12 +756,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -753,12 +819,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -821,12 +893,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();
@@ -879,12 +957,18 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = mdibHistorian.createNewStorage(sequenceId);
+                    second = mdibHistorian.createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
 
                 // get relevant reports
-                try (final var reports = mdibHistorian.getAllReports(sequenceId)) {
-
-                    var first = mdibHistorian.createNewStorage(sequenceId);
-                    var second = mdibHistorian.createNewStorage(sequenceId);
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> reportIterator = reports.iterator();
                             reportIterator.hasNext(); ) {

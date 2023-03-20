@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <revision>6.0.0</revision>
+        <revision>7.0.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <execPluginVersion>3.1.0</execPluginVersion>
@@ -58,6 +58,13 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <version>2.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>download-licenses</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
