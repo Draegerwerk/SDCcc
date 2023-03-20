@@ -319,7 +319,7 @@ public class ManipulationPreconditions {
 
         static class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
 
-            private String expectedHandle;
+            private final String expectedHandle;
             private final Object signal = new Object();
 
             private EpisodicContextReportStateHandleObserver(String expectedStateHandle) {
@@ -328,10 +328,12 @@ public class ManipulationPreconditions {
 
             @Subscribe
             public void onUpdate(ContextStateModificationMessage report) {
-                for (AbstractContextState state : report.getStates()) {
-                    if (this.expectedHandle.equals(state.getHandle())) {
-                        synchronized (signal) {
-                            this.signal.notifyAll();
+                for (List<AbstractContextState> states : report.getStates().values()) {
+                    for (AbstractContextState state : states) {
+                        if (this.expectedHandle.equals(state.getHandle())) {
+                            synchronized (signal) {
+                                this.signal.notifyAll();
+                            }
                         }
                     }
                 }
