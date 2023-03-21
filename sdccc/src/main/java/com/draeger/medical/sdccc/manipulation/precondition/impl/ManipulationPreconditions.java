@@ -308,44 +308,13 @@ public class ManipulationPreconditions {
     public static class AssociateLocationsManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateLocationsManipulation.class);
-        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS =  5000;
+        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS = 5000;
 
         /**
          * Creates a location association precondition.
          */
         public AssociateLocationsManipulation() {
             super(AssociateLocationsManipulation::manipulation);
-        }
-
-        static class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
-
-            private final String expectedHandle;
-            private final Object signal = new Object();
-
-            private EpisodicContextReportStateHandleObserver(String expectedStateHandle) {
-                this.expectedHandle = expectedStateHandle;
-            }
-
-            @Subscribe
-            public void onUpdate(ContextStateModificationMessage report) {
-                for (List<AbstractContextState> states : report.getStates().values()) {
-                    for (AbstractContextState state : states) {
-                        if (this.expectedHandle.equals(state.getHandle())) {
-                            synchronized (signal) {
-                                this.signal.notifyAll();
-                            }
-                        }
-                    }
-                }
-            }
-
-            public void waitForStateUpdate(long timeoutMillis) throws InterruptedException {
-                signal.wait(timeoutMillis);
-            }
-
-            public Object getSignal() {
-                return signal;
-            }
         }
 
         /**
@@ -438,9 +407,10 @@ public class ManipulationPreconditions {
             return stateHandle;
         }
 
-        private static void waitForEpisodicContextReportToModifyStateHandle(TestClient testClient, String stateHandle) {
-            EpisodicContextReportStateHandleObserver observer =
-                new EpisodicContextReportStateHandleObserver(stateHandle);
+        private static void waitForEpisodicContextReportToModifyStateHandle(
+                final TestClient testClient, final String stateHandle) {
+            final EpisodicContextReportStateHandleObserver observer =
+                    new EpisodicContextReportStateHandleObserver(stateHandle);
             testClient.getSdcRemoteDevice().getMdibAccessObservable().registerObserver(observer);
 
             final long start = System.currentTimeMillis();
@@ -448,7 +418,7 @@ public class ManipulationPreconditions {
             long now = System.currentTimeMillis();
             boolean done = false;
             synchronized (observer.getSignal()) {
-                while(now < end && !done) {
+                while (now < end && !done) {
                     try {
                         observer.waitForStateUpdate(end - now);
                         done = true;
@@ -492,6 +462,37 @@ public class ManipulationPreconditions {
             LOG.info("Validity for {} after checking if state handle is already known: {}", stateHandle, valid);
 
             return valid;
+        }
+
+        static final class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
+
+            private final String expectedHandle;
+            private final Object signal = new Object();
+
+            private EpisodicContextReportStateHandleObserver(final String expectedStateHandle) {
+                this.expectedHandle = expectedStateHandle;
+            }
+
+            @Subscribe
+            public void onUpdate(final ContextStateModificationMessage report) {
+                for (List<AbstractContextState> states : report.getStates().values()) {
+                    for (AbstractContextState state : states) {
+                        if (this.expectedHandle.equals(state.getHandle())) {
+                            synchronized (signal) {
+                                this.signal.notifyAll();
+                            }
+                        }
+                    }
+                }
+            }
+
+            public void waitForStateUpdate(final long timeoutMillis) throws InterruptedException {
+                signal.wait(timeoutMillis);
+            }
+
+            public Object getSignal() {
+                return signal;
+            }
         }
     }
 
