@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -49,6 +51,7 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.dpws.soap.MarshallingService;
+import org.somda.sdc.dpws.soap.SoapMessage;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
@@ -195,45 +198,59 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirementR00980() throws NoTestData, IOException {
-        final var sequenceIds =
-                messageStorage.getUniqueSequenceIds().filter(Objects::nonNull).toList();
-
         final var reinsertionSeen = new AtomicInteger(0);
 
-        for (var sequenceId : sequenceIds) {
-            try (final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
-                    sequenceId, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+        try (final var sequenceIds = messageStorage.getUniqueSequenceIds().filter(Objects::nonNull)) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                        sequenceId, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
 
-                final var deletedDescriptors = new HashMap<String, AbstractDescriptor>();
+                    final var deletedDescriptors = new HashMap<String, AbstractDescriptor>();
 
-                messages.getStream().forEach(messageContent -> {
-                    try {
-                        final var soapMessage = marshalling.unmarshal(new ByteArrayInputStream(
-                                messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
-                        final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
-                        final var reportParts = reportOpt.orElseThrow().getReportPart();
-                        for (var part : reportParts) {
-                            if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.CRT) {
-                                for (var descriptor : part.getDescriptor()) {
-                                    final var handle = descriptor.getHandle();
-                                    if (deletedDescriptors.containsKey(handle)) {
-                                        reinsertionSeen.incrementAndGet();
-                                        checkReinsertedDescriptor(descriptor, deletedDescriptors.get(handle));
+                    messages.getStream()
+                            .map(this::getDescriptionModificationReportFromMessageContent)
+                            .forEach(report -> {
+                                final var reportParts = report.orElseThrow().getReportPart();
+                                for (var part : reportParts) {
+                                    if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.CRT) {
+                                        for (var descriptor : part.getDescriptor()) {
+                                            final var handle = descriptor.getHandle();
+                                            if (deletedDescriptors.containsKey(handle)) {
+                                                reinsertionSeen.incrementAndGet();
+                                                checkReinsertedDescriptor(descriptor, deletedDescriptors.get(handle));
+                                            }
+                                        }
+                                    } else if (ImpliedValueUtil.getModificationType(part)
+                                            == DescriptionModificationType.DEL) {
+                                        for (var descriptor : part.getDescriptor()) {
+                                            deletedDescriptors.put(descriptor.getHandle(), descriptor);
+                                        }
                                     }
                                 }
-                            } else if (ImpliedValueUtil.getModificationType(part) == DescriptionModificationType.DEL) {
-                                for (var descriptor : part.getDescriptor()) {
-                                    deletedDescriptors.put(descriptor.getHandle(), descriptor);
-                                }
-                            }
-                        }
-                    } catch (MarshallingException e) {
-                        fail("Error unmarshalling MessageContent " + e);
-                    }
-                });
-            }
+                            });
+                } catch (IOException e) {
+                    fail(e);
+                    // unreachable, silence warnings
+                    throw new RuntimeException(e);
+                }
+            });
         }
         assertTestData(reinsertionSeen.get(), "No reinsertion of descriptors seen during the test run, test failed.");
+    }
+
+    private Optional<DescriptionModificationReport> getDescriptionModificationReportFromMessageContent(
+            final MessageContent content) {
+        final var body = content.getBody();
+
+        final SoapMessage message;
+        try {
+            message = marshalling.unmarshal(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
+        } catch (MarshallingException e) {
+            fail("Could not unmarshal message", e);
+            // unreachable, silence warnings
+            throw new RuntimeException(e);
+        }
+        return soapUtil.getBody(message, DescriptionModificationReport.class);
     }
 
     private void checkReinsertedDescriptor(
