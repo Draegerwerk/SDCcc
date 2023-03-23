@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,15 +26,22 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.common.access.MdibAccessObservable;
+import org.somda.sdc.biceps.common.access.MdibAccessObserver;
+import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
@@ -79,6 +87,8 @@ public class ManipulationPreconditionsTest {
     private MdibEntity mockEntity;
     private MdibEntity mockEntity2;
     private MdibAccess mockMdibAccess;
+    private TestClient mockTestClient;
+    private boolean updated;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -96,7 +106,7 @@ public class ManipulationPreconditionsTest {
         mockEntity2 = mock(MdibEntity.class);
         mockMdibAccess = mock(MdibAccess.class);
 
-        final var mockTestClient = mock(TestClient.class);
+        mockTestClient = mock(TestClient.class, Answers.RETURNS_DEEP_STUBS);
         when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
 
         injector = InjectorUtil.setupInjector(new AbstractModule() {
@@ -145,11 +155,14 @@ public class ManipulationPreconditionsTest {
         // create mock location context state
         when(mockLocationContextState.getDescriptorHandle()).thenReturn(LOCATION_CONTEXT_DESCRIPTOR_HANDLE);
         when(mockLocationContextState.getContextAssociation()).thenReturn(ContextAssociation.ASSOC);
+        when(mockLocationContextState.getContextAssociation())
+                .thenAnswer((arguments) -> updated ? ContextAssociation.ASSOC : ContextAssociation.DIS);
         when(mockLocationContextState.getHandle()).thenReturn(LOCATION_CONTEXT_STATE_HANDLE);
 
         // create another mock location context state
         when(mockLocationContextState2.getDescriptorHandle()).thenReturn(LOCATION_CONTEXT_DESCRIPTOR_HANDLE);
-        when(mockLocationContextState2.getContextAssociation()).thenReturn(ContextAssociation.ASSOC);
+        when(mockLocationContextState2.getContextAssociation())
+                .thenAnswer((arguments) -> updated ? ContextAssociation.ASSOC : ContextAssociation.DIS);
         when(mockLocationContextState2.getHandle()).thenReturn(LOCATION_CONTEXT_STATE_HANDLE2);
 
         // make manipulation return our two location context state handles and nothing afterwards
@@ -257,8 +270,56 @@ public class ManipulationPreconditionsTest {
     @Test
     @DisplayName("associateNewLocations: Associate new location correctly")
     void testAssociateNewLocationForHandle() {
+        updated = false;
         associateNewLocationsSetup();
         final var expectedManipulationCalls = 2;
+        final List<MdibAccessObserver> observers = new ArrayList<>();
+
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+                updated = true;
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
 
         assertTrue(
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
@@ -272,57 +333,318 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations, times(expectedManipulationCalls))
                 .createContextStateWithAssociation(handleCaptor.capture(), assocCaptor.capture());
 
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
+
         assertEquals(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, handleCaptor.getValue());
         assertEquals(ContextAssociation.ASSOC, assocCaptor.getValue());
+    }
+
+    @Test
+    @DisplayName("associateNewLocations: Associate new location slowly")
+    void testAssociateNewLocationForHandleSlow() {
+        updated = false;
+        associateNewLocationsSetup();
+        final var expectedManipulationCalls = 2;
+        final List<MdibAccessObserver> observers = new ArrayList<>();
+
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+
+                // the delay
+                sleep(2000);
+                updated = true;
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
+
+        assertTrue(
+                ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalid. Reason(s): " + testRunObserver.getReasons());
+
+        final var handleCaptor = ArgumentCaptor.forClass(String.class);
+        final var assocCaptor = ArgumentCaptor.forClass(ContextAssociation.class);
+        verify(mockManipulations, times(expectedManipulationCalls))
+                .createContextStateWithAssociation(handleCaptor.capture(), assocCaptor.capture());
+
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
+
+        assertEquals(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, handleCaptor.getValue());
+        assertEquals(ContextAssociation.ASSOC, assocCaptor.getValue());
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void sleep(final long delayInMillis) {
+        final long start = System.currentTimeMillis();
+        final long end = start + delayInMillis;
+        long now = System.currentTimeMillis();
+        while (now < end) {
+            try {
+                Thread.sleep(end - now);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+            now = System.currentTimeMillis();
+        }
+    }
+
+    @Test
+    @DisplayName(
+            "associateNewLocations: EpisodicContextReport is too slow and the Association is hence not yet udated.")
+    void testAssociateNewLocationForHandleReportTooSlow() {
+        updated = false;
+        associateNewLocationsSetup();
+
+        assertFalse(
+                ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
+                "Manipulation should've failed");
+        assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
     }
 
     @Test
     @DisplayName("associateNewLocations: New location not associated")
     void testAssociateNewLocationForHandleWrongAssociation() {
         associateNewLocationsSetup();
+        final List<MdibAccessObserver> observers = new ArrayList<>();
 
         // introduce error, context won't be associated
         when(mockLocationContextState.getContextAssociation()).thenReturn(ContextAssociation.DIS);
+
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
 
         assertFalse(
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
     }
 
     @Test
     @DisplayName("associateNewLocations: New location wrong descriptor")
     void testAssociateNewLocationForHandleWrongDescriptor() {
         associateNewLocationsSetup();
+        final List<MdibAccessObserver> observers = new ArrayList<>();
 
         final var wrongDescriptorHandle = "mostindeededly";
 
         // introduce error, state points to wrong descriptor
         when(mockLocationContextState.getDescriptorHandle()).thenReturn(wrongDescriptorHandle);
 
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
+
         assertFalse(
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
     }
 
     @Test
     @DisplayName("associateNewLocations: Already existent state")
     void testAssociateNewLocationForHandleUsedState() {
         associateNewLocationsSetup();
+        final List<MdibAccessObserver> observers = new ArrayList<>();
 
         // introduce error, first state handle already in entity
         when(mockEntity.getStates(LocationContextState.class)).thenReturn(List.of(mockLocationContextState));
+
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
+
         assertFalse(
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
     }
 
     @Test
     @DisplayName("associateNewLocations: Manipulation returns same handle twice")
     void testAssociateNewLocationForHandleSameStateTwice() {
         associateNewLocationsSetup();
+        final List<MdibAccessObserver> observers = new ArrayList<>();
 
         // introduce error, manipulation returns same handle twice
         when(mockManipulations.createContextStateWithAssociation(
@@ -331,10 +653,59 @@ public class ManipulationPreconditionsTest {
                 .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
                 .thenReturn(Optional.empty());
 
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<MdibAccessObserver> observer = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observer.set(arguments.getArgument(0));
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            ManipulationPreconditions.AssociateLocationsManipulation.EpisodicContextReportStateHandleObserver
+                    mdibAccessObserver;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserver =
+                        (ManipulationPreconditions.AssociateLocationsManipulation
+                                        .EpisodicContextReportStateHandleObserver)
+                                observer.get();
+                synchronized (signal) {
+                    while (mdibAccessObserver == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        mdibAccessObserver =
+                                (ManipulationPreconditions.AssociateLocationsManipulation
+                                                .EpisodicContextReportStateHandleObserver)
+                                        observer.get();
+                    }
+                }
+                observers.add(mdibAccessObserver);
+                final ContextStateModificationMessage report = new ContextStateModificationMessage(
+                        mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
+                mdibAccessObserver.onUpdate(report);
+
+                observer.set(null);
+            }
+        });
+        t.start();
+
         assertFalse(
                 ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+
+        for (MdibAccessObserver obs : observers) {
+            verify(mockMdibAccessObservable).registerObserver(obs);
+        }
     }
 
     @Test
@@ -426,6 +797,7 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void setupMetricStatusManipulation(final MetricCategory metricCategory, final String metricStateHandle) {
         when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
         when(mockMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class)).thenReturn(List.of(mockEntity));
@@ -522,6 +894,7 @@ public class ManipulationPreconditionsTest {
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void setMetricStatusSetup(
             final MetricCategory category,
             final String metricHandle,
@@ -1095,6 +1468,7 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations).insertDescriptor(SOME_HANDLE);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void setupRemoveAndReinsertDescriptor(
             final String descriptorHandle, final List<String> removableDescriptors) {
         when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(removableDescriptors);
