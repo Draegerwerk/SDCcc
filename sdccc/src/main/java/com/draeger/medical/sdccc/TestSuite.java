@@ -49,6 +49,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -67,10 +68,15 @@ import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.discovery.PackageSelector;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -97,6 +103,7 @@ public class TestSuite {
     private final MessageGeneratingUtil messageGenerator;
     private final TestRunInformation testRunInformation;
     private final TestClient client;
+    private final boolean testExecutionLogging;
 
     @Inject
     TestSuite(
@@ -104,6 +111,7 @@ public class TestSuite {
             final TestRunObserver testRunObserver,
             @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
             @Named(TestRunConfig.TEST_RUN_DIR) final File testRunDir,
+            @Named(TestSuiteConfig.TEST_EXECUTION_LOGGING) final boolean testExecutionLogging,
             final MessageGeneratingUtil messageGenerator,
             final TestRunInformation testRunInformation,
             final TestClient client) {
@@ -114,6 +122,7 @@ public class TestSuite {
         this.messageGenerator = messageGenerator;
         this.testRunInformation = testRunInformation;
         this.client = client;
+        this.testExecutionLogging = testExecutionLogging;
         LOG.info("Created");
     }
 
@@ -237,7 +246,11 @@ public class TestSuite {
             final Launcher directTestLauncher,
             final TestPlan directTestPlan,
             final SummaryGeneratingListener directSummary) {
-        directTestLauncher.execute(directTestPlan);
+        if (testExecutionLogging) {
+            directTestLauncher.execute(directTestPlan, new TestCaseExecutionListener());
+        } else {
+            directTestLauncher.execute(directTestPlan);
+        }
         directSummary.getSummary().printTo(outWriter);
         directSummary
                 .getSummary()
@@ -632,6 +645,61 @@ public class TestSuite {
                         "Precondition violated: Logger '%s' does not append to the"
                                 + " TriggerOnErrorOrWorseLogAppender '%s'",
                         entry.getKey(), triggerOnErrorOrWorseLogAppenderName));
+            }
+        }
+    }
+
+    private static class TestCaseExecutionListener implements TestExecutionListener {
+
+        @Override
+        public void executionStarted(final TestIdentifier testIdentifier) {
+            if (testIdentifier.isTest()) {
+                final TestSource testSource = testIdentifier.getSource().orElse(null);
+                if (testSource instanceof MethodSource methodSource) {
+                    try {
+                        final var testClass = ClassLoader.getSystemClassLoader().loadClass(methodSource.getClassName());
+                        final var testMethod = Arrays.stream(testClass.getDeclaredMethods())
+                                .filter(method -> method.getName().equals(methodSource.getMethodName()))
+                                .findAny()
+                                .orElseThrow();
+                        final var testIdentifierAnnotation = testMethod.getAnnotation(
+                                com.draeger.medical.sdccc.tests.annotations.TestIdentifier.class);
+                        LOG.info("Test case for Requirement {} started", testIdentifierAnnotation.value());
+                    } catch (ClassNotFoundException | NoSuchElementException e) {
+                        LOG.info(
+                                "Error while logging test case execution for method {} ",
+                                methodSource.getMethodName(),
+                                e);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void executionFinished(
+                final TestIdentifier testIdentifier, final TestExecutionResult testExecutionResult) {
+            if (testIdentifier.isTest()) {
+                final TestSource testSource = testIdentifier.getSource().orElse(null);
+                if (testSource instanceof MethodSource methodSource) {
+                    try {
+                        final var testClass = ClassLoader.getSystemClassLoader().loadClass(methodSource.getClassName());
+                        final var testMethod = Arrays.stream(testClass.getDeclaredMethods())
+                                .filter(method -> method.getName().equals(methodSource.getMethodName()))
+                                .findAny()
+                                .orElseThrow();
+                        final var testIdentifierAnnotation = testMethod.getAnnotation(
+                                com.draeger.medical.sdccc.tests.annotations.TestIdentifier.class);
+                        LOG.info(
+                                "Test case for Requirement {} finished with result {}",
+                                testIdentifierAnnotation.value(),
+                                testExecutionResult.getStatus());
+                    } catch (ClassNotFoundException | NoSuchElementException e) {
+                        LOG.info(
+                                "Error while logging test case execution for method {} ",
+                                methodSource.getMethodName(),
+                                e);
+                    }
+                }
             }
         }
     }
