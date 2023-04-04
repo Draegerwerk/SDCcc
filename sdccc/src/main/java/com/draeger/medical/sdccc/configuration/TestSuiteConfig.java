@@ -22,6 +22,7 @@ public final class TestSuiteConfig {
     private static final String SDCCC = "SDCcc.";
     public static final String CI_MODE = SDCCC + "CIMode";
     public static final String GRAPHICAL_POPUPS = SDCCC + "GraphicalPopups";
+    public static final String TEST_EXECUTION_LOGGING = SDCCC + "TestExecutionLogging";
 
     /*
      * TLS configuration

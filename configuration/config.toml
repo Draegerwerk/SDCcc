@@ -1,6 +1,7 @@
 [SDCcc]
 CIMode=false
 GraphicalPopups=true
+TestExecutionLogging=true
 
 [SDCcc.TLS]
 FileDirectory="./configuration"
