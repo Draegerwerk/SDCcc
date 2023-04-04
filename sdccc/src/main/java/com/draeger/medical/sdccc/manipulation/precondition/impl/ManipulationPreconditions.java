@@ -477,7 +477,7 @@ public class ManipulationPreconditions {
                 long now = System.currentTimeMillis();
                 final long end = now + timeoutMillis;
                 boolean done = false;
-                synchronized (getSignal()) {
+                synchronized (signal) {
                     while (now < end && !done) {
                         try {
                             signal.wait(end - now);
