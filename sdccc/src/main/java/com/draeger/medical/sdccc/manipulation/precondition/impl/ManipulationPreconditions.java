@@ -377,6 +377,7 @@ public class ManipulationPreconditions {
          * Associates a new location context state for a given descriptor handle.
          *
          * @param device               the location context state will appear in, used for validation
+         * @param testClient           the testClient connected to the DUT. Used to wait for the Reports.
          * @param manipulations        to call for insertion of state
          * @param handle               of the descriptor to insert a new state for
          * @param previousStateHandles previously present state handles, to ensure new state is actually new
