@@ -410,25 +410,11 @@ public class ManipulationPreconditions {
 
         private static void waitForEpisodicContextReportToModifyStateHandle(
                 final TestClient testClient, final String stateHandle) {
+
             final EpisodicContextReportStateHandleObserver observer =
                     new EpisodicContextReportStateHandleObserver(stateHandle);
             testClient.getSdcRemoteDevice().getMdibAccessObservable().registerObserver(observer);
-
-            final long start = System.currentTimeMillis();
-            final long end = start + TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS;
-            long now = System.currentTimeMillis();
-            boolean done = false;
-            synchronized (observer.getSignal()) {
-                while (now < end && !done) {
-                    try {
-                        observer.waitForStateUpdate(end - now);
-                        done = true;
-                    } catch (InterruptedException e) {
-                        // do nothing
-                    }
-                    now = System.currentTimeMillis();
-                }
-            }
+            observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS);
         }
 
         /**
@@ -487,8 +473,21 @@ public class ManipulationPreconditions {
                 }
             }
 
-            public void waitForStateUpdate(final long timeoutMillis) throws InterruptedException {
-                signal.wait(timeoutMillis);
+            public void waitForStateUpdate(final long timeoutMillis) {
+                long now = System.currentTimeMillis();
+                final long end = now + timeoutMillis;
+                boolean done = false;
+                synchronized (getSignal()) {
+                    while (now < end && !done) {
+                        try {
+                            signal.wait(end - now);
+                            done = true;
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        }
+                        now = System.currentTimeMillis();
+                    }
+                }
             }
 
             public Object getSignal() {
