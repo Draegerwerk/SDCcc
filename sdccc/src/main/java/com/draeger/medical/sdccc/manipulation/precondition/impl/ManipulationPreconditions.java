@@ -455,9 +455,11 @@ public class ManipulationPreconditions {
 
             private final String expectedHandle;
             private final Object signal = new Object();
+            private boolean reportReceived;
 
             private EpisodicContextReportStateHandleObserver(final String expectedStateHandle) {
                 this.expectedHandle = expectedStateHandle;
+                this.reportReceived = false;
             }
 
             @Subscribe
@@ -466,6 +468,7 @@ public class ManipulationPreconditions {
                     for (AbstractContextState state : states) {
                         if (this.expectedHandle.equals(state.getHandle())) {
                             synchronized (signal) {
+                                this.reportReceived = true;
                                 this.signal.notifyAll();
                             }
                         }
@@ -476,22 +479,16 @@ public class ManipulationPreconditions {
             public void waitForStateUpdate(final long timeoutMillis) {
                 long now = System.currentTimeMillis();
                 final long end = now + timeoutMillis;
-                boolean done = false;
                 synchronized (signal) {
-                    while (now < end && !done) {
+                    while (now < end && !reportReceived) {
                         try {
                             signal.wait(end - now);
-                            done = true;
                         } catch (InterruptedException e) {
                             // do nothing
                         }
                         now = System.currentTimeMillis();
                     }
                 }
-            }
-
-            public Object getSignal() {
-                return signal;
             }
         }
     }
