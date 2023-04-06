@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - requirement test execution logging
 
 ### Changed
-- Precondition of biceps:R0133 is now easier to satisfy.
+- the precondition of biceps:R0133 so that it is now easier to satisfy.
 
 ## [7.0.1] - 2023-03-17
 
