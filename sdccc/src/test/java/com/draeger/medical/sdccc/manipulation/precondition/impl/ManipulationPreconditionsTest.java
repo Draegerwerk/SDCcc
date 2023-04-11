@@ -9,7 +9,9 @@ package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -302,7 +304,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -319,6 +321,7 @@ public class ManipulationPreconditionsTest {
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertTrue(
@@ -336,6 +339,68 @@ public class ManipulationPreconditionsTest {
         for (MdibAccessObserver obs : observers) {
             verify(mockMdibAccessObservable).registerObserver(obs);
         }
+
+        assertEquals(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, handleCaptor.getValue());
+        assertEquals(ContextAssociation.ASSOC, assocCaptor.getValue());
+    }
+
+    @Test
+    @DisplayName("associateNewLocations: Associate new location correctly, but interrupted.")
+    void testAssociateNewLocationForHandleButInterrupted() {
+        updated = false;
+        associateNewLocationsSetup();
+        final var expectedManipulationCalls = 1;
+
+        final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
+        final AtomicReference<Thread> observerThread = new AtomicReference<>();
+        final Object signal = new Object();
+        doAnswer((arguments) -> {
+                    synchronized (signal) {
+                        observerThread.set(Thread.currentThread());
+                        signal.notifyAll();
+                    }
+                    return null;
+                })
+                .when(mockMdibAccessObservable)
+                .registerObserver(any());
+
+        final Thread t = new Thread(() -> {
+            Thread mdibAccessObserverThread;
+            for (int i = 0; i < 2; i++) {
+                mdibAccessObserverThread = observerThread.get();
+                synchronized (signal) {
+                    while (mdibAccessObserverThread == null) {
+                        try {
+                            signal.wait(300);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException("Unexpected InterruptedException", e);
+                        }
+                        mdibAccessObserverThread = observerThread.get();
+                    }
+                }
+                mdibAccessObserverThread.interrupt();
+                updated = true;
+
+                observerThread.set(null);
+            }
+        });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
+        t.start();
+
+        final RuntimeException runtimeException = assertThrows(RuntimeException.class, () ->
+            ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector));
+        assertTrue(
+                runtimeException.getCause() instanceof InterruptedException,
+                "Expected: a RuntimeException " + "caused by an InterruptedException");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalid. Reason(s): " + testRunObserver.getReasons());
+
+        final var handleCaptor = ArgumentCaptor.forClass(String.class);
+        final var assocCaptor = ArgumentCaptor.forClass(ContextAssociation.class);
+        verify(mockManipulations, times(expectedManipulationCalls))
+                .createContextStateWithAssociation(handleCaptor.capture(), assocCaptor.capture());
 
         assertEquals(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, handleCaptor.getValue());
         assertEquals(ContextAssociation.ASSOC, assocCaptor.getValue());
@@ -376,7 +441,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -389,13 +454,18 @@ public class ManipulationPreconditionsTest {
                         mockMdibAccess, Map.of("foo", List.of(mockLocationContextState, mockLocationContextState2)));
 
                 // the delay
-                sleep(2000);
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Unexpected InterruptedException", e);
+                }
                 updated = true;
                 mdibAccessObserver.onUpdate(report);
 
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertTrue(
@@ -416,21 +486,6 @@ public class ManipulationPreconditionsTest {
 
         assertEquals(LOCATION_CONTEXT_DESCRIPTOR_HANDLE, handleCaptor.getValue());
         assertEquals(ContextAssociation.ASSOC, assocCaptor.getValue());
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private void sleep(final long delayInMillis) {
-        final long start = System.currentTimeMillis();
-        final long end = start + delayInMillis;
-        long now = System.currentTimeMillis();
-        while (now < end) {
-            try {
-                Thread.sleep(end - now);
-            } catch (InterruptedException e) {
-                // do nothing
-            }
-            now = System.currentTimeMillis();
-        }
     }
 
     @Test
@@ -482,7 +537,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -498,6 +553,7 @@ public class ManipulationPreconditionsTest {
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertFalse(
@@ -548,7 +604,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -564,6 +620,7 @@ public class ManipulationPreconditionsTest {
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertFalse(
@@ -612,7 +669,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -628,6 +685,7 @@ public class ManipulationPreconditionsTest {
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertFalse(
@@ -680,7 +738,7 @@ public class ManipulationPreconditionsTest {
                         try {
                             signal.wait(300);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         mdibAccessObserver =
                                 (ManipulationPreconditions.AssociateLocationsManipulation
@@ -696,6 +754,7 @@ public class ManipulationPreconditionsTest {
                 observer.set(null);
             }
         });
+        t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
         assertFalse(

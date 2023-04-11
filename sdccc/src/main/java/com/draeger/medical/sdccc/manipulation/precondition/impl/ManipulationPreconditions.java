@@ -484,7 +484,8 @@ public class ManipulationPreconditions {
                         try {
                             signal.wait(end - now);
                         } catch (InterruptedException e) {
-                            // do nothing
+                            // InterruptedException is not expected
+                            throw new RuntimeException("Unexpected InterruptedException", e);
                         }
                         now = System.currentTimeMillis();
                     }
