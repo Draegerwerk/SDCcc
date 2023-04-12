@@ -388,8 +388,9 @@ public class ManipulationPreconditionsTest {
         t.setUncaughtExceptionHandler((t1, e) -> fail(e));
         t.start();
 
-        final RuntimeException runtimeException = assertThrows(RuntimeException.class, () ->
-            ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector));
+        final RuntimeException runtimeException = assertThrows(
+                RuntimeException.class,
+                () -> ManipulationPreconditions.AssociateLocationsManipulation.manipulation(injector));
         assertTrue(
                 runtimeException.getCause() instanceof InterruptedException,
                 "Expected: a RuntimeException " + "caused by an InterruptedException");
