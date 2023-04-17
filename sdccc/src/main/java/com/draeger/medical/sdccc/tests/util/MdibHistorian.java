@@ -253,7 +253,7 @@ public class MdibHistorian {
     /**
      * Retrieves all episodic reports for a given sequence id.
      *
-     * @param sequenceId of the sequence to retrieve reports for
+     * @param sequenceId         of the sequence to retrieve reports for
      * @param minimumMdibVersion optional minimum mdib version to retrieve for the reports, if null all are returned
      * @return list of the reports
      */
@@ -271,6 +271,32 @@ public class MdibHistorian {
             return iter;
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
+            LOG.error("{}: {}", errorMessage, e.getMessage());
+            LOG.debug("{}", errorMessage, e);
+            fail(e);
+            // unreachable, silence warnings
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Retrieves all episodic reports for a given sequence id and a maximum mdib version.
+     *
+     * @param sequenceId         of the sequence to retrieve reports for
+     * @param maximumMdibVersion maximum mdib version to retrieve for the reports
+     * @param bodyTypes  to match messages against
+     * @return list of the reports
+     */
+    public Stream<AbstractReport> getAllReportsWithLowerMdibVersion(
+            final String sequenceId, final BigInteger maximumMdibVersion, final QName... bodyTypes) {
+        try {
+            final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(sequenceId, bodyTypes);
+
+            final var iter = messages.getStream().map(this::unmarshallReport);
+
+            return iter.filter(it -> ImpliedValueUtil.getReportMdibVersion(it).compareTo(maximumMdibVersion) < 0);
+        } catch (IOException e) {
+            final var errorMessage = "Error while trying to retrieve reports from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());
             LOG.debug("{}", errorMessage, e);
             fail(e);
