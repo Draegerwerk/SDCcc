@@ -59,7 +59,7 @@ import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.exception.MarshallingException;
 
 /**
- * Glue Communication model binding tests.
+ * Glue subscription handling tests.
  */
 public class InvariantSubscriptionHandlingTest extends InjectorTestBase {
 
