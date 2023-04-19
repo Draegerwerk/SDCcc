@@ -38,8 +38,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import it.com.draeger.medical.sdccc.test_util.SslMetadata;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
@@ -135,7 +137,13 @@ public class TestSuiteIT {
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
 
-        final var injector = createTestSuiteITInjector(providerCrypto, false);
+        final var injector = createTestSuiteITInjector(providerCrypto, false, new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
+            }
+        });
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
@@ -173,7 +181,13 @@ public class TestSuiteIT {
     @Timeout(TEST_TIMEOUT)
     public void testConsumer() throws IOException {
 
-        final var injector = getConsumerInjector(false);
+        final var injector = getConsumerInjector(false, new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
+            }
+        });
 
         final var injectorSpy = spy(injector);
         final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -219,6 +233,8 @@ public class TestSuiteIT {
             protected void configure() {
                 super.configure();
                 bind(PreconditionRegistry.class).toInstance(preconditionRegistryMock);
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
             }
         });
 
@@ -249,7 +265,13 @@ public class TestSuiteIT {
     @Test
     @Timeout(TEST_TIMEOUT)
     public void testConsumerUnexpectedSubscriptionEnd() throws Exception {
-        final var injector = getConsumerInjector(false);
+        final var injector = getConsumerInjector(false, new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -307,7 +329,13 @@ public class TestSuiteIT {
     @Test
     @Timeout(TEST_TIMEOUT)
     public void testConsumerExpectedDisconnect() throws Exception {
-        final var injector = getConsumerInjector(false);
+        final var injector = getConsumerInjector(false, new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -347,7 +375,13 @@ public class TestSuiteIT {
     @Test
     @Timeout(TEST_TIMEOUT)
     public void testMockConsumerFailures() throws IOException {
-        final var injector = getConsumerInjector(true);
+        final var injector = getConsumerInjector(true, new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
+            }
+        });
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);

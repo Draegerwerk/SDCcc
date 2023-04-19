@@ -23,6 +23,7 @@ import com.draeger.medical.biceps.model.message.DescriptionModificationType;
 import com.draeger.medical.biceps.model.participant.AbstractContextState;
 import com.draeger.medical.biceps.model.participant.AbstractDescriptor;
 import com.draeger.medical.biceps.model.participant.ObjectFactory;
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
@@ -40,6 +41,8 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.time.Duration;
@@ -172,6 +175,8 @@ public class ConditionalPreconditionsTest {
                 bind(TestClient.class).toInstance(testClient);
                 bind(Manipulations.class).toInstance(mockManipulations);
                 bind(SdcRemoteDevice.class).toInstance(mockDevice);
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
             }
         });
         InjectorTestBase.setInjector(testInjector);
@@ -302,12 +307,10 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationPrecondition correctly calls manipulation.
-     *
-     * @throws PreconditionException on precondition exceptions
      */
     @Test
     @DisplayName("DescriptionModificationPrecondition correctly calls manipulation")
-    public void testDescriptionModificationManipulation() throws PreconditionException {
+    public void testDescriptionModificationManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 
@@ -409,12 +412,10 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationCrtPrecondition correctly calls manipulation.
-     *
-     * @throws PreconditionException on precondition exceptions
      */
     @Test
     @DisplayName("DescriptionModificationCrtPrecondition correctly calls manipulation")
-    public void testDescriptionModificationCrtManipulation() throws PreconditionException {
+    public void testDescriptionModificationCrtManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 
@@ -583,7 +584,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationDelPrecondition correctly calls manipulation")
-    public void testDescriptionModificationDelManipulation() throws PreconditionException {
+    public void testDescriptionModificationDelManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 
