@@ -34,6 +34,7 @@ import com.draeger.medical.biceps.model.participant.MetricCategory;
 import com.draeger.medical.biceps.model.participant.VmdDescriptor;
 import com.draeger.medical.biceps.model.participant.VmdState;
 import com.draeger.medical.dpws.soap.model.Envelope;
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -46,6 +47,8 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
@@ -101,6 +104,8 @@ public class InvariantDeviceComponentStateTestTest {
             @Override
             protected void configure() {
                 bind(TestClient.class).toInstance(mockClient);
+                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                        .toInstance(true);
             }
         });
 
@@ -255,8 +260,7 @@ public class InvariantDeviceComponentStateTestTest {
                 .filter(e -> handle.equals(e.getDescriptorHandle()))
                 .collect(Collectors.toList())
                 .get(0);
-        final T result = (T) state;
-        return result;
+        return (T) state;
     }
 
     private Envelope buildMdibWithoutActivationStates() {

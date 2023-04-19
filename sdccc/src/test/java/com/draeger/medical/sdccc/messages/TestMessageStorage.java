@@ -143,8 +143,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testMdibVersionOverflow(@TempDir final File dir) throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             final String transactionId = "transactionId";
@@ -183,8 +183,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testMdibVersionCloseToOverflow(@TempDir final File dir) throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             final String transactionId = "transactionId";
@@ -234,8 +234,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetUniqueSequenceIds(@TempDir final File dir) throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             final String transactionId = "transactionId";
@@ -306,8 +306,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testHeadersAndTransactionId(@TempDir final File dir) throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             final List<String> expectedList1 = Arrays.asList("headerContent1", "headerContent2", "headerContent3");
@@ -369,8 +369,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testUdpMessageWithTransactionIdNull(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             try (final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.UNKNOWN,
@@ -407,8 +407,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testBodyExtraction(@TempDir final File dir) throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
             // test tag with content
@@ -501,8 +501,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessages(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                3, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "inbound_body";
 
             try (final Message message = new Message(
@@ -559,8 +559,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetOutboundMessages(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                3, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "outbound_body";
 
             try (final Message message = new Message(
@@ -631,8 +631,8 @@ public class TestMessageStorage {
                         null,
                         Collections.singletonList(CertificateUtil.getDummyCert())));
 
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var expected = String.format(BASE_MESSAGE_STRING, "action1", "expected_body");
 
             try (final Message message = new Message(
@@ -735,8 +735,8 @@ public class TestMessageStorage {
                         null,
                         Collections.singletonList(CertificateUtil.getDummyCert())));
 
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var expected = String.format(BASE_MESSAGE_STRING, "action1", "expected_body");
 
             try (final Message message = new Message(
@@ -845,8 +845,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundHttpMessages(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(5, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                5, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
             try (final Message message = new Message(
                     CommunicationLog.Direction.OUTBOUND,
@@ -918,8 +918,8 @@ public class TestMessageStorage {
     @Test
     public void testGetOutboundHttpMessagesByBodyTypeAndHeaders(@TempDir final File dir)
             throws IOException, CertificateException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                3, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
             final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "some_body", "msg");
             final String expectedBody1 = "<msg:some_body><pm:once_told_me>"
@@ -1005,8 +1005,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessagesByBodyType(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                6, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
             final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
             final String expectedBody1 = "<msg:EpisodicAlertReport><pm:once_told_me>"
@@ -1135,8 +1135,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                6, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
             final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
             final var expectedQName2 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicMetricReport", "msg");
@@ -1273,8 +1273,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationData(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                3, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
@@ -1307,8 +1307,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testMessageStorageFlushNotInDeadlock(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(3, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                3, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final String expected = "inbound_body";
 
             try (final Message message = new Message(
@@ -1395,8 +1395,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetInboundMessagesByTimeIntervalAndBodyType(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                6, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // test tag with content
             final var expectedQName1 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicAlertReport", "msg");
             final String expectedBody1 = "<msg:EpisodicAlertReport><pm:once_told_me>"
@@ -1498,8 +1498,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationDataByManipulation(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(6, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                6, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
@@ -1545,9 +1545,10 @@ public class TestMessageStorage {
             {
                 try (final var inboundMessages =
                         messageStorage.getManipulationDataByManipulation(methodName1, methodName2)) {
-                    inboundMessages.getStream().forEach(message -> {
-                        assertEquals(2, inboundMessages.getStream().count());
-                    });
+                    inboundMessages
+                            .getStream()
+                            .forEach(message ->
+                                    assertEquals(2, inboundMessages.getStream().count()));
                 }
             }
         }
@@ -1561,8 +1562,8 @@ public class TestMessageStorage {
      */
     @Test
     public void testGetManipulationDataByParametersAndManipulation(@TempDir final File dir) throws Exception {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
@@ -1631,9 +1632,7 @@ public class TestMessageStorage {
                 try (final var inboundMessages = messageStorage.getManipulationDataByParametersAndManipulation(
                         expectedParameters, expectedMethodName)) {
                     final var count = new AtomicInteger(0);
-                    inboundMessages.getStream().forEach(message -> {
-                        count.incrementAndGet();
-                    });
+                    inboundMessages.getStream().forEach(message -> count.incrementAndGet());
                     assertEquals(2, count.get(), "Two matching manipulation should've been retrieved from storage.");
                 }
             }
@@ -1649,8 +1648,8 @@ public class TestMessageStorage {
     @Test
     public void testGetManipulationDataByParametersAndManipulationOneParameter(@TempDir final File dir)
             throws Exception {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
@@ -1735,8 +1734,8 @@ public class TestMessageStorage {
     @Test
     public void testGetManipulationDataByParametersAndManipulationEmptyParameters(@TempDir final File dir)
             throws Exception {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final var startTime1 = 1000;
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
@@ -1793,8 +1792,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFromHttpHeader(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/xml; charset=ISO-8859-13");
@@ -1821,9 +1820,73 @@ public class TestMessageStorage {
     }
 
     @Test
+    void testDetermineCharsetFromMessageFromHttpHeaderSuppressEncodingErrors(@TempDir final File dir)
+            throws IOException {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            assertEquals(0, messageStorage.getMessageEncodingErrorCount());
+
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", "application/xml; charset=ISO-8859-13");
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            message.close();
+
+            // when
+            final Charset actualCharset = messageStorage.determineCharsetFromMessage(message);
+            assertEquals(1, messageStorage.getMessageEncodingErrorCount());
+
+            // then
+            assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
+            Mockito.verifyNoInteractions(this.testRunObserver);
+        }
+    }
+
+    @Test
+    void testDetermineCharsetFromMessageFromHttpHeaderSuppressMimeTypeErrors(@TempDir final File dir)
+            throws IOException {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            assertEquals(0, messageStorage.getInvalidMimeTypeErrorCount());
+
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", "text/xml; charset=UTF-8");
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            message.close();
+
+            // when
+            final Charset actualCharset = messageStorage.determineCharsetFromMessage(message);
+            assertEquals(1, messageStorage.getInvalidMimeTypeErrorCount());
+
+            // then
+            assertEquals(StandardCharsets.UTF_8, actualCharset);
+            Mockito.verifyNoInteractions(this.testRunObserver);
+        }
+    }
+
+    @Test
     void testDetermineCharsetFromMessageFromHttpHeaderWithQuotes(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/soap+xml; charset='ISO-8859-13'");
@@ -1850,8 +1913,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/xml; charset=\"ISO-8859-13\"");
@@ -1879,8 +1942,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/xml; charset=ISO-8859-13; boundary=XYZ");
@@ -1908,8 +1971,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary2(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/xml; charset=ISO-8859-13 ;boundary=XYZ");
@@ -1937,8 +2000,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/soap+xml");
@@ -1969,8 +2032,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineEBCDICCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/xml");
@@ -2002,8 +2065,8 @@ public class TestMessageStorage {
     @Test
     void testDetermineCharsetFromMessageFromXmlDeclarationUsingSingleQuotes(@TempDir final File dir)
             throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/soap+xml");
@@ -2045,8 +2108,8 @@ public class TestMessageStorage {
             final File dir, final Charset charset, final ByteOrderMark bom, final boolean expectFailure)
             throws IOException {
         Mockito.reset(this.testRunObserver);
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "application/soap+xml");
@@ -2083,8 +2146,8 @@ public class TestMessageStorage {
 
     @Test
     void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir) throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             headers.put("Content-Type", "text/html"); // no charset in HTTP Header
@@ -2254,8 +2317,8 @@ public class TestMessageStorage {
             final Charset charsetInXMLDeclarationEncoding,
             final String mimeType)
             throws IOException {
-        try (final MessageStorage messageStorage =
-                new MessageStorage(1, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
             final ListMultimap<String, String> headers = ArrayListMultimap.create();
             if (charsetInHttpHeader != null) {

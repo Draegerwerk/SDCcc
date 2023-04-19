@@ -166,10 +166,14 @@ public class MessageStorage implements AutoCloseable {
     private final CyclicBarrier flushBarrier;
 
     private final TestRunObserver testRunObserver;
+    private boolean summarizeMessageEncodingErrors;
+    private long messageEncodingErrorCount;
+    private int invalidMimeTypeCount;
 
     @Inject
     MessageStorage(
             @Named(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE) final int blockingQueueSize,
+            @Named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS) final boolean summarizeMessageEncodingErrors,
             final MessageFactory messageFactory,
             final HibernateConfig configuration,
             final TestRunObserver testRunObserver) {
@@ -177,6 +181,9 @@ public class MessageStorage implements AutoCloseable {
         this.testRunObserver = testRunObserver;
         this.closed = new AtomicBoolean();
         this.blockingQueueSize = blockingQueueSize;
+        this.summarizeMessageEncodingErrors = summarizeMessageEncodingErrors;
+        this.messageEncodingErrorCount = 0;
+        this.invalidMimeTypeCount = 0;
 
         this.actionExtractor = new XPathExtractor(String.format("//%s:Action", WsAddressingConstants.NAMESPACE_PREFIX));
 
@@ -256,8 +263,8 @@ public class MessageStorage implements AutoCloseable {
         final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups = new LinkedList<>();
         final byte[] bodyBytes = message.getFinalMemory();
         if (bodyBytes.length > 0) {
-            // TODO: removed charset determination temporarily (https://github.com/Draegerwerk/SDCcc/issues/48)
-            // final Charset charset = determineCharsetFromMessage(message);
+            // TODO: ignored charset determination temporarily (https://github.com/Draegerwerk/SDCcc/issues/48)
+            determineCharsetFromMessage(message);
             // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
             body = new String(message.getFinalMemory(), StandardCharsets.UTF_8);
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
@@ -355,10 +362,14 @@ public class MessageStorage implements AutoCloseable {
                 } else if (charset.equals(charsetFromXmlDeclaration)) {
                     charsetWithOrigin = String.format("'%s' in XML Declaration", charset);
                 }
-                this.testRunObserver.invalidateTestRun(String.format(
-                        "Encountered a message whose encoding is declared to be %s. This violates"
-                                + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8.",
-                        charsetWithOrigin));
+                if (this.summarizeMessageEncodingErrors) {
+                    this.messageEncodingErrorCount++;
+                } else {
+                    this.testRunObserver.invalidateTestRun(String.format(
+                            "Encountered a message whose encoding is declared to be %s. This violates"
+                                    + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8. (Message UID='%s')",
+                            charsetWithOrigin, message.getID()));
+                }
             }
 
             return charset;
@@ -444,11 +455,15 @@ public class MessageStorage implements AutoCloseable {
                     mimeType = value;
                 }
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
-                    this.testRunObserver.invalidateTestRun(String.format(
-                            "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
-                                    + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and "
-                                    + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1.",
-                            mimeType));
+                    if (summarizeMessageEncodingErrors) {
+                        this.invalidMimeTypeCount++;
+                    } else {
+                        this.testRunObserver.invalidateTestRun(String.format(
+                                "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
+                                        + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and "
+                                        + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1. (Message UUID='%s')",
+                                mimeType, message.getID()));
+                    }
                 }
             }
         }
@@ -1735,6 +1750,22 @@ public class MessageStorage implements AutoCloseable {
 
             transaction.commit();
         }
+    }
+
+    /**
+     * Get the number of messageEncodingErrors detected by the MessageStorage.
+     * @return the count
+     */
+    public long getMessageEncodingErrorCount() {
+        return this.messageEncodingErrorCount;
+    }
+
+    /**
+     * Get the number of invalid MimeTypeErrors detected by the MessageStorage.
+     * @return the count
+     */
+    public long getInvalidMimeTypeErrorCount() {
+        return this.invalidMimeTypeCount;
     }
 
     /**
