@@ -191,7 +191,7 @@ public class InvariantSubscriptionHandlingTestTest {
     }
 
     /**
-     * Tests whether the test passes when the description modification report where send before the report
+     * Tests whether the test passes when the description modification report where sent before any report
      * containing the changed states.
      *
      * @throws Exception on any exception
@@ -260,7 +260,7 @@ public class InvariantSubscriptionHandlingTestTest {
 
     /**
      * Tests whether the test passes when the description modification report and the report
-     * containing the changed state having the same mdib version.
+     * containing the changed state have the same mdib version.
      *
      * @throws Exception on any exception
      */

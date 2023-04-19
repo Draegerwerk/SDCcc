@@ -253,15 +253,6 @@ public class InvariantSubscriptionHandlingTest extends InjectorTestBase {
 
     private boolean compareStates(
             final List<AbstractState> statesFromReport, final List<AbstractState> statesFromDescriptionModification) {
-        boolean foundState = false;
-        for (var state : statesFromDescriptionModification) {
-            final var matchingState = statesFromReport.stream()
-                    .filter(reportState -> reportState.equals(state))
-                    .findAny();
-            if (matchingState.isPresent()) {
-                foundState = true;
-            }
-        }
-        return foundState;
+        return statesFromReport.stream().anyMatch(statesFromDescriptionModification::contains);
     }
 }

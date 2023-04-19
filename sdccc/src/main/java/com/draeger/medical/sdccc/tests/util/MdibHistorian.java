@@ -280,7 +280,8 @@ public class MdibHistorian {
     }
 
     /**
-     * Retrieves all episodic reports for a given sequence id and a maximum mdib version.
+     * Retrieves all episodic reports for a given sequence id and an mdib version less than the
+     * given maximumMdibVersion.
      *
      * @param sequenceId         of the sequence to retrieve reports for
      * @param maximumMdibVersion maximum mdib version to retrieve for the reports
