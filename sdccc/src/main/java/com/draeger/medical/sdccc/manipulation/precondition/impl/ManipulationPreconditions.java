@@ -25,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.common.access.MdibAccessObservable;
 import org.somda.sdc.biceps.common.access.MdibAccessObserver;
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
@@ -412,8 +413,7 @@ public class ManipulationPreconditions {
                 final TestClient testClient, final String stateHandle) {
 
             final EpisodicContextReportStateHandleObserver observer =
-                    new EpisodicContextReportStateHandleObserver(stateHandle);
-            testClient.getSdcRemoteDevice().getMdibAccessObservable().registerObserver(observer);
+                    new EpisodicContextReportStateHandleObserver(stateHandle, testClient);
             observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS);
         }
 
@@ -455,11 +455,15 @@ public class ManipulationPreconditions {
 
             private final String expectedHandle;
             private final Object signal = new Object();
+            private final MdibAccessObservable mdibAccessObservable;
             private boolean reportReceived;
 
-            private EpisodicContextReportStateHandleObserver(final String expectedStateHandle) {
+            private EpisodicContextReportStateHandleObserver(final String expectedStateHandle,
+                                                             TestClient testClient) {
                 this.expectedHandle = expectedStateHandle;
                 this.reportReceived = false;
+                this.mdibAccessObservable = testClient.getSdcRemoteDevice().getMdibAccessObservable();
+                this.mdibAccessObservable.registerObserver(this);
             }
 
             @Subscribe
@@ -471,6 +475,8 @@ public class ManipulationPreconditions {
                                 this.reportReceived = true;
                                 this.signal.notifyAll();
                             }
+                            // the report has been received -> unregister observer so this method is not called again.
+                            this.mdibAccessObservable.unregisterObserver(this);
                         }
                     }
                 }
