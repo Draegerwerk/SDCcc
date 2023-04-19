@@ -12,11 +12,11 @@ ParticipantPrivatePassword="dummypass"
 EnabledProtocols = ["TLSv1.2", "TLSv1.3"]
 
 [SDCcc.Network]
-InterfaceAddress="192.168.2.106"
+InterfaceAddress="127.0.0.1"
 
 [SDCcc.Consumer]
 Enable=true
-DeviceEpr="urn:uuid:bbad3043-f225-4020-becd-ddb5632bc1e5"
+DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 
 [SDCcc.Provider]
 Enable=false
