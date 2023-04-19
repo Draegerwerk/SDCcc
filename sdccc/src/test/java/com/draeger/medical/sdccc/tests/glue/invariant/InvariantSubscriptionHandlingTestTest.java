@@ -191,7 +191,7 @@ public class InvariantSubscriptionHandlingTestTest {
     }
 
     /**
-     * Tests whether the test passes when the description modification report where sent before any report
+     * Tests whether the test passes when the description modification report were sent before any report
      * containing the changed states.
      *
      * @throws Exception on any exception
