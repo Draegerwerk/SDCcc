@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - requirement test execution logging
+- test for glue:R0056
 
 ### Changed
 - the precondition of biceps:R0133 so that it is now easier to satisfy.

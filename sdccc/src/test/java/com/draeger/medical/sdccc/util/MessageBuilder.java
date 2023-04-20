@@ -25,6 +25,7 @@ import com.draeger.medical.biceps.model.message.GetMdibResponse;
 import com.draeger.medical.biceps.model.message.InvocationInfo;
 import com.draeger.medical.biceps.model.message.InvocationState;
 import com.draeger.medical.biceps.model.message.ObjectFactory;
+import com.draeger.medical.biceps.model.message.ObservedValueStream;
 import com.draeger.medical.biceps.model.message.OperationInvokedReport;
 import com.draeger.medical.biceps.model.message.PeriodicContextReport;
 import com.draeger.medical.biceps.model.message.SetContextStateResponse;
@@ -33,6 +34,7 @@ import com.draeger.medical.biceps.model.message.SystemErrorReport;
 import com.draeger.medical.biceps.model.message.WaveformStream;
 import com.draeger.medical.biceps.model.participant.CodedValue;
 import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricState;
+import com.draeger.medical.biceps.model.participant.SampleArrayValue;
 import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.dpws.soap.wsaddressing.model.AttributedURIType;
 import com.draeger.medical.dpws.soap.wsaddressing.model.EndpointReferenceType;
@@ -44,6 +46,7 @@ import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchType;
 import com.draeger.medical.dpws.soap.wsdiscovery.model.ResolveMatchesType;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
 import jakarta.xml.bind.JAXBElement;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -467,6 +470,38 @@ public class MessageBuilder {
         waveform.setSequenceId(sequenceId);
         waveform.getState().addAll(states);
         return waveform;
+    }
+
+    /**
+     * Creates a new observed value stream value element.
+     *
+     * @param metricHandle of the metric the sample array value belongs to
+     * @param stateVersion of the metric
+     * @param value the sample array value of the metric
+     * @return new observed value stream value
+     */
+    public ObservedValueStream.Value buildObservedValue(
+            final String metricHandle, final BigInteger stateVersion, final SampleArrayValue value) {
+        final var observedValue = messageModelFactory.createObservedValueStreamValue();
+        observedValue.setMetric(metricHandle);
+        observedValue.setStateVersion(stateVersion);
+        observedValue.setValue(value);
+        return observedValue;
+    }
+
+    /**
+     * Creates a new observed value stream element.
+     *
+     * @param sequenceId  of current mdib
+     * @param values to add to observed value stream
+     * @return new observed value stream
+     */
+    public ObservedValueStream buildObservedValueStream(
+            final String sequenceId, final List<ObservedValueStream.Value> values) {
+        final var observedValueStream = messageModelFactory.createObservedValueStream();
+        observedValueStream.setSequenceId(sequenceId);
+        observedValueStream.getValue().addAll(values);
+        return observedValueStream;
     }
 
     /**
