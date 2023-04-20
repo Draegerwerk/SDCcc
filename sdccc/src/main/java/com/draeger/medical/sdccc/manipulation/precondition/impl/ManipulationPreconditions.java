@@ -458,8 +458,8 @@ public class ManipulationPreconditions {
             private final MdibAccessObservable mdibAccessObservable;
             private boolean reportReceived;
 
-            private EpisodicContextReportStateHandleObserver(final String expectedStateHandle,
-                                                             TestClient testClient) {
+            private EpisodicContextReportStateHandleObserver(
+                    final String expectedStateHandle, final TestClient testClient) {
                 this.expectedHandle = expectedStateHandle;
                 this.reportReceived = false;
                 this.mdibAccessObservable = testClient.getSdcRemoteDevice().getMdibAccessObservable();
