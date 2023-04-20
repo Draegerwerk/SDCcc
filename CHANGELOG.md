@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - requirement test execution logging
+- test for glue:R0056
 - message encoding errors are summarized by default.
 
 ## [7.0.1] - 2023-03-17
