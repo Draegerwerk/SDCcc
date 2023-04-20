@@ -49,8 +49,8 @@ public class XmlReportWriter {
     /**
      * Initializes an XmlReportWriter.
      *
-     * @param reportData list of results representing test cases
-     * @param classUtil utility
+     * @param reportData      list of results representing test cases
+     * @param classUtil       utility
      * @param testRunObserver observer which contains information on validity of test run
      */
     @AssistedInject
@@ -261,7 +261,17 @@ public class XmlReportWriter {
                 xmlWriter.writeAttribute("message", err.getMessage());
             }
             xmlWriter.writeAttribute("type", err.getClass().getCanonicalName());
-            xmlWriter.writeCData(ExceptionUtils.getStackTrace(err));
+
+            final var stackTrace = ExceptionUtils.getStackTrace(err);
+            final var stackTraceSplit = stackTrace.split("]]>");
+
+            for (int i = 0; i < stackTraceSplit.length; i++) {
+                xmlWriter.writeCData(stackTraceSplit[i]);
+                if (i < stackTraceSplit.length - 1) {
+                    xmlWriter.writeCData("]]");
+                    xmlWriter.writeCData(">");
+                }
+            }
         }
         xmlWriter.writeEndElement();
         writeNewLine(xmlWriter);
