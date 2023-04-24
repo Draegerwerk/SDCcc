@@ -268,8 +268,7 @@ public class XmlReportWriter {
             final var lastIndex = stackTraceSplit.length - 1;
             for (final String x :
                     Arrays.stream(stackTraceSplit).limit(lastIndex).toArray(String[]::new)) {
-                xmlWriter.writeCData(x);
-                xmlWriter.writeCData("]]");
+                xmlWriter.writeCData(x + "]]");
                 xmlWriter.writeCData(">");
             }
             xmlWriter.writeCData(stackTraceSplit[lastIndex]);
