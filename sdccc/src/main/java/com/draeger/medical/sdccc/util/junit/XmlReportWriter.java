@@ -18,6 +18,7 @@ import java.lang.annotation.Annotation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.xml.stream.XMLOutputFactory;
@@ -264,14 +265,14 @@ public class XmlReportWriter {
 
             final var stackTrace = ExceptionUtils.getStackTrace(err);
             final var stackTraceSplit = stackTrace.split("]]>");
-
-            for (int i = 0; i < stackTraceSplit.length; i++) {
-                xmlWriter.writeCData(stackTraceSplit[i]);
-                if (i < stackTraceSplit.length - 1) {
-                    xmlWriter.writeCData("]]");
-                    xmlWriter.writeCData(">");
-                }
+            final var lastIndex = stackTraceSplit.length - 1;
+            for (final String x :
+                    Arrays.stream(stackTraceSplit).limit(lastIndex).toArray(String[]::new)) {
+                xmlWriter.writeCData(x);
+                xmlWriter.writeCData("]]");
+                xmlWriter.writeCData(">");
             }
+            xmlWriter.writeCData(stackTraceSplit[lastIndex]);
         }
         xmlWriter.writeEndElement();
         writeNewLine(xmlWriter);
