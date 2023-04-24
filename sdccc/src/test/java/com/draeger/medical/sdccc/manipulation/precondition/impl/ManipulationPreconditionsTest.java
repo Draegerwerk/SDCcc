@@ -17,7 +17,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
@@ -25,8 +24,6 @@ import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -108,8 +105,6 @@ public class ManipulationPreconditionsTest {
                 bind(TestClient.class).toInstance(mockTestClient);
                 bind(SdcRemoteDevice.class).toInstance(mockDevice);
                 bind(Manipulations.class).toInstance(mockManipulations);
-                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
-                        .toInstance(true);
             }
         });
 

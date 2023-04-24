@@ -21,8 +21,10 @@ import com.draeger.medical.sdccc.util.junit.guice.XmlReportFactory;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtil;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtilImpl;
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 
 /**
@@ -44,5 +46,7 @@ public class DefaultTestSuiteModule extends AbstractModule {
         bind(ClassUtil.class).to(ClassUtilImpl.class);
         bind(HibernateConfig.class).to(HibernateConfigImpl.class).in(Singleton.class);
         bind(Manipulations.class).to(GRpcManipulations.class).in(Singleton.class);
+        bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
+                .toInstance(true);
     }
 }

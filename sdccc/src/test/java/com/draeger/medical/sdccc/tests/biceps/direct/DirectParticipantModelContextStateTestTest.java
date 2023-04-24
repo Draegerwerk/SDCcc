@@ -14,7 +14,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -23,8 +22,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -107,8 +104,6 @@ public class DirectParticipantModelContextStateTestTest {
             protected void configure() {
                 bind(TestClient.class).toInstance(testClient);
                 bind(Manipulations.class).toInstance(mockManipulations);
-                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
-                        .toInstance(true);
             }
         });
 

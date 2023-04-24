@@ -20,7 +20,6 @@ import com.draeger.medical.biceps.model.message.OperationInvokedReport;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.ObjectFactory;
 import com.draeger.medical.dpws.soap.model.Envelope;
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -34,8 +33,6 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -125,8 +122,6 @@ public class InvariantRemoteControlCapabilitiesTestTest {
             @Override
             protected void configure() {
                 bind(TestClient.class).toInstance(mockClient);
-                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
-                        .toInstance(true);
             }
         });
         InjectorTestBase.setInjector(injector);

@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import com.draeger.medical.biceps.model.participant.ContextAssociation;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.dpws.soap.model.Envelope;
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -28,8 +27,6 @@ import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -93,8 +90,6 @@ public class InvariantParticipantModelContextStateTestTest {
             @Override
             protected void configure() {
                 bind(TestClient.class).toInstance(mockClient);
-                bind(Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)))
-                        .toInstance(true);
             }
         });
         InjectorTestBase.setInjector(injector);
