@@ -1943,7 +1943,8 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir)
+            throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2216,7 +2217,8 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir)
+            throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2319,7 +2321,8 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testDetermineCharsetFromMessageFailureHTTPHeaderInconsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureHTTPHeaderInconsistent(@TempDir final File dir)
+            throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.ISO_8859_1,
@@ -2361,7 +2364,8 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testDetermineCharsetFromMessageFailureXMLDeclarationInconsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureXMLDeclarationInconsistent(@TempDir final File dir)
+            throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.UTF_8,
