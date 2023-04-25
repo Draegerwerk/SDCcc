@@ -1790,6 +1790,11 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly determines the Charset when it is given in the HTTP Header.
+     * @param dir - temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeader(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -1819,6 +1824,13 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Ensures that determineCharsetFromMessage() does not invalidate the TestRun when an Encoding Error is detected,
+     * but SummarizeMessageEncodingErrors is set to true in the Configuration. Also checks that the encoding error is
+     * nevertheless correctly counted for the summary.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderSuppressEncodingErrors(@TempDir final File dir)
             throws IOException {
@@ -1851,6 +1863,13 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Ensures that determineCharsetFromMessage() does not invalidate the TestRun when a Mime Type Error is detected,
+     * but SummarizeMessageEncodingErrors is set to true in the Configuration. Also checks that the Mime Type error is
+     * nevertheless correctly counted for the summary.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderSuppressMimeTypeErrors(@TempDir final File dir)
             throws IOException {
@@ -1883,6 +1902,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
+     * Quotes are used.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderWithQuotes(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -1911,6 +1936,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
+     * Double-Quotes are used.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -1940,6 +1971,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
+     * a boundary is given as well.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -1969,6 +2006,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
+     * a boundary is given as well.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary2(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -1998,6 +2041,11 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the XML Declaration.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -2030,6 +2078,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects an EBCDIC Charset when it is given in the
+     * XML Declaration.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineEBCDICCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -2062,6 +2116,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the XML Declaration
+     * using single quotes.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromXmlDeclarationUsingSingleQuotes(@TempDir final File dir)
             throws IOException {
@@ -2095,6 +2155,11 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the Byte Order Mark.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFromByteOrderMark(@TempDir final File dir) throws IOException {
         testForCharset(dir, Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE, true);
@@ -2144,6 +2209,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Tests if determineCharsetFromMessage() invalidates the TestRun when the Charset of a message cannot be
+     * determined.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
@@ -2177,6 +2248,12 @@ public class TestMessageStorage {
         }
     }
 
+    /**
+     * Ensures that determineCharsetFromMessage() does not invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are consistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageConsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
@@ -2191,6 +2268,12 @@ public class TestMessageStorage {
         Mockito.verifyNoInteractions(this.testRunObserver);
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentEBCDIC(@TempDir final File dir)
             throws IOException {
@@ -2207,6 +2290,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentASCIICompatible(@TempDir final File dir)
             throws IOException {
@@ -2223,6 +2312,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureHTTPHeaderInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
@@ -2238,6 +2333,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureBOMInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
@@ -2253,6 +2354,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureXMLDeclarationInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
@@ -2268,6 +2375,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureXmlDeclarationEncodingInconsistent(@TempDir final File dir)
             throws IOException {
@@ -2284,6 +2397,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when the given Mime Type is not
+     * standard-compliant.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageFailureWrongMimeType(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
@@ -2299,6 +2418,12 @@ public class TestMessageStorage {
                 .invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
+     * declarations within a message that are inconsistent.
+     * @param dir - a temporal directory.
+     * @throws IOException - when something goes wrong.
+     */
     @Test
     public void testDetermineCharsetFromMessageASCIISpecialCase(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
