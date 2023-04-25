@@ -35,6 +35,8 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
         bind(TestSuiteConfig.GRAPHICAL_POPUPS, Boolean.class, true);
 
         bind(TestSuiteConfig.TEST_EXECUTION_LOGGING, Boolean.class, false);
+
+        bind(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS, Boolean.class, true);
     }
 
     void configureTLS() {
