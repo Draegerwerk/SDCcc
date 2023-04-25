@@ -1791,7 +1791,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeader(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeader(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -1820,7 +1820,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderSuppressEncodingErrors(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFromHttpHeaderSuppressEncodingErrors(@TempDir final File dir)
             throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
@@ -1852,7 +1852,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderSuppressMimeTypeErrors(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFromHttpHeaderSuppressMimeTypeErrors(@TempDir final File dir)
             throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
@@ -1884,7 +1884,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderWithQuotes(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeaderWithQuotes(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -1912,7 +1912,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeaderWithDoubleQuotes(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -1941,7 +1941,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -1970,7 +1970,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary2(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromHttpHeaderWithBoundary2(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -1999,7 +1999,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2031,7 +2031,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineEBCDICCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
+    public void testDetermineEBCDICCharsetFromMessageFromXmlDeclaration(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2063,7 +2063,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromXmlDeclarationUsingSingleQuotes(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFromXmlDeclarationUsingSingleQuotes(@TempDir final File dir)
             throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
@@ -2096,7 +2096,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFromByteOrderMark(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFromByteOrderMark(@TempDir final File dir) throws IOException {
         testForCharset(dir, Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE, true);
         testForCharset(dir, Charset.forName("UTF-32BE"), ByteOrderMark.UTF_32BE, true);
         testForCharset(dir, StandardCharsets.UTF_16LE, ByteOrderMark.UTF_16LE, true);
@@ -2145,7 +2145,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureCharsetCannotBeDetermined(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2178,7 +2178,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageConsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageConsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.UTF_8,
@@ -2192,7 +2192,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentEBCDIC(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentEBCDIC(@TempDir final File dir)
             throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
@@ -2208,7 +2208,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentASCIICompatible(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFailureEncodingNotUTF8ConsistentASCIICompatible(@TempDir final File dir)
             throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
@@ -2224,7 +2224,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureHTTPHeaderInconsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureHTTPHeaderInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.ISO_8859_1,
@@ -2239,7 +2239,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureBOMInconsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureBOMInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.UTF_8,
@@ -2254,7 +2254,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureXMLDeclarationInconsistent(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureXMLDeclarationInconsistent(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.UTF_8,
@@ -2269,7 +2269,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureXmlDeclarationEncodingInconsistent(@TempDir final File dir)
+    public void testDetermineCharsetFromMessageFailureXmlDeclarationEncodingInconsistent(@TempDir final File dir)
             throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
@@ -2285,7 +2285,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageFailureWrongMimeType(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageFailureWrongMimeType(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir,
                 StandardCharsets.UTF_8,
@@ -2300,7 +2300,7 @@ public class TestMessageStorage {
     }
 
     @Test
-    void testDetermineCharsetFromMessageASCIISpecialCase(@TempDir final File dir) throws IOException {
+    public void testDetermineCharsetFromMessageASCIISpecialCase(@TempDir final File dir) throws IOException {
         final Charset actualCharset = testDetermineCharsetFromMessageUsingCharsets(
                 dir, null, null, StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8, "application/soap+xml");
         // then
