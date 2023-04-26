@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for glue:R0056
 - message encoding errors are summarized by default.
 
+### Fixed
+- the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
+
 ## [7.0.1] - 2023-03-17
 
 ### Fixed

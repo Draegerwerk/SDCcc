@@ -58,6 +58,7 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
+import org.opentest4j.AssertionFailedError;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -120,6 +121,17 @@ public class XmlReportWriterTest {
     TestExecutionResult createFailedTest(final TestDescriptor test) {
         final var result = TestExecutionResult.failed(new AssertionError(
                 String.format("Assertion for %s failed", test.getUniqueId().toString())));
+        failedTests.put(test.getUniqueId().toString(), result);
+        return result;
+    }
+
+    TestExecutionResult createFailedTestWithBadCharSequence(final TestDescriptor test) {
+        final var result = TestExecutionResult.failed(new AssertionFailedError(String.format(
+                "Assertion for %s failed. The sequence ']]>' may be included in the content only if it marks the end"
+                        + " of a CDATA section. Oh no, now I wrote ]]> and the CDATA section is not finished yet."
+                        + " I hope my XML parser can handle it and does not produce any errors or throws exceptions,"
+                        + " since ]]> usually marks the end of a CDATA section, as I mentioned.",
+                test.getUniqueId().toString())));
         failedTests.put(test.getUniqueId().toString(), result);
         return result;
     }
@@ -194,6 +206,133 @@ public class XmlReportWriterTest {
                     testExecutionResult,
                     List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))));
         }
+    }
+
+    private void setupBadCharSequenceTest() throws Exception {
+        // reset old setup
+        data.clear();
+        stringToIdentifier = new HashMap<>();
+        failedTests = new HashMap<>();
+        errorTests = new HashMap<>();
+
+        // build and add report data
+        final String uniqueId = UNIQUE_ID_PREFIX + "badCharSequence" + "]";
+        final TestSource src = MethodSource.from(TEST_PACKAGE, TEST_CASE_PREFIX + "badCharSequence");
+        final Set<TestTag> tags = new HashSet<>();
+
+        final TestDescriptor testDescriptor = createMockedTestDescriptor(
+                uniqueId,
+                DEFAULT_DISPLAY_NAME + " " + "badCharSequence",
+                src,
+                tags,
+                TestDescriptor.Type.TEST,
+                null,
+                DEFAULT_LEGACY_REPORTING_NAME + "badCharSequence");
+
+        data.add(new ReportData(
+                TestIdentifier.from(testDescriptor),
+                Duration.ofSeconds(11),
+                createFailedTestWithBadCharSequence(testDescriptor),
+                List.of(ReportEntry.from(DEFAULT_REPORT_ENTRY_KEY, DEFAULT_REPORT_ENTRY_VALUE))));
+
+        final var mockMethod = this.getClass().getNestHost().getDeclaredMethod("mockMethod");
+        doReturn(mockMethod).when(classUtil).getMethod(TEST_PACKAGE, TEST_CASE_PREFIX + "badCharSequence");
+        stringToIdentifier.put(uniqueId, testDescriptor);
+    }
+
+    /**
+     * Tests whether the XmlReportWriter can process the string sequence that marks the end of a CDATA section
+     * if it also occurs in the content.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testBadCharSequence() throws Exception {
+        setupBadCharSequenceTest();
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final var observer = mock(TestRunObserver.class);
+        try (final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
+            final var factory = XMLOutputFactory.newInstance();
+            final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
+
+            final var writer = new XmlReportWriter(data, classUtil, observer);
+            writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1));
+        }
+
+        // now look whether we find our test cases and their descriptions
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(baos.toByteArray());
+
+        final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        final Document report = dBuilder.parse(byteArrayInputStream);
+
+        // schema verify the report
+        performSchemaValidation(report);
+
+        final Node root = report.getChildNodes().item(0);
+
+        final Map<String, TestContainer> parsingResult = parseReportToTestCases(root);
+        parsingResult.forEach((key, value) -> {
+            assertNotNull(value.uniqueId);
+
+            final var testCaseData = data.stream()
+                    .filter(it -> value.uniqueId.equals(it.testIdentifier().getUniqueId()))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertNotNull(value.testDescription);
+            assertFalse(value.testDescription.isBlank());
+            assertEquals(MOCK_METHOD_DESCRIPTION, value.testDescription);
+
+            assertNotNull(value.testIdentifier);
+            assertFalse(value.testIdentifier.isBlank());
+            assertEquals(MOCK_METHOD_DESCRIPTION, value.testDescription);
+
+            assertEquals(testCaseData.testIdentifier().getDisplayName(), value.displayName());
+            assertEquals(testCaseData.testIdentifier().getUniqueId(), value.uniqueId());
+            assertEquals(testCaseData.testIdentifier().getLegacyReportingName(), value.name());
+
+            for (ReportEntry reportEntry : testCaseData.reportEntries()) {
+                assertTrue(
+                        value.systemOut().contains(reportEntry.toString()),
+                        String.format("%s does not occur in %s", reportEntry, value.message()));
+            }
+
+            assertNotNull(testCaseData.testDuration());
+            assertEquals(
+                    String.valueOf(testCaseData.testDuration().toSeconds()),
+                    value.time().split("\\.")[0]);
+            assertEquals(
+                    String.valueOf(testCaseData.testDuration().toMillisPart()),
+                    value.time().split("\\.")[1]);
+
+            // verify remaining attributes match
+            final var identifier = stringToIdentifier.get(key);
+            assertEquals(identifier.getDisplayName(), value.displayName);
+            assertEquals(identifier.getUniqueId().toString(), value.uniqueId);
+
+            if (failedTests.containsKey(value.uniqueId)) {
+                assertEquals("failure", value.failureType);
+                assertEquals(
+                        failedTests
+                                .get(value.uniqueId)
+                                .getThrowable()
+                                .orElseThrow()
+                                .getMessage(),
+                        value.message);
+            }
+            if (errorTests.containsKey(value.uniqueId)) {
+                assertEquals("error", value.failureType);
+                assertEquals(
+                        errorTests
+                                .get(value.uniqueId)
+                                .getThrowable()
+                                .orElseThrow()
+                                .getMessage(),
+                        value.message);
+            }
+        });
     }
 
     /**

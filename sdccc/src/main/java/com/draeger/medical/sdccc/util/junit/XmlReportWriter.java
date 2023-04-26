@@ -18,6 +18,7 @@ import java.lang.annotation.Annotation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.xml.stream.XMLOutputFactory;
@@ -49,8 +50,8 @@ public class XmlReportWriter {
     /**
      * Initializes an XmlReportWriter.
      *
-     * @param reportData list of results representing test cases
-     * @param classUtil utility
+     * @param reportData      list of results representing test cases
+     * @param classUtil       utility
      * @param testRunObserver observer which contains information on validity of test run
      */
     @AssistedInject
@@ -170,7 +171,7 @@ public class XmlReportWriter {
                         .map(ReportEntry::toString)
                         .collect(Collectors.joining("\n"));
 
-                xmlWriter.writeCData(transformedData);
+                handleCDataSection(xmlWriter, transformedData);
                 xmlWriter.writeEndElement();
                 writeNewLine(xmlWriter);
             }
@@ -217,9 +218,11 @@ public class XmlReportWriter {
             xmlWriter.writeStartElement("error");
             xmlWriter.writeAttribute("message", "SDCcc test run was marked as invalid");
             xmlWriter.writeAttribute("type", "InvalidTestRun");
-            xmlWriter.writeCData(String.format(
-                    "SDCcc test run was marked as invalid for the following reasons:%s",
-                    String.join("\n- ", testRunObserver.getReasons())));
+            handleCDataSection(
+                    xmlWriter,
+                    String.format(
+                            "SDCcc test run was marked as invalid for the following reasons:%s",
+                            String.join("\n- ", testRunObserver.getReasons())));
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
@@ -261,10 +264,21 @@ public class XmlReportWriter {
                 xmlWriter.writeAttribute("message", err.getMessage());
             }
             xmlWriter.writeAttribute("type", err.getClass().getCanonicalName());
-            xmlWriter.writeCData(ExceptionUtils.getStackTrace(err));
+            handleCDataSection(xmlWriter, ExceptionUtils.getStackTrace(err));
         }
         xmlWriter.writeEndElement();
         writeNewLine(xmlWriter);
+    }
+
+    private static void handleCDataSection(final XMLStreamWriter xmlWriter, final String content)
+            throws XMLStreamException {
+        final var contentSplit = content.split("]]>");
+        final var lastIndex = contentSplit.length - 1;
+        for (final String x : Arrays.stream(contentSplit).limit(lastIndex).toArray(String[]::new)) {
+            xmlWriter.writeCData(x + "]]");
+            xmlWriter.writeCData(">");
+        }
+        xmlWriter.writeCData(contentSplit[lastIndex]);
     }
 
     private static String getTestName(final ReportData reportDatum) {
