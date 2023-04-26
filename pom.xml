@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <revision>7.0.1</revision>
+        <revision>7.1.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <execPluginVersion>3.1.0</execPluginVersion>
