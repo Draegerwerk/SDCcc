@@ -171,7 +171,7 @@ public class XmlReportWriter {
                         .map(ReportEntry::toString)
                         .collect(Collectors.joining("\n"));
 
-                xmlWriter.writeCData(transformedData);
+                handleCDataSection(xmlWriter, transformedData);
                 xmlWriter.writeEndElement();
                 writeNewLine(xmlWriter);
             }
@@ -218,9 +218,11 @@ public class XmlReportWriter {
             xmlWriter.writeStartElement("error");
             xmlWriter.writeAttribute("message", "SDCcc test run was marked as invalid");
             xmlWriter.writeAttribute("type", "InvalidTestRun");
-            xmlWriter.writeCData(String.format(
-                    "SDCcc test run was marked as invalid for the following reasons:%s",
-                    String.join("\n- ", testRunObserver.getReasons())));
+            handleCDataSection(
+                    xmlWriter,
+                    String.format(
+                            "SDCcc test run was marked as invalid for the following reasons:%s",
+                            String.join("\n- ", testRunObserver.getReasons())));
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
@@ -262,19 +264,21 @@ public class XmlReportWriter {
                 xmlWriter.writeAttribute("message", err.getMessage());
             }
             xmlWriter.writeAttribute("type", err.getClass().getCanonicalName());
-
-            final var stackTrace = ExceptionUtils.getStackTrace(err);
-            final var stackTraceSplit = stackTrace.split("]]>");
-            final var lastIndex = stackTraceSplit.length - 1;
-            for (final String x :
-                    Arrays.stream(stackTraceSplit).limit(lastIndex).toArray(String[]::new)) {
-                xmlWriter.writeCData(x + "]]");
-                xmlWriter.writeCData(">");
-            }
-            xmlWriter.writeCData(stackTraceSplit[lastIndex]);
+            handleCDataSection(xmlWriter, ExceptionUtils.getStackTrace(err));
         }
         xmlWriter.writeEndElement();
         writeNewLine(xmlWriter);
+    }
+
+    private static void handleCDataSection(final XMLStreamWriter xmlWriter, final String content)
+            throws XMLStreamException {
+        final var contentSplit = content.split("]]>");
+        final var lastIndex = contentSplit.length - 1;
+        for (final String x : Arrays.stream(contentSplit).limit(lastIndex).toArray(String[]::new)) {
+            xmlWriter.writeCData(x + "]]");
+            xmlWriter.writeCData(">");
+        }
+        xmlWriter.writeCData(contentSplit[lastIndex]);
     }
 
     private static String getTestName(final ReportData reportDatum) {
