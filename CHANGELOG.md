@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - requirement test execution logging
 - test for glue:R0056
+- configuration option to change the maximum waiting time during connection establishment
 
 ## [7.0.1] - 2023-03-17
 
