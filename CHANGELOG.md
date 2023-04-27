@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - test for glue:R0056
 - configuration option to change the maximum waiting time during connection establishment
 
+### Changed
+- SDCri version 4.1.0-SNAPSHOT
+
+### Fixed
+- the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
+
 ## [7.0.1] - 2023-03-17
 
 ### Fixed
