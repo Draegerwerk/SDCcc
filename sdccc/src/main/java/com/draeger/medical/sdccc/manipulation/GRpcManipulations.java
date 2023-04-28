@@ -291,7 +291,7 @@ public class GRpcManipulations implements Manipulations {
                 List.of(
                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
                         new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activationState.toString())));
+                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activationState.value())));
     }
 
     @Override
@@ -330,7 +330,7 @@ public class GRpcManipulations implements Manipulations {
                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
                         new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
                         new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.toString())));
+                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())));
     }
 
     @Override
