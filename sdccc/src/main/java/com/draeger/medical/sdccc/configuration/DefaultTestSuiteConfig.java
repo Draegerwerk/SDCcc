@@ -36,6 +36,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
         bind(TestSuiteConfig.TEST_EXECUTION_LOGGING, Boolean.class, false);
 
+        bind(TestSuiteConfig.ENABLE_MESSAGE_ENCODING_CHECK, Boolean.class, true);
         bind(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS, Boolean.class, true);
     }
 

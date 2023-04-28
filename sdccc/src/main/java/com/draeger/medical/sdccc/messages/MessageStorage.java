@@ -169,11 +169,13 @@ public class MessageStorage implements AutoCloseable {
     private boolean summarizeMessageEncodingErrors;
     private long messageEncodingErrorCount;
     private int invalidMimeTypeCount;
+    private boolean enableEncodingCheck;
 
     @Inject
     MessageStorage(
             @Named(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE) final int blockingQueueSize,
             @Named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS) final boolean summarizeMessageEncodingErrors,
+            @Named(TestSuiteConfig.ENABLE_MESSAGE_ENCODING_CHECK) final boolean enableEncodingCheck,
             final MessageFactory messageFactory,
             final HibernateConfig configuration,
             final TestRunObserver testRunObserver) {
@@ -182,6 +184,7 @@ public class MessageStorage implements AutoCloseable {
         this.closed = new AtomicBoolean();
         this.blockingQueueSize = blockingQueueSize;
         this.summarizeMessageEncodingErrors = summarizeMessageEncodingErrors;
+        this.enableEncodingCheck = enableEncodingCheck;
         this.messageEncodingErrorCount = 0;
         this.invalidMimeTypeCount = 0;
 
@@ -264,7 +267,9 @@ public class MessageStorage implements AutoCloseable {
         final byte[] bodyBytes = message.getFinalMemory();
         if (bodyBytes.length > 0) {
             // TODO: ignored charset determination temporarily (https://github.com/Draegerwerk/SDCcc/issues/48)
-            determineCharsetFromMessage(message);
+            if (this.enableEncodingCheck) {
+                determineCharsetFromMessage(message);
+            }
             // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
             body = new String(message.getFinalMemory(), StandardCharsets.UTF_8);
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
@@ -343,15 +348,21 @@ public class MessageStorage implements AutoCloseable {
                     charsetFromHttpHeader,
                     charsetFromUnicodeByteOrderMark,
                     charsetFromXmlDeclaration,
-                    (String originA, String valueA, String originB, String valueB) ->
+                    (String originA, String valueA, String originB, String valueB) -> {
+                        if (this.summarizeMessageEncodingErrors) {
+                            this.testRunObserver.invalidateTestRunWithoutReason();
+                            this.messageEncodingErrorCount += 1;
+                        } else {
                             this.testRunObserver.invalidateTestRun(String.format(
                                     INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
                                     message.getID(),
                                     String.format(originA, valueA),
-                                    String.format(originB, valueB))));
+                                    String.format(originB, valueB)));
+                        }
+                    });
 
             final Charset charset = chooseMessageCharset(
-                    charsetFromHttpHeader, charsetFromUnicodeByteOrderMark, charsetFromXmlDeclaration);
+                    message, charsetFromHttpHeader, charsetFromUnicodeByteOrderMark, charsetFromXmlDeclaration);
 
             checkMimeType(message);
 
@@ -363,6 +374,7 @@ public class MessageStorage implements AutoCloseable {
                     charsetWithOrigin = String.format("'%s' in XML Declaration", charset);
                 }
                 if (this.summarizeMessageEncodingErrors) {
+                    this.testRunObserver.invalidateTestRunWithoutReason();
                     this.messageEncodingErrorCount++;
                 } else {
                     this.testRunObserver.invalidateTestRun(String.format(
@@ -380,6 +392,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private Charset chooseMessageCharset(
+            final Message message,
             @Nullable final Charset charsetFromHttpHeader,
             @Nullable final Charset charsetFromUnicodeByteOrderMark,
             @Nullable final Charset charsetFromXmlDeclaration) {
@@ -395,10 +408,17 @@ public class MessageStorage implements AutoCloseable {
                 if (charsetFromXmlDeclaration != null) {
                     charset = charsetFromXmlDeclaration;
                 } else {
-                    this.testRunObserver.invalidateTestRun("Message encoding could not be determined."
-                            + " Please ensure that all Messages send by the Device under Test declare their encoding"
-                            + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
-                            + " as mandated by the XML Standard.");
+                    if (this.summarizeMessageEncodingErrors) {
+                        this.testRunObserver.invalidateTestRunWithoutReason();
+                        this.messageEncodingErrorCount += 1;
+                    } else {
+                        this.testRunObserver.invalidateTestRun(
+                                "Message encoding could not be determined for message with ID '" + message.getID()
+                                        + "'."
+                                        + " Please ensure that all Messages send by the Device under Test declare their encoding"
+                                        + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
+                                        + " as mandated by the XML Standard.");
+                    }
                     charset = StandardCharsets.UTF_8;
                 }
             }
@@ -456,6 +476,7 @@ public class MessageStorage implements AutoCloseable {
                 }
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
                     if (summarizeMessageEncodingErrors) {
+                        this.testRunObserver.invalidateTestRunWithoutReason();
                         this.invalidMimeTypeCount++;
                     } else {
                         this.testRunObserver.invalidateTestRun(String.format(
@@ -495,7 +516,13 @@ public class MessageStorage implements AutoCloseable {
                 charsetFromUnicodeByteOrderMark = Charset.forName("UTF_32BE");
             }
         } catch (IOException e) {
-            this.testRunObserver.invalidateTestRun("Unable to read message contents", e);
+            if (this.summarizeMessageEncodingErrors) {
+                this.testRunObserver.invalidateTestRunWithoutReason();
+                this.messageEncodingErrorCount += 1;
+            } else {
+                this.testRunObserver.invalidateTestRun(
+                        "Unable to read message contents of message with ID '" + message.getID() + "'", e);
+            }
         }
         return charsetFromUnicodeByteOrderMark;
     }
@@ -517,12 +544,18 @@ public class MessageStorage implements AutoCloseable {
                 charsetFromBOM,
                 charsetFromPrefix,
                 result,
-                (String originA, String valueA, String originB, String valueB) ->
+                (String originA, String valueA, String originB, String valueB) -> {
+                    if (this.summarizeMessageEncodingErrors) {
+                        this.testRunObserver.invalidateTestRunWithoutReason();
+                        this.messageEncodingErrorCount += 1;
+                    } else {
                         this.testRunObserver.invalidateTestRun(String.format(
                                 INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
                                 message.getID(),
                                 String.format(originA, valueA),
-                                String.format(originB, valueB))));
+                                String.format(originB, valueB)));
+                    }
+                });
 
         return result;
     }
@@ -678,9 +711,15 @@ public class MessageStorage implements AutoCloseable {
                         // NOTE: returning null in this case is ok as determineCharsetFromMessage() will then try to
                         //       use other clues to determine the charset and hopefully succeed in correctly decoding
                         //       the Message before storing it in the DB.
-                        this.testRunObserver.invalidateTestRun(
-                                String.format("Encountered invalid/unknown charset '%s' in HTTP Header", charsetName),
-                                e);
+                        if (this.summarizeMessageEncodingErrors) {
+                            this.testRunObserver.invalidateTestRunWithoutReason();
+                            this.messageEncodingErrorCount += 1;
+                        } else {
+                            this.testRunObserver.invalidateTestRun(
+                                    String.format(
+                                            "Encountered invalid/unknown charset '%s' in HTTP Header", charsetName),
+                                    e);
+                        }
                     }
                 }
             }
