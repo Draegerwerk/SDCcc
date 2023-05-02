@@ -2,7 +2,7 @@
 CIMode=false
 GraphicalPopups=true
 TestExecutionLogging=true
-EnableEncodingCheck=false
+EnableMessageEncodingCheck=false
 SummarizeMessageEncodingErrors=true
 
 [SDCcc.TLS]
