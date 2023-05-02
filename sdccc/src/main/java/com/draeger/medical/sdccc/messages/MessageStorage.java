@@ -1792,7 +1792,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
-     * Get the number of messageEncodingErrors detected by the MessageStorage.
+     * Get the number of messages detected by the MessageStorage where the encoding could not be determined.
      * @return the count
      */
     public long getMessageEncodingErrorCount() {
@@ -1800,7 +1800,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
-     * Get the number of invalid MimeTypeErrors detected by the MessageStorage.
+     * Get the number of messages detected by the MessageStorage where the MIME type has an unexpected value.
      * @return the count
      */
     public long getInvalidMimeTypeErrorCount() {
