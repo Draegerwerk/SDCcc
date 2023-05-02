@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - requirement test execution logging
 - test for glue:R0056
-- message encoding errors are summarized by default.
+- message encoding errors are summarized by default, but all information is available via the configuration option
+  SDCcc.SummarizeMessageEncodingErrors.
+- checking for message encoding errors can be disabled using the configuration option SDCcc.EnableMessageEncodingCheck.
 
 ### Changed
 - SDCri version 4.1.0-SNAPSHOT

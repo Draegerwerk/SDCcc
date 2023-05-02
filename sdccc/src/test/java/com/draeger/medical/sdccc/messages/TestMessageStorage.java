@@ -1828,9 +1828,10 @@ public class TestMessageStorage {
     }
 
     /**
-     * Ensures that determineCharsetFromMessage() does not log the Error when an Encoding Error is detected,
-     * but SummarizeMessageEncodingErrors is set to true in the Configuration. Also checks that the encoding error is
-     * nevertheless correctly counted for the summary.
+     * Ensures that the test run is not invalidated when an encoding error is detected
+     * but SummarizeMessageEncodingErrors is set to true in the configuration.
+     * Also checks that the encoding error is nevertheless counted correctly for the summary.
+     *
      * @param dir - a temporal directory.
      * @throws IOException - when something goes wrong.
      */
@@ -1908,9 +1909,10 @@ public class TestMessageStorage {
     }
 
     /**
-     * Ensures that determineCharsetFromMessage() does not log the Error when a Mime Type Error is detected,
-     * but SummarizeMessageEncodingErrors is set to true in the Configuration. Also checks that the Mime Type error is
-     * nevertheless correctly counted for the summary.
+     * Ensures that the test run is not invalidated when an MIME type error is detected
+     * but SummarizeMessageEncodingErrors is set to true in the configuration.
+     * Also checks that the MIME type error is nevertheless counted correctly for the summary.
+     *
      * @param dir - a temporal directory.
      * @throws IOException - when something goes wrong.
      */
