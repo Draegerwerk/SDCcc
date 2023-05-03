@@ -583,7 +583,8 @@ public class TestSuite {
                     + " Please see the Log for more Details.");
         });
 
-        String versionString = triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
+        String versionString =
+                triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
         if (versionString != null) {
             versionString = " version " + versionString;
         } else {
