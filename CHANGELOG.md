@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - requirement test execution logging
 - test for glue:R0056
+- SDCcc version is written to the Log and into the Result XML files.
 
 ### Changed
 - SDCri version 4.1.0-SNAPSHOT
