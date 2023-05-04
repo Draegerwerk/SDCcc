@@ -1867,7 +1867,7 @@ public class TestMessageStorage {
     }
 
     /**
-     * Ensures that determineCharsetFromMessage() is not called when enableEncodingCheck=false.
+     * Ensures that no charset determination is performed if the EnableMessageEncodingCheck configuration is set to false.
      * @param dir - a temporal directory.
      * @throws IOException - when something goes wrong.
      */
