@@ -350,7 +350,7 @@ public class MessageStorage implements AutoCloseable {
                     charsetFromXmlDeclaration,
                     (String originA, String valueA, String originB, String valueB) -> {
                         if (this.summarizeMessageEncodingErrors) {
-                            this.testRunObserver.invalidateTestRunWithoutReason();
+                            // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                             this.messageEncodingErrorCount += 1;
                         } else {
                             this.testRunObserver.invalidateTestRun(String.format(
@@ -374,7 +374,7 @@ public class MessageStorage implements AutoCloseable {
                     charsetWithOrigin = String.format("'%s' in XML Declaration", charset);
                 }
                 if (this.summarizeMessageEncodingErrors) {
-                    this.testRunObserver.invalidateTestRunWithoutReason();
+                    // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                     this.messageEncodingErrorCount++;
                 } else {
                     this.testRunObserver.invalidateTestRun(String.format(
@@ -409,7 +409,7 @@ public class MessageStorage implements AutoCloseable {
                     charset = charsetFromXmlDeclaration;
                 } else {
                     if (this.summarizeMessageEncodingErrors) {
-                        this.testRunObserver.invalidateTestRunWithoutReason();
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                         this.messageEncodingErrorCount += 1;
                     } else {
                         this.testRunObserver.invalidateTestRun(
@@ -476,7 +476,7 @@ public class MessageStorage implements AutoCloseable {
                 }
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
                     if (summarizeMessageEncodingErrors) {
-                        this.testRunObserver.invalidateTestRunWithoutReason();
+                        // TestRun will be invalidated in TestSuite if invalidMimeTypeCount > 0
                         this.invalidMimeTypeCount++;
                     } else {
                         this.testRunObserver.invalidateTestRun(String.format(
@@ -517,7 +517,7 @@ public class MessageStorage implements AutoCloseable {
             }
         } catch (IOException e) {
             if (this.summarizeMessageEncodingErrors) {
-                this.testRunObserver.invalidateTestRunWithoutReason();
+                // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                 this.messageEncodingErrorCount += 1;
             } else {
                 this.testRunObserver.invalidateTestRun(
@@ -546,7 +546,7 @@ public class MessageStorage implements AutoCloseable {
                 result,
                 (String originA, String valueA, String originB, String valueB) -> {
                     if (this.summarizeMessageEncodingErrors) {
-                        this.testRunObserver.invalidateTestRunWithoutReason();
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                         this.messageEncodingErrorCount += 1;
                     } else {
                         this.testRunObserver.invalidateTestRun(String.format(
@@ -712,7 +712,7 @@ public class MessageStorage implements AutoCloseable {
                         //       use other clues to determine the charset and hopefully succeed in correctly decoding
                         //       the Message before storing it in the DB.
                         if (this.summarizeMessageEncodingErrors) {
-                            this.testRunObserver.invalidateTestRunWithoutReason();
+                            // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
                             this.messageEncodingErrorCount += 1;
                         } else {
                             this.testRunObserver.invalidateTestRun(

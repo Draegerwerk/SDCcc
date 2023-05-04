@@ -72,14 +72,6 @@ public class TestRunObserver {
     }
 
     /**
-     * Silently invalidates the test run. Should only be used in exceptional cases where the reason
-     * for invalidation is communicated by other means and would hence be redundant.
-     */
-    public synchronized void invalidateTestRunWithoutReason() {
-        isInvalid = true;
-    }
-
-    /**
      * Has the test run been marked as invalid.
      *
      * @return true if invalid, false otherwise

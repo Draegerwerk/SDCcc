@@ -492,9 +492,28 @@ public class TestSuite {
 
     private static void printVerdict(final int exitCode, final File testRunDir, final Injector injector) {
         final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
-        final Boolean suppressMessageEncodingErrors = injector.getInstance(
+        final Boolean summarizeMessageEncodingErrors = injector.getInstance(
                 Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)));
         final MessageStorage messageStorage = injector.getInstance(MessageStorage.class);
+
+        if (summarizeMessageEncodingErrors) {
+            final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
+            if (messageEncodingErrorCount > 0) {
+                testRunObserver.invalidateTestRun(
+                    String.format("During the Test run, %d messages with invalid encoding declarations were "
+                            + "encountered. For more detailed information on these messages, please set "
+                            + "SummarizeMessageEncodingErrors=false in the configuration.",
+                        messageEncodingErrorCount));
+            }
+            final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
+            if (invalidMimeTypeErrorCount > 0) {
+                testRunObserver.invalidateTestRun(
+                    String.format("During the Test run, %d messages with invalid Mime Type declarations were "
+                            + "encountered. For more detailed information on these messages, please set "
+                            + "SummarizeMessageEncodingErrors=false in the configuration.",
+                        invalidMimeTypeErrorCount));
+            }
+        }
 
         if (exitCode == 0) {
             LOG.info(
@@ -510,24 +529,6 @@ public class TestSuite {
             LOG.info("Test run was valid.");
         }
 
-        if (suppressMessageEncodingErrors) {
-            final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
-            if (messageEncodingErrorCount > 0) {
-                LOG.warn(
-                        "Note that during the Test run, {} messages with invalid encoding declarations were "
-                                + "encountered. For more detailed information on these messages, please set "
-                                + "SummarizeMessageEncodingErrors=false in the configuration.",
-                        messageEncodingErrorCount);
-            }
-            final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
-            if (invalidMimeTypeErrorCount > 0) {
-                LOG.warn(
-                        "Note that during the Test run, {} messages with invalid Mime Type declarations were "
-                                + "encountered. For more detailed information on these messages, please set "
-                                + "SummarizeMessageEncodingErrors=false in the configuration.",
-                        invalidMimeTypeErrorCount);
-            }
-        }
     }
 
     /**

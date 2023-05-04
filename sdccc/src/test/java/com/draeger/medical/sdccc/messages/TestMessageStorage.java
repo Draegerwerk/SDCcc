@@ -20,7 +20,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.messages.guice.MessageFactory;
@@ -1863,8 +1862,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            verify(this.testRunObserver).invalidateTestRunWithoutReason();
-            verifyNoMoreInteractions(this.testRunObserver);
+            verifyNoInteractions(this.testRunObserver);
         }
     }
 
@@ -1944,8 +1942,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(StandardCharsets.UTF_8, actualCharset);
-            verify(this.testRunObserver).invalidateTestRunWithoutReason();
-            Mockito.verifyNoMoreInteractions(this.testRunObserver);
+            Mockito.verifyNoInteractions(this.testRunObserver);
         }
     }
 
