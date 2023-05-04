@@ -41,6 +41,7 @@ public final class TestSuiteConfig {
      */
     private static final String NETWORK = "Network.";
     public static final String NETWORK_INTERFACE_ADDRESS = SDCCC + NETWORK + "InterfaceAddress";
+    public static final String NETWORK_MAX_WAIT = SDCCC + NETWORK + "MaxWait";
 
     /*
      * Consumer configuration
