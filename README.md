@@ -70,6 +70,12 @@ To select the network interface that should be used, the interface address can b
 InterfaceAddress="interfaceAddress"`
 ```
 
+The maximum waiting time in seconds to find and connect to the target device.
+```
+[SDCcc.Network]
+MaxWait="timeInSeconds"
+```
+
 ### Target Device (DUT) configuration
 In order for the test tool to connect to the DUT, the address of the target device must be set under
 ```
