@@ -499,18 +499,18 @@ public class TestSuite {
         if (summarizeMessageEncodingErrors) {
             final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
             if (messageEncodingErrorCount > 0) {
-                testRunObserver.invalidateTestRun(
-                    String.format("During the Test run, %d messages with invalid encoding declarations were "
-                            + "encountered. For more detailed information on these messages, please set "
-                            + "SummarizeMessageEncodingErrors=false in the configuration.",
+                testRunObserver.invalidateTestRun(String.format(
+                        "During the Test run, %d messages with invalid encoding declarations were "
+                                + "encountered. For more detailed information on these messages, please set "
+                                + "SummarizeMessageEncodingErrors=false in the configuration.",
                         messageEncodingErrorCount));
             }
             final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
             if (invalidMimeTypeErrorCount > 0) {
-                testRunObserver.invalidateTestRun(
-                    String.format("During the Test run, %d messages with invalid Mime Type declarations were "
-                            + "encountered. For more detailed information on these messages, please set "
-                            + "SummarizeMessageEncodingErrors=false in the configuration.",
+                testRunObserver.invalidateTestRun(String.format(
+                        "During the Test run, %d messages with invalid Mime Type declarations were "
+                                + "encountered. For more detailed information on these messages, please set "
+                                + "SummarizeMessageEncodingErrors=false in the configuration.",
                         invalidMimeTypeErrorCount));
             }
         }
@@ -528,7 +528,6 @@ public class TestSuite {
         } else {
             LOG.info("Test run was valid.");
         }
-
     }
 
     /**
