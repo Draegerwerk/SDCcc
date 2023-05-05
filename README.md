@@ -73,7 +73,7 @@ InterfaceAddress="interfaceAddress"`
 The maximum waiting time in seconds to find and connect to the target device.
 ```
 [SDCcc.Network]
-MaxWait="timeInSeconds"
+MaxWait=timeInSeconds
 ```
 
 ### Target Device (DUT) configuration
