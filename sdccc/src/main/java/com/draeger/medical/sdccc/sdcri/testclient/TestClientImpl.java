@@ -54,10 +54,10 @@ import org.somda.sdc.glue.consumer.event.WatchdogMessage;
 public class TestClientImpl extends AbstractIdleService implements TestClient, WatchdogObserver {
     private static final Logger LOG = LogManager.getLogger(TestClientImpl.class);
 
-    // max time to wait for futures
-    private static final Duration MAX_WAIT = Duration.ofSeconds(10);
     private static final String COULDN_T_CONNECT_TO_TARGET = "Couldn't connect to target";
 
+    // max time to wait for futures
+    private final Duration maxWait;
     private final Injector injector;
     private final String targetEpr;
     private final NetworkInterface networkInterface;
@@ -76,6 +76,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
      *
      * @param targetDevicePr  DUT EPR address
      * @param adapterAddress  ip of the network interface to bind to
+     * @param maxWait         max waiting time to find and connect to target device
      * @param testClientUtil  test client utility
      * @param testRunObserver observer for invalidating test runs on unexpected errors
      */
@@ -83,6 +84,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     public TestClientImpl(
             @Named(TestSuiteConfig.CONSUMER_DEVICE_EPR) final String targetDevicePr,
             @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
+            @Named(TestSuiteConfig.NETWORK_MAX_WAIT) final long maxWait,
             final TestClientUtil testClientUtil,
             final TestRunObserver testRunObserver) {
         this.injector = testClientUtil.getInjector();
@@ -90,6 +92,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
         this.testRunObserver = testRunObserver;
         this.shouldBeConnected = new AtomicBoolean(false);
+        this.maxWait = Duration.ofSeconds(maxWait);
 
         // get interface for address
         try {
@@ -168,7 +171,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         client.probe(discoveryFilterBuilder.get());
 
         try {
-            targetXAddrs = xAddrs.get(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
+            targetXAddrs = xAddrs.get(maxWait.toSeconds(), TimeUnit.SECONDS);
         } catch (final InterruptedException | TimeoutException | ExecutionException e) {
             LOG.error("Couldn't find target with EPR {}", targetEpr, e);
             throw new IOException(COULDN_T_CONNECT_TO_TARGET);
@@ -181,7 +184,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
         hostingServiceProxy = null;
         try {
-            hostingServiceProxy = hostingServiceFuture.get(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
+            hostingServiceProxy = hostingServiceFuture.get(maxWait.toSeconds(), TimeUnit.SECONDS);
         } catch (final InterruptedException | TimeoutException | ExecutionException e) {
             LOG.error("Couldn't connect to EPR {}", targetEpr, e);
             throw new IOException(COULDN_T_CONNECT_TO_TARGET);
@@ -194,7 +197,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
             remoteDeviceFuture = connector.connect(
                     hostingServiceProxy,
                     ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS));
-            sdcRemoteDevice = remoteDeviceFuture.get(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
+            sdcRemoteDevice = remoteDeviceFuture.get(maxWait.toSeconds(), TimeUnit.SECONDS);
         } catch (final PrerequisitesException | InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Couldn't attach to remote mdib and subscriptions for {}", targetEpr, e);
             throw new IOException("Couldn't attach to remote mdib and subscriptions");
@@ -207,11 +210,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     public synchronized void disconnect() throws TimeoutException {
         shouldBeConnected.set(false);
         if (sdcRemoteDevice != null) {
-            sdcRemoteDevice.stopAsync().awaitTerminated(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
+            sdcRemoteDevice.stopAsync().awaitTerminated(maxWait.toSeconds(), TimeUnit.SECONDS);
             sdcRemoteDevice = null;
         }
         hostingServiceProxy = null;
-        client.stopAsync().awaitTerminated(MAX_WAIT.toSeconds(), TimeUnit.SECONDS);
+        client.stopAsync().awaitTerminated(maxWait.toSeconds(), TimeUnit.SECONDS);
     }
 
     @Override
