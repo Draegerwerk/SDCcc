@@ -8,10 +8,9 @@
 package com.draeger.medical.sdccc.messages.guice;
 
 import com.draeger.medical.sdccc.messages.ManipulationInfo;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.assistedinject.Assisted;
-import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Guice factory for {@linkplain ManipulationInfo}.
@@ -32,5 +31,5 @@ public interface ManipulationInfoFactory {
             @Assisted(value = "stopTime") long stopTimestamp,
             @Assisted ResponseTypes.Result result,
             @Assisted(value = "methodName") String methodName,
-            @Assisted List<Pair<String, String>> parameters);
+            @Assisted ManipulationParameterUtil.ManipulationParameterData parameters);
 }

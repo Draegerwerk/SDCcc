@@ -69,7 +69,6 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -804,7 +803,7 @@ public class MessageStorage implements AutoCloseable {
             final long finishTime,
             final ResponseTypes.Result result,
             final String name,
-            final List<Pair<String, String>> parameters) {
+            final ManipulationParameterUtil.ManipulationParameterData parameters) {
         final var manipulation = new ManipulationInfo(startTime, finishTime, result, name, parameters, this);
         manipulation.addToStorage();
     }
