@@ -107,6 +107,10 @@ public class TomlConfigParser {
             final var value = result.getDouble(key);
             LOG.debug("Binding Double {} to {}", key, value);
             bind(module, key, Double.class, value);
+        } else if (result.isLong(key)) {
+            final var value = result.getLong(key);
+            LOG.debug("Binding Long {} to {}", key, value);
+            bind(module, key, Long.class, value);
             // complex types
         } else if (result.isArray(key)) {
             parseArray(module, Objects.requireNonNull(result.getArray(key)), key);
