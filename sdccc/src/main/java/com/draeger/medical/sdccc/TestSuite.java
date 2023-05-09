@@ -603,7 +603,14 @@ public class TestSuite {
                     + " Please see the Log for more Details.");
         });
 
-        LOG.info("Starting SDCcc");
+        String versionString =
+                triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
+        if (versionString != null) {
+            versionString = " version " + versionString;
+        } else {
+            versionString = "";
+        }
+        LOG.info("Starting SDCcc {}", versionString);
 
         try {
 
