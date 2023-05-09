@@ -468,15 +468,26 @@ public class ManipulationPreconditions {
 
             @Subscribe
             public void onUpdate(final ContextStateModificationMessage report) {
-                for (List<AbstractContextState> states : report.getStates().values()) {
-                    for (AbstractContextState state : states) {
-                        if (this.expectedHandle.equals(state.getHandle())) {
-                            synchronized (signal) {
-                                this.reportReceived = true;
-                                this.signal.notifyAll();
+                synchronized (signal) {
+                    if (!reportReceived) {
+                        for (List<AbstractContextState> states :
+                                report.getStates().values()) {
+                            if (this.reportReceived) {
+                                break;
                             }
-                            // the report has been received -> unregister observer so this method is not called again.
-                            this.mdibAccessObservable.unregisterObserver(this);
+                            for (AbstractContextState state : states) {
+                                if (this.reportReceived) {
+                                    break;
+                                }
+                                if (this.expectedHandle.equals(state.getHandle())) {
+                                    // the report has been received -> unregister observer so this method is not called
+                                    // again.
+                                    this.mdibAccessObservable.unregisterObserver(this);
+
+                                    this.reportReceived = true;
+                                    this.signal.notifyAll();
+                                }
+                            }
                         }
                     }
                 }
