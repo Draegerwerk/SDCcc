@@ -140,6 +140,11 @@ public class XmlReportWriter {
         xmlWriter.writeStartElement("properties");
 
         final var properties = System.getProperties();
+        String implementationVersion = this.getClass().getPackage().getImplementationVersion();
+        if (implementationVersion == null) {
+            implementationVersion = "unknown";
+        }
+        properties.setProperty("SDCcc version", implementationVersion);
         for (String stringPropertyName : properties.stringPropertyNames()) {
             xmlWriter.writeEmptyElement("property");
             xmlWriter.writeAttribute("name", stringPropertyName);
