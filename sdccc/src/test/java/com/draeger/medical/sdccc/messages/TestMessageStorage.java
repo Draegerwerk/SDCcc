@@ -1794,7 +1794,7 @@ public class TestMessageStorage {
 
     /**
      * Tests if determineCharsetFromMessage() correctly determines the Charset when it is given in the HTTP Header.
-     * @param dir - temporal directory.
+     * @param dir - temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -1868,7 +1868,7 @@ public class TestMessageStorage {
 
     /**
      * Ensures that no charset determination is performed if the EnableMessageEncodingCheck configuration is set to false.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -1911,7 +1911,7 @@ public class TestMessageStorage {
      * but SummarizeMessageEncodingErrors is set to true in the configuration.
      * Also checks that the MIME type error is nevertheless counted correctly for the summary.
      *
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -1949,7 +1949,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
      * Quotes are used.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -1983,7 +1983,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
      * Double-Quotes are used.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2019,7 +2019,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
      * a boundary is given as well.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2054,7 +2054,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the HTTP Header and
      * a boundary is given as well.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2088,7 +2088,7 @@ public class TestMessageStorage {
 
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the XML Declaration.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2126,7 +2126,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects an EBCDIC Charset when it is given in the
      * XML Declaration.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2164,7 +2164,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the XML Declaration
      * using single quotes.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2202,7 +2202,7 @@ public class TestMessageStorage {
 
     /**
      * Tests if determineCharsetFromMessage() correctly detects the Charset when it is given in the Byte Order Mark.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2257,7 +2257,7 @@ public class TestMessageStorage {
     /**
      * Tests if determineCharsetFromMessage() invalidates the TestRun when the Charset of a message cannot be
      * determined.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2297,7 +2297,7 @@ public class TestMessageStorage {
     /**
      * Ensures that determineCharsetFromMessage() does not invalidate the TestRun when there are multiple Charset
      * declarations within a message that are consistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2317,7 +2317,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2339,7 +2339,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2361,7 +2361,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2383,7 +2383,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2404,7 +2404,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2426,7 +2426,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2448,7 +2448,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when the given Mime Type is not
      * standard-compliant.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
@@ -2469,7 +2469,7 @@ public class TestMessageStorage {
     /**
      * Checks that determineCharsetFromMessage() invalidate the TestRun when there are multiple Charset
      * declarations within a message that are inconsistent.
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
