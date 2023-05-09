@@ -84,7 +84,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     public TestClientImpl(
             @Named(TestSuiteConfig.CONSUMER_DEVICE_EPR) final String targetDevicePr,
             @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
-            @Named(TestSuiteConfig.NETWORK_MAX_WAIT) final int maxWait,
+            @Named(TestSuiteConfig.NETWORK_MAX_WAIT) final long maxWait,
             final TestClientUtil testClientUtil,
             final TestRunObserver testRunObserver) {
         this.injector = testClientUtil.getInjector();
