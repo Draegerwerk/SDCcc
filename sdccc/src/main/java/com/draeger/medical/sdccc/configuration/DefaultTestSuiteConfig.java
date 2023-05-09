@@ -50,7 +50,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
     void configureNetwork() {
         bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
-        bind(TestSuiteConfig.NETWORK_MAX_WAIT, int.class, 10);
+        bind(TestSuiteConfig.NETWORK_MAX_WAIT, long.class, 10L);
     }
 
     void configureProvider() {

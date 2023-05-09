@@ -14,7 +14,7 @@ EnabledProtocols = ["TLSv1.2", "TLSv1.3"]
 
 [SDCcc.Network]
 InterfaceAddress="127.0.0.1"
-MaxWait="10"
+MaxWait=10
 
 [SDCcc.Consumer]
 Enable=true
