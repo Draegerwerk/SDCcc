@@ -590,7 +590,7 @@ public class TestSuite {
         } else {
             versionString = "";
         }
-        LOG.info("Starting SDCcc" + versionString);
+        LOG.info("Starting SDCcc {}", versionString);
 
         try {
 
