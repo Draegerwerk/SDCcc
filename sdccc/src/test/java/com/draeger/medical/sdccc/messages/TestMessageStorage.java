@@ -1831,7 +1831,7 @@ public class TestMessageStorage {
      * but SummarizeMessageEncodingErrors is set to true in the configuration.
      * Also checks that the encoding error is nevertheless counted correctly for the summary.
      *
-     * @param dir - a temporal directory.
+     * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
     @Test
