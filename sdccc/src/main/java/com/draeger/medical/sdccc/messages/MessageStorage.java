@@ -19,6 +19,7 @@ import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity;
 import com.draeger.medical.sdccc.messages.mapping.MdibVersionGroupEntity_;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent_;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.XPathExtractor;
@@ -68,7 +69,6 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -803,7 +803,7 @@ public class MessageStorage implements AutoCloseable {
             final long finishTime,
             final ResponseTypes.Result result,
             final String name,
-            final List<Pair<String, String>> parameters) {
+            final ManipulationParameterUtil.ManipulationParameterData parameters) {
         final var manipulation = new ManipulationInfo(startTime, finishTime, result, name, parameters, this);
         manipulation.addToStorage();
     }
@@ -1617,19 +1617,20 @@ public class MessageStorage implements AutoCloseable {
      * <p>
      * Manipulations are sorted by their timestamp.
      *
-     * @param parameters       of the manipulation
+     * @param parameter       of the manipulation
      * @param manipulationName to match manipulation data against
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
      */
     public GetterResult<ManipulationData> getManipulationDataByParametersAndManipulation(
-            final List<Pair<String, String>> parameters, final String manipulationName) throws IOException {
+            final ManipulationParameterUtil.ManipulationParameterData parameter, final String manipulationName)
+            throws IOException {
         if (this.closed.get()) {
             LOG.error(GET_MANIPULATION_DATA_BY_MANIPULATION);
             throw new IOException(GET_MANIPULATION_DATA_BY_MANIPULATION);
         }
 
-        if (parameters.isEmpty()) {
+        if (parameter.getParameterData().isEmpty()) {
             return getManipulationDataByManipulation(manipulationName);
         }
 
@@ -1647,7 +1648,7 @@ public class MessageStorage implements AutoCloseable {
 
             final List<Predicate> parameterExistPredicates = new ArrayList<>();
 
-            for (var parameter : parameters) {
+            for (var parameterData : parameter.getParameterData()) {
                 final var parameterSubquery = criteria.subquery(ManipulationParameter.class);
                 final Root<ManipulationParameter> manipulationParameterRoot =
                         parameterSubquery.from(ManipulationParameter.class);
@@ -1660,10 +1661,10 @@ public class MessageStorage implements AutoCloseable {
                                 criteriaBuilder.and(
                                         criteriaBuilder.equal(
                                                 manipulationParameterRoot.get(ManipulationParameter_.parameterName),
-                                                parameter.getKey()),
+                                                parameterData.getKey()),
                                         criteriaBuilder.equal(
                                                 manipulationParameterRoot.get(ManipulationParameter_.parameterValue),
-                                                parameter.getValue()))));
+                                                parameterData.getValue()))));
                 parameterExistPredicates.add(criteriaBuilder.exists(parameterSubquery));
             }
 

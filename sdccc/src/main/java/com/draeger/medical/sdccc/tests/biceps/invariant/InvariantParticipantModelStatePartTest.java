@@ -21,16 +21,15 @@ import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -363,9 +362,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
             throws NoTestData {
         final var successfulReportsSeen = new AtomicBoolean(false);
         try (final var manipulations = messageStorage.getManipulationDataByParametersAndManipulation(
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())),
+                ManipulationParameterUtil.buildMetricStatusManipulationParameterDataWithoutHandle(category, activation),
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS)) {
             assertTestData(
                     manipulations.areObjectsPresent(), String.format(NO_SET_METRIC_STATUS_MANIPULATION, category));
