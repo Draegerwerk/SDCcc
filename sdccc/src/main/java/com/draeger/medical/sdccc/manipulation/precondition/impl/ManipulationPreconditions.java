@@ -517,11 +517,25 @@ public class ManipulationPreconditions {
                 final AlertActivation activationState) {
             LOG.debug("Setting the activation state {} for handle {}", activationState, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activationState);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the activation state {} for handle {} failed", activationState, handle);
-            } else if (!verifyStatePresentAndAlertSet(device, handle, activationState)) {
-                LOG.error("Validation for alert system {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the activation state {} for handle {} was successful", activationState, handle);
+                    if (!verifyStatePresentAndAlertSet(device, handle, activationState)) {
+                        LOG.debug(
+                            "Validation for state with handle {} failed, because the state is"
+                                + " either not present or the activation state is not {}",
+                            handle,
+                            activationState);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                    "Setting the activation state {} for handle {} is not supported", activationState, handle);
+                default -> LOG.error(
+                    "Setting the activation state {} for handle {} failed, manipulation result: {}",
+                    activationState,
+                    handle,
+                    manipulationResult);
             }
             return manipulationResult;
         }
