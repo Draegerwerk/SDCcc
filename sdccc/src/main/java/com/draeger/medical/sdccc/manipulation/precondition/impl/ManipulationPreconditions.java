@@ -605,6 +605,8 @@ public class ManipulationPreconditions {
                         && alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
                         && presenceTrueResult == ResponseTypes.Result.RESULT_SUCCESS) {
                     manipulationSuccessful = true;
+                    // successful manipulation seen
+                    break;
                 }
             }
             return manipulationSuccessful;
@@ -626,11 +628,25 @@ public class ManipulationPreconditions {
                 final boolean presence) {
             LOG.debug("Setting the presence attribute {} for handle {}", presence, handle);
             var manipulationResult = manipulations.setAlertConditionPresence(handle, presence);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the presence attribute {} for handle {} failed", presence, handle);
-            } else if (!verifyStatePresentAndPresenceSet(device, handle, presence)) {
-                LOG.error("Validation for alert condition state {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the presence {} for handle {} was successful", presence, handle);
+                    if (!verifyStatePresentAndPresenceSet(device, handle, presence)) {
+                        LOG.debug(
+                                "Validation for alert condition state with handle {} failed, because the state is"
+                                        + " either not present or the presence is not {}",
+                                handle,
+                                presence);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                        "Setting the presence {} for handle {} is not supported", presence, handle);
+                default -> LOG.error(
+                        "Setting the presence {} for handle {} failed, manipulation result: {}",
+                        presence,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
@@ -651,11 +667,25 @@ public class ManipulationPreconditions {
                 final AlertActivation activation) {
             LOG.debug("Setting the activation state {} for handle {}", activation, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activation);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the activation state {} for handle {} failed", activation, handle);
-            } else if (!verifyStatePresentAndActivationState(device, handle, activation)) {
-                LOG.error("Validation for state with handle {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the activation state {} for handle {} was successful", activation, handle);
+                    if (!verifyStatePresentAndActivationState(device, handle, activation)) {
+                        LOG.debug(
+                                "Validation for state with handle {} failed, because the state is either not present"
+                                        + " or the activation state is not {}",
+                                handle,
+                                activation);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                        "Setting the activation state {} for handle {} is not supported", activation, handle);
+                default -> LOG.error(
+                        "Setting the activation state {} for handle {} failed, manipulation result: {}",
+                        activation,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
@@ -682,7 +712,7 @@ public class ManipulationPreconditions {
                     alertConditionState);
 
             final var valid = ImpliedValueUtil.isPresence(alertConditionState);
-            LOG.info("Validity for {} after presence attribute is set check: {}", stateHandle, valid);
+            LOG.info("The presence for {} should be {} and is {}", stateHandle, presence, valid);
             return valid == presence;
         }
 
@@ -707,9 +737,9 @@ public class ManipulationPreconditions {
                     "verifyStatePresentAndActivationState: The alert state for the given handle found. {}",
                     abstractAlertState);
 
-            final boolean valid = activation.equals(abstractAlertState.getActivationState());
-            LOG.info("Validity for {} after activation state is set check: {}", stateHandle, valid);
-            return valid;
+            final var actualActivation = abstractAlertState.getActivationState();
+            LOG.info("The activation state for {} should be {} and is {}", stateHandle, activation, actualActivation);
+            return activation.equals(actualActivation);
         }
     }
 
@@ -944,7 +974,7 @@ public class ManipulationPreconditions {
             final var valid = alertSystemState.getSystemSignalActivation().stream()
                     .filter(systemSignalActivation ->
                             systemSignalActivation.getManifestation().equals(manifestation))
-                    .collect(Collectors.toList())
+                    .toList()
                     .stream()
                     .anyMatch(systemSignalActivation ->
                             systemSignalActivation.getState().equals(activation));
