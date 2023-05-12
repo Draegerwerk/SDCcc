@@ -21,11 +21,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.sdccc.messages.guice.MessageFactory;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationParameter;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.util.CertificateUtil;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -50,7 +50,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.ByteOrderMark;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1281,13 +1280,28 @@ public class TestMessageStorage {
             final var expectedMethodName = "someManipulation";
 
             final var manipulation = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedMethodName, List.of(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    expectedMethodName,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation.addToStorage();
             final var manipulation2 = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedMethodName, List.of(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    expectedMethodName,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation2.addToStorage();
             final var manipulation3 = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedMethodName, List.of(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    expectedMethodName,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation3.addToStorage();
             messageStorage.flush();
 
@@ -1347,7 +1361,12 @@ public class TestMessageStorage {
             }
 
             final var manipulation = new ManipulationInfo(
-                    1000, 2000, ResponseTypes.Result.RESULT_SUCCESS, "setMetricStatus", List.of(), messageStorage);
+                    1000,
+                    2000,
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    "setMetricStatus",
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation.addToStorage();
 
             assertTimeoutPreemptively(
@@ -1504,10 +1523,8 @@ public class TestMessageStorage {
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
             final var methodName1 = "setMetricStatus";
-            final List<Pair<String, String>> parameters1 = List.of(
-                    new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someHandle"),
-                    new ImmutablePair<>(
-                            Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+            final var parameters1 = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    "someHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
             final var manipulationInfo =
                     new ManipulationInfo(startTime1, finishTime1, result, methodName1, parameters1, messageStorage);
             manipulationInfo.addToStorage();
@@ -1516,7 +1533,12 @@ public class TestMessageStorage {
             final var finishTime2 = 1300;
             final var methodName2 = "sendHello";
             final var manipulationInfo2 = new ManipulationInfo(
-                    startTime2, finishTime2, result, methodName2, Collections.emptyList(), messageStorage);
+                    startTime2,
+                    finishTime2,
+                    result,
+                    methodName2,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulationInfo2.addToStorage();
 
             messageStorage.flush();
@@ -1567,24 +1589,26 @@ public class TestMessageStorage {
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
             final var expectedMethodName = "setMetricStatus";
-            final List<Pair<String, String>> expectedParameters = List.of(
-                    new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someHandle"),
-                    new ImmutablePair<>(
-                            Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+            final var expectedParameters = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    "someHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
             final var expectedManipulationInfo = new ManipulationInfo(
                     startTime1, finishTime1, result, expectedMethodName, expectedParameters, messageStorage);
             expectedManipulationInfo.addToStorage();
 
             // same manipulation without parameter
             final var manipulationWithoutParams = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedMethodName, Collections.emptyList(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    expectedMethodName,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulationWithoutParams.addToStorage();
 
             // same manipulation with different handle parameter
-            final List<Pair<String, String>> parameters2 = List.of(
-                    new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someOtherHandle"),
-                    new ImmutablePair<>(
-                            Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+            final var parameters2 = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    "someOtherHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
+
             final var manipulationDifferentHandle = new ManipulationInfo(
                     startTime1, finishTime1, result, expectedMethodName, parameters2, messageStorage);
             manipulationDifferentHandle.addToStorage();
@@ -1594,8 +1618,13 @@ public class TestMessageStorage {
                     startTime1, finishTime1, result, "setComponentActivation", expectedParameters, messageStorage);
             differentManipulationSameParam.addToStorage();
 
-            final var otherManipulation =
-                    new ManipulationInfo(1200, 1300, result, "sendHello", Collections.emptyList(), messageStorage);
+            final var otherManipulation = new ManipulationInfo(
+                    1200,
+                    1300,
+                    result,
+                    "sendHello",
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             otherManipulation.addToStorage();
 
             messageStorage.flush();
@@ -1655,32 +1684,29 @@ public class TestMessageStorage {
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
             final var expectedMethodName = "setMetricStatus";
-            final List<Pair<String, String>> expectedParameters =
-                    List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someHandle"));
+            final var expectedHandle = "someHandle";
+            final var expectedParameters =
+                    ManipulationParameterUtil.buildHandleManipulationParameterData(expectedHandle);
+            final var expectedParameters2 = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    expectedHandle, org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
 
             final var expectedManipulationInfo = new ManipulationInfo(
-                    startTime1,
-                    finishTime1,
-                    result,
-                    expectedMethodName,
-                    List.of(
-                            expectedParameters.get(0),
-                            new ImmutablePair<>(
-                                    Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION,
-                                    ComponentActivation.ON.value())),
-                    messageStorage);
+                    startTime1, finishTime1, result, expectedMethodName, expectedParameters2, messageStorage);
             expectedManipulationInfo.addToStorage();
 
             // same manipulation without parameter
             final var manipulationWithoutParams = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedMethodName, List.of(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    expectedMethodName,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulationWithoutParams.addToStorage();
 
             // same manipulation with different handle parameter
-            final List<Pair<String, String>> parameters2 = List.of(
-                    new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someOtherHandle"),
-                    new ImmutablePair<>(
-                            Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+            final var parameters2 = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    "someOtherHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
             final var manipulationDifferentHandle = new ManipulationInfo(
                     startTime1, finishTime1, result, expectedMethodName, parameters2, messageStorage);
             manipulationDifferentHandle.addToStorage();
@@ -1695,7 +1721,12 @@ public class TestMessageStorage {
             final var finishTime2 = 1300;
             final var methodName2 = "sendHello";
             final var otherManipulation = new ManipulationInfo(
-                    startTime2, finishTime2, result, methodName2, Collections.emptyList(), messageStorage);
+                    startTime2,
+                    finishTime2,
+                    result,
+                    methodName2,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             otherManipulation.addToStorage();
 
             messageStorage.flush();
@@ -1709,7 +1740,7 @@ public class TestMessageStorage {
                         assertEquals(expectedManipulationInfo.getFinishTimestamp(), message.getFinishTimestamp());
                         assertEquals(expectedManipulationInfo.getResult(), message.getResult());
                         assertEquals(expectedManipulationInfo.getMethodName(), message.getMethodName());
-                        for (var parameter : expectedParameters) {
+                        for (var parameter : expectedParameters.getParameterData()) {
                             assertTrue(message.getParameters().stream()
                                     .map(ManipulationParameter::getParameterName)
                                     .anyMatch(it -> it.equals(parameter.getKey())));
@@ -1741,10 +1772,14 @@ public class TestMessageStorage {
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
             final var methodName1 = "setMetricStatus";
-            final List<Pair<String, String>> parameters1 =
-                    List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someHandle"));
-            final var manipulation1 =
-                    new ManipulationInfo(startTime1, finishTime1, result, methodName1, List.of(), messageStorage);
+            final var parameters1 = ManipulationParameterUtil.buildHandleManipulationParameterData("someHandle");
+            final var manipulation1 = new ManipulationInfo(
+                    startTime1,
+                    finishTime1,
+                    result,
+                    methodName1,
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation1.addToStorage();
 
             // same manipulation without parameter
@@ -1753,28 +1788,36 @@ public class TestMessageStorage {
             manipulation2.addToStorage();
 
             // same manipulation with different handle parameter
-            final List<Pair<String, String>> parameters2 = List.of(
-                    new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, "someOtherHandle"),
-                    new ImmutablePair<>(
-                            Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+            final var parameters2 = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
+                    "someOtherHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
             final var manipulation3 =
                     new ManipulationInfo(startTime1, finishTime1, result, methodName1, parameters2, messageStorage);
             manipulation3.addToStorage();
 
             // different manipulation with same parameter
             final var manipulation4 = new ManipulationInfo(
-                    startTime1, finishTime1, result, "setComponentActivation", List.of(), messageStorage);
+                    startTime1,
+                    finishTime1,
+                    result,
+                    "setComponentActivation",
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation4.addToStorage();
 
-            final var manipulation5 =
-                    new ManipulationInfo(1200, 1300, result, "sendHello", Collections.emptyList(), messageStorage);
+            final var manipulation5 = new ManipulationInfo(
+                    1200,
+                    1300,
+                    result,
+                    "sendHello",
+                    ManipulationParameterUtil.buildEmptyManipulationParameterData(),
+                    messageStorage);
             manipulation5.addToStorage();
 
             messageStorage.flush();
 
             {
                 try (final var inboundMessages = messageStorage.getManipulationDataByParametersAndManipulation(
-                        Collections.emptyList(), methodName1)) {
+                        ManipulationParameterUtil.buildEmptyManipulationParameterData(), methodName1)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         assertEquals(methodName1, message.getMethodName());
