@@ -25,6 +25,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.CertificateUtil;
 import com.draeger.medical.sdccc.util.Constants;
@@ -48,8 +49,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,12 +155,11 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        // Component activation should be ON to be relevant for testRequirement54700.
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                // Component activation should be ON to be relevant for testRequirement54700.
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -200,11 +198,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -234,11 +231,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -266,11 +262,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -300,11 +295,11 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, RTSA_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                RTSA_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
+
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -331,11 +326,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -344,11 +338,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -379,11 +372,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -413,11 +405,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -449,11 +440,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be on
@@ -482,11 +472,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -515,11 +504,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -552,11 +540,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -586,11 +573,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -618,11 +604,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -653,11 +638,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, RTSA_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                RTSA_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -684,11 +668,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -697,11 +680,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -732,11 +714,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -766,11 +747,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -802,11 +782,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be on
@@ -835,11 +814,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -868,11 +846,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -905,11 +882,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -939,11 +915,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -971,11 +946,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1003,17 +977,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
         messageStorageUtil.addManipulation(
                 storage,
@@ -1052,11 +1024,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -1086,11 +1057,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1122,11 +1092,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be stndby
@@ -1155,11 +1124,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -1187,11 +1155,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1224,11 +1191,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -1258,11 +1224,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1290,11 +1255,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1322,17 +1286,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
         messageStorageUtil.addManipulation(
                 storage,
@@ -1371,11 +1333,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -1405,11 +1366,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1441,11 +1401,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be shtdn
@@ -1474,11 +1433,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -1506,11 +1464,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1543,11 +1500,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -1577,11 +1533,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1609,11 +1564,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1642,17 +1596,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1691,11 +1643,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -1725,11 +1676,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1761,11 +1711,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be OFF
@@ -1794,11 +1743,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -1826,11 +1774,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1863,11 +1810,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -1897,11 +1843,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -1929,11 +1874,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -1962,17 +1906,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2011,11 +1953,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -2045,11 +1986,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2081,11 +2021,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be FAIL
@@ -2114,11 +2053,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -2146,11 +2084,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2183,11 +2120,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -2217,11 +2153,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2248,11 +2183,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2285,11 +2219,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2297,11 +2230,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -2332,11 +2264,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -2366,11 +2297,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2402,11 +2332,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be on
@@ -2435,11 +2364,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -2467,11 +2395,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2504,11 +2431,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -2538,11 +2464,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2569,11 +2494,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2606,11 +2530,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2619,11 +2542,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -2655,11 +2577,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -2689,11 +2610,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2725,11 +2645,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be NotRdy
@@ -2758,11 +2677,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -2790,11 +2708,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2827,11 +2744,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -2861,11 +2777,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -2892,11 +2807,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2929,11 +2843,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -2942,11 +2855,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -2978,11 +2890,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -3012,11 +2923,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3048,11 +2958,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be stndby
@@ -3081,11 +2990,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -3113,11 +3021,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3150,11 +3057,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -3184,11 +3090,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3215,11 +3120,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3251,11 +3155,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3264,11 +3167,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -3300,11 +3202,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -3334,11 +3235,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3370,11 +3270,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be shtdn
@@ -3403,11 +3302,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -3435,11 +3333,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3472,11 +3369,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -3508,11 +3404,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3539,11 +3434,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3571,11 +3465,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3584,11 +3477,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -3619,11 +3511,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -3653,11 +3544,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3689,11 +3579,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be OFF
@@ -3722,11 +3611,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -3754,11 +3642,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3791,11 +3678,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -3827,11 +3713,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -3858,11 +3743,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3890,11 +3774,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -3903,11 +3786,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -3938,11 +3820,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -3972,11 +3853,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4008,11 +3888,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be FAIL
@@ -4041,11 +3920,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -4073,11 +3951,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4110,11 +3987,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -4144,11 +4020,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4175,11 +4050,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4208,11 +4082,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4220,11 +4093,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -4255,11 +4127,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -4289,11 +4160,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4325,11 +4195,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be on
@@ -4358,11 +4227,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -4390,11 +4258,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.ON.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4427,11 +4294,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -4461,11 +4327,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, MSRMT_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.MSRMT.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4492,11 +4357,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4526,11 +4390,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4538,11 +4401,10 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START2,
@@ -4573,11 +4435,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -4607,11 +4468,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4643,11 +4503,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be not_rdy
@@ -4676,11 +4535,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -4708,11 +4566,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.NOT_RDY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4745,11 +4602,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -4779,11 +4635,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -4810,11 +4665,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4842,17 +4696,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
         messageStorageUtil.addManipulation(
                 storage,
@@ -4891,11 +4743,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -4925,11 +4776,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -4961,11 +4811,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be stndby
@@ -4994,11 +4843,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -5026,11 +4874,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.STND_BY.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5063,11 +4910,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -5097,11 +4943,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5128,11 +4973,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5160,17 +5004,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
         messageStorageUtil.addManipulation(
                 storage,
@@ -5209,11 +5051,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -5243,11 +5084,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5279,11 +5119,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be shtdn
@@ -5312,11 +5151,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -5344,11 +5182,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.SHTDN.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5381,11 +5218,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -5415,11 +5251,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5446,11 +5281,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5479,17 +5313,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5528,11 +5360,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -5562,11 +5393,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5598,11 +5428,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be OFF
@@ -5631,11 +5460,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -5663,11 +5491,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.OFF.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5700,11 +5527,10 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         // add manipulation data with result fail
         messageStorageUtil.addManipulation(
                 storage,
@@ -5734,11 +5560,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, SET_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.SET.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(
@@ -5765,11 +5590,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5798,17 +5622,15 @@ public class InvariantParticipantModelStatePartTestTest {
         final var initial = buildMdib(SEQUENCE_ID);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
 
-        final List<Pair<String, String>> parameters2 = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE2),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5847,11 +5669,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // this metric report is not in the time interval of the setMetricStatus manipulation
@@ -5881,11 +5702,10 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
                 TIMESTAMP_START,
@@ -5917,11 +5737,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // activation state should be FAIL
@@ -5950,11 +5769,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         // good report in time interval
@@ -5982,11 +5800,10 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final List<Pair<String, String>> parameters = List.of(
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, CLC_METRIC_HANDLE),
-                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, MetricCategory.CLC.value()),
-                new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, ComponentActivation.FAIL.value()));
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
 
         final var metricReport = buildMetricReport(

@@ -11,6 +11,7 @@ import com.draeger.medical.dpws.soap.model.Envelope;
 import com.draeger.medical.sdccc.marshalling.SoapMarshalling;
 import com.draeger.medical.sdccc.messages.Message;
 import com.draeger.medical.sdccc.messages.MessageStorage;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -25,7 +26,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.DpwsConstants;
 import org.somda.sdc.dpws.soap.ApplicationInfo;
@@ -189,7 +189,7 @@ public class MessageStorageUtil {
             final long finishTime,
             final ResponseTypes.Result result,
             final String name,
-            final List<Pair<String, String>> parameters)
+            final ManipulationParameterUtil.ManipulationParameterData parameters)
             throws IOException {
         final long previous_count;
         try (final var manipulations = storage.getManipulationDataByManipulation(name)) {
