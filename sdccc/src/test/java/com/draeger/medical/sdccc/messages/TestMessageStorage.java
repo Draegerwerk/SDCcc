@@ -59,7 +59,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.somda.sdc.biceps.common.CommonConstants;
-import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.soap.ApplicationInfo;
 import org.somda.sdc.dpws.soap.CommunicationContext;
