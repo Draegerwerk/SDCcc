@@ -60,7 +60,6 @@ public class ManipulationPreconditions {
             final ComponentActivation startingActivationState) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
-        final var testRunObserver = injector.getInstance(TestRunObserver.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
@@ -74,28 +73,39 @@ public class ManipulationPreconditions {
                 final var resultStartingActivationState =
                         manipulations.setComponentActivation(handle, startingActivationState);
                 // change activation state to something other than expected result to ensure the transition
-                if (resultStartingActivationState != ResponseTypes.Result.RESULT_SUCCESS) {
-                    log.debug(
-                            "Manipulating the activation state to {} was {} for metric state with handle {}."
-                                    + " This needs to be successful, to ensure that the metric is set to {} after performing"
-                                    + " the setMetricStatus manipulation.",
+
+                switch (resultStartingActivationState) {
+                    case RESULT_NOT_SUPPORTED -> log.debug(
+                            "Manipulating the activation state to {} was not supported for metric state with handle {}."
+                                    + " Changing the activation state to something other than {} is required to ensure that a transition occurs when the setMetric manipulation is called.",
                             startingActivationState,
-                            resultStartingActivationState,
                             handle,
                             activationState);
-                    testRunObserver.invalidateTestRun(
-                            String.format("Setting the activation state for metric with handle %s failed", handle));
-                    return false;
+                    case RESULT_SUCCESS -> {
+                        final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
+                        log.debug(
+                                "Manipulation setMetricStatus was {} for metric state with handle {}",
+                                manipulationResult,
+                                handle);
+                        if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                                || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                            log.error("Setting the metric status for metric with handle {} failed", handle);
+                            return false;
+                        }
+                        manipulationResults.add(manipulationResult);
+                    }
+                    default -> {
+                        log.error(
+                                "Manipulating the activation state to {} was {} for metric state with handle {}."
+                                        + " This needs to be successful, to ensure that the metric is set to {} after performing"
+                                        + " the setMetricStatus manipulation.",
+                                startingActivationState,
+                                resultStartingActivationState,
+                                handle,
+                                activationState);
+                        return false;
+                    }
                 }
-                final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
-                log.debug("Manipulation was {} for metric state with handle {}", manipulationResult, handle);
-                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
-                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
-                    testRunObserver.invalidateTestRun(
-                            String.format("Setting the metric status for metric with handle %s failed", handle));
-                    return false;
-                }
-                manipulationResults.add(manipulationResult);
             }
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
@@ -522,20 +532,20 @@ public class ManipulationPreconditions {
                     LOG.debug("Setting the activation state {} for handle {} was successful", activationState, handle);
                     if (!verifyStatePresentAndAlertSet(device, handle, activationState)) {
                         LOG.debug(
-                            "Validation for state with handle {} failed, because the state is"
-                                + " either not present or the activation state is not {}",
-                            handle,
-                            activationState);
+                                "Validation for state with handle {} failed, because the state is"
+                                        + " either not present or the activation state is not {}",
+                                handle,
+                                activationState);
                         manipulationResult = ResponseTypes.Result.RESULT_FAIL;
                     }
                 }
                 case RESULT_NOT_SUPPORTED -> LOG.debug(
-                    "Setting the activation state {} for handle {} is not supported", activationState, handle);
+                        "Setting the activation state {} for handle {} is not supported", activationState, handle);
                 default -> LOG.error(
-                    "Setting the activation state {} for handle {} failed, manipulation result: {}",
-                    activationState,
-                    handle,
-                    manipulationResult);
+                        "Setting the activation state {} for handle {} failed, manipulation result: {}",
+                        activationState,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
