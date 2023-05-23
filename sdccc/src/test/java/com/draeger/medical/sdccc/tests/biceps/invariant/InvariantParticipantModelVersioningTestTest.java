@@ -9,7 +9,11 @@ package com.draeger.medical.sdccc.tests.biceps.invariant;
 
 import static com.draeger.medical.sdccc.tests.biceps.invariant.InvariantParticipantModelVersioningTest.DESCRIPTOR_REINSERTION_PREFIX;
 import static com.draeger.medical.sdccc.tests.biceps.invariant.InvariantParticipantModelVersioningTest.DESCRIPTOR_UPDATE_PREFIX;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -571,7 +575,6 @@ public class InvariantParticipantModelVersioningTestTest {
         assertTrue(thrown.getMessage().startsWith(DESCRIPTOR_UPDATE_PREFIX));
     }
 
-
     /**
      * Tests whether deleting and inserting a descriptor with a change fails the test.
      *
@@ -585,45 +588,35 @@ public class InvariantParticipantModelVersioningTestTest {
         final var changedStringMetric = buildStringMetric(STRING_METRIC_HANDLE, null, null);
 
         // change metric
-        changedStringMetric.getKey().setType(
-                mdibBuilder.buildCodedValue("changedTypeTestRequirementR0034Bad2")
-        );
+        changedStringMetric.getKey().setType(mdibBuilder.buildCodedValue("changedTypeTestRequirementR0034Bad2"));
         assertNotEquals(stringMetric.getKey(), changedStringMetric.getKey());
-        assertEquals(stringMetric.getKey().getDescriptorVersion(), changedStringMetric.getKey().getDescriptorVersion());
+        assertEquals(
+                stringMetric.getKey().getDescriptorVersion(),
+                changedStringMetric.getKey().getDescriptorVersion());
 
         final var firstUpdate = buildDescriptionModificationReportWithParts(
-            SEQUENCE_ID,
-            BigInteger.ONE,
-            buildDescriptionModificationReportPart(
-                    DescriptionModificationType.DEL,
-                    CHANNEL_HANDLE,
-                    stringMetric
-            )
-        );
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(DescriptionModificationType.DEL, CHANNEL_HANDLE, stringMetric));
 
         // one message in between to test the storage mechanism
         final var secondUpdate = buildEpisodicContextReport(
                 SEQUENCE_ID, BigInteger.TWO, PATIENT_CONTEXT_DESCRIPTOR_HANDLE, "pat1", null);
 
-
         final var thirdUpdate = buildDescriptionModificationReportWithParts(
-            SEQUENCE_ID, BigInteger.valueOf(3),
-            buildDescriptionModificationReportPart(
-                    DescriptionModificationType.CRT,
-                    CHANNEL_HANDLE,
-                    changedStringMetric
-            )
-        );
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, CHANNEL_HANDLE, changedStringMetric));
 
         // fourth update to make sure a descriptor change was observed during the test
         final var fourthUpdate = buildDescriptionModificationReportWithParts(
-                SEQUENCE_ID, BigInteger.valueOf(4),
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
                 buildDescriptionModificationReportPart(
                         DescriptionModificationType.UPT,
                         VMD_HANDLE,
-                        buildChannel(CHANNEL_HANDLE, BigInteger.ONE, BigInteger.ONE)
-                )
-        );
+                        buildChannel(CHANNEL_HANDLE, BigInteger.ONE, BigInteger.ONE)));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
@@ -634,7 +627,6 @@ public class InvariantParticipantModelVersioningTestTest {
         final var thrown = assertThrows(AssertionError.class, testClass::testRequirementR0034);
         assertTrue(thrown.getMessage().startsWith(DESCRIPTOR_REINSERTION_PREFIX));
     }
-
 
     /**
      * Tests whether insufficient test data fails the test.
@@ -1622,11 +1614,15 @@ public class InvariantParticipantModelVersioningTestTest {
         return channel;
     }
 
-    Pair<com.draeger.medical.biceps.model.participant.StringMetricDescriptor, com.draeger.medical.biceps.model.participant.StringMetricState> buildStringMetric(
-            final String handle,
-            @Nullable final BigInteger descriptorVersion,
-            @Nullable final BigInteger stateVersion) {
-        final var metric = mdibBuilder.buildStringMetric(handle, MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
+    Pair<
+                    com.draeger.medical.biceps.model.participant.StringMetricDescriptor,
+                    com.draeger.medical.biceps.model.participant.StringMetricState>
+            buildStringMetric(
+                    final String handle,
+                    @Nullable final BigInteger descriptorVersion,
+                    @Nullable final BigInteger stateVersion) {
+        final var metric = mdibBuilder.buildStringMetric(
+                handle, MetricCategory.CLC, MetricAvailability.INTR, mdibBuilder.buildCodedValue("abc"));
         metric.getLeft().setDescriptorVersion(descriptorVersion);
         metric.getRight().setDescriptorVersion(descriptorVersion);
         if (stateVersion != null) {

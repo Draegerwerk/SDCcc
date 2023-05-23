@@ -62,8 +62,8 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             "The version of %s has been decremented in" + " MdibVersion %s. It was %s and is now %s.";
 
     public static final String DESCRIPTOR_REINSERTION_PREFIX =
-            "Descriptor version has not been incremented by one, but descriptor has changed after" +
-                    " reinsertion into mdib.";
+            "Descriptor version has not been incremented by one, but descriptor has changed after"
+                    + " reinsertion into mdib.";
 
     public static final String DESCRIPTOR_UPDATE_PREFIX =
             "Descriptor version has not been incremented by one, but descriptor has changed.";
@@ -189,8 +189,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                                     descriptorChanges.incrementAndGet();
                                     assertTrue(
                                             isIncrementedVersion(
-                                                    ImpliedValueUtil.getDescriptorVersion(
-                                                            oldVersion, impliedValueMap),
+                                                    ImpliedValueUtil.getDescriptorVersion(oldVersion, impliedValueMap),
                                                     ImpliedValueUtil.getDescriptorVersion(
                                                             descriptor.getDescriptor(), impliedValueMap)),
                                             DESCRIPTOR_REINSERTION_PREFIX
@@ -199,7 +198,6 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                                                     + ". Old Descriptor " + oldVersion
                                                     + " Inserted Descriptor " + descriptor.getDescriptor());
                                 }
-
                             }
 
                             final var nextDescriptorOpt = second.getEntity(descriptor.getHandle());
