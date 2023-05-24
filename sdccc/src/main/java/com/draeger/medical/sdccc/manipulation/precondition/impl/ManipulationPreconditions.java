@@ -20,6 +20,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -309,7 +312,7 @@ public class ManipulationPreconditions {
     public static class AssociateLocationsManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateLocationsManipulation.class);
-        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS = 5000;
+        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS = (long) 5E9;
 
         /**
          * Creates a location association precondition.
@@ -414,7 +417,7 @@ public class ManipulationPreconditions {
 
             final EpisodicContextReportStateHandleObserver observer =
                     new EpisodicContextReportStateHandleObserver(stateHandle, testClient);
-            observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_MILLIS);
+            observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS);
         }
 
         /**
@@ -454,7 +457,8 @@ public class ManipulationPreconditions {
         static final class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
 
             private final String expectedHandle;
-            private final Object signal = new Object();
+            private final Lock lock = new ReentrantLock();
+            private final Condition reportReceivedSignal = lock.newCondition();
             private final MdibAccessObservable mdibAccessObservable;
             private boolean reportReceived;
 
@@ -468,7 +472,8 @@ public class ManipulationPreconditions {
 
             @Subscribe
             public void onUpdate(final ContextStateModificationMessage report) {
-                synchronized (signal) {
+                lock.lock();
+                try {
                     if (!reportReceived) {
                         for (List<AbstractContextState> states :
                                 report.getStates().values()) {
@@ -485,27 +490,42 @@ public class ManipulationPreconditions {
                                     this.mdibAccessObservable.unregisterObserver(this);
 
                                     this.reportReceived = true;
-                                    this.signal.notifyAll();
+                                    reportReceivedSignal.signalAll();
                                 }
                             }
                         }
                     }
+                } finally {
+                    lock.unlock();
                 }
             }
 
-            public void waitForStateUpdate(final long timeoutMillis) {
-                long now = System.currentTimeMillis();
-                final long end = now + timeoutMillis;
-                synchronized (signal) {
+            /**
+             * Waits for a state update.
+             *
+             * @param timeoutNanos positive number of Nanoseconds to wait for the State Update
+             */
+            @SuppressWarnings("ResultOfMethodCallIgnored")
+            public void waitForStateUpdate(final long timeoutNanos) {
+                if (timeoutNanos < 0) {
+                    throw new IllegalArgumentException("timeoutNanos is supposed to be positive");
+                }
+                long now = System.nanoTime();
+                final long end = now + timeoutNanos;
+                lock.lock();
+                try {
+                    now = System.nanoTime();
                     while (now < end && !reportReceived) {
                         try {
-                            signal.wait(end - now);
+                            reportReceivedSignal.awaitNanos(Math.min(Math.abs(end - now), timeoutNanos));
                         } catch (InterruptedException e) {
                             // InterruptedException is not expected
                             throw new RuntimeException("Unexpected InterruptedException", e);
                         }
-                        now = System.currentTimeMillis();
+                        now = System.nanoTime();
                     }
+                } finally {
+                    lock.unlock();
                 }
             }
         }
