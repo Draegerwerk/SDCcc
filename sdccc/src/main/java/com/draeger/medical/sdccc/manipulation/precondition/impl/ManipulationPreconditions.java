@@ -511,13 +511,14 @@ public class ManipulationPreconditions {
                     throw new IllegalArgumentException("timeoutNanos is supposed to be positive");
                 }
                 long now = System.nanoTime();
-                final long end = now + timeoutNanos;
+                final long end = Math.addExact(now, timeoutNanos); // an overflow would cause the code to not wait
+                                                                   // at all. It is hence better to throw an Exception.
                 lock.lock();
                 try {
                     now = System.nanoTime();
                     while (now < end && !reportReceived) {
                         try {
-                            reportReceivedSignal.awaitNanos(Math.min(Math.abs(end - now), timeoutNanos));
+                            reportReceivedSignal.awaitNanos(Math.min(Math.abs(Math.subtractExact(end, now)), timeoutNanos));
                         } catch (InterruptedException e) {
                             // InterruptedException is not expected
                             throw new RuntimeException("Unexpected InterruptedException", e);
