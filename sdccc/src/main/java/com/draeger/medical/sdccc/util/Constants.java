@@ -226,7 +226,7 @@ public final class Constants {
     public static final String MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION = "ContextAssociation";
     public static final String MANIPULATION_PARAMETER_ALERT_ACTIVATION = "AlertActivation";
     public static final String MANIPULATION_PARAMETER_PRESENCE = "Presence";
-    public static final String MANIPULATION_PARAMETER_ALERT_SIGNAL_ACTIVATION = "AlertSignalManifestation";
+    public static final String MANIPULATION_PARAMETER_ALERT_SIGNAL_MANIFESTATION = "AlertSignalManifestation";
     public static final String MANIPULATION_PARAMETER_METRIC_CATEGORY = "MetricCategory";
     public static final String MANIPULATION_PARAMETER_COMPONENT_ACTIVATION = "ComponentActivation";
     public static final String MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY = "MeasurementValidity";

@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.messages;
 
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.assistedinject.Assisted;
 import java.util.List;
@@ -32,14 +33,14 @@ public class ManipulationInfo implements DatabaseEntry {
             @Assisted(value = "stopTime") final long finishTimestamp,
             @Assisted final ResponseTypes.Result result,
             @Assisted(value = "methodName") final String methodName,
-            @Assisted final List<Pair<String, String>> parameters,
+            @Assisted final ManipulationParameterUtil.ManipulationParameterData parameters,
             final MessageStorage messageStorage) {
 
         this.startTimestamp = startTimestamp;
         this.finishTimestamp = finishTimestamp;
         this.result = result;
         this.methodName = methodName;
-        this.parameters = parameters;
+        this.parameters = parameters.getParameterData();
         storage = messageStorage;
     }
 

@@ -9,6 +9,7 @@ package com.draeger.medical.sdccc.manipulation;
 
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
+import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.t2iapi.BasicRequests;
 import com.draeger.medical.t2iapi.BasicResponses;
@@ -35,14 +36,11 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.StringValue;
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.xml.namespace.QName;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
@@ -131,16 +129,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setLocationDetail(locationDetail),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(new ImmutablePair<>(
-                        Constants.MANIPULATION_PARAMETER_LOCATION_DETAIL,
-                        String.format(
-                                "poC=%s, " + "room=%s, " + "bed=%s, " + "facility=%s, " + "building=%s, " + "floor=%s",
-                                locationDetail.getPoC(),
-                                locationDetail.getRoom(),
-                                locationDetail.getBed(),
-                                locationDetail.getFacility(),
-                                locationDetail.getBuilding(),
-                                locationDetail.getFloor()))));
+                ManipulationParameterUtil.buildLocationDetailManipulationParameterData(locationDetail));
     }
 
     @Override
@@ -159,7 +148,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.getRemovableDescriptorsOfClass(descriptorClass),
                 res -> res.getStatus().getResult(),
                 DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
-                Collections.emptyList());
+                ManipulationParameterUtil.buildEmptyManipulationParameterData());
     }
 
     @Override
@@ -171,7 +160,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.removeDescriptor(handle),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle)));
+                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
     }
 
     @Override
@@ -183,7 +172,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.insertDescriptor(handle),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle)));
+                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
     }
 
     @Override
@@ -193,7 +182,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.sendHello(),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                Collections.emptyList());
+                ManipulationParameterUtil.buildEmptyManipulationParameterData());
     }
 
     @Override
@@ -214,10 +203,8 @@ public class GRpcManipulations implements Manipulations {
                     }
                     return Optional.of(msg.getContextStateHandle());
                 },
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, descriptorHandle),
-                        new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION, association.value())));
+                ManipulationParameterUtil.buildContextAssociationManipulationParameterData(
+                        descriptorHandle, association));
     }
 
     @Override
@@ -232,10 +219,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setAlertActivation(handle, activationState),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activationState.value())));
+                ManipulationParameterUtil.buildAlertActivationManipulationParameterData(handle, activationState));
     }
 
     @Override
@@ -250,9 +234,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setAlertConditionPresence(handle, presence),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_PRESENCE, String.format("%s", presence))));
+                ManipulationParameterUtil.buildAlertConditionPresenceManipulationParameterData(handle, presence));
     }
 
     @Override
@@ -269,11 +251,8 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setSystemSignalActivation(handle, manifestation, activation),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_ALERT_SIGNAL_ACTIVATION, manifestation.value()),
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_ALERT_ACTIVATION, activation.value())));
+                ManipulationParameterUtil.buildSystemSignalActivationManipulationParameterData(
+                        handle, manifestation, activation));
     }
 
     @Override
@@ -288,10 +267,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setComponentActivation(handle, activationState),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activationState.toString())));
+                ManipulationParameterUtil.buildComponentActivationManipulationParameterData(handle, activationState));
     }
 
     @Override
@@ -306,9 +282,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setMetricQualityValidity(handle, validity),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY, validity.value())));
+                ManipulationParameterUtil.buildMetricQualityValidityManipulationParameterData(handle, validity));
     }
 
     @Override
@@ -326,11 +300,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.setMetricStatus(handle, category, activation),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
-                        new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
-                        new ImmutablePair<>(
-                                Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.toString())));
+                ManipulationParameterUtil.buildMetricStatusManipulationParameterData(handle, category, activation));
     }
 
     @Override
@@ -343,7 +313,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.triggerDescriptorUpdate(handle),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, handle)));
+                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
     }
 
     @Override
@@ -359,7 +329,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> fallback.triggerReport(report),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, report.toString())));
+                ManipulationParameterUtil.buildTriggerReportManipulationParameterData(report));
     }
 
     private Optional<MetricTypes.MetricStatus> getMetricStatus(final ComponentActivation activation) {
@@ -392,7 +362,7 @@ public class GRpcManipulations implements Manipulations {
             final Function<Void, RES> fallbackFunc,
             final Function<GRES, ResponseTypes.Result> statusExtractor,
             final Function<GRES, RES> responseExtractor,
-            final List<Pair<String, String>> parameter) {
+            final ManipulationParameterUtil.ManipulationParameterData parameter) {
         final var startTime = System.nanoTime();
         final var result = performCall(func, fallbackFunc, statusExtractor, responseExtractor);
         final var endTime = System.nanoTime();
