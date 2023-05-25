@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,9 +35,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.model.participant.AbstractAlertState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
+import org.somda.sdc.biceps.model.participant.AlertConditionDescriptor;
+import org.somda.sdc.biceps.model.participant.AlertConditionState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertSystemState;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
@@ -61,6 +65,8 @@ public class ManipulationPreconditionsTest {
     private static final String LOCATION_CONTEXT_STATE_HANDLE2 = "loclocstate2";
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE = "alerthandle";
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE2 = "alerthandle2";
+    private static final String ALERT_CONDITION_HANDLE = "alertconditionhandle";
+    private static final String ALERT_CONDITION_HANDLE2 = "alertconditionhandle2";
     private static final String METRIC_HANDLE = "someMetric";
     private static final String SOME_HANDLE = "someHandle";
 
@@ -73,6 +79,8 @@ public class ManipulationPreconditionsTest {
     private LocationContextState mockLocationContextState2;
     private AlertSystemState mockAlertSystemState;
     private AlertSystemState mockAlertSystemState2;
+    private AlertConditionState mockAlertConditionState;
+    private AlertConditionState mockAlertConditionState2;
     private AbstractMetricDescriptor mockMetricDescriptor;
     private AbstractMetricState mockMetricState;
     private TestRunObserver testRunObserver;
@@ -90,6 +98,8 @@ public class ManipulationPreconditionsTest {
         mockLocationContextState2 = mock(LocationContextState.class);
         mockAlertSystemState = mock(AlertSystemState.class);
         mockAlertSystemState2 = mock(AlertSystemState.class);
+        mockAlertConditionState = mock(AlertConditionState.class);
+        mockAlertConditionState2 = mock(AlertConditionState.class);
         mockMetricDescriptor = mock(AbstractMetricDescriptor.class);
         mockMetricState = mock(AbstractMetricState.class);
         mockEntity = mock(MdibEntity.class);
@@ -433,6 +443,247 @@ public class ManipulationPreconditionsTest {
         when(mockMetricDescriptor.getMetricCategory()).thenReturn(metricCategory);
         when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState));
         when(mockMetricState.getDescriptorHandle()).thenReturn(metricStateHandle);
+    }
+
+    private void alertConditionPresenceManipulationSetup() {
+        when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
+        when(mockMdibAccess.findEntitiesByType(AlertConditionDescriptor.class))
+                .thenReturn(List.of(mockEntity, mockEntity2));
+        when(mockEntity.getHandle()).thenReturn(ALERT_CONDITION_HANDLE);
+        when(mockEntity.getParent()).thenReturn(Optional.of(ALERT_SYSTEM_CONTEXT_HANDLE));
+        when(mockEntity2.getHandle()).thenReturn(ALERT_CONDITION_HANDLE2);
+        when(mockEntity2.getParent()).thenReturn(Optional.of(ALERT_SYSTEM_CONTEXT_HANDLE2));
+
+        when(mockMdibAccess.getState(ALERT_SYSTEM_CONTEXT_HANDLE, AbstractAlertState.class))
+                .thenReturn(Optional.of(mockAlertSystemState));
+        when(mockMdibAccess.getState(ALERT_SYSTEM_CONTEXT_HANDLE2, AbstractAlertState.class))
+                .thenReturn(Optional.of(mockAlertSystemState2));
+        when(mockMdibAccess.getState(ALERT_CONDITION_HANDLE, AbstractAlertState.class))
+                .thenReturn(Optional.of(mockAlertConditionState));
+        when(mockMdibAccess.getState(ALERT_CONDITION_HANDLE2, AbstractAlertState.class))
+                .thenReturn(Optional.of(mockAlertConditionState2));
+        when(mockMdibAccess.getState(ALERT_CONDITION_HANDLE, AlertConditionState.class))
+                .thenReturn(Optional.of(mockAlertConditionState));
+        when(mockMdibAccess.getState(ALERT_CONDITION_HANDLE2, AlertConditionState.class))
+                .thenReturn(Optional.of(mockAlertConditionState2));
+
+        when(mockAlertSystemState.getActivationState()).thenReturn(AlertActivation.OFF);
+        when(mockAlertSystemState2.getActivationState()).thenReturn(AlertActivation.OFF);
+        when(mockAlertConditionState.getActivationState()).thenReturn(AlertActivation.OFF);
+        when(mockAlertConditionState2.getActivationState()).thenReturn(AlertActivation.OFF);
+
+        when(mockAlertConditionState.isPresence()).thenReturn(true);
+        when(mockAlertConditionState2.isPresence()).thenReturn(true);
+    }
+
+    private void verifyAlertConditionPresenceSetAlertActivationInteractions(
+            final int numberOfManipulations,
+            final List<String> expectedHandles,
+            final List<AlertActivation> expectedAlertActivations) {
+        final var activationStateHandleCaptor = ArgumentCaptor.forClass(String.class);
+        final var activationStateCaptor = ArgumentCaptor.forClass(AlertActivation.class);
+        verify(mockManipulations, times(numberOfManipulations))
+                .setAlertActivation(activationStateHandleCaptor.capture(), activationStateCaptor.capture());
+
+        assertEquals(expectedHandles, activationStateHandleCaptor.getAllValues());
+        assertEquals(expectedAlertActivations, activationStateCaptor.getAllValues());
+    }
+
+    private void verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+            final int numberOfManipulations,
+            final List<String> expectedHandles,
+            final List<Boolean> expectedAlertActivations) {
+        final var handleCaptor = ArgumentCaptor.forClass(String.class);
+        final var presenceCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(mockManipulations, times(numberOfManipulations))
+                .setAlertConditionPresence(handleCaptor.capture(), presenceCaptor.capture());
+
+        assertEquals(expectedHandles, handleCaptor.getAllValues());
+        assertEquals(expectedAlertActivations, presenceCaptor.getAllValues());
+    }
+
+    @Test
+    @DisplayName(
+            "AlertConditionPresence: set alert activation and set presence correctly and stop when a alert condition was successfully manipulated")
+    void testSetPresenceForAlertConditionSuccessful() {
+        alertConditionPresenceManipulationSetup();
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        assertTrue(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        // precondition should stop after the first successful
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                2,
+                List.of(ALERT_CONDITION_HANDLE, ALERT_SYSTEM_CONTEXT_HANDLE),
+                List.of(AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                1, List.of(ALERT_CONDITION_HANDLE), List.of(true));
+    }
+
+    @Test
+    @DisplayName(
+            "AlertConditionPresence: allow result not_supported for setAlertConditionPresence when at least one successful is seen")
+    void testSetPresenceForAlertConditionAllowNotSupported1() {
+        alertConditionPresenceManipulationSetup();
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        // setAlertConditionPresence is not supported for first alert condition
+        when(mockManipulations.setAlertConditionPresence(ALERT_CONDITION_HANDLE, true))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+        when(mockManipulations.setAlertConditionPresence(ALERT_CONDITION_HANDLE2, true))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        assertTrue(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                4,
+                List.of(
+                        ALERT_CONDITION_HANDLE,
+                        ALERT_SYSTEM_CONTEXT_HANDLE,
+                        ALERT_CONDITION_HANDLE2,
+                        ALERT_SYSTEM_CONTEXT_HANDLE2),
+                List.of(AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                2, List.of(ALERT_CONDITION_HANDLE, ALERT_CONDITION_HANDLE2), List.of(true, true));
+    }
+
+    @Test
+    @DisplayName("AlertConditionPresence: alert activation not supported does not fail the precondition")
+    void testSetPresenceForAlertConditionAllowNotSupported2() {
+        alertConditionPresenceManipulationSetup();
+        // manipulation of alert activation is not supported from DUT
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        assertTrue(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        // precondition should stop after the first successful
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                2,
+                List.of(ALERT_CONDITION_HANDLE, ALERT_SYSTEM_CONTEXT_HANDLE),
+                List.of(AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                1, List.of(ALERT_CONDITION_HANDLE), List.of(true));
+    }
+
+    @Test
+    @DisplayName("AlertConditionPresence: precondition fails when setAlertActivation failed")
+    void testSetPresenceForAlertConditionFail1() {
+        alertConditionPresenceManipulationSetup();
+        // manipulation of alert activation fails
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        // precondition should return false, since RESULT_FAIL was seen
+        assertFalse(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                4,
+                List.of(
+                        ALERT_CONDITION_HANDLE,
+                        ALERT_SYSTEM_CONTEXT_HANDLE,
+                        ALERT_CONDITION_HANDLE2,
+                        ALERT_SYSTEM_CONTEXT_HANDLE2),
+                List.of(AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                2, List.of(ALERT_CONDITION_HANDLE, ALERT_CONDITION_HANDLE2), List.of(true, true));
+    }
+
+    @Test
+    @DisplayName("AlertConditionPresence: precondition fails when setAlertActivation is not implemented")
+    void testSetPresenceForAlertConditionFail2() {
+        alertConditionPresenceManipulationSetup();
+        // manipulation of alert activation fails
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+
+        // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
+        assertFalse(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                4,
+                List.of(
+                        ALERT_CONDITION_HANDLE,
+                        ALERT_SYSTEM_CONTEXT_HANDLE,
+                        ALERT_CONDITION_HANDLE2,
+                        ALERT_SYSTEM_CONTEXT_HANDLE2),
+                List.of(AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                2, List.of(ALERT_CONDITION_HANDLE, ALERT_CONDITION_HANDLE2), List.of(true, true));
+    }
+
+    @Test
+    @DisplayName("AlertConditionPresence: precondition fails when setAlertConditionPresence failed")
+    void testSetPresenceForAlertConditionFail3() {
+        alertConditionPresenceManipulationSetup();
+        // manipulation of alert activation fails
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
+        assertFalse(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                4,
+                List.of(
+                        ALERT_CONDITION_HANDLE,
+                        ALERT_SYSTEM_CONTEXT_HANDLE,
+                        ALERT_CONDITION_HANDLE2,
+                        ALERT_SYSTEM_CONTEXT_HANDLE2),
+                List.of(AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                2, List.of(ALERT_CONDITION_HANDLE, ALERT_CONDITION_HANDLE2), List.of(true, true));
+    }
+
+    @Test
+    @DisplayName("AlertConditionPresence: precondition fails when setAlertConditionPresence is not implemented")
+    void testSetPresenceForAlertConditionFail4() {
+        alertConditionPresenceManipulationSetup();
+        // manipulation of alert activation fails
+        when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+
+        // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
+        assertFalse(
+                ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+
+        verifyAlertConditionPresenceSetAlertActivationInteractions(
+                4,
+                List.of(
+                        ALERT_CONDITION_HANDLE,
+                        ALERT_SYSTEM_CONTEXT_HANDLE,
+                        ALERT_CONDITION_HANDLE2,
+                        ALERT_SYSTEM_CONTEXT_HANDLE2),
+                List.of(AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF, AlertActivation.OFF));
+        verifyAlertConditionPresenceSetAlertConditionPresenceInteractions(
+                2, List.of(ALERT_CONDITION_HANDLE, ALERT_CONDITION_HANDLE2), List.of(true, true));
     }
 
     void setActivationStateSetup() {

@@ -625,8 +625,12 @@ public class ManipulationPreconditions {
                         testClient.getSdcRemoteDevice(), manipulations, parentHandle, AlertActivation.OFF);
                 final var presenceTrueResult =
                         changePresence(testClient.getSdcRemoteDevice(), manipulations, handle, true);
-                if (alertConditionStateResult == ResponseTypes.Result.RESULT_SUCCESS
-                        && alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                // the setAlertActivation manipulations are not mandatory, but then the device must ensure that the
+                // activation states are ON when the presence is true.
+                if ((alertConditionStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                                || alertConditionStateResult == ResponseTypes.Result.RESULT_NOT_SUPPORTED)
+                        && (alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                                || alertSystemStateResult == ResponseTypes.Result.RESULT_NOT_SUPPORTED)
                         && presenceTrueResult == ResponseTypes.Result.RESULT_SUCCESS) {
                     manipulationSuccessful = true;
                     // successful manipulation seen
