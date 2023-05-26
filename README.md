@@ -155,6 +155,8 @@ Maven >= 3.8.1 and Java 17 are required to build the project.
 
 ## Limitations
 The test tool has the following limitations. If the DUT falls under these limitations, the test tool **cannot** be used.
+Where it is possible to detect when a DUT falls under these limitations, SDCcc's test cases are designed to fail in
+this case in order to minimize the risk of such an invalid application going unnoticed.
 
 [General]
 
