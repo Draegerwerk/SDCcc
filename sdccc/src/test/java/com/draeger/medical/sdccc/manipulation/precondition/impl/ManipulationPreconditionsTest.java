@@ -1967,6 +1967,93 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
+    @DisplayName("MetricStatusManipulationCLCActivationStateSTNDBY: Set metric with category CLC to 'calculation"
+        + " initialized, but is not being performed' which results in activation state STND_BY.")
+    void testMetricStatusManipulationCLCActivationStateSTNDBYGood() {
+        setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.STND_BY);
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.STND_BY);
+    }
+
+    @Test
+    @DisplayName(
+        "MetricStatusManipulationCLCActivationStateSTNDBY: The precondition does not fail if setComponentActivation is not supported by all metrics.")
+    void testMetricStatusManipulationCLCActivationStateSTNDBYAllowNotSupported1() {
+        metricMockSetup(
+            MetricCategory.CLC, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.ON, ComponentActivation.STND_BY);
+
+        // let one metric not support setComponentActivation manipulation
+        when(mockManipulations.setComponentActivation(eq(SOME_HANDLE), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+            .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.STND_BY);
+    }
+
+    @Test
+    @DisplayName(
+        "MetricStatusManipulationCLCActivationStateSTNDBY: The precondition does not fail if setMetricStatus is not supported by all metrics.")
+    void testMetricStatusManipulationCLCActivationStateSTNDBYAllowNotSupported2() {
+        metricMockSetup(
+            MetricCategory.CLC, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.ON, ComponentActivation.STND_BY);
+
+        // let one metric not support setMetricStatus manipulation
+        when(mockManipulations.setMetricStatus(
+            eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+            .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.STND_BY);
+    }
+
+    @Test
+    @DisplayName("MetricStatusManipulationCLCActivationStateSTNDBY: setComponentActivation failed.")
+    void testMetricStatusManipulationCLCActivationStateSTNDBYBadFirstManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.STND_BY);
+
+        // let setComponentActivation fail
+        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+            ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName("MetricStatusManipulationCLCActivationStateSTNDBY: setMetricStatus failed.")
+    void testMetricStatusManipulationCLCActivationStateSTNDBYBadSecondManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.CLC, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.STND_BY);
+
+        // let setMetricStatus fail
+        when(mockManipulations.setMetricStatus(
+            any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+            ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.CLC, ComponentActivation.STND_BY);
+    }
+
+    @Test
     @DisplayName("testMetricStatusManipulationSETActivationStateFAIL: Set ActivationState of all SET-Metrics to FAIL.")
     void testMetricStatusManipulationSETActivationStateFAILGood() {
         setMetricStatusSetup(MetricCategory.SET, METRIC_HANDLE, ComponentActivation.ON, ComponentActivation.FAIL);
