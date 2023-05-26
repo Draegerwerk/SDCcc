@@ -82,7 +82,9 @@ public class ManipulationPreconditionsTest {
     private AlertConditionState mockAlertConditionState;
     private AlertConditionState mockAlertConditionState2;
     private AbstractMetricDescriptor mockMetricDescriptor;
+    private AbstractMetricDescriptor mockMetricDescriptor2;
     private AbstractMetricState mockMetricState;
+    private AbstractMetricState mockMetricState2;
     private TestRunObserver testRunObserver;
     private MdibEntity mockEntity;
     private MdibEntity mockEntity2;
@@ -101,7 +103,9 @@ public class ManipulationPreconditionsTest {
         mockAlertConditionState = mock(AlertConditionState.class);
         mockAlertConditionState2 = mock(AlertConditionState.class);
         mockMetricDescriptor = mock(AbstractMetricDescriptor.class);
+        mockMetricDescriptor2 = mock(AbstractMetricDescriptor.class);
         mockMetricState = mock(AbstractMetricState.class);
+        mockMetricState2 = mock(AbstractMetricState.class);
         mockEntity = mock(MdibEntity.class);
         mockEntity2 = mock(MdibEntity.class);
         mockMdibAccess = mock(MdibAccess.class);
@@ -504,13 +508,12 @@ public class ManipulationPreconditionsTest {
 
     @Test
     @DisplayName(
-            "AlertConditionPresence: set alert activation and set presence correctly and stop when a alert condition was successfully manipulated")
+            "AlertConditionPresence: set alert activation and set presence correctly and stop when an alert condition was successfully manipulated")
     void testSetPresenceForAlertConditionSuccessful() {
         alertConditionPresenceManipulationSetup();
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
         when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
         assertTrue(
@@ -701,16 +704,6 @@ public class ManipulationPreconditionsTest {
                 .thenReturn(AlertActivation.PSD)
                 .thenReturn(AlertActivation.OFF);
 
-        // make manipulation return true for the manipulations and false afterwards
-        when(mockManipulations.setAlertActivation(any(String.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(ALERT_SYSTEM_CONTEXT_HANDLE, AlertSystemState.class))
                 .thenReturn(Optional.of(mockAlertSystemState));
@@ -728,6 +721,67 @@ public class ManipulationPreconditionsTest {
     @DisplayName("setActivationState: set activation state for an alert system correctly")
     void testSetActivationStateForAlertSystem() {
         setActivationStateSetup();
+
+        // make manipulation return true for the manipulations and false afterwards
+        when(mockManipulations.setAlertActivation(any(String.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        final var expectedManipulationCalls = 6;
+        final var expectedActivationStates = List.of(
+                AlertActivation.ON,
+                AlertActivation.PSD,
+                AlertActivation.OFF,
+                AlertActivation.ON,
+                AlertActivation.PSD,
+                AlertActivation.OFF);
+        final var expectedHandles = List.of(
+                ALERT_SYSTEM_CONTEXT_HANDLE,
+                ALERT_SYSTEM_CONTEXT_HANDLE,
+                ALERT_SYSTEM_CONTEXT_HANDLE,
+                ALERT_SYSTEM_CONTEXT_HANDLE2,
+                ALERT_SYSTEM_CONTEXT_HANDLE2,
+                ALERT_SYSTEM_CONTEXT_HANDLE2);
+
+        assertTrue(
+                ManipulationPreconditions.AlertSystemActivationStateManipulation.manipulation(injector),
+                "Manipulation should've succeeded");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "Test run should not have been invalid. Reason(s): " + testRunObserver.getReasons());
+
+        final var handleCaptor = ArgumentCaptor.forClass(String.class);
+        final var activationStateCaptor = ArgumentCaptor.forClass(AlertActivation.class);
+        verify(mockManipulations, times(expectedManipulationCalls))
+                .setAlertActivation(handleCaptor.capture(), activationStateCaptor.capture());
+
+        assertEquals(expectedHandles, handleCaptor.getAllValues());
+        assertEquals(expectedActivationStates, activationStateCaptor.getAllValues());
+    }
+
+    @Test
+    @DisplayName(
+            "AlertSystemActivationStateManipulation: allow result not_supported for setAlertConditionPresence when at least one successful is seen")
+    void testSetAlertActivationManipulationAllowNotSupported() {
+        setActivationStateSetup();
+        // let one alert system not support manipulations
+        when(mockManipulations.setAlertActivation(eq(ALERT_SYSTEM_CONTEXT_HANDLE), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+        // make manipulation for the other alert system return true for the manipulations and false afterwards
+        when(mockManipulations.setAlertActivation(eq(ALERT_SYSTEM_CONTEXT_HANDLE2), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
         final var expectedManipulationCalls = 6;
         final var expectedActivationStates = List.of(
                 AlertActivation.ON,
@@ -764,6 +818,15 @@ public class ManipulationPreconditionsTest {
     @DisplayName("setActivationState: wrong ActivationState")
     void testSetActivationStateForAlertSystemWrongActivationState() {
         setActivationStateSetup();
+        // make manipulation return true for the manipulations and false afterwards
+        when(mockManipulations.setAlertActivation(any(String.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         when(mockAlertSystemState.getActivationState()).thenReturn(AlertActivation.OFF);
 
@@ -771,6 +834,46 @@ public class ManipulationPreconditionsTest {
                 ManipulationPreconditions.AlertSystemActivationStateManipulation.manipulation(injector),
                 "manipulation should've failed.");
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
+    }
+
+    private void metricMockSetup(
+            final MetricCategory category,
+            final String metricHandle,
+            final String secondMetricHandle,
+            final ComponentActivation startingState,
+            final ComponentActivation endState) {
+        // create mock metric
+        when(mockMetricDescriptor.getHandle()).thenReturn(metricHandle);
+        when(mockMetricDescriptor.getMetricCategory()).thenReturn(category);
+        when(mockMetricState.getDescriptorHandle()).thenReturn(metricHandle);
+        when(mockMetricState.getActivationState()).thenReturn(startingState).thenReturn(endState);
+
+        // create second mock metric
+        when(mockMetricDescriptor2.getHandle()).thenReturn(secondMetricHandle);
+        when(mockMetricDescriptor2.getMetricCategory()).thenReturn(category);
+        when(mockMetricState2.getDescriptorHandle()).thenReturn(secondMetricHandle);
+        when(mockMetricState2.getActivationState()).thenReturn(startingState).thenReturn(endState);
+
+        // create mock entities to hold the states
+        when(mockEntity.getHandle()).thenReturn(metricHandle);
+        when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
+        when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState));
+        when(mockEntity2.getHandle()).thenReturn(secondMetricHandle);
+        when(mockEntity2.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor2));
+        when(mockEntity2.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState2));
+
+        // make setComponentActivation return true for the manipulations and false afterwards
+        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        // make setMetricStatus return true for the manipulations and false afterwards
+        when(mockManipulations.setMetricStatus(
+                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
     }
 
     private void setMetricStatusSetup(
@@ -816,6 +919,49 @@ public class ManipulationPreconditionsTest {
                 "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
 
         verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.NOT_RDY);
+    }
+
+    @Test
+    @DisplayName(
+            "MetricStatusManipulationMSRMTActivationStateNOTRDY: The precondition does not fail if setComponentActivation is not supported by all metrics.")
+    void testMetricStatusManipulationMSRMTActivationStateNOTRDYAllowNotSupported1() {
+        metricMockSetup(
+                MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
+
+        // let one metric not support setComponentActivation manipulation
+        when(mockManipulations.setComponentActivation(eq(SOME_HANDLE), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+                .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.NOT_RDY);
+    }
+
+    @Test
+    @DisplayName(
+            "MetricStatusManipulationMSRMTActivationStateNOTRDY: The precondition does not fail if setMetricStatus is not supported by all metrics.")
+    void testMetricStatusManipulationMSRMTActivationStateNOTRDYAllowNotSupported2() {
+        metricMockSetup(
+                MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
+
+        // let one metric not support setMetricStatus manipulation
+        when(mockManipulations.setMetricStatus(
+                        eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+                .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.OFF);
         verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.NOT_RDY);
     }
 
