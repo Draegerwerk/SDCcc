@@ -907,6 +907,93 @@ public class ManipulationPreconditionsTest {
     }
 
     @Test
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateON: Setting a metric with category MSRMT to `measurement is"
+        + " being performed` results in activation state ON.")
+    void testMetricStatusManipulationMSRMTActivationStateONGood() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.ON);
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName(
+        "MetricStatusManipulationMSRMTActivationStateON: The precondition does not fail if setComponentActivation is not supported by all metrics.")
+    void testMetricStatusManipulationMSRMTActivationStateONAllowNotSupported1() {
+        metricMockSetup(
+            MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.ON);
+
+        // let one metric not support setComponentActivation manipulation
+        when(mockManipulations.setComponentActivation(eq(SOME_HANDLE), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+            .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName(
+        "MetricStatusManipulationMSRMTActivationStateON: The precondition does not fail if setMetricStatus is not supported by all metrics.")
+    void testMetricStatusManipulationMSRMTActivationStateONAllowNotSupported2() {
+        metricMockSetup(
+            MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.ON);
+
+        // let one metric not support setMetricStatus manipulation
+        when(mockManipulations.setMetricStatus(
+            eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
+            .thenReturn(List.of(mockEntity2, mockEntity));
+
+        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.ON);
+    }
+
+    @Test
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateON: setComponentActivation failed.")
+    void testMetricStatusManipulationMSRMTActivationStateONBadFirstManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.ON);
+
+        // let setComponentActivation fail
+        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+            ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+    }
+
+    @Test
+    @DisplayName("MetricStatusManipulationMSRMTActivationStateON: setMetricStatus failed.")
+    void testMetricStatusManipulationMSRMTActivationStateONBadSecondManipulationFailed() {
+        setMetricStatusSetup(MetricCategory.MSRMT, METRIC_HANDLE, ComponentActivation.OFF, ComponentActivation.ON);
+
+        // let setMetricStatus fail
+        when(mockManipulations.setMetricStatus(
+            any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+            .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(
+            ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.ON);
+    }
+
+    @Test
     @DisplayName("MetricStatusManipulationMSRMTActivationStateNOTRDY: Set metric with category MSRMT to currently"
             + " initializing which results in activation state NOT_RDY.")
     void testMetricStatusManipulationMSRMTActivationStateNOTRDYGood() {
