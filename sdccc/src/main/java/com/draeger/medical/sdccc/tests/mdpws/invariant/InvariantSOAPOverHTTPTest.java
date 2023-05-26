@@ -57,8 +57,9 @@ public class InvariantSOAPOverHTTPTest extends InjectorTestBase {
                     + " those circumstances.");
         }
 
-        // NOTE: the LocalizationService may also send very large messages. However, this test case
-        //       does not need a precondition as these messages are already triggered by the BasicMessagingCheck.
+        // NOTE: other services such as the LocalizationService may also send very large messages.
+        //             However, as far as possible for us, these messages are already triggered by the
+        //             BasicMessagingCheck and do not require a precondition.
 
         final var messageStorage = getInjector().getInstance(MessageStorage.class);
 
