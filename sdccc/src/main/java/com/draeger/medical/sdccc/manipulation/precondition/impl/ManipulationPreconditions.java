@@ -505,7 +505,6 @@ public class ManipulationPreconditions {
              *
              * @param timeoutNanos positive number of Nanoseconds to wait for the State Update
              */
-            @SuppressWarnings("ResultOfMethodCallIgnored")
             public void waitForStateUpdate(final long timeoutNanos) {
                 if (timeoutNanos < 0) {
                     throw new IllegalArgumentException("timeoutNanos is supposed to be positive");
@@ -518,8 +517,11 @@ public class ManipulationPreconditions {
                     now = System.nanoTime();
                     while (now < end && !reportReceived) {
                         try {
-                            reportReceivedSignal.awaitNanos(
+                            final long remaining = reportReceivedSignal.awaitNanos(
                                     Math.min(Math.abs(Math.subtractExact(end, now)), timeoutNanos));
+                            if (remaining > 0) {
+                                LOG.debug("Spurious wakeup: {}ns remaining.", remaining);
+                            }
                         } catch (InterruptedException e) {
                             // InterruptedException is not expected
                             throw new RuntimeException("Unexpected InterruptedException", e);
@@ -1044,7 +1046,7 @@ public class ManipulationPreconditions {
             final var valid = alertSystemState.getSystemSignalActivation().stream()
                     .filter(systemSignalActivation ->
                             systemSignalActivation.getManifestation().equals(manifestation))
-                    .collect(Collectors.toList())
+                    .toList()
                     .stream()
                     .anyMatch(systemSignalActivation ->
                             systemSignalActivation.getState().equals(activation));
