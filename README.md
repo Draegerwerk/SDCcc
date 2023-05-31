@@ -128,10 +128,8 @@ SummarizeMessageEncodingErrors=true
 ```
 
 EnableMessageEncodingCheck defaults to true and allows the user to control whether SDCcc checks the encoding
-and mimeType specified in the messages received from the DUT. By disabling this check, it is possible for devices
-that do not yet specify the correct encoding and mimeTypes in all their messages to also pass SDCcc's tests.
-However, we highly recommend fixing encoding problems anyway, because this option will be removed at some point
-in the future. Also note that disabling the MessageEncodingCheck causes SDCcc to decode all messages as UTF-8. 
+and mimeType specified in the messages received from the DUT. Note that disabling the MessageEncodingCheck
+causes SDCcc to decode all messages as UTF-8. 
 
 SummarizeMessageEncodingErrors defaults to true and allows the user to control how encoding and mimeType problems
 are presented during an SDCcc TestRun. Note that devices that have encoding problems usually produce these errors
