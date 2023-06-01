@@ -84,7 +84,7 @@ public class InvariantBicepsNormativeAnnexTestTest {
     }
 
     @AfterEach
-    void testDown() throws IOException {
+    void testDown() {
         storage.close();
     }
 

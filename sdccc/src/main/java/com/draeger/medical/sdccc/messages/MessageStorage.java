@@ -166,10 +166,16 @@ public class MessageStorage implements AutoCloseable {
     private final CyclicBarrier flushBarrier;
 
     private final TestRunObserver testRunObserver;
+    private boolean summarizeMessageEncodingErrors;
+    private long messageEncodingErrorCount;
+    private int invalidMimeTypeCount;
+    private boolean enableEncodingCheck;
 
     @Inject
     MessageStorage(
             @Named(TestSuiteConfig.COMMLOG_MESSAGE_BUFFER_SIZE) final int blockingQueueSize,
+            @Named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS) final boolean summarizeMessageEncodingErrors,
+            @Named(TestSuiteConfig.ENABLE_MESSAGE_ENCODING_CHECK) final boolean enableEncodingCheck,
             final MessageFactory messageFactory,
             final HibernateConfig configuration,
             final TestRunObserver testRunObserver) {
@@ -177,6 +183,10 @@ public class MessageStorage implements AutoCloseable {
         this.testRunObserver = testRunObserver;
         this.closed = new AtomicBoolean();
         this.blockingQueueSize = blockingQueueSize;
+        this.summarizeMessageEncodingErrors = summarizeMessageEncodingErrors;
+        this.enableEncodingCheck = enableEncodingCheck;
+        this.messageEncodingErrorCount = 0;
+        this.invalidMimeTypeCount = 0;
 
         this.actionExtractor = new XPathExtractor(String.format("//%s:Action", WsAddressingConstants.NAMESPACE_PREFIX));
 
@@ -256,10 +266,12 @@ public class MessageStorage implements AutoCloseable {
         final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups = new LinkedList<>();
         final byte[] bodyBytes = message.getFinalMemory();
         if (bodyBytes.length > 0) {
-            // TODO: removed charset determination temporarily (https://github.com/Draegerwerk/SDCcc/issues/48)
-            // final Charset charset = determineCharsetFromMessage(message);
+            Charset messageCharset = StandardCharsets.UTF_8;
+            if (this.enableEncodingCheck) {
+                messageCharset = determineCharsetFromMessage(message);
+            }
             // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
-            body = new String(message.getFinalMemory(), StandardCharsets.UTF_8);
+            body = new String(message.getFinalMemory(), messageCharset);
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
         }
         return new MessageContent(
@@ -336,15 +348,21 @@ public class MessageStorage implements AutoCloseable {
                     charsetFromHttpHeader,
                     charsetFromUnicodeByteOrderMark,
                     charsetFromXmlDeclaration,
-                    (String originA, String valueA, String originB, String valueB) ->
+                    (String originA, String valueA, String originB, String valueB) -> {
+                        if (this.summarizeMessageEncodingErrors) {
+                            // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                            this.messageEncodingErrorCount += 1;
+                        } else {
                             this.testRunObserver.invalidateTestRun(String.format(
                                     INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
                                     message.getID(),
                                     String.format(originA, valueA),
-                                    String.format(originB, valueB))));
+                                    String.format(originB, valueB)));
+                        }
+                    });
 
             final Charset charset = chooseMessageCharset(
-                    charsetFromHttpHeader, charsetFromUnicodeByteOrderMark, charsetFromXmlDeclaration);
+                    message, charsetFromHttpHeader, charsetFromUnicodeByteOrderMark, charsetFromXmlDeclaration);
 
             checkMimeType(message);
 
@@ -355,10 +373,15 @@ public class MessageStorage implements AutoCloseable {
                 } else if (charset.equals(charsetFromXmlDeclaration)) {
                     charsetWithOrigin = String.format("'%s' in XML Declaration", charset);
                 }
-                this.testRunObserver.invalidateTestRun(String.format(
-                        "Encountered a message whose encoding is declared to be %s. This violates"
-                                + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8.",
-                        charsetWithOrigin));
+                if (this.summarizeMessageEncodingErrors) {
+                    // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                    this.messageEncodingErrorCount++;
+                } else {
+                    this.testRunObserver.invalidateTestRun(String.format(
+                            "Encountered a message whose encoding is declared to be %s. This violates"
+                                    + " MDPWS:R0007_0 - SOAP ENVELOPEs SHALL be encoded by using UTF-8. (Message UID='%s')",
+                            charsetWithOrigin, message.getID()));
+                }
             }
 
             return charset;
@@ -369,6 +392,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private Charset chooseMessageCharset(
+            final Message message,
             @Nullable final Charset charsetFromHttpHeader,
             @Nullable final Charset charsetFromUnicodeByteOrderMark,
             @Nullable final Charset charsetFromXmlDeclaration) {
@@ -384,10 +408,17 @@ public class MessageStorage implements AutoCloseable {
                 if (charsetFromXmlDeclaration != null) {
                     charset = charsetFromXmlDeclaration;
                 } else {
-                    this.testRunObserver.invalidateTestRun("Message encoding could not be determined."
-                            + " Please ensure that all Messages send by the Device under Test declare their encoding"
-                            + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
-                            + " as mandated by the XML Standard.");
+                    if (this.summarizeMessageEncodingErrors) {
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                        this.messageEncodingErrorCount += 1;
+                    } else {
+                        this.testRunObserver.invalidateTestRun(
+                                "Message encoding could not be determined for message with ID '" + message.getID()
+                                        + "'."
+                                        + " Please ensure that all Messages send by the Device under Test declare their encoding"
+                                        + " either in the HTTP Header, in the Unicode Byte Order Mark, or in the XML Declaration"
+                                        + " as mandated by the XML Standard.");
+                    }
                     charset = StandardCharsets.UTF_8;
                 }
             }
@@ -444,11 +475,16 @@ public class MessageStorage implements AutoCloseable {
                     mimeType = value;
                 }
                 if (!SDC_MIME_TYPES.contains(mimeType)) {
-                    this.testRunObserver.invalidateTestRun(String.format(
-                            "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
-                                    + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and "
-                                    + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1.",
-                            mimeType));
+                    if (summarizeMessageEncodingErrors) {
+                        // TestRun will be invalidated in TestSuite if invalidMimeTypeCount > 0
+                        this.invalidMimeTypeCount++;
+                    } else {
+                        this.testRunObserver.invalidateTestRun(String.format(
+                                "encountered a SOAP Envelope whose mimeType '%s' (declared in its "
+                                        + "HTTP Header) indicates that it was not serialized as 'application/soap+xml' and "
+                                        + "that hence violates the definition of a SOAP TEXT ENVELOPE in MDPWS Section 3.1. (Message UUID='%s')",
+                                mimeType, message.getID()));
+                    }
                 }
             }
         }
@@ -480,7 +516,13 @@ public class MessageStorage implements AutoCloseable {
                 charsetFromUnicodeByteOrderMark = Charset.forName("UTF_32BE");
             }
         } catch (IOException e) {
-            this.testRunObserver.invalidateTestRun("Unable to read message contents", e);
+            if (this.summarizeMessageEncodingErrors) {
+                // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                this.messageEncodingErrorCount += 1;
+            } else {
+                this.testRunObserver.invalidateTestRun(
+                        "Unable to read message contents of message with ID '" + message.getID() + "'", e);
+            }
         }
         return charsetFromUnicodeByteOrderMark;
     }
@@ -502,12 +544,18 @@ public class MessageStorage implements AutoCloseable {
                 charsetFromBOM,
                 charsetFromPrefix,
                 result,
-                (String originA, String valueA, String originB, String valueB) ->
+                (String originA, String valueA, String originB, String valueB) -> {
+                    if (this.summarizeMessageEncodingErrors) {
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                        this.messageEncodingErrorCount += 1;
+                    } else {
                         this.testRunObserver.invalidateTestRun(String.format(
                                 INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
                                 message.getID(),
                                 String.format(originA, valueA),
-                                String.format(originB, valueB))));
+                                String.format(originB, valueB)));
+                    }
+                });
 
         return result;
     }
@@ -663,9 +711,15 @@ public class MessageStorage implements AutoCloseable {
                         // NOTE: returning null in this case is ok as determineCharsetFromMessage() will then try to
                         //       use other clues to determine the charset and hopefully succeed in correctly decoding
                         //       the Message before storing it in the DB.
-                        this.testRunObserver.invalidateTestRun(
-                                String.format("Encountered invalid/unknown charset '%s' in HTTP Header", charsetName),
-                                e);
+                        if (this.summarizeMessageEncodingErrors) {
+                            // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                            this.messageEncodingErrorCount += 1;
+                        } else {
+                            this.testRunObserver.invalidateTestRun(
+                                    String.format(
+                                            "Encountered invalid/unknown charset '%s' in HTTP Header", charsetName),
+                                    e);
+                        }
                     }
                 }
             }
@@ -1736,6 +1790,22 @@ public class MessageStorage implements AutoCloseable {
 
             transaction.commit();
         }
+    }
+
+    /**
+     * Get the number of messages detected by the MessageStorage where the encoding could not be determined.
+     * @return the count
+     */
+    public long getMessageEncodingErrorCount() {
+        return this.messageEncodingErrorCount;
+    }
+
+    /**
+     * Get the number of messages detected by the MessageStorage where the MIME type has an unexpected value.
+     * @return the count
+     */
+    public long getInvalidMimeTypeErrorCount() {
+        return this.invalidMimeTypeCount;
     }
 
     /**

@@ -2,6 +2,8 @@
 CIMode=false
 GraphicalPopups=true
 TestExecutionLogging=true
+EnableMessageEncodingCheck=true
+SummarizeMessageEncodingErrors=true
 
 [SDCcc.TLS]
 FileDirectory="./configuration"

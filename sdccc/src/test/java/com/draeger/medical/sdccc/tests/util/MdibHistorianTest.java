@@ -573,7 +573,7 @@ public class MdibHistorianTest {
         try (final var history = historian.episodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
             assertNotNull(history.next());
             {
-                final var error = assertThrows(AssertionError.class, () -> history.next());
+                final var error = assertThrows(AssertionError.class, history::next);
                 assertEquals(RuntimeException.class, error.getCause().getClass());
             }
         }

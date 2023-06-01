@@ -302,12 +302,10 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationPrecondition correctly calls manipulation.
-     *
-     * @throws PreconditionException on precondition exceptions
      */
     @Test
     @DisplayName("DescriptionModificationPrecondition correctly calls manipulation")
-    public void testDescriptionModificationManipulation() throws PreconditionException {
+    public void testDescriptionModificationManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 
@@ -409,12 +407,10 @@ public class ConditionalPreconditionsTest {
 
     /**
      * Tests whether DescriptionModificationCrtPrecondition correctly calls manipulation.
-     *
-     * @throws PreconditionException on precondition exceptions
      */
     @Test
     @DisplayName("DescriptionModificationCrtPrecondition correctly calls manipulation")
-    public void testDescriptionModificationCrtManipulation() throws PreconditionException {
+    public void testDescriptionModificationCrtManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 
@@ -583,7 +579,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionModificationDelPrecondition correctly calls manipulation")
-    public void testDescriptionModificationDelManipulation() throws PreconditionException {
+    public void testDescriptionModificationDelManipulation() {
         final var descriptor1Handle = "superHandle";
         final var descriptor2Handle = "handle;Süper;";
 

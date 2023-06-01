@@ -452,7 +452,6 @@ public class InvariantParticipantModelHandleTestTest {
                 ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
-    @SafeVarargs
     final DescriptionModificationReport.ReportPart buildDescriptionModificationReportPart(
             final DescriptionModificationType modificationType, final AbstractDescriptor... modifications) {
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();

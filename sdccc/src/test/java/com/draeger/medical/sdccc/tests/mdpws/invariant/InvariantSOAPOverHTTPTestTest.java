@@ -103,7 +103,7 @@ public class InvariantSOAPOverHTTPTestTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         storage.close();
     }
 

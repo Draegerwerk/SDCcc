@@ -492,15 +492,35 @@ public class TestSuite {
 
     private static void printVerdict(final int exitCode, final File testRunDir, final Injector injector) {
         final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
+        final Boolean summarizeMessageEncodingErrors = injector.getInstance(
+                Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)));
+        final MessageStorage messageStorage = injector.getInstance(MessageStorage.class);
+
+        if (summarizeMessageEncodingErrors) {
+            final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
+            if (messageEncodingErrorCount > 0) {
+                testRunObserver.invalidateTestRun(String.format(
+                        "During the Test run, %d messages with invalid encoding declarations were "
+                                + "encountered. For more detailed information on these messages, please set "
+                                + "SummarizeMessageEncodingErrors=false in the configuration.",
+                        messageEncodingErrorCount));
+            }
+            final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
+            if (invalidMimeTypeErrorCount > 0) {
+                testRunObserver.invalidateTestRun(String.format(
+                        "During the Test run, %d messages with invalid Mime Type declarations were "
+                                + "encountered. For more detailed information on these messages, please set "
+                                + "SummarizeMessageEncodingErrors=false in the configuration.",
+                        invalidMimeTypeErrorCount));
+            }
+        }
 
         if (exitCode == 0) {
             LOG.info(
-                    "Test run with {} Tests was completed successfully." + " No problems were found.",
+                    "Test run with {} Tests was completed successfully. No problems were found.",
                     testRunObserver.getTotalNumberOfTestsRun());
         } else {
-            LOG.info(
-                    "Test run found problems. Please consult the logfiles in {}" + " for further information.",
-                    testRunDir);
+            LOG.info("Test run found problems. Please consult the logfiles in {} for further information.", testRunDir);
         }
 
         if (testRunObserver.isInvalid()) {
