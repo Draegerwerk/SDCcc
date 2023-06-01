@@ -80,7 +80,7 @@ public class InvariantDynamicDiscoveryTestTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         storage.close();
     }
 

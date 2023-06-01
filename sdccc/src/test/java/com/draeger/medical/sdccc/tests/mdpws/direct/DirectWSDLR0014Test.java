@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -83,6 +84,7 @@ public class DirectWSDLR0014Test {
         final String message;
         try (final var messageStream =
                 DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0014_Good.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "ecivres";
@@ -101,6 +103,7 @@ public class DirectWSDLR0014Test {
         final String message;
         try (final var messageStream =
                 DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0014_Bad.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";

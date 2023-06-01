@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,6 +87,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream =
                 DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Good_Policy.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -104,6 +106,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
                 "DirectWSDLTestTest/R0010_R0011_Good_PolicyReference.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -122,6 +125,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream =
                 DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_No_Policies.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -140,6 +144,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream =
                 DirectWSDLUtilTest.class.getResourceAsStream("DirectWSDLTestTest/R0010_R0011_Bad_Missing_Policy.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -158,6 +163,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
                 "DirectWSDLTestTest/R0010_R0011_Bad_Policy_In_PortType.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";
@@ -176,6 +182,7 @@ public class DirectWSDLR0011Test {
         final String message;
         try (final var messageStream = DirectWSDLUtilTest.class.getResourceAsStream(
                 "DirectWSDLTestTest/R0010_R0011_Bad_PolicyURIs_In_PortType.xml")) {
+            assertNotNull(messageStream);
             message = new String(messageStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         final var serviceName = "someService";

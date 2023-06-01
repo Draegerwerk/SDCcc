@@ -110,6 +110,33 @@ CIMode = true
 ```
 A test fails in CI mode if this test requires manipulations and these have not been automated by the test engineer.
 
+### Further Configuration Options
+
+```
+[SDCcc] 
+TestExecutionLogging=true
+```
+
+TestExecutionLogging can be enabled, to get more information on which test case is currently executed. When enabled,
+SDCcc will log when a test case for a requirement has started and finished.
+
+
+```
+[SDCcc] 
+EnableMessageEncodingCheck=true
+SummarizeMessageEncodingErrors=true
+```
+
+EnableMessageEncodingCheck defaults to true and allows the user to control whether SDCcc checks the encoding
+and mimeType specified in the messages received from the DUT. Note that disabling the MessageEncodingCheck
+causes SDCcc to decode all messages as UTF-8. 
+
+SummarizeMessageEncodingErrors defaults to true and allows the user to control how encoding and mimeType problems
+are presented during an SDCcc TestRun. Note that devices that have encoding problems usually produce these errors
+in high numbers. When this option is set to true, then the errors will not be displayed individually, but summarized
+at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
+these problems.
+
 ## Running SDCcc
 The following command line options are supported by the test tool, the first two need to be provided.
 
@@ -164,7 +191,6 @@ this case in order to minimize the risk of such an invalid application going unn
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li><li>content-type: multipart/related</li></ul> |
 | The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                                                       |
-| SDCcc only supports decoding messages encoded in UTF-8.                                                                                                                                                                                         |
 | Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                                                           |
 
 [MDPWS]
