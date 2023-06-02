@@ -13,18 +13,26 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.common.eventbus.Subscribe;
 import com.google.inject.Injector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.common.access.MdibAccessObservable;
+import org.somda.sdc.biceps.common.access.MdibAccessObserver;
+import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
+import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
@@ -314,6 +322,7 @@ public class ManipulationPreconditions {
     public static class AssociateLocationsManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateLocationsManipulation.class);
+        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS = (long) 5E9;
 
         /**
          * Creates a location association precondition.
@@ -330,7 +339,6 @@ public class ManipulationPreconditions {
             final var testClient = injector.getInstance(TestClient.class);
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testRunObserver = injector.getInstance(TestRunObserver.class);
-
             final MdibAccess mdibAccess;
             final SdcRemoteDevice remoteDevice;
 
@@ -353,6 +361,7 @@ public class ManipulationPreconditions {
                 // associate first new location
                 var newStateHandle = associateNewLocationForHandle(
                         testClient.getSdcRemoteDevice(),
+                        testClient,
                         manipulations,
                         locationContextEntity.getHandle(),
                         originalStates);
@@ -363,6 +372,7 @@ public class ManipulationPreconditions {
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewLocationForHandle(
                             testClient.getSdcRemoteDevice(),
+                            testClient,
                             manipulations,
                             locationContextEntity.getHandle(),
                             originalStates);
@@ -381,6 +391,7 @@ public class ManipulationPreconditions {
          * Associates a new location context state for a given descriptor handle.
          *
          * @param device               the location context state will appear in, used for validation
+         * @param testClient           the testClient connected to the DUT. Used to wait for the Reports.
          * @param manipulations        to call for insertion of state
          * @param handle               of the descriptor to insert a new state for
          * @param previousStateHandles previously present state handles, to ensure new state is actually new
@@ -388,6 +399,7 @@ public class ManipulationPreconditions {
          */
         static Optional<String> associateNewLocationForHandle(
                 final SdcRemoteDevice device,
+                final TestClient testClient,
                 final Manipulations manipulations,
                 final String handle,
                 final Collection<String> previousStateHandles) {
@@ -397,6 +409,8 @@ public class ManipulationPreconditions {
                 LOG.error("Associating new location failed for handle {}", handle);
                 return Optional.empty();
             }
+            waitForEpisodicContextReportToModifyStateHandle(testClient, stateHandle.orElseThrow());
+
             LOG.debug("New location created, state handle is {}", stateHandle.orElseThrow());
             final var validState =
                     verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
@@ -406,6 +420,14 @@ public class ManipulationPreconditions {
                 stateHandle = Optional.empty();
             }
             return stateHandle;
+        }
+
+        private static void waitForEpisodicContextReportToModifyStateHandle(
+                final TestClient testClient, final String stateHandle) {
+
+            final EpisodicContextReportStateHandleObserver observer =
+                    new EpisodicContextReportStateHandleObserver(stateHandle, testClient);
+            observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS);
         }
 
         /**
@@ -440,6 +462,86 @@ public class ManipulationPreconditions {
             LOG.info("Validity for {} after checking if state handle is already known: {}", stateHandle, valid);
 
             return valid;
+        }
+
+        static final class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
+
+            private final String expectedHandle;
+            private final Lock lock = new ReentrantLock();
+            private final Condition reportReceivedSignal = lock.newCondition();
+            private final MdibAccessObservable mdibAccessObservable;
+            private boolean reportReceived;
+
+            private EpisodicContextReportStateHandleObserver(
+                    final String expectedStateHandle, final TestClient testClient) {
+                this.expectedHandle = expectedStateHandle;
+                this.reportReceived = false;
+                this.mdibAccessObservable = testClient.getSdcRemoteDevice().getMdibAccessObservable();
+                this.mdibAccessObservable.registerObserver(this);
+            }
+
+            @Subscribe
+            public void onUpdate(final ContextStateModificationMessage report) {
+                lock.lock();
+                try {
+                    if (!reportReceived) {
+                        for (List<AbstractContextState> states :
+                                report.getStates().values()) {
+                            if (this.reportReceived) {
+                                break;
+                            }
+                            for (AbstractContextState state : states) {
+                                if (this.reportReceived) {
+                                    break;
+                                }
+                                if (this.expectedHandle.equals(state.getHandle())) {
+                                    // the report has been received -> unregister observer so this method is not called
+                                    // again.
+                                    this.mdibAccessObservable.unregisterObserver(this);
+
+                                    this.reportReceived = true;
+                                    reportReceivedSignal.signalAll();
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            /**
+             * Waits for a state update.
+             *
+             * @param timeoutNanos positive number of Nanoseconds to wait for the State Update
+             */
+            public void waitForStateUpdate(final long timeoutNanos) {
+                if (timeoutNanos < 0) {
+                    throw new IllegalArgumentException("timeoutNanos is supposed to be positive");
+                }
+                long now = System.nanoTime();
+                final long end = Math.addExact(now, timeoutNanos); // an overflow would cause the code to not wait
+                // at all. It is hence better to throw an Exception.
+                lock.lock();
+                try {
+                    now = System.nanoTime();
+                    while (now < end && !reportReceived) {
+                        try {
+                            final long remaining = reportReceivedSignal.awaitNanos(
+                                    Math.min(Math.abs(Math.subtractExact(end, now)), timeoutNanos));
+                            if (remaining > 0) {
+                                LOG.debug("Spurious wakeup: {}ns remaining.", remaining);
+                            }
+                        } catch (InterruptedException e) {
+                            // InterruptedException is not expected
+                            throw new RuntimeException("Unexpected InterruptedException", e);
+                        }
+                        now = System.nanoTime();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
         }
     }
 

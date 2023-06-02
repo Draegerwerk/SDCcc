@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - SDCri version 4.1.0-SNAPSHOT
+- the precondition of biceps:R0133 so that it is now easier to satisfy.
 
 ### Fixed
 - the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
