@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
 - setComponentActivation stores incorrect manipulation data in the database resulting in no test data being available for 5-4-7_* tests
+- biceps:R0034_0 does not track changes when reinserting descriptors.
 
 ## [7.0.1] - 2023-03-17
 
