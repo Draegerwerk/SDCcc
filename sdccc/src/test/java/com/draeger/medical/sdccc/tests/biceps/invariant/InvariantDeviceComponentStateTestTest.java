@@ -255,8 +255,7 @@ public class InvariantDeviceComponentStateTestTest {
                 .filter(e -> handle.equals(e.getDescriptorHandle()))
                 .collect(Collectors.toList())
                 .get(0);
-        final T result = (T) state;
-        return result;
+        return (T) state;
     }
 
     private Envelope buildMdibWithoutActivationStates() {

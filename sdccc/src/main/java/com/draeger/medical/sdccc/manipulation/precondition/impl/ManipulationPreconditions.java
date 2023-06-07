@@ -13,18 +13,26 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.common.eventbus.Subscribe;
 import com.google.inject.Injector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
+import org.somda.sdc.biceps.common.access.MdibAccessObservable;
+import org.somda.sdc.biceps.common.access.MdibAccessObserver;
+import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
+import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
@@ -60,7 +68,6 @@ public class ManipulationPreconditions {
             final ComponentActivation startingActivationState) {
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
-        final var testRunObserver = injector.getInstance(TestRunObserver.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
@@ -74,28 +81,39 @@ public class ManipulationPreconditions {
                 final var resultStartingActivationState =
                         manipulations.setComponentActivation(handle, startingActivationState);
                 // change activation state to something other than expected result to ensure the transition
-                if (resultStartingActivationState != ResponseTypes.Result.RESULT_SUCCESS) {
-                    log.debug(
-                            "Manipulating the activation state to {} was {} for metric state with handle {}."
-                                    + " This needs to be successful, to ensure that the metric is set to {} after performing"
-                                    + " the setMetricStatus manipulation.",
+
+                switch (resultStartingActivationState) {
+                    case RESULT_NOT_SUPPORTED -> log.debug(
+                            "Manipulating the activation state to {} was not supported for metric state with handle {}."
+                                    + " Changing the activation state to something other than {} is required to ensure that a transition occurs when the setMetric manipulation is called.",
                             startingActivationState,
-                            resultStartingActivationState,
                             handle,
                             activationState);
-                    testRunObserver.invalidateTestRun(
-                            String.format("Setting the activation state for metric with handle %s failed", handle));
-                    return false;
+                    case RESULT_SUCCESS -> {
+                        final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
+                        log.debug(
+                                "Manipulation setMetricStatus was {} for metric state with handle {}",
+                                manipulationResult,
+                                handle);
+                        if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                                || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                            log.error("Setting the metric status for metric with handle {} failed", handle);
+                            return false;
+                        }
+                        manipulationResults.add(manipulationResult);
+                    }
+                    default -> {
+                        log.error(
+                                "Manipulating the activation state to {} was {} for metric state with handle {}."
+                                        + " This needs to be successful, to ensure that the metric is set to {} after performing"
+                                        + " the setMetricStatus manipulation.",
+                                startingActivationState,
+                                resultStartingActivationState,
+                                handle,
+                                activationState);
+                        return false;
+                    }
                 }
-                final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
-                log.debug("Manipulation was {} for metric state with handle {}", manipulationResult, handle);
-                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
-                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
-                    testRunObserver.invalidateTestRun(
-                            String.format("Setting the metric status for metric with handle %s failed", handle));
-                    return false;
-                }
-                manipulationResults.add(manipulationResult);
             }
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
@@ -304,6 +322,7 @@ public class ManipulationPreconditions {
     public static class AssociateLocationsManipulation extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateLocationsManipulation.class);
+        private static final long TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS = (long) 5E9;
 
         /**
          * Creates a location association precondition.
@@ -320,7 +339,6 @@ public class ManipulationPreconditions {
             final var testClient = injector.getInstance(TestClient.class);
             final var manipulations = injector.getInstance(Manipulations.class);
             final var testRunObserver = injector.getInstance(TestRunObserver.class);
-
             final MdibAccess mdibAccess;
             final SdcRemoteDevice remoteDevice;
 
@@ -343,6 +361,7 @@ public class ManipulationPreconditions {
                 // associate first new location
                 var newStateHandle = associateNewLocationForHandle(
                         testClient.getSdcRemoteDevice(),
+                        testClient,
                         manipulations,
                         locationContextEntity.getHandle(),
                         originalStates);
@@ -353,6 +372,7 @@ public class ManipulationPreconditions {
                     originalStates.add(newStateHandle.orElseThrow());
                     newStateHandle = associateNewLocationForHandle(
                             testClient.getSdcRemoteDevice(),
+                            testClient,
                             manipulations,
                             locationContextEntity.getHandle(),
                             originalStates);
@@ -371,6 +391,7 @@ public class ManipulationPreconditions {
          * Associates a new location context state for a given descriptor handle.
          *
          * @param device               the location context state will appear in, used for validation
+         * @param testClient           the testClient connected to the DUT. Used to wait for the Reports.
          * @param manipulations        to call for insertion of state
          * @param handle               of the descriptor to insert a new state for
          * @param previousStateHandles previously present state handles, to ensure new state is actually new
@@ -378,6 +399,7 @@ public class ManipulationPreconditions {
          */
         static Optional<String> associateNewLocationForHandle(
                 final SdcRemoteDevice device,
+                final TestClient testClient,
                 final Manipulations manipulations,
                 final String handle,
                 final Collection<String> previousStateHandles) {
@@ -387,6 +409,8 @@ public class ManipulationPreconditions {
                 LOG.error("Associating new location failed for handle {}", handle);
                 return Optional.empty();
             }
+            waitForEpisodicContextReportToModifyStateHandle(testClient, stateHandle.orElseThrow());
+
             LOG.debug("New location created, state handle is {}", stateHandle.orElseThrow());
             final var validState =
                     verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
@@ -396,6 +420,14 @@ public class ManipulationPreconditions {
                 stateHandle = Optional.empty();
             }
             return stateHandle;
+        }
+
+        private static void waitForEpisodicContextReportToModifyStateHandle(
+                final TestClient testClient, final String stateHandle) {
+
+            final EpisodicContextReportStateHandleObserver observer =
+                    new EpisodicContextReportStateHandleObserver(stateHandle, testClient);
+            observer.waitForStateUpdate(TIMEOUT_EPISODIC_CONTEXT_REPORT_NANOS);
         }
 
         /**
@@ -430,6 +462,86 @@ public class ManipulationPreconditions {
             LOG.info("Validity for {} after checking if state handle is already known: {}", stateHandle, valid);
 
             return valid;
+        }
+
+        static final class EpisodicContextReportStateHandleObserver implements MdibAccessObserver {
+
+            private final String expectedHandle;
+            private final Lock lock = new ReentrantLock();
+            private final Condition reportReceivedSignal = lock.newCondition();
+            private final MdibAccessObservable mdibAccessObservable;
+            private boolean reportReceived;
+
+            private EpisodicContextReportStateHandleObserver(
+                    final String expectedStateHandle, final TestClient testClient) {
+                this.expectedHandle = expectedStateHandle;
+                this.reportReceived = false;
+                this.mdibAccessObservable = testClient.getSdcRemoteDevice().getMdibAccessObservable();
+                this.mdibAccessObservable.registerObserver(this);
+            }
+
+            @Subscribe
+            public void onUpdate(final ContextStateModificationMessage report) {
+                lock.lock();
+                try {
+                    if (!reportReceived) {
+                        for (List<AbstractContextState> states :
+                                report.getStates().values()) {
+                            if (this.reportReceived) {
+                                break;
+                            }
+                            for (AbstractContextState state : states) {
+                                if (this.reportReceived) {
+                                    break;
+                                }
+                                if (this.expectedHandle.equals(state.getHandle())) {
+                                    // the report has been received -> unregister observer so this method is not called
+                                    // again.
+                                    this.mdibAccessObservable.unregisterObserver(this);
+
+                                    this.reportReceived = true;
+                                    reportReceivedSignal.signalAll();
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            /**
+             * Waits for a state update.
+             *
+             * @param timeoutNanos positive number of Nanoseconds to wait for the State Update
+             */
+            public void waitForStateUpdate(final long timeoutNanos) {
+                if (timeoutNanos < 0) {
+                    throw new IllegalArgumentException("timeoutNanos is supposed to be positive");
+                }
+                long now = System.nanoTime();
+                final long end = Math.addExact(now, timeoutNanos); // an overflow would cause the code to not wait
+                // at all. It is hence better to throw an Exception.
+                lock.lock();
+                try {
+                    now = System.nanoTime();
+                    while (now < end && !reportReceived) {
+                        try {
+                            final long remaining = reportReceivedSignal.awaitNanos(
+                                    Math.min(Math.abs(Math.subtractExact(end, now)), timeoutNanos));
+                            if (remaining > 0) {
+                                LOG.debug("Spurious wakeup: {}ns remaining.", remaining);
+                            }
+                        } catch (InterruptedException e) {
+                            // InterruptedException is not expected
+                            throw new RuntimeException("Unexpected InterruptedException", e);
+                        }
+                        now = System.nanoTime();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
         }
     }
 
@@ -517,11 +629,25 @@ public class ManipulationPreconditions {
                 final AlertActivation activationState) {
             LOG.debug("Setting the activation state {} for handle {}", activationState, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activationState);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the activation state {} for handle {} failed", activationState, handle);
-            } else if (!verifyStatePresentAndAlertSet(device, handle, activationState)) {
-                LOG.error("Validation for alert system {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the activation state {} for handle {} was successful", activationState, handle);
+                    if (!verifyStatePresentAndAlertSet(device, handle, activationState)) {
+                        LOG.debug(
+                                "Validation for state with handle {} failed, because the state is"
+                                        + " either not present or the activation state is not {}",
+                                handle,
+                                activationState);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                        "Setting the activation state {} for handle {} is not supported", activationState, handle);
+                default -> LOG.error(
+                        "Setting the activation state {} for handle {} failed, manipulation result: {}",
+                        activationState,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
@@ -601,10 +727,16 @@ public class ManipulationPreconditions {
                         testClient.getSdcRemoteDevice(), manipulations, parentHandle, AlertActivation.OFF);
                 final var presenceTrueResult =
                         changePresence(testClient.getSdcRemoteDevice(), manipulations, handle, true);
-                if (alertConditionStateResult == ResponseTypes.Result.RESULT_SUCCESS
-                        && alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                // the setAlertActivation manipulations are not mandatory, but then the device must ensure that the
+                // activation states are ON when the presence is true.
+                if ((alertConditionStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                                || alertConditionStateResult == ResponseTypes.Result.RESULT_NOT_SUPPORTED)
+                        && (alertSystemStateResult == ResponseTypes.Result.RESULT_SUCCESS
+                                || alertSystemStateResult == ResponseTypes.Result.RESULT_NOT_SUPPORTED)
                         && presenceTrueResult == ResponseTypes.Result.RESULT_SUCCESS) {
                     manipulationSuccessful = true;
+                    // successful manipulation seen
+                    break;
                 }
             }
             return manipulationSuccessful;
@@ -626,11 +758,25 @@ public class ManipulationPreconditions {
                 final boolean presence) {
             LOG.debug("Setting the presence attribute {} for handle {}", presence, handle);
             var manipulationResult = manipulations.setAlertConditionPresence(handle, presence);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the presence attribute {} for handle {} failed", presence, handle);
-            } else if (!verifyStatePresentAndPresenceSet(device, handle, presence)) {
-                LOG.error("Validation for alert condition state {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the presence {} for handle {} was successful", presence, handle);
+                    if (!verifyStatePresentAndPresenceSet(device, handle, presence)) {
+                        LOG.debug(
+                                "Validation for alert condition state with handle {} failed, because the state is"
+                                        + " either not present or the presence is not {}",
+                                handle,
+                                presence);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                        "Setting the presence {} for handle {} is not supported", presence, handle);
+                default -> LOG.error(
+                        "Setting the presence {} for handle {} failed, manipulation result: {}",
+                        presence,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
@@ -651,11 +797,25 @@ public class ManipulationPreconditions {
                 final AlertActivation activation) {
             LOG.debug("Setting the activation state {} for handle {}", activation, handle);
             var manipulationResult = manipulations.setAlertActivation(handle, activation);
-            if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS) {
-                LOG.error("Setting the activation state {} for handle {} failed", activation, handle);
-            } else if (!verifyStatePresentAndActivationState(device, handle, activation)) {
-                LOG.error("Validation for state with handle {} failed", handle);
-                manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+            switch (manipulationResult) {
+                case RESULT_SUCCESS -> {
+                    LOG.debug("Setting the activation state {} for handle {} was successful", activation, handle);
+                    if (!verifyStatePresentAndActivationState(device, handle, activation)) {
+                        LOG.debug(
+                                "Validation for state with handle {} failed, because the state is either not present"
+                                        + " or the activation state is not {}",
+                                handle,
+                                activation);
+                        manipulationResult = ResponseTypes.Result.RESULT_FAIL;
+                    }
+                }
+                case RESULT_NOT_SUPPORTED -> LOG.debug(
+                        "Setting the activation state {} for handle {} is not supported", activation, handle);
+                default -> LOG.error(
+                        "Setting the activation state {} for handle {} failed, manipulation result: {}",
+                        activation,
+                        handle,
+                        manipulationResult);
             }
             return manipulationResult;
         }
@@ -682,7 +842,7 @@ public class ManipulationPreconditions {
                     alertConditionState);
 
             final var valid = ImpliedValueUtil.isPresence(alertConditionState);
-            LOG.info("Validity for {} after presence attribute is set check: {}", stateHandle, valid);
+            LOG.info("The presence for {} should be {} and is {}", stateHandle, presence, valid);
             return valid == presence;
         }
 
@@ -707,9 +867,9 @@ public class ManipulationPreconditions {
                     "verifyStatePresentAndActivationState: The alert state for the given handle found. {}",
                     abstractAlertState);
 
-            final boolean valid = activation.equals(abstractAlertState.getActivationState());
-            LOG.info("Validity for {} after activation state is set check: {}", stateHandle, valid);
-            return valid;
+            final var actualActivation = abstractAlertState.getActivationState();
+            LOG.info("The activation state for {} should be {} and is {}", stateHandle, activation, actualActivation);
+            return activation.equals(actualActivation);
         }
     }
 
@@ -944,7 +1104,7 @@ public class ManipulationPreconditions {
             final var valid = alertSystemState.getSystemSignalActivation().stream()
                     .filter(systemSignalActivation ->
                             systemSignalActivation.getManifestation().equals(manifestation))
-                    .collect(Collectors.toList())
+                    .toList()
                     .stream()
                     .anyMatch(systemSignalActivation ->
                             systemSignalActivation.getState().equals(activation));

@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.mdpws.direct;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -145,6 +146,7 @@ public class DirectWSDLR0012Test {
         final var loader = SdcDevice.class.getClassLoader();
         final String wsdl;
         try (final var wsdlStream = loader.getResourceAsStream(wsdlPath)) {
+            assertNotNull(wsdlStream);
             wsdl = new String(wsdlStream.readAllBytes(), StandardCharsets.UTF_8);
         }
         when(mockWsdlRetriever.retrieveWsdls(any())).thenReturn(Map.of(getServiceName, List.of(wsdl)));
