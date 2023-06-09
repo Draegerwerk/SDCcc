@@ -60,6 +60,13 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             "Handle %s has an implied value, but was already seen" + " without an implied value.";
     public static final String DECREMENTED_VERSION_ERROR_MESSAGE =
             "The version of %s has been decremented in" + " MdibVersion %s. It was %s and is now %s.";
+
+    public static final String DESCRIPTOR_REINSERTION_PREFIX =
+            "Descriptor version has not been incremented by one, but descriptor has changed after"
+                    + " reinsertion into mdib.";
+
+    public static final String DESCRIPTOR_UPDATE_PREFIX =
+            "Descriptor version has not been incremented by one, but descriptor has changed.";
     private MessageStorage messageStorage;
     private MdibHistorianFactory mdibHistorianFactory;
 
@@ -158,6 +165,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
                 final var impliedValueMap = new InitialImpliedValue();
+                final var lastDescriptorMap = new HashMap<String, AbstractDescriptor>();
                 try (final MdibHistorian.HistorianResult history =
                                 mdibHistorian.episodicReportBasedHistory(sequenceId);
                         final MdibHistorian.HistorianResult historyNext =
@@ -172,10 +180,33 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                     while (second != null) {
                         final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
                         for (MdibEntity descriptor : currentDescriptors) {
+                            // check if this was previously deleted and returned
+                            final var oldVersion = lastDescriptorMap.remove(descriptor.getHandle());
+                            if (oldVersion != null) {
+                                final var descriptorChanged =
+                                        hasDescriptorChanged(oldVersion, descriptor.getDescriptor());
+                                if (descriptorChanged) {
+                                    descriptorChanges.incrementAndGet();
+                                    assertTrue(
+                                            isIncrementedVersion(
+                                                    ImpliedValueUtil.getDescriptorVersion(oldVersion, impliedValueMap),
+                                                    ImpliedValueUtil.getDescriptorVersion(
+                                                            descriptor.getDescriptor(), impliedValueMap)),
+                                            DESCRIPTOR_REINSERTION_PREFIX
+                                                    + " MdibVersions of insertion " + first.getMdibVersion()
+                                                    + ". Descriptor handle " + descriptor.getHandle()
+                                                    + ". Old Descriptor " + oldVersion
+                                                    + " Inserted Descriptor " + descriptor.getDescriptor());
+                                }
+                            }
+
                             final var nextDescriptorOpt = second.getEntity(descriptor.getHandle());
                             if (nextDescriptorOpt.isEmpty()) {
+                                // descriptor was removed, add to storage
+                                lastDescriptorMap.put(descriptor.getHandle(), descriptor.getDescriptor());
                                 continue;
                             }
+
                             final var nextDescriptor = nextDescriptorOpt.orElseThrow();
                             // compare children of current and next descriptor one by one
                             final var descriptorChanged =
@@ -191,7 +222,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                                                     descriptor.getDescriptor(), impliedValueMap),
                                             ImpliedValueUtil.getDescriptorVersion(
                                                     nextDescriptor.getDescriptor(), impliedValueMap)),
-                                    "Descriptor version has not been incremented by one, but descriptor has changed."
+                                    DESCRIPTOR_UPDATE_PREFIX
                                             + " MdibVersions " + first.getMdibVersion()
                                             + " and " + second.getMdibVersion()
                                             + ". Descriptor handle " + descriptor.getHandle()
