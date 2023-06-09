@@ -22,6 +22,7 @@ import com.google.inject.util.Modules;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.inject.Named;
 import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
@@ -58,7 +59,8 @@ public class TestClientUtil {
     public TestClientUtil(
             final CryptoSettings cryptoSettings,
             final CommunicationLogMessageStorage communicationLogMessageStorage,
-            final TestRunObserver testRunObserver) {
+            final TestRunObserver testRunObserver,
+            @Named(DpwsConfig.MULTICAST_TTL) final Integer multicastTTL) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
@@ -71,6 +73,7 @@ public class TestClientUtil {
                                 (hostname, session) -> true);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
+                        bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL);
                     }
                 },
                 new AbstractModule() {
