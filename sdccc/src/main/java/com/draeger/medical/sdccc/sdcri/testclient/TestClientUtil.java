@@ -54,6 +54,8 @@ public class TestClientUtil {
      * @param cryptoSettings                 crypto setting
      * @param communicationLogMessageStorage connector to the {@linkplain MessageStorage} to write to
      * @param testRunObserver                observer for invalidating test runs on unexpected errors
+     * @param multicastTTL                   TTL for multicast packets used in Discovery.
+     *                                       Values from 1 to 255 are valid.
      */
     @Inject
     public TestClientUtil(

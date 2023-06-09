@@ -462,20 +462,19 @@ public class TestSuite {
             configModuleParser.parseToml(configFileStream, configModule);
         }
 
-
         // read multicast TTL from config
-        var configInjector = Guice.createInjector(Modules.override(
-                                new DefaultTestSuiteConfig())
-                            .with(configModule));
+        final var configInjector = Guice.createInjector(
+                Modules.override(new DefaultTestSuiteConfig()).with(configModule));
 
-        var multicast_TTL = configInjector.getInstance(Key.get(Long.class, Names.named(TestSuiteConfig.NETWORK_MULTICAST_TTL)));
+        final var multicastTTL =
+                configInjector.getInstance(Key.get(Long.class, Names.named(TestSuiteConfig.NETWORK_MULTICAST_TTL)));
 
         // configure SDC-ri to use the multicastTTL
-        var sdcriConfigModule = new AbstractConfigurationModule() {
+        final var sdcriConfigModule = new AbstractConfigurationModule() {
 
             @Override
             protected void defaultConfigure() {
-                bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicast_TTL.intValue());
+                bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL.intValue());
             }
         };
 
