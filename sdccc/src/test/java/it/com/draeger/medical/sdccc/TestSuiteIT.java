@@ -209,7 +209,9 @@ public class TestSuiteIT {
     public void testInvalid() throws IOException, PreconditionException {
 
         final var preconditionRegistryMock = mock(PreconditionRegistry.class);
-        doThrow(new NullPointerException()).when(preconditionRegistryMock).runPreconditions();
+        doThrow(new NullPointerException("intentional exception for testing purposes"))
+                .when(preconditionRegistryMock)
+                .runPreconditions();
 
         final var injector = getConsumerInjector(false, new AbstractModule() {
             /**
