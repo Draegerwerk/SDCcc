@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.sdcri.testclient;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.CommunicationLogMessageStorage;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
@@ -62,7 +63,7 @@ public class TestClientUtil {
             final CryptoSettings cryptoSettings,
             final CommunicationLogMessageStorage communicationLogMessageStorage,
             final TestRunObserver testRunObserver,
-            @Named(DpwsConfig.MULTICAST_TTL) final Integer multicastTTL) {
+            @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
@@ -75,7 +76,7 @@ public class TestClientUtil {
                                 (hostname, session) -> true);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
-                        bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL);
+                        bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL.intValue());
                     }
                 },
                 new AbstractModule() {

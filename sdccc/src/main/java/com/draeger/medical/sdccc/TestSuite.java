@@ -82,7 +82,6 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
-import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.soap.exception.TransportException;
 import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.common.WsdlConstants;
@@ -461,23 +460,6 @@ public class TestSuite {
             final var configModuleParser = new TomlConfigParser(TestSuiteConfig.class);
             configModuleParser.parseToml(configFileStream, configModule);
         }
-
-        // read multicast TTL from config
-        final var configInjector = Guice.createInjector(
-                Modules.override(new DefaultTestSuiteConfig()).with(configModule));
-
-        final var multicastTTL =
-                configInjector.getInstance(Key.get(Long.class, Names.named(TestSuiteConfig.NETWORK_MULTICAST_TTL)));
-
-        // configure SDC-ri to use the multicastTTL
-        final var sdcriConfigModule = new AbstractConfigurationModule() {
-
-            @Override
-            protected void defaultConfigure() {
-                bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL.intValue());
-            }
-        };
-
         try (final var testConfigFileStream =
                 new FileInputStream(cmdLine.getTestConfigPath().toFile())) {
             final var testConfigModuleParser = new TomlConfigParser(EnabledTestConfig.class);
@@ -486,7 +468,7 @@ public class TestSuite {
 
         // cli overrides
         final var configurationModule =
-                Modules.override(configModule, testConfigModule).with(cliOverrideModule, sdcriConfigModule);
+                Modules.override(configModule, testConfigModule).with(cliOverrideModule);
 
         return createInjector(configurationModule, new TestRunConfig(testRunDir));
     }
