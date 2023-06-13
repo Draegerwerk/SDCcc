@@ -170,10 +170,10 @@ public class MessageStorage implements AutoCloseable {
     private final CyclicBarrier flushBarrier;
 
     private final TestRunObserver testRunObserver;
-    private boolean summarizeMessageEncodingErrors;
+    private final boolean summarizeMessageEncodingErrors;
     private long messageEncodingErrorCount;
     private int invalidMimeTypeCount;
-    private boolean enableEncodingCheck;
+    private final boolean enableEncodingCheck;
 
     @Inject
     MessageStorage(

@@ -2688,13 +2688,14 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testConvertToMessageContentWhenSummarizeEncodingProblemsIsEnabled(@TempDir final File dir) throws IOException {
+    public void testConvertToMessageContentWhenSummarizeEncodingProblemsIsEnabled(@TempDir final File dir)
+            throws IOException {
 
         final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
         final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
         final String mimeType = "application/xml";
 
-        MessageStorage storage;
+        final MessageStorage storage;
         try (final MessageStorage messageStorage = new MessageStorage(
                 1, true, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             // given
@@ -2734,7 +2735,8 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testConvertToMessageContentDoNotFailWhenEncodingCheckIsDisabled(@TempDir final File dir) throws IOException {
+    public void testConvertToMessageContentDoNotFailWhenEncodingCheckIsDisabled(@TempDir final File dir)
+            throws IOException {
 
         final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
         final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
