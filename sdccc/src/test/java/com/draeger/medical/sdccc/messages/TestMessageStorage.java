@@ -2682,6 +2682,96 @@ public class TestMessageStorage {
     }
 
     /**
+     * Checks that convertMessageToMessageContent() does not fail the TestRun, but correctly counts the encoding errors
+     * when SummarizeEncodingErrors is enabled.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContentWhenSummarizeEncodingProblemsIsEnabled(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
+        final String mimeType = "application/xml";
+
+        MessageStorage storage;
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, true, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            storage = messageStorage;
+            assertEquals(0, messageStorage.getMessageEncodingErrorCount());
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag>üöä</sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(StandardCharsets.ISO_8859_1);
+
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+        }
+        assertEquals(2, storage.getMessageEncodingErrorCount());
+    }
+
+    /**
+     * Checks that convertMessageToMessageContent() does not fail when the Encodingcheck is disabled.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContentDoNotFailWhenEncodingCheckIsDisabled(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, false, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag>üöä</sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(StandardCharsets.ISO_8859_1);
+
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+        }
+        verifyNoInteractions(testRunObserver);
+    }
+
+    /**
      * Checks that determineCharsetFromMessage() works with the given Charsets.
      * @param dir - a temporary directory.
      * @param charsetInHttpHeader - the Charset contained in the HTTP Header.

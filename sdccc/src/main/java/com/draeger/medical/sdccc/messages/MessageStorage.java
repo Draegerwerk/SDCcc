@@ -281,15 +281,17 @@ public class MessageStorage implements AutoCloseable {
                 final var decodingResult = charsetDecoder.decode(ByteBuffer.wrap(message.getFinalMemory()));
                 body = decodingResult.toString();
             } catch (CharacterCodingException e) {
-                if (this.summarizeMessageEncodingErrors) {
-                    // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                    this.messageEncodingErrorCount += 1;
-                } else {
-                    this.testRunObserver.invalidateTestRun(String.format(
-                            "Encountered message encoding problem: charset %s was specified, but message "
-                                    + "cannot be decoded using this charset. Either the specified charset is incorrect, "
-                                    + "or the message contains invalid characters (Message UID='%s').",
-                            messageCharset, message.getID()));
+                if (this.enableEncodingCheck) {
+                    if (this.summarizeMessageEncodingErrors) {
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                        this.messageEncodingErrorCount += 1;
+                    } else {
+                        this.testRunObserver.invalidateTestRun(String.format(
+                                "Encountered message encoding problem: charset %s was specified, but message "
+                                        + "cannot be decoded using this charset. Either the specified charset is incorrect, "
+                                        + "or the message contains invalid characters (Message UID='%s').",
+                                messageCharset, message.getID()));
+                    }
                 }
                 body = new String(message.getFinalMemory(), messageCharset);
             }
