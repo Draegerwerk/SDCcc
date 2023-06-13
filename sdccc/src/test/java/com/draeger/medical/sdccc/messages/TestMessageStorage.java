@@ -9,15 +9,17 @@ package com.draeger.medical.sdccc.messages;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -104,6 +106,9 @@ public class TestMessageStorage {
                     + "</msg:MetricState>"
                     + "</msg:ReportPart>"
                     + "</msg:EpisodicMetricReport>";
+    private static final byte[] ACTION_ENVELOPE = String.format(
+                    BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
+            .getBytes(StandardCharsets.UTF_8);
     private static final String SEQUENCE_ID_ALERT_BODY_STRING =
             "<msg:EpisodicAlertReport MdibVersion=\"%s\" SequenceId=\"urn:uuid:%s\">"
                     + "<msg:ReportPart>"
@@ -253,9 +258,7 @@ public class TestMessageStorage {
                     CommunicationLog.MessageType.REQUEST,
                     headerContext,
                     messageStorage)) {
-                message.write(String.format(
-                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
-                        .getBytes(StandardCharsets.UTF_8));
+                message.write(ACTION_ENVELOPE);
             }
             messageStorage.flush();
 
@@ -1864,8 +1867,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -1985,7 +1987,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(StandardCharsets.UTF_8, actualCharset);
-            Mockito.verifyNoInteractions(this.testRunObserver);
+            verifyNoInteractions(this.testRunObserver);
         }
     }
 
@@ -2018,8 +2020,7 @@ public class TestMessageStorage {
             final Charset actualCharset = messageStorage.determineCharsetFromMessage(message);
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2054,8 +2055,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2089,8 +2089,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2124,8 +2123,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ISO-8859-13"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2161,8 +2159,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(StandardCharsets.ISO_8859_1, actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2199,8 +2196,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(Charset.forName("ebcdic-gb-285+euro"), actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2238,8 +2234,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(StandardCharsets.ISO_8859_1, actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2289,10 +2284,10 @@ public class TestMessageStorage {
             // then
             assertEquals(charset, actualCharset);
             if (expectFailure) {
-                Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
+                verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
                         .invalidateTestRun(anyString());
             } else {
-                Mockito.verifyNoInteractions(this.testRunObserver);
+                verifyNoInteractions(this.testRunObserver);
             }
         }
     }
@@ -2332,8 +2327,7 @@ public class TestMessageStorage {
 
             // then
             assertEquals(StandardCharsets.UTF_8, actualCharset);
-            Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                    .invalidateTestRun(anyString());
+            verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
         }
     }
 
@@ -2354,7 +2348,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.UTF_8, actualCharset);
-        Mockito.verifyNoInteractions(this.testRunObserver);
+        verifyNoInteractions(this.testRunObserver);
     }
 
     /**
@@ -2375,8 +2369,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(Charset.forName("CP1147"), actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2397,8 +2390,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.ISO_8859_1, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2419,8 +2411,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.ISO_8859_1, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2440,8 +2431,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.UTF_8, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2462,8 +2452,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.UTF_8, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2484,8 +2473,7 @@ public class TestMessageStorage {
                 "application/soap+xml");
         // then
         assertEquals(StandardCharsets.UTF_8, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2505,8 +2493,7 @@ public class TestMessageStorage {
                 "text/xml");
         // then
         assertEquals(StandardCharsets.UTF_8, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
     /**
@@ -2521,10 +2508,188 @@ public class TestMessageStorage {
                 dir, null, null, StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8, "application/soap+xml");
         // then
         assertEquals(StandardCharsets.ISO_8859_1, actualCharset);
-        Mockito.verify(this.testRunObserver, VerificationModeFactory.atLeastOnce())
-                .invalidateTestRun(anyString());
+        verify(this.testRunObserver, VerificationModeFactory.atLeastOnce()).invalidateTestRun(anyString());
     }
 
+    /**
+     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContent(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclarationEncoding = StandardCharsets.UTF_8;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag></sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(charsetInXMLDeclarationEncoding);
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+            assertFalse(testRunObserver.isInvalid());
+        }
+    }
+
+    /**
+     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContentFailOnEncodingProblem(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.US_ASCII;
+        final Charset charsetInXMLDeclaration = StandardCharsets.US_ASCII;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag>üöä</sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(StandardCharsets.UTF_8);
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+            // then
+            assertNotNull(result);
+        }
+        verify(testRunObserver, times(4)).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContentFailOnEncodingProblem2(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag>üöä</sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(StandardCharsets.UTF_16);
+
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+        }
+        verify(testRunObserver, times(6)).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertToMessageContentFailOnEncodingProblem3(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag>üöä</sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(StandardCharsets.ISO_8859_1);
+
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+        }
+        verify(testRunObserver, times(2)).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Checks that determineCharsetFromMessage() works with the given Charsets.
+     * @param dir - a temporary directory.
+     * @param charsetInHttpHeader - the Charset contained in the HTTP Header.
+     * @param bom   - the ByteOrderMark in the message body.
+     * @param charsetInXMLDeclaration - the Charset declared in the XML Declaration.
+     * @param charsetInXMLDeclarationEncoding - the Charset in which the XML Declaration is encoded.
+     * @throws IOException - when something goes wrong.
+     */
     private Charset testDetermineCharsetFromMessageUsingCharsets(
             final File dir,
             @Nullable final Charset charsetInHttpHeader,

@@ -31,7 +31,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
@@ -259,7 +263,7 @@ public class MessageStorage implements AutoCloseable {
         return xmlInputFactory;
     }
 
-    private MessageContent convertMessageToMessageContent(final Message message) {
+    protected MessageContent convertMessageToMessageContent(final Message message) {
         boolean isSOAP = false;
         String body = "";
         final Set<String> actions = new HashSet<>();
@@ -270,8 +274,25 @@ public class MessageStorage implements AutoCloseable {
             if (this.enableEncodingCheck) {
                 messageCharset = determineCharsetFromMessage(message);
             }
-            // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
-            body = new String(message.getFinalMemory(), messageCharset);
+            final CharsetDecoder charsetDecoder = messageCharset.newDecoder();
+            charsetDecoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            charsetDecoder.onMalformedInput(CodingErrorAction.REPORT);
+            try {
+                final var decodingResult = charsetDecoder.decode(ByteBuffer.wrap(message.getFinalMemory()));
+                body = decodingResult.toString();
+            } catch (CharacterCodingException e) {
+                if (this.summarizeMessageEncodingErrors) {
+                    // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                    this.messageEncodingErrorCount += 1;
+                } else {
+                    this.testRunObserver.invalidateTestRun(String.format(
+                            "Encountered message encoding problem: charset %s was specified, but message "
+                                    + "cannot be decoded using this charset. Either the specified charset is incorrect, "
+                                    + "or the message contains invalid characters (Message UID='%s').",
+                            messageCharset, message.getID()));
+                }
+                body = new String(message.getFinalMemory(), messageCharset);
+            }
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
         }
         return new MessageContent(
