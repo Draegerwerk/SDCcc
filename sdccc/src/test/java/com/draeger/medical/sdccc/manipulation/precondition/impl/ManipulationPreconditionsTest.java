@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,8 @@ import org.somda.sdc.biceps.common.access.MdibAccessObservable;
 import org.somda.sdc.biceps.common.access.MdibAccessObserver;
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
+import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
+import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
@@ -53,6 +56,9 @@ import org.somda.sdc.biceps.model.participant.AlertConditionDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertConditionState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertSystemState;
+import org.somda.sdc.biceps.model.participant.BatteryState;
+import org.somda.sdc.biceps.model.participant.ChannelState;
+import org.somda.sdc.biceps.model.participant.ClockState;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
@@ -60,6 +66,8 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
+import org.somda.sdc.biceps.model.participant.ScoState;
+import org.somda.sdc.biceps.model.participant.VmdState;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
 /**
@@ -78,6 +86,12 @@ public class ManipulationPreconditionsTest {
     private static final String ALERT_CONDITION_HANDLE = "alertconditionhandle";
     private static final String ALERT_CONDITION_HANDLE2 = "alertconditionhandle2";
     private static final String METRIC_HANDLE = "someMetric";
+    private static final String VMD_HANDLE = "vmdHandle";
+    private static final String VMD_HANDLE2 = "vmdHandleButDifferent";
+    private static final String CHANNEL_HANDLE = "DiscoveryChannel";
+    private static final String SCO_HANDLE = "S-C-O";
+    private static final String BATTERY_HANDLE = "rechargeable";
+    private static final String CLOCK_HANDLE = "ticktock";
     private static final String SOME_HANDLE = "someHandle";
 
     private Injector injector;
@@ -95,6 +109,12 @@ public class ManipulationPreconditionsTest {
     private AbstractMetricDescriptor mockMetricDescriptor2;
     private AbstractMetricState mockMetricState;
     private AbstractMetricState mockMetricState2;
+    private VmdState mockVmdState;
+    private VmdState mockVmdState2;
+    private ChannelState mockChannelState;
+    private ScoState mockScoState;
+    private ClockState mockClockState;
+    private BatteryState mockBatteryState;
     private TestRunObserver testRunObserver;
     private MdibEntity mockEntity;
     private MdibEntity mockEntity2;
@@ -118,6 +138,12 @@ public class ManipulationPreconditionsTest {
         mockMetricDescriptor2 = mock(AbstractMetricDescriptor.class);
         mockMetricState = mock(AbstractMetricState.class);
         mockMetricState2 = mock(AbstractMetricState.class);
+        mockVmdState = mock(VmdState.class);
+        mockVmdState2 = mock(VmdState.class);
+        mockChannelState = mock(ChannelState.class);
+        mockScoState = mock(ScoState.class);
+        mockClockState = mock(ClockState.class);
+        mockBatteryState = mock(BatteryState.class);
         mockEntity = mock(MdibEntity.class);
         mockEntity2 = mock(MdibEntity.class);
         mockMdibAccess = mock(MdibAccess.class);
@@ -2206,5 +2232,121 @@ public class ManipulationPreconditionsTest {
                 .thenReturn(Optional.of(mockEntity))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(mockEntity));
+    }
+
+    private void setUpAbstractDeviceComponentStateOFFManipulation(final AbstractDeviceComponentState... states) {
+        final var entities = new ArrayList<MdibEntity>();
+        for (var state : states) {
+            when(mockManipulations.setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF))
+                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+            final var mock = mock(MdibEntity.class);
+            when(mock.getFirstState(AbstractDeviceComponentState.class)).thenReturn(Optional.of(state));
+            entities.add(mock);
+        }
+        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractDeviceComponentDescriptor.class))
+                .thenReturn(entities);
+    }
+
+    @Test
+    @DisplayName(
+            "AbstractDeviceComponentStateOFFManipulation is unsuccessful when no AbstractDeviceComponentStates are present.")
+    void testAbstractDeviceComponentStateOFFManipulationNoStates() {
+        setUpAbstractDeviceComponentStateOFFManipulation();
+
+        assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations, never()).setComponentActivation(anyString(), any(ComponentActivation.class));
+    }
+
+    @Test
+    @DisplayName(
+            "AbstractDeviceComponentStateOFFManipulation is successful when the component activation can be set successfully.")
+    void testAbstractDeviceComponentStateOFFManipulation() {
+        when(mockVmdState.getDescriptorHandle()).thenReturn(VMD_HANDLE);
+        when(mockVmdState2.getDescriptorHandle()).thenReturn(VMD_HANDLE2);
+        when(mockScoState.getDescriptorHandle()).thenReturn(SCO_HANDLE);
+        when(mockBatteryState.getDescriptorHandle()).thenReturn(BATTERY_HANDLE);
+        when(mockClockState.getDescriptorHandle()).thenReturn(CLOCK_HANDLE);
+        when(mockChannelState.getDescriptorHandle()).thenReturn(CHANNEL_HANDLE);
+        setUpAbstractDeviceComponentStateOFFManipulation(
+                mockVmdState, mockVmdState2, mockScoState, mockBatteryState, mockClockState, mockChannelState);
+
+        assertTrue(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations, times(6)).setComponentActivation(anyString(), any(ComponentActivation.class));
+        verify(mockManipulations).setComponentActivation(VMD_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(VMD_HANDLE2, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(SCO_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(BATTERY_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(CHANNEL_HANDLE, ComponentActivation.OFF);
+    }
+
+    @Test
+    @DisplayName(
+            "AbstractDeviceComponentStateOFFManipulation is unsuccessful when all manipulations are not supported.")
+    void testAbstractDeviceComponentStateOFFManipulationNotSupportedBad() {
+        when(mockVmdState.getDescriptorHandle()).thenReturn(VMD_HANDLE);
+        setUpAbstractDeviceComponentStateOFFManipulation(mockVmdState);
+        // let all manipulations return not supported
+        when(mockManipulations.setComponentActivation(anyString(), eq(ComponentActivation.OFF)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations).setComponentActivation(VMD_HANDLE, ComponentActivation.OFF);
+    }
+
+    @Test
+    @DisplayName(
+            "AbstractDeviceComponentStateOFFManipulation is successful when at least one manipulation is successful and the rest is not supported.")
+    void testAbstractDeviceComponentStateOFFManipulationNotSupportedGood() {
+        when(mockVmdState.getDescriptorHandle()).thenReturn(VMD_HANDLE);
+        when(mockVmdState2.getDescriptorHandle()).thenReturn(VMD_HANDLE2);
+        setUpAbstractDeviceComponentStateOFFManipulation(mockVmdState, mockVmdState2);
+        // let manipulation for first vmd return not supported
+        when(mockManipulations.setComponentActivation(VMD_HANDLE, ComponentActivation.OFF))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        assertTrue(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations, times(2)).setComponentActivation(anyString(), any(ComponentActivation.class));
+        verify(mockManipulations).setComponentActivation(VMD_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(VMD_HANDLE2, ComponentActivation.OFF);
+    }
+
+    @Test
+    @DisplayName("AbstractDeviceComponentStateOFFManipulation is unsuccessful when a failed manipulation was seen.")
+    void testAbstractDeviceComponentStateOFFManipulationFailed() {
+        when(mockScoState.getDescriptorHandle()).thenReturn(SCO_HANDLE);
+        when(mockClockState.getDescriptorHandle()).thenReturn(CLOCK_HANDLE);
+        setUpAbstractDeviceComponentStateOFFManipulation(mockScoState, mockClockState);
+        // let one manipulation fail
+        when(mockManipulations.setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations, times(2)).setComponentActivation(anyString(), any(ComponentActivation.class));
+        verify(mockManipulations).setComponentActivation(SCO_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF);
+    }
+
+    @Test
+    @DisplayName(
+            "AbstractDeviceComponentStateOFFManipulation is unsuccessful when a not implemented manipulation was seen.")
+    void testAbstractDeviceComponentStateOFFManipulationNotImplemented() {
+        when(mockScoState.getDescriptorHandle()).thenReturn(SCO_HANDLE);
+        when(mockClockState.getDescriptorHandle()).thenReturn(CLOCK_HANDLE);
+        setUpAbstractDeviceComponentStateOFFManipulation(mockScoState, mockClockState);
+        // let one manipulation return not implemented
+        when(mockManipulations.setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+
+        assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
+
+        verify(mockManipulations, times(2)).setComponentActivation(anyString(), any(ComponentActivation.class));
+        verify(mockManipulations).setComponentActivation(SCO_HANDLE, ComponentActivation.OFF);
+        verify(mockManipulations).setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF);
     }
 }
