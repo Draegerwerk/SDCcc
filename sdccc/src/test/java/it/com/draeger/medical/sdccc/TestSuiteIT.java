@@ -70,6 +70,7 @@ import org.junit.jupiter.api.Timeout;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.dpws.CommunicationLog;
+import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.factory.TransportBindingFactory;
@@ -209,7 +210,9 @@ public class TestSuiteIT {
     public void testInvalid() throws IOException, PreconditionException {
 
         final var preconditionRegistryMock = mock(PreconditionRegistry.class);
-        doThrow(new NullPointerException()).when(preconditionRegistryMock).runPreconditions();
+        doThrow(new NullPointerException("intentional exception for testing purposes"))
+                .when(preconditionRegistryMock)
+                .runPreconditions();
 
         final var injector = getConsumerInjector(false, new AbstractModule() {
             /**
@@ -393,6 +396,7 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
 
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
+            bind(DpwsConfig.MULTICAST_TTL, Integer.class, 128);
 
             bind(HibernateConfig.class).to(HibernateConfigInMemoryImpl.class).in(Singleton.class);
             install(new FactoryModuleBuilder()
