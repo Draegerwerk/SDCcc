@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.sdcri.testclient;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.CommunicationLogMessageStorage;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
@@ -22,6 +23,7 @@ import com.google.inject.util.Modules;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.inject.Named;
 import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
@@ -53,12 +55,15 @@ public class TestClientUtil {
      * @param cryptoSettings                 crypto setting
      * @param communicationLogMessageStorage connector to the {@linkplain MessageStorage} to write to
      * @param testRunObserver                observer for invalidating test runs on unexpected errors
+     * @param multicastTTL                   TTL for multicast packets used in Discovery.
+     *                                       Values from 1 to 255 are valid.
      */
     @Inject
     public TestClientUtil(
             final CryptoSettings cryptoSettings,
             final CommunicationLogMessageStorage communicationLogMessageStorage,
-            final TestRunObserver testRunObserver) {
+            final TestRunObserver testRunObserver,
+            @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
@@ -71,6 +76,7 @@ public class TestClientUtil {
                                 (hostname, session) -> true);
                         bind(DpwsConfig.HTTPS_SUPPORT, Boolean.class, true);
                         bind(DpwsConfig.HTTP_SUPPORT, Boolean.class, false);
+                        bind(DpwsConfig.MULTICAST_TTL, Integer.class, multicastTTL.intValue());
                     }
                 },
                 new AbstractModule() {
