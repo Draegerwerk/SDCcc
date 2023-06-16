@@ -54,6 +54,9 @@ import org.somda.sdc.biceps.model.participant.AbstractMetricState;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertConditionDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertConditionState;
+import org.somda.sdc.biceps.model.participant.AlertSignalDescriptor;
+import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
+import org.somda.sdc.biceps.model.participant.AlertSignalState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertSystemState;
 import org.somda.sdc.biceps.model.participant.BatteryState;
@@ -67,6 +70,7 @@ import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
 import org.somda.sdc.biceps.model.participant.ScoState;
+import org.somda.sdc.biceps.model.participant.SystemSignalActivation;
 import org.somda.sdc.biceps.model.participant.VmdState;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
@@ -85,6 +89,11 @@ public class ManipulationPreconditionsTest {
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE2 = "alerthandle2";
     private static final String ALERT_CONDITION_HANDLE = "alertconditionhandle";
     private static final String ALERT_CONDITION_HANDLE2 = "alertconditionhandle2";
+    private static final String ALERT_SIGNAL_HANDLE = "alertSignalHandle";
+    private static final String AUD_ALERT_SIGNAL_HANDLE = "audAlertSignalHandle";
+    private static final String OTH_ALERT_SIGNAL_HANDLE = "othAlertSignalHandle";
+    private static final String TAN_ALERT_SIGNAL_HANDLE = "tanAlertSignalHandle";
+    private static final String VIS_ALERT_SIGNAL_HANDLE = "visAlertSignalHandle";
     private static final String METRIC_HANDLE = "someMetric";
     private static final String VMD_HANDLE = "vmdHandle";
     private static final String VMD_HANDLE2 = "vmdHandleButDifferent";
@@ -105,6 +114,14 @@ public class ManipulationPreconditionsTest {
     private AlertSystemState mockAlertSystemState2;
     private AlertConditionState mockAlertConditionState;
     private AlertConditionState mockAlertConditionState2;
+    private AlertSignalDescriptor mockAudAlertSignalDescriptor;
+    private AlertSignalState mockAudAlertSignalState;
+    private AlertSignalDescriptor mockOthAlertSignalDescriptor;
+    private AlertSignalState mockOthAlertSignalState;
+    private AlertSignalDescriptor mockTanAlertSignalDescriptor;
+    private AlertSignalState mockTanAlertSignalState;
+    private AlertSignalDescriptor mockVisAlertSignalDescriptor;
+    private AlertSignalState mockVisAlertSignalState;
     private AbstractMetricDescriptor mockMetricDescriptor;
     private AbstractMetricDescriptor mockMetricDescriptor2;
     private AbstractMetricState mockMetricState;
@@ -115,6 +132,10 @@ public class ManipulationPreconditionsTest {
     private ScoState mockScoState;
     private ClockState mockClockState;
     private BatteryState mockBatteryState;
+    private SystemSignalActivation mockSystemSignalActivationAud;
+    private SystemSignalActivation mockSystemSignalActivationOth;
+    private SystemSignalActivation mockSystemSignalActivationTan;
+    private SystemSignalActivation mockSystemSignalActivationVis;
     private TestRunObserver testRunObserver;
     private MdibEntity mockEntity;
     private MdibEntity mockEntity2;
@@ -134,6 +155,14 @@ public class ManipulationPreconditionsTest {
         mockAlertSystemState2 = mock(AlertSystemState.class);
         mockAlertConditionState = mock(AlertConditionState.class);
         mockAlertConditionState2 = mock(AlertConditionState.class);
+        mockAudAlertSignalDescriptor = mock(AlertSignalDescriptor.class);
+        mockAudAlertSignalState = mock(AlertSignalState.class);
+        mockOthAlertSignalDescriptor = mock(AlertSignalDescriptor.class);
+        mockOthAlertSignalState = mock(AlertSignalState.class);
+        mockTanAlertSignalDescriptor = mock(AlertSignalDescriptor.class);
+        mockTanAlertSignalState = mock(AlertSignalState.class);
+        mockVisAlertSignalDescriptor = mock(AlertSignalDescriptor.class);
+        mockVisAlertSignalState = mock(AlertSignalState.class);
         mockMetricDescriptor = mock(AbstractMetricDescriptor.class);
         mockMetricDescriptor2 = mock(AbstractMetricDescriptor.class);
         mockMetricState = mock(AbstractMetricState.class);
@@ -144,6 +173,10 @@ public class ManipulationPreconditionsTest {
         mockScoState = mock(ScoState.class);
         mockClockState = mock(ClockState.class);
         mockBatteryState = mock(BatteryState.class);
+        mockSystemSignalActivationAud = mock(SystemSignalActivation.class);
+        mockSystemSignalActivationOth = mock(SystemSignalActivation.class);
+        mockSystemSignalActivationTan = mock(SystemSignalActivation.class);
+        mockSystemSignalActivationVis = mock(SystemSignalActivation.class);
         mockEntity = mock(MdibEntity.class);
         mockEntity2 = mock(MdibEntity.class);
         mockMdibAccess = mock(MdibAccess.class);
@@ -2348,5 +2381,239 @@ public class ManipulationPreconditionsTest {
         verify(mockManipulations, times(2)).setComponentActivation(anyString(), any(ComponentActivation.class));
         verify(mockManipulations).setComponentActivation(SCO_HANDLE, ComponentActivation.OFF);
         verify(mockManipulations).setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF);
+    }
+
+    private void setUpSystemSignalActivation() {
+        // build system signal activations
+        buildSystemSignalActivation(mockSystemSignalActivationAud, AlertSignalManifestation.AUD);
+        buildSystemSignalActivation(mockSystemSignalActivationOth, AlertSignalManifestation.OTH);
+        buildSystemSignalActivation(mockSystemSignalActivationTan, AlertSignalManifestation.TAN);
+        buildSystemSignalActivation(mockSystemSignalActivationVis, AlertSignalManifestation.VIS);
+        when(mockAlertSystemState.getSystemSignalActivation())
+                .thenReturn(List.of(
+                        mockSystemSignalActivationAud,
+                        mockSystemSignalActivationOth,
+                        mockSystemSignalActivationTan,
+                        mockSystemSignalActivationVis));
+
+        // build alert signals
+        buildAlertSignal(
+                mockAudAlertSignalDescriptor,
+                mockAudAlertSignalState,
+                AUD_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.AUD);
+        buildAlertSignal(
+                mockOthAlertSignalDescriptor,
+                mockOthAlertSignalState,
+                OTH_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.OTH);
+        buildAlertSignal(
+                mockTanAlertSignalDescriptor,
+                mockTanAlertSignalState,
+                TAN_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.TAN);
+        buildAlertSignal(
+                mockVisAlertSignalDescriptor,
+                mockVisAlertSignalState,
+                VIS_ALERT_SIGNAL_HANDLE,
+                AlertSignalManifestation.VIS);
+
+        when(mockEntity.getHandle()).thenReturn(ALERT_SYSTEM_CONTEXT_HANDLE);
+        when(mockEntity.getChildren())
+                .thenReturn(List.of(
+                        AUD_ALERT_SIGNAL_HANDLE,
+                        VIS_ALERT_SIGNAL_HANDLE,
+                        TAN_ALERT_SIGNAL_HANDLE,
+                        OTH_ALERT_SIGNAL_HANDLE));
+        when(mockDevice.getMdibAccess().findEntitiesByType(AlertSystemDescriptor.class))
+                .thenReturn(List.of(mockEntity));
+        when(mockDevice.getMdibAccess().getState(anyString(), eq(AlertSystemState.class)))
+                .thenReturn(Optional.of(mockAlertSystemState));
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+    }
+
+    private void buildSystemSignalActivation(
+            final SystemSignalActivation ssa, final AlertSignalManifestation manifestation) {
+        when(ssa.getManifestation()).thenReturn(manifestation);
+        when(ssa.getState())
+                .thenReturn(AlertActivation.ON)
+                .thenReturn(AlertActivation.PSD)
+                .thenReturn(AlertActivation.OFF);
+    }
+
+    private void buildAlertSignal(
+            final AlertSignalDescriptor descriptor,
+            final AlertSignalState state,
+            final String handle,
+            final AlertSignalManifestation manifestation) {
+        when(descriptor.getHandle()).thenReturn(handle);
+        when(descriptor.getManifestation()).thenReturn(manifestation);
+        when(state.getDescriptorHandle()).thenReturn(handle);
+        when(state.getActivationState())
+                .thenReturn(AlertActivation.ON)
+                .thenReturn(AlertActivation.PSD)
+                .thenReturn(AlertActivation.OFF)
+                .thenReturn(AlertActivation.ON)
+                .thenReturn(AlertActivation.PSD)
+                .thenReturn(AlertActivation.OFF)
+                .thenReturn(AlertActivation.ON)
+                .thenReturn(AlertActivation.PSD)
+                .thenReturn(AlertActivation.OFF)
+                .thenReturn(AlertActivation.ON)
+                .thenReturn(AlertActivation.PSD)
+                .thenReturn(AlertActivation.OFF);
+
+        when(mockDevice.getMdibAccess().getDescriptor(handle, AlertSignalDescriptor.class))
+                .thenReturn(Optional.of(descriptor));
+        when(mockDevice.getMdibAccess().getState(handle, AlertSignalState.class))
+                .thenReturn(Optional.of(state));
+    }
+
+    @Test
+    @DisplayName("SystemSignalActivation is successful the system signal activation can be set for every manifestation")
+    void testSystemSignalActivationSuccessful() {
+        setUpSystemSignalActivation();
+
+        assertTrue(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+
+        // 12 for each manifestation (aud, oth, tan, vis) and every activation state (on, psd, off)
+        final var expectedSystemSignalActivationManipulations = 12;
+        verify(mockManipulations, times(expectedSystemSignalActivationManipulations))
+                .setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class));
+        verify(mockManipulations, times(3))
+                .setSystemSignalActivation(anyString(), eq(AlertSignalManifestation.AUD), any(AlertActivation.class));
+        verify(mockManipulations, times(3))
+                .setSystemSignalActivation(anyString(), eq(AlertSignalManifestation.OTH), any(AlertActivation.class));
+        verify(mockManipulations, times(3))
+                .setSystemSignalActivation(anyString(), eq(AlertSignalManifestation.TAN), any(AlertActivation.class));
+        verify(mockManipulations, times(3))
+                .setSystemSignalActivation(anyString(), eq(AlertSignalManifestation.VIS), any(AlertActivation.class));
+        verify(mockManipulations, times(4))
+                .setSystemSignalActivation(anyString(), any(AlertSignalManifestation.class), eq(AlertActivation.ON));
+        verify(mockManipulations, times(4))
+                .setSystemSignalActivation(anyString(), any(AlertSignalManifestation.class), eq(AlertActivation.PSD));
+        verify(mockManipulations, times(4))
+                .setSystemSignalActivation(anyString(), any(AlertSignalManifestation.class), eq(AlertActivation.OFF));
+
+        // 4 different alert signals (aud, oth, tan, vis) with 3 different activation states (on, psd, off)
+        final var expectedAlertActivationManipulations = 12;
+        verify(mockManipulations, times(expectedAlertActivationManipulations))
+                .setAlertActivation(anyString(), any(AlertActivation.class));
+        verify(mockManipulations, times(3)).setAlertActivation(eq(AUD_ALERT_SIGNAL_HANDLE), any(AlertActivation.class));
+        verify(mockManipulations, times(3)).setAlertActivation(eq(OTH_ALERT_SIGNAL_HANDLE), any(AlertActivation.class));
+        verify(mockManipulations, times(3)).setAlertActivation(eq(TAN_ALERT_SIGNAL_HANDLE), any(AlertActivation.class));
+        verify(mockManipulations, times(3)).setAlertActivation(eq(VIS_ALERT_SIGNAL_HANDLE), any(AlertActivation.class));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is unsuccessful because the manipulation to set the system signal activation is not supported")
+    void testSystemSignalActivationAllNotSupported() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is successful because at least one manipulation to set the system signal activation is successful and the rest not supported")
+    void testSystemSignalActivationSomeNotSupported() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), eq(AlertSignalManifestation.OTH), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        assertTrue(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation the setAlertActivation manipulation for the child alert signals is not supported")
+    void testSystemSignalActivationChildNotSupported() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+
+        assertTrue(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation the setAlertActivation manipulation for the child alert signals is not implemented")
+    void testSystemSignalActivationChildNotImplemented() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName("SystemSignalActivation the setAlertActivation manipulation for the child alert signals failed")
+    void testSystemSignalActivationChildFailed() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is unsuccessful because the manipulation to set the system signal activation is not implemented")
+    void testSystemSignalActivationAllNotImplemented() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is unsuccessful when some manipulations to set the system signal activation are not implemented, but others are successful")
+    void testSystemSignalActivationSomeNotImplemented() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), eq(AlertSignalManifestation.AUD), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is unsuccessful because the manipulation to set the system signal activation failed")
+    void testSystemSignalActivationAllFail() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
+        verify(mockManipulations, times(3))
+                .setSystemSignalActivation(
+                        anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class));
+    }
+
+    @Test
+    @DisplayName(
+            "SystemSignalActivation is unsuccessful when some manipulations to set the system signal activation failed, but others are successful")
+    void testSystemSignalActivationSomeFail() {
+        setUpSystemSignalActivation();
+        when(mockManipulations.setSystemSignalActivation(
+                        anyString(), eq(AlertSignalManifestation.TAN), any(AlertActivation.class)))
+                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+
+        assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
 }

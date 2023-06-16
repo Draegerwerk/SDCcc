@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -903,49 +904,54 @@ public class ManipulationPreconditions {
                     alertSystemEntities.size());
             for (MdibEntity alertSystemEntity : alertSystemEntities) {
 
-                var systemSignalActivation = setSystemSignalActivation(
+                final var manipulationResults = new HashSet<ResponseTypes.Result>(setSystemSignalActivation(
                         testClient.getSdcRemoteDevice(),
                         manipulations,
                         alertSystemEntity.getHandle(),
                         AlertSignalManifestation.AUD,
                         getChildAlertSignalsForManifestation(
                                 alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.AUD),
-                        testRunObserver);
+                        testRunObserver));
 
-                if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(
+                if (!manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                        && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
+                    manipulationResults.addAll(setSystemSignalActivation(
                             testClient.getSdcRemoteDevice(),
                             manipulations,
                             alertSystemEntity.getHandle(),
                             AlertSignalManifestation.VIS,
                             getChildAlertSignalsForManifestation(
                                     alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.VIS),
-                            testRunObserver);
+                            testRunObserver));
                 }
 
-                if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(
+                if (!manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                        && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
+                    manipulationResults.addAll(setSystemSignalActivation(
                             testClient.getSdcRemoteDevice(),
                             manipulations,
                             alertSystemEntity.getHandle(),
                             AlertSignalManifestation.TAN,
                             getChildAlertSignalsForManifestation(
                                     alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.TAN),
-                            testRunObserver);
+                            testRunObserver));
                 }
 
-                if (systemSignalActivation) {
-                    systemSignalActivation = setSystemSignalActivation(
+                if (!manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                        && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
+                    manipulationResults.addAll(setSystemSignalActivation(
                             testClient.getSdcRemoteDevice(),
                             manipulations,
                             alertSystemEntity.getHandle(),
                             AlertSignalManifestation.OTH,
                             getChildAlertSignalsForManifestation(
                                     alertSystemEntity, testClient.getSdcRemoteDevice(), AlertSignalManifestation.OTH),
-                            testRunObserver);
+                            testRunObserver));
                 }
 
-                if (!systemSignalActivation) {
+                if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                        || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                        || !manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS)) {
                     testRunObserver.invalidateTestRun(String.format(
                             "Setting the system signal activation for alert system state with handle %s failed",
                             alertSystemEntity.getHandle()));
@@ -993,7 +999,7 @@ public class ManipulationPreconditions {
          * @param testRunObserver   to register unexpected failures during test run
          * @return true if successful, false otherwise
          */
-        static boolean setSystemSignalActivation(
+        static Set<ResponseTypes.Result> setSystemSignalActivation(
                 final SdcRemoteDevice sdcRemoteDevice,
                 final Manipulations manipulations,
                 final String handle,
@@ -1017,9 +1023,9 @@ public class ManipulationPreconditions {
                     || manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)) {
                 testRunObserver.invalidateTestRun(String.format(
                         "Setting the system signal activation for alert system state with handle %s failed", handle));
-                return false;
+                return manipulationResults;
             }
-            return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+            return manipulationResults;
         }
 
         /**
@@ -1067,8 +1073,8 @@ public class ManipulationPreconditions {
                     manipulationResult = ResponseTypes.Result.RESULT_FAIL;
                 }
                 if (childActivation == ResponseTypes.Result.RESULT_SUCCESS
-                        && !verifyStatePresentAndActivationSet(device, handle, activation)) {
-                    LOG.error("Validation for alert signal state {} failed", handle);
+                        && !verifyStatePresentAndActivationSet(device, child.getDescriptorHandle(), activation)) {
+                    LOG.error("Validation for alert signal state {} failed", child.getDescriptorHandle());
                     manipulationResult = ResponseTypes.Result.RESULT_FAIL;
                 }
             }
