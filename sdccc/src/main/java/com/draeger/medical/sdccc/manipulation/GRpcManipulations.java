@@ -271,21 +271,6 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
-    public ResponseTypes.Result setMetricQualityValidity(final String handle, final MeasurementValidity validity) {
-        final var message = MetricRequests.SetMetricQualityValidityRequest.newBuilder()
-                .setHandle(handle)
-                .setValidity(toApiMeasurementValidityType(validity))
-                .build();
-
-        return performCallWrapper(
-                v -> metricStub.setMetricQualityValidity(message),
-                v -> fallback.setMetricQualityValidity(handle, validity),
-                BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
-                ManipulationParameterUtil.buildMetricQualityValidityManipulationParameterData(handle, validity));
-    }
-
-    @Override
     public ResponseTypes.Result setMetricStatus(
             final String handle, final MetricCategory category, final ComponentActivation activation) {
         final var metricStatus = getMetricStatus(activation);

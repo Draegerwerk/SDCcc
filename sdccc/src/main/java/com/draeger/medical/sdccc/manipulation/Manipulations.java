@@ -17,7 +17,6 @@ import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
-import org.somda.sdc.biceps.model.participant.MeasurementValidity;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 
 /**
@@ -117,15 +116,6 @@ public interface Manipulations {
      * @return the result of the manipulation
      */
     ResponseTypes.Result setComponentActivation(String handle, ComponentActivation activationState);
-
-    /**
-     * Set the metric quality validity of an metric value.
-     *
-     * @param handle state handle to set the validity attribute of the metric quality for
-     * @param validity new validity attribute to set
-     * @return the result of the manipulation
-     */
-    ResponseTypes.Result setMetricQualityValidity(String handle, MeasurementValidity validity);
 
     /**
      * Set the metric to a specific state to trigger the setting of the ActivationState.

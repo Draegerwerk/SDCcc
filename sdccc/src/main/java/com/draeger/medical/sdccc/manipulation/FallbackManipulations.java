@@ -24,7 +24,6 @@ import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
-import org.somda.sdc.biceps.model.participant.MeasurementValidity;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 
 /**
@@ -193,19 +192,6 @@ public class FallbackManipulations implements Manipulations {
     public ResponseTypes.Result setComponentActivation(final String handle, final ComponentActivation activationState) {
         final var interactionMessage =
                 String.format("Set activation state for handle %s to %s", handle, activationState.name());
-        final var interactionResult = interactionFactory
-                .createUserInteraction(new FilterInputStream(System.in) {
-                    @Override
-                    public void close() {}
-                })
-                .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
-    }
-
-    @Override
-    public ResponseTypes.Result setMetricQualityValidity(final String handle, final MeasurementValidity validity) {
-        final var interactionMessage =
-                String.format("Set metric quality validity for handle %s to %s", handle, validity.name());
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
                     @Override
