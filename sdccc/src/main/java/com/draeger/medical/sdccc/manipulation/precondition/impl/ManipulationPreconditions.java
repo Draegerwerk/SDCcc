@@ -1408,7 +1408,7 @@ public class ManipulationPreconditions {
 
     /**
      * Sets the activation state for every metric with category 'Set' to 'On' and then the status to 'setting
-     * not being performed and is de-initialized,' to trigger an activation state change to 'Off'.
+     * not being performed and is de-initialized' to trigger an activation state change to 'Off'.
      */
     public static class MetricStatusManipulationSETActivationStateOFF extends ManipulationPrecondition {
 
