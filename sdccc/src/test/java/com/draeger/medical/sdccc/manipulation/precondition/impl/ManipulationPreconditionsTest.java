@@ -2579,7 +2579,7 @@ public class ManipulationPreconditionsTest {
         "MetricStatusManipulationCLCActivationStateNOTRDY: The precondition does not fail if setMetricStatus is not supported by all metrics.")
     void testMetricStatusManipulationCLCActivationStateNOTRDYAllowNotSupported2() {
         metricMockSetup(
-            MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
+            MetricCategory.CLC, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.OFF, ComponentActivation.NOT_RDY);
 
         // let one metric not support setMetricStatus manipulation
         when(mockManipulations.setMetricStatus(
