@@ -77,11 +77,50 @@ MaxWait=timeInSeconds
 ```
 
 ### Target Device (DUT) configuration
-In order for the test tool to connect to the DUT, the address of the target device must be set under
+In order for the test tool to connect to the DUT, appropriate filter criteria have to be set.
+It is possible to combine the following filter criteria:
+
+- DeviceEpr
+- DeviceLocationFacility
+- DeviceLocationBuilding
+- DeviceLocationPointOfCare
+- DeviceLocationFloor
+- DeviceLocationRoom
+- DeviceLocationBed
+
+All of them are optional. 
+In case that all of them are not set, the first device encountered will be connected to.
+In case at least one of them is set, 
+all the given filter criteria have to be fulfilled for initiating a connection.
+
+For example the configuration
 ```
 [SDCcc.Consumer] 
-DeviceEpr="deviceEpr"
+Enable=true
+DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 ```
+will make only those devices match during discovery that have the EPR "urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11",
+the configuration
+```
+[SDCcc.Consumer] 
+Enable=true
+DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
+DeviceLocationBed="bed32"
+```
+only those that have the EPR "urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11" and the bed "bed32" in the location query,
+the configuration
+```
+[SDCcc.Consumer] 
+Enable=true
+DeviceLocationBed="bed32"
+```
+only those that have the bed "bed32" in the location query,
+and the configuration
+```
+[SDCcc.Consumer]
+Enable=true
+```
+will make all devices match during discovery.
 
 ### Manipulation API
 The test tool uses *T2IAPI* version `2.0.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
@@ -140,13 +179,19 @@ these problems.
 ## Running SDCcc
 The following command line options are supported by the test tool, the first two need to be provided.
 
-| **Option**         | **Short** | **Argument**                                                                                         | **Required** | 
-|--------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
-| config             | c         | path to the *config.toml*                                                                            | yes          |
-| testconfig         | t         | path to the *test_configuration.toml*                                                                | yes          |
-| device_epr         | de        | the epr of the target provider, overrides setting from configuration if provided                     | no           |
-| ipaddress          | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
-| test_run_directory | d         | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
+| **Option**           | **Short** | **Argument**                                                                                         | **Required** | 
+|----------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
+| config               | c         | path to the *config.toml*                                                                            | yes          |
+| testconfig           | t         | path to the *test_configuration.toml*                                                                | yes          |
+| device_epr           | de        | the epr of the target provider, overrides setting from configuration if provided                     | no           |
+| device_facility      | fac       | the facility of the target provider, overrides setting from configuration if provided                | no           |
+| device_building      | bldng     | the building of the target provider, overrides setting from configuration if provided                | no           |
+| device_point_of_care | poc       | the point of care of the target provider, overrides setting from configuration if provided           | no           |
+| device_floor         | flr       | the floor of the target provider, overrides setting from configuration if provided                   | no           |
+| device_room          | rm        | the room of the target provider, overrides setting from configuration if provided                    | no           |
+| device_bed           | bed       | the bed of the target provider, overrides setting from configuration if provided                     | no           |
+| ipaddress            | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
+| test_run_directory   | d         | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
 
 ### Enabling Tests
 The *test_configuration.toml* file contains the identifiers of all implemented requirement tests. It is located in the
