@@ -76,6 +76,13 @@ The maximum waiting time in seconds to find and connect to the target device.
 MaxWait=timeInSeconds
 ```
 
+The time to live (the number of routers an IP packet may pass before it is discarded) of multicast packets used for
+Discovery defaults to 128. When other values are needed, it can be configured using the following option
+```
+[SDCcc.Network]
+MulticastTTL=196
+```
+
 ### Target Device (DUT) configuration
 In order for the test tool to connect to the DUT, appropriate filter criteria have to be set.
 It is possible to combine the following filter criteria:
