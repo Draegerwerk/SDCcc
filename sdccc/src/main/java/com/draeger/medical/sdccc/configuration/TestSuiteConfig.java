@@ -49,6 +49,12 @@ public final class TestSuiteConfig {
     private static final String CONSUMER = "Consumer.";
     public static final String CONSUMER_ENABLE = SDCCC + CONSUMER + Constants.ENABLE_SETTING_POSTFIX;
     public static final String CONSUMER_DEVICE_EPR = SDCCC + CONSUMER + Constants.DEVICE_EPR_POSTFIX;
+    public static final String CONSUMER_DEVICE_LOCATION_FACILITY = SDCCC + CONSUMER + "DeviceLocationFacility";
+    public static final String CONSUMER_DEVICE_LOCATION_BUILDING = SDCCC + CONSUMER + "DeviceLocationBuilding";
+    public static final String CONSUMER_DEVICE_LOCATION_POINT_OF_CARE = SDCCC + CONSUMER + "DeviceLocationPointOfCare";
+    public static final String CONSUMER_DEVICE_LOCATION_FLOOR = SDCCC + CONSUMER + "DeviceLocationFloor";
+    public static final String CONSUMER_DEVICE_LOCATION_ROOM = SDCCC + CONSUMER + "DeviceLocationRoom";
+    public static final String CONSUMER_DEVICE_LOCATION_BED = SDCCC + CONSUMER + "DeviceLocationBed";
 
     /*
      * Provider configuration

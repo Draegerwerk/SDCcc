@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.configuration;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -32,11 +33,23 @@ public class CommandLineOptions {
     private static final String CONFIG_OPT = "config";
     private static final String TEST_CONFIG_OPT = "testconfig";
     private static final String DEVICE_EPR = "device_epr";
+    private static final String DEVICE_LOCATION_FACILITY = "device_facility";
+    private static final String DEVICE_LOCATION_BUILDING = "device_building";
+    private static final String DEVICE_LOCATION_POINT_OF_CARE = "device_point_of_care";
+    private static final String DEVICE_LOCATION_FLOOR = "device_floor";
+    private static final String DEVICE_LOCATION_ROOM = "device_room";
+    private static final String DEVICE_LOCATION_BED = "device_bed";
     private static final String IP_ADDRESS = "ipaddress";
     private static final String TEST_RUN_DIRECTORY = "test_run_directory";
     private final Path configPath;
     private final Path testConfigPath;
     private final String deviceEpr;
+    private final String deviceFacility;
+    private final String deviceBuilding;
+    private final String devicePointOfCare;
+    private final String deviceFloor;
+    private final String deviceRoom;
+    private final String deviceBed;
     private final String ipAddress;
     private final String testRunDirectory;
 
@@ -75,6 +88,12 @@ public class CommandLineOptions {
         this.configPath = Path.of(cmd.getOptionValue(CONFIG_OPT));
         this.testConfigPath = Path.of(cmd.getOptionValue(TEST_CONFIG_OPT));
         this.deviceEpr = cmd.getOptionValue(DEVICE_EPR);
+        this.deviceFacility = cmd.getOptionValue(DEVICE_LOCATION_FACILITY);
+        this.deviceBuilding = cmd.getOptionValue(DEVICE_LOCATION_BUILDING);
+        this.devicePointOfCare = cmd.getOptionValue(DEVICE_LOCATION_POINT_OF_CARE);
+        this.deviceFloor = cmd.getOptionValue(DEVICE_LOCATION_FLOOR);
+        this.deviceRoom = cmd.getOptionValue(DEVICE_LOCATION_ROOM);
+        this.deviceBed = cmd.getOptionValue(DEVICE_LOCATION_BED);
         this.ipAddress = cmd.getOptionValue(IP_ADDRESS);
         this.testRunDirectory = cmd.getOptionValue(TEST_RUN_DIRECTORY);
     }
@@ -101,11 +120,53 @@ public class CommandLineOptions {
             options.addOption(deviceEprOpt);
         }
         {
+            final String description =
+                    "Facility of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("fac", DEVICE_LOCATION_FACILITY, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
+            final String description =
+                    "Building of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("bldng", DEVICE_LOCATION_BUILDING, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
+            final String description =
+                    "Point of care of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("poc", DEVICE_LOCATION_POINT_OF_CARE, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
+            final String description =
+                    "Floor of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("flr", DEVICE_LOCATION_FLOOR, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
+            final String description =
+                    "Room of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("rm", DEVICE_LOCATION_ROOM, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
+            final String description =
+                    "Bed of the target provider, " + "overrides setting from configuration if provided";
+            final var deviceLocOpt = new Option("bed", DEVICE_LOCATION_BED, true, description);
+            deviceLocOpt.setRequired(false);
+            options.addOption(deviceLocOpt);
+        }
+        {
             final String description = "IP address of the adapter to use for communication,"
                     + " overrides setting from configuration if provided";
-            final var consumerTargetEprOpt = new Option("ip", IP_ADDRESS, true, description);
-            consumerTargetEprOpt.setRequired(false);
-            options.addOption(consumerTargetEprOpt);
+            final var consumerTargetIpOpt = new Option("ip", IP_ADDRESS, true, description);
+            consumerTargetIpOpt.setRequired(false);
+            options.addOption(consumerTargetIpOpt);
         }
         {
             final String description = "Base directory to store test runs in, creates a timestamped SDCcc run"
@@ -126,11 +187,39 @@ public class CommandLineOptions {
         return testConfigPath;
     }
 
-    /**
-     * @return epr the consumer searches for, provided via cli, empty if not set
-     */
-    public Optional<String> getDeviceEpr() {
-        return Optional.ofNullable(deviceEpr);
+    @Nullable
+    public String getDeviceEpr() {
+        return deviceEpr;
+    }
+
+    @Nullable
+    public String getDeviceFacility() {
+        return deviceFacility;
+    }
+
+    @Nullable
+    public String getDeviceBuilding() {
+        return deviceBuilding;
+    }
+
+    @Nullable
+    public String getDevicePointOfCare() {
+        return devicePointOfCare;
+    }
+
+    @Nullable
+    public String getDeviceFloor() {
+        return deviceFloor;
+    }
+
+    @Nullable
+    public String getDeviceRoom() {
+        return deviceRoom;
+    }
+
+    @Nullable
+    public String getDeviceBed() {
+        return deviceBed;
     }
 
     /**
