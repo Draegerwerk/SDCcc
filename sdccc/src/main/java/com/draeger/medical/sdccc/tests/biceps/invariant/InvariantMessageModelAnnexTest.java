@@ -704,7 +704,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
                 // get relevant reports
                 final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllReports(sequenceId, minimumMdibVersion)) {
+                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
 
                     for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                         final AbstractReport report = iterator.next();

@@ -1559,6 +1559,47 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether EpisodicAlertReports which contain only AbstractAlertStates with at least one changed child
+     * element or attribute passes the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC11DuplicatedReports() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC11();
+    }
+
+    /**
      * Tests whether seeing one acceptable sequence is sufficient to pass the test.
      *
      * @throws Exception on any exception

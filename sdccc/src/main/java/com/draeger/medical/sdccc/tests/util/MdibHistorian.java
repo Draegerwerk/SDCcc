@@ -280,6 +280,50 @@ public class MdibHistorian {
     }
 
     /**
+     * Retrieves all episodic reports for a given sequence id while
+     * removing duplicates.
+     *
+     * @param sequenceId         of the sequence to retrieve reports for
+     * @param minimumMdibVersion optional minimum mdib version to retrieve for the reports, if null all are returned
+     * @return list of the reports
+     */
+    public Stream<AbstractReport> getAllUniqueReports(
+            final String sequenceId, @Nullable final BigInteger minimumMdibVersion) {
+        try {
+            final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                    sequenceId, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
+
+            var iter = messages.getStream().map(this::unmarshallReport);
+            if (minimumMdibVersion != null) {
+                iter = iter.filter(
+                        it -> ImpliedValueUtil.getReportMdibVersion(it).compareTo(minimumMdibVersion) >= 1);
+            }
+            final BigInteger[] last = new BigInteger[1];
+            return iter.filter(it -> {
+                    if (last[0] == null) {
+                        last[0] = it.getMdibVersion();
+                        return true;
+                    }
+                    if (it.getMdibVersion().compareTo(last[0]) > 0) {
+                        last[0] = it.getMdibVersion();
+                        return true;
+                    } else {
+                        // found duplicate Version -> drop duplicate
+                        last[0] = it.getMdibVersion();
+                        return false;
+                    }
+            });
+        } catch (IOException e) {
+            final var errorMessage = "Error while trying to retrieve initial mdib from storage";
+            LOG.error("{}: {}", errorMessage, e.getMessage());
+            LOG.debug("{}", errorMessage, e);
+            fail(e);
+            // unreachable, silence warnings
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Retrieves all episodic reports for a given sequence id and an mdib version less than the
      * given maximumMdibVersion.
      *
