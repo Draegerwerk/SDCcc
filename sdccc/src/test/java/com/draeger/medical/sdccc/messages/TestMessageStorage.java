@@ -2517,7 +2517,7 @@ public class TestMessageStorage {
      * @throws IOException - when something goes wrong.
      */
     @Test
-    public void testConvertToMessageContent(@TempDir final File dir) throws IOException {
+    public void testConvertMessageToMessageContent(@TempDir final File dir) throws IOException {
 
         final Charset charsetInHttpHeader = StandardCharsets.UTF_8;
         final Charset charsetInXMLDeclaration = StandardCharsets.UTF_8;
@@ -2550,12 +2550,13 @@ public class TestMessageStorage {
 
             // then
             assertNotNull(result);
-            assertFalse(testRunObserver.isInvalid());
+            assertEquals(content, result.getBody());
+            verifyNoInteractions(testRunObserver);
         }
     }
 
     /**
-     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * Checks that convertMessageToMessageContent() fails when it detects a decoding problem in the message.
      * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
@@ -2596,7 +2597,7 @@ public class TestMessageStorage {
     }
 
     /**
-     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * Checks that convertMessageToMessageContent() fails when it detects a decoding problem in the message.
      * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
@@ -2639,7 +2640,7 @@ public class TestMessageStorage {
     }
 
     /**
-     * Checks that convertMessageToMessageContent() works when it does not detect any decoding problems in the message.
+     * Checks that convertMessageToMessageContent() fails when it detects a decoding problem in the message.
      * @param dir - a temporary directory.
      * @throws IOException - when something goes wrong.
      */
