@@ -1144,7 +1144,7 @@ public class ConditionalPreconditions {
     }
 
     /**
-     * Precondition which checks whether DescriptionModification messages have been received, and trigger such a
+     * Precondition which checks whether DescriptionModificationReport messages have been received, and trigger such a
      * message otherwise.
      */
     public static class TriggerDescriptionModificationReportPrecondition extends SimplePrecondition {
