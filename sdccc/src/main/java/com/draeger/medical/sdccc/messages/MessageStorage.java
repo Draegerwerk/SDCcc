@@ -289,7 +289,7 @@ public class MessageStorage implements AutoCloseable {
                     } else {
                         this.testRunObserver.invalidateTestRun(String.format(
                                 "Encountered message encoding problem: charset %s was specified, but message "
-                                        + "cannot be decoded using this charset. Either the specified charset is incorrect, "
+                                        + "cannot be decoded using this charset. The specified charset is incorrect, "
                                         + "or the message contains invalid characters (Message UID='%s').",
                                 messageCharset, message.getID()));
                     }
