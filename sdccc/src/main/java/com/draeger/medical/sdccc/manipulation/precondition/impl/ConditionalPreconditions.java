@@ -200,12 +200,14 @@ public class ConditionalPreconditions {
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
 
-    private static boolean triggerReportPreconditionCheck(final Injector injector, final QName... reportType)
-            throws PreconditionException {
+    private static boolean triggerReportPreconditionCheck(
+            final Injector injector, final Logger log, final QName... reportType) throws PreconditionException {
         final var messageStorage = injector.getInstance(MessageStorage.class);
         try (final var messages = messageStorage.getInboundMessagesByBodyType(reportType)) {
             // determine if there were any reports with the specified type
-            return messages.areObjectsPresent();
+            final var areReportsPresent = messages.areObjectsPresent();
+            log.info("Reports of types {} are present: {}", reportType, areReportsPresent);
+            return areReportsPresent;
         } catch (IOException e) {
             throw new PreconditionException(
                     String.format(
@@ -641,6 +643,7 @@ public class ConditionalPreconditions {
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
             return triggerReportPreconditionCheck(
                     injector,
+                    LOG,
                     Constants.MSG_EPISODIC_ALERT_REPORT,
                     Constants.MSG_EPISODIC_COMPONENT_REPORT,
                     Constants.MSG_EPISODIC_METRIC_REPORT,
@@ -967,7 +970,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_ALERT_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_EPISODIC_ALERT_REPORT);
         }
 
         /**
@@ -999,7 +1002,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_COMPONENT_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_EPISODIC_COMPONENT_REPORT);
         }
 
         /**
@@ -1031,7 +1034,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_CONTEXT_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_EPISODIC_CONTEXT_REPORT);
         }
 
         /**
@@ -1063,7 +1066,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_METRIC_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_EPISODIC_METRIC_REPORT);
         }
 
         /**
@@ -1095,7 +1098,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT);
         }
 
         /**
@@ -1126,7 +1129,7 @@ public class ConditionalPreconditions {
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
-            return triggerReportPreconditionCheck(injector, Constants.MSG_OPERATION_INVOKED_REPORT);
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_OPERATION_INVOKED_REPORT);
         }
 
         /**
@@ -1137,6 +1140,37 @@ public class ConditionalPreconditions {
          */
         static boolean manipulation(final Injector injector) {
             return triggerReportManipulation(injector, LOG, Constants.MSG_OPERATION_INVOKED_REPORT);
+        }
+    }
+
+    /**
+     * Precondition which checks whether DescriptionModification messages have been received, and trigger such a
+     * message otherwise.
+     */
+    public static class TriggerDescriptionModificationReportPrecondition extends SimplePrecondition {
+        private static final Logger LOG = LogManager.getLogger(TriggerDescriptionModificationReportPrecondition.class);
+
+        /**
+         * Creates a trigger description modification report message precondition check.
+         */
+        public TriggerDescriptionModificationReportPrecondition() {
+            super(
+                    TriggerDescriptionModificationReportPrecondition::preconditionCheck,
+                    TriggerDescriptionModificationReportPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) throws PreconditionException {
+            return triggerReportPreconditionCheck(injector, LOG, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT);
+        }
+
+        /**
+         * Performs the manipulation to trigger description modification reports.
+         *
+         * @param injector to analyze mdib on
+         * @return  true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            return triggerReportManipulation(injector, LOG, Constants.MSG_DESCRIPTION_MODIFICATION_REPORT);
         }
     }
 }
