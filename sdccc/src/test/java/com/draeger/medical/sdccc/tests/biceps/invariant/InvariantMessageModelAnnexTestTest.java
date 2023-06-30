@@ -1194,6 +1194,51 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests if duplicated DescriptionModificationReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR50460GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var alertSignal = mdibBuilder.buildAlertSignal(
+                MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, true, AlertActivation.ON);
+        final var reportOnePart = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertSignal);
+        final var reportOne = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, reportOnePart);
+
+        final var alertCondition = mdibBuilder.buildAlertCondition(
+                MDS_SECOND_ALERT_CONDITION_HANDLE,
+                AlertConditionKind.PHY,
+                AlertConditionPriority.HI,
+                AlertActivation.ON);
+        final var alertCondition2 = mdibBuilder.buildAlertCondition(
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI, AlertActivation.ON);
+        final var alertSignal2 = mdibBuilder.buildAlertSignal(
+                MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, true, AlertActivation.ON);
+        final var reportTwoPart1 = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertCondition);
+        final var reportTwoPart2 = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertCondition2, alertSignal2);
+        final var reportTwo =
+                buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, reportTwoPart1, reportTwoPart2);
+
+        final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
+        final var reportThreePart =
+                buildDescriptionModificationReportPart(DescriptionModificationType.DEL, mdsAlertSystem);
+        final var reportThree = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.valueOf(3), reportThreePart);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportOne);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportOne);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportTwo);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportThree);
+
+        testClass.testRequirementR50460();
+    }
+
+    /**
      * Tests if deleting descriptors with child descriptors fails the test.
      *
      * @throws Exception on any exception
