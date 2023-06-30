@@ -451,43 +451,43 @@ public class TestSuite {
             protected void defaultConfigure() {
                 final String epr = cmdLine.getDeviceEpr();
                 if (epr != null) {
-                    LOG.info("Using consumer target epr from cli: {}", epr);
+                    LOG.info("Using target provider epr from cli: {}", epr);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, epr);
                 }
 
                 final String deviceFacility = cmdLine.getDeviceFacility();
                 if (deviceFacility != null) {
-                    LOG.info("Using consumer location facility from cli: {}", deviceFacility);
+                    LOG.info("Using target provider location facility from cli: {}", deviceFacility);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, deviceFacility);
                 }
 
                 final String deviceBuilding = cmdLine.getDeviceBuilding();
                 if (deviceBuilding != null) {
-                    LOG.info("Using consumer location building from cli: {}", deviceBuilding);
+                    LOG.info("Using target provider location building from cli: {}", deviceBuilding);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, deviceBuilding);
                 }
 
                 final String devicePointOfCare = cmdLine.getDevicePointOfCare();
                 if (devicePointOfCare != null) {
-                    LOG.info("Using consumer location point of care from cli: {}", devicePointOfCare);
+                    LOG.info("Using target provider location point of care from cli: {}", devicePointOfCare);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, devicePointOfCare);
                 }
 
                 final String deviceFloor = cmdLine.getDeviceFloor();
                 if (deviceFloor != null) {
-                    LOG.info("Using consumer location floor from cli: {}", deviceFloor);
+                    LOG.info("Using target provider location floor from cli: {}", deviceFloor);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FLOOR, String.class, deviceFloor);
                 }
 
                 final String deviceRoom = cmdLine.getDeviceRoom();
                 if (deviceRoom != null) {
-                    LOG.info("Using consumer location room from cli: {}", deviceRoom);
+                    LOG.info("Using target provider location room from cli: {}", deviceRoom);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, deviceRoom);
                 }
 
                 final String deviceBed = cmdLine.getDeviceBed();
                 if (deviceBed != null) {
-                    LOG.info("Using consumer location bed from cli: {}", deviceBed);
+                    LOG.info("Using target provider location bed from cli: {}", deviceBed);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, deviceBed);
                 }
 
