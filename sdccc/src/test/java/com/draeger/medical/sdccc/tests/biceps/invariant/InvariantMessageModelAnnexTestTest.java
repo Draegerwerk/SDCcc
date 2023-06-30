@@ -1559,13 +1559,12 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
-     * Tests whether EpisodicAlertReports which contain only AbstractAlertStates with at least one changed child
-     * element or attribute passes the test.
+     * Tests whether duplicated EpisodicAlertReports pass the test.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC11DuplicatedReports() throws Exception {
+    public void testRequirementC11ReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicAlertReport(
@@ -1747,6 +1746,41 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether duplicated EpisodicComponentReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC12ReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
+
+        final var second = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.OFF, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.ON),
+                buildScoState(SCO_HANDLE, ComponentActivation.OFF));
+
+        final var third = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.valueOf(3), buildBatteryState(BATTERY_HANDLE, ComponentActivation.NOT_RDY, 0L));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC12();
+    }
+
+    /**
      * Tests whether seeing one acceptable sequence is sufficient to pass the test.
      *
      * @throws Exception on any exception
@@ -1905,6 +1939,56 @@ public class InvariantMessageModelAnnexTestTest {
                         mdibBuilder.buildCodedValue("newValue")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC13();
+    }
+
+    /**
+     * Tests whether duplicated EpisodicContextReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC13ReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
+
+        final var second = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.DIS,
+                        mdibBuilder.buildCodedValue("initial")));
+
+        final var third = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("otherValue")),
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.PRE,
+                        mdibBuilder.buildCodedValue("newValue")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
@@ -2110,6 +2194,52 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether duplicated EpisodicMetricReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC14ReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
+
+        final var second = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("otherValue"),
+                        ComponentActivation.SHTDN));
+
+        final var third = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.valueOf(11L)),
+                        ComponentActivation.ON),
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("changedValue"),
+                        ComponentActivation.ON));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC14();
+    }
+
+    /**
      * Tests whether seeing one acceptable sequence is sufficient to pass the test.
      *
      * @throws Exception on any exception
@@ -2245,6 +2375,38 @@ public class InvariantMessageModelAnnexTestTest {
                 buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC15();
+    }
+
+    /**
+     * Tests whether duplicated EpisodicOperationalStateReport pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC15ReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
+
+        final var second = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID, BigInteger.TWO, buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
+
+        final var third = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN),
+                buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
