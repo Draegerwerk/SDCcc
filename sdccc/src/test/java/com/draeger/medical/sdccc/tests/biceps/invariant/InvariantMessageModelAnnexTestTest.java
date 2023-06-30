@@ -596,6 +596,52 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Checks whether duplicated DescriptionModificationReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC5ReportDuplication() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final var crtPart1Handle = "second vmd";
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        MdibBuilder.DEFAULT_MDS_HANDLE,
+                        mdibBuilder.buildVmd(crtPart1Handle)),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, crtPart1Handle, mdibBuilder.buildChannel("second channel")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC5();
+    }
+
+    /**
      * Checks whether a DescriptionModificationReport
      * containing an AbstractDescriptor without any change,
      * fails the test.
