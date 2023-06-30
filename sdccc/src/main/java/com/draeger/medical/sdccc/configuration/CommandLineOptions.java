@@ -121,42 +121,39 @@ public class CommandLineOptions {
         }
         {
             final String description =
-                    "Facility of the target provider, " + "overrides setting from configuration if provided";
+                    "Facility of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("fac", DEVICE_LOCATION_FACILITY, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
             final String description =
-                    "Building of the target provider, " + "overrides setting from configuration if provided";
+                    "Building of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("bldng", DEVICE_LOCATION_BUILDING, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
             final String description =
-                    "Point of care of the target provider, " + "overrides setting from configuration if provided";
+                    "Point of care of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("poc", DEVICE_LOCATION_POINT_OF_CARE, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
-            final String description =
-                    "Floor of the target provider, " + "overrides setting from configuration if provided";
+            final String description = "Floor of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("flr", DEVICE_LOCATION_FLOOR, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
-            final String description =
-                    "Room of the target provider, " + "overrides setting from configuration if provided";
+            final String description = "Room of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("rm", DEVICE_LOCATION_ROOM, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
-            final String description =
-                    "Bed of the target provider, " + "overrides setting from configuration if provided";
+            final String description = "Bed of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("bed", DEVICE_LOCATION_BED, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
