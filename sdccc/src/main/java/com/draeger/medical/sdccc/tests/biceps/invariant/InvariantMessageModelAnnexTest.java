@@ -293,7 +293,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_R5024)
     @TestDescription("Retrieves each report part from each description modification report seen during the test run and"
             + " checks that each descriptor does not contain nested descriptors.")
-    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerDescriptionModificationReportPrecondition.class})
+    @RequirePrecondition(
+            simplePreconditions = {ConditionalPreconditions.TriggerDescriptionModificationReportPrecondition.class})
     void testRequirementR5024() throws NoTestData, IOException {
         try (final var messages =
                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
