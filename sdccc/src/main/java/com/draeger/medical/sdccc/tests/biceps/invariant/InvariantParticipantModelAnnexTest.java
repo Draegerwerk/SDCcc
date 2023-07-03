@@ -137,7 +137,7 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
                 try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                        mdibHistorian.uniqueEpisodicReportBasedHistory(sequenceId)) {
                     RemoteMdibAccess first = history.next();
 
                     while (first != null) {

@@ -317,6 +317,45 @@ public class InvariantParticipantModelAnnexTestTest {
     }
 
     /**
+     * Tests whether duplicated DescriptionModificationReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementB284GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID);
+
+        final var firstUpdate = buildDescriptionModificationReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.ONE,
+                null,
+                buildMdsPair(MdibBuilder.DEFAULT_MDS_HANDLE, BigInteger.ONE, null, null));
+
+        final var approvedJurisdiction = participantFactory.createApprovedJurisdictions();
+        final var operatingJurisdiction = participantFactory.createOperatingJurisdiction();
+        final var secondUpdate = buildDescriptionModificationReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.TWO,
+                null,
+                buildMdsPair(
+                        MdibBuilder.DEFAULT_MDS_HANDLE, BigInteger.TWO, approvedJurisdiction, operatingJurisdiction));
+
+        final var thirdUpdate = buildDescriptionModificationReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                DescriptionModificationType.CRT,
+                buildMdsPair(SECOND_MDS_HANDLE, BigInteger.valueOf(3), null, null));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, thirdUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, thirdUpdate);
+
+        testClass.testRequirementB284();
+    }
+
+    /**
      * Tests whether operatingJurisdiction is set when no approvedJurisdiction is present fails the test.
      *
      * @throws Exception on any exception
@@ -449,7 +488,7 @@ public class InvariantParticipantModelAnnexTestTest {
         mdsAlertSystem.getLeft().getAlertCondition().clear();
         mdsAlertSystem.getLeft().getAlertCondition().add(mdsAlertCondition.getLeft());
         mdsAlertSystem.getLeft().getAlertSignal().clear();
-        mdsAlertSystem.getLeft().getAlertSignal().addAll(List.of(mdsAlertSignal.getLeft()));
+        mdsAlertSystem.getLeft().getAlertSignal().add(mdsAlertSignal.getLeft());
 
         final var vmdAlertCondition = mdibBuilder.buildAlertCondition(
                 VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME, AlertActivation.ON);
@@ -460,9 +499,9 @@ public class InvariantParticipantModelAnnexTestTest {
         final var vmdAlertSystem = mdibBuilder.buildAlertSystem(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
 
         vmdAlertSystem.getLeft().getAlertCondition().clear();
-        vmdAlertSystem.getLeft().getAlertCondition().addAll(List.of(vmdAlertCondition.getLeft()));
+        vmdAlertSystem.getLeft().getAlertCondition().add(vmdAlertCondition.getLeft());
         vmdAlertSystem.getLeft().getAlertSignal().clear();
-        vmdAlertSystem.getLeft().getAlertSignal().addAll(List.of(vmdAlertSignal.getLeft()));
+        vmdAlertSystem.getLeft().getAlertSignal().add(vmdAlertSignal.getLeft());
 
         final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
         final var vmdOperatingJurisdiction = participantFactory.createOperatingJurisdiction();
@@ -470,7 +509,7 @@ public class InvariantParticipantModelAnnexTestTest {
         final var vmdApprovedJurisdictions = participantFactory.createApprovedJurisdictions();
         final var vmdApprovedJurisdiction = participantFactory.createInstanceIdentifier();
         vmdApprovedJurisdictions.getApprovedJurisdiction().clear();
-        vmdApprovedJurisdictions.getApprovedJurisdiction().addAll(List.of(vmdApprovedJurisdiction));
+        vmdApprovedJurisdictions.getApprovedJurisdiction().add(vmdApprovedJurisdiction);
         vmd.getLeft().setApprovedJurisdictions(vmdApprovedJurisdictions);
         vmd.getLeft().setAlertSystem(vmdAlertSystem.getLeft());
         mdState.getState()

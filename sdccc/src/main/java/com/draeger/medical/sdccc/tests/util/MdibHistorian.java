@@ -183,6 +183,11 @@ public class MdibHistorian {
         return convertToRemoteMdib(initialMdib);
     }
 
+    public HistorianResult uniqueEpisodicReportBasedHistory(final String sequenceId)
+            throws PreprocessingException, ReportProcessingException {
+        return getHistorianResultForEpisodicReportBasedHistory(sequenceId, true);
+    }
+
     /**
      * Generates an mdib history for a sequence id using the first available GetMdibResponse for said sequence id and
      * all related episodic reports.
@@ -195,6 +200,10 @@ public class MdibHistorian {
     public HistorianResult episodicReportBasedHistory(final String sequenceId)
             throws PreprocessingException, ReportProcessingException {
 
+        return getHistorianResultForEpisodicReportBasedHistory(sequenceId, false);
+    }
+
+    private HistorianResult getHistorianResultForEpisodicReportBasedHistory(String sequenceId, boolean ensureUnique) throws PreprocessingException, ReportProcessingException {
         // create new storage
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
@@ -205,10 +214,29 @@ public class MdibHistorian {
         try {
             final var messages =
                     messageStorage.getInboundMessagesByBodyType(Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
-            final var stream = messages.getStream()
+            final BigInteger[] last = new BigInteger[1];
+            var stream = messages.getStream()
                     .map(this::unmarshallReport)
                     .filter(report -> sequenceId.equals(report.getSequenceId()))
                     .filter(mdibVersionPredicate)
+                    .filter(it -> {
+                        if (ensureUnique) {
+                            if (last[0] == null) {
+                                last[0] = it.getMdibVersion();
+                                return true;
+                            }
+                            if (it.getMdibVersion().compareTo(last[0]) > 0) {
+                                last[0] = it.getMdibVersion();
+                                return true;
+                            } else {
+                                // found duplicate Version -> drop duplicate
+                                last[0] = it.getMdibVersion();
+                                return false;
+                            }
+                        } else {
+                            return true;
+                        }
+                    })
                     .map(report -> {
                         try {
                             final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
