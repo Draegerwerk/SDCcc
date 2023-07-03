@@ -37,7 +37,6 @@ import org.somda.sdc.glue.common.MdibXmlIo;
 import org.somda.sdc.glue.common.factory.ModificationsBuilderFactory;
 import org.somda.sdc.glue.provider.SdcDevice;
 import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
-import org.somda.sdc.glue.provider.plugin.SdcRequiredTypesAndScopes;
 
 /**
  * SDCri provider used to test SDC consumers.
@@ -100,9 +99,7 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
                         },
                         this.mdibAccess,
                         Collections.emptyList(),
-                        List.of(
-                                injector.getInstance(SdcRequiredTypesAndScopes.class),
-                                injector.getInstance(TestProviderHostingServicePlugin.class)));
+                        List.of(injector.getInstance(TestProviderHostingServicePlugin.class)));
     }
 
     @Override
@@ -113,6 +110,15 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
     @Override
     public void stopService(final Duration waitTime) throws TimeoutException {
         stopAsync().awaitTerminated(waitTime);
+    }
+
+    @Override
+    public SdcDevice getSdcDevice() {
+        return sdcDevice;
+    }
+
+    public Mdib getMdib() {
+        return mdib;
     }
 
     @Override

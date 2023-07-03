@@ -10,6 +10,7 @@ package it.com.draeger.medical.sdccc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
@@ -47,15 +48,15 @@ import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.Level;
@@ -72,12 +73,15 @@ import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
+import org.somda.sdc.dpws.device.DiscoveryAccess;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.factory.TransportBindingFactory;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
+import org.somda.sdc.glue.GlueConstants;
+import org.somda.sdc.mdpws.common.CommonConstants;
 
 /**
  * SDCcc system test.
@@ -110,25 +114,18 @@ public class TestSuiteIT {
     }
 
     private static Injector createTestSuiteITInjector(
-            final CryptoSettings cryptoSettings, final Boolean failingTests, final AbstractModule... override)
+            final CryptoSettings cryptoSettings,
+            final Boolean failingTests,
+            @Nullable final LocationConfig locationConfig,
+            final AbstractModule... override)
             throws IOException {
         final var tempDir = Files.createTempDirectory("SDCccIT_TestSuiteIT");
         tempDir.toFile().deleteOnExit();
 
         LOG.info("Creating injector for epr {}", DUT_EPR);
 
-        return createInjector(
-                ArrayUtils.addAll(override, new MockConfiguration(cryptoSettings, tempDir, failingTests)));
-    }
-
-    private static String getLoopbackName() {
-        final NetworkInterface loopbackAdapter;
-        try {
-            loopbackAdapter = NetworkInterface.getByInetAddress(InetAddress.getLoopbackAddress());
-        } catch (final SocketException e) {
-            throw new RuntimeException(e);
-        }
-        return loopbackAdapter.getName();
+        return createInjector(ArrayUtils.addAll(
+                override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig)));
     }
 
     private TestProvider getProvider() throws IOException {
@@ -136,7 +133,7 @@ public class TestSuiteIT {
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
 
-        final var injector = createTestSuiteITInjector(providerCrypto, false);
+        final var injector = createTestSuiteITInjector(providerCrypto, false, null);
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
@@ -146,20 +143,25 @@ public class TestSuiteIT {
         }
     }
 
-    private Injector getConsumerInjector(final boolean failingTests, final AbstractModule... override)
+    private Injector getConsumerInjector(
+            final Boolean failingTests, @Nullable final LocationConfig locationConfig, final AbstractModule... override)
             throws IOException {
 
         final var consumerCert = SSL_METADATA.getClientKeySet();
         assert consumerCert != null;
         final var consumerCrypto = SslMetadata.getCryptoSettings(consumerCert);
 
-        return createTestSuiteITInjector(consumerCrypto, failingTests, override);
+        return createTestSuiteITInjector(consumerCrypto, failingTests, locationConfig, override);
     }
 
     @BeforeEach
-    void setUp() throws IOException, TimeoutException, PreprocessingException {
+    void setUp() throws IOException {
         this.testProvider = getProvider();
-        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final DiscoveryAccess discoveryAccess =
+                this.testProvider.getSdcDevice().getDevice().getDiscoveryAccess();
+        discoveryAccess.setTypes(List.of(CommonConstants.MEDICAL_DEVICE_TYPE));
+        discoveryAccess.setScopes(List.of(GlueConstants.SCOPE_SDC_PROVIDER));
     }
 
     @AfterEach
@@ -168,13 +170,189 @@ public class TestSuiteIT {
     }
 
     /**
+     * Test whether the location based discovery mechanism only discovers those targets that have a matching
+     * location context scope string.
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT * 13)
+    public void testLocationBasedDiscovery() throws IOException, PreprocessingException, TimeoutException {
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/facility23%2Fbuilding23%2Ffloor23%2Fpoc23%2Froom23%2Fbed23"
+                            + "?fac=facility23&bed=" + bed + "&bldng=building23&poc=poc23&flr=floor23&rm=room23",
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    false);
+        }
+
+        {
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/facility23%2Fbuilding23%2Ffloor23%2Fpoc23%2Froom23%2Fbed23"
+                            + "?fac=facility23&bed=" + UUID.randomUUID()
+                            + "&bldng=building23&poc=poc23&flr=floor23&rm=room23",
+                    new LocationConfig(UUID.randomUUID().toString(), null, null, null, null, null),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/facility23%2Fbuilding23%2Ffloor23%2Fpoc23%2Froom23%2Fbed23"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    false);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    false);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + bed + "2",
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + "0" + bed,
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, null, "room23", bed.toString()),
+                    false);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=floor23&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, null, "room32", bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, "", null, bed.toString()),
+                    false);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=1&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, "", null, bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_"
+                            + "?fac=facility23&bldng=building23&poc=poc23&flr=&rm=room23&bed=" + bed,
+                    new LocationConfig(null, null, null, "1", null, bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_" + "?fac=facility23&bldng=building23&poc=poc23&rm=room23&bed="
+                            + bed,
+                    new LocationConfig(null, null, null, "", null, bed.toString()),
+                    true);
+        }
+
+        {
+            final UUID bed = UUID.randomUUID();
+            runWithSpecificLocation(
+                    "sdc.ctxt.loc:/sdc.ctxt.loc.detail/_" + "?fac=facility23&bldng=building23&poc=poc23&rm=room23&bed="
+                            + bed,
+                    new LocationConfig(null, null, null, null, null, bed.toString()),
+                    false);
+        }
+    }
+
+    private void runWithSpecificLocation(
+            final String locationScope, final LocationConfig locationConfig, final boolean expectedFailure)
+            throws PreprocessingException, TimeoutException, IOException {
+
+        final TestProvider provider = getProvider();
+
+        final DiscoveryAccess discoveryAccess =
+                provider.getSdcDevice().getDevice().getDiscoveryAccess();
+        discoveryAccess.setTypes(List.of(CommonConstants.MEDICAL_DEVICE_TYPE));
+        discoveryAccess.setScopes(List.of(GlueConstants.SCOPE_SDC_PROVIDER, locationScope));
+        provider.startService(DEFAULT_TIMEOUT);
+
+        try {
+            final var injector = getConsumerInjector(false, locationConfig);
+
+            final var injectorSpy = spy(injector);
+            final var testClientSpy = spy(injector.getInstance(TestClient.class));
+            when(injectorSpy.getInstance(TestClient.class)).thenReturn(testClientSpy);
+
+            InjectorTestBase.setInjector(injectorSpy);
+
+            final var obs = injector.getInstance(WasRunObserver.class);
+            assertFalse(obs.hadDirectRun());
+            assertFalse(obs.hadInvariantRun());
+
+            final var testSuite = injector.getInstance(TestSuite.class);
+
+            if (expectedFailure) {
+                final Throwable exception = assertThrows(RuntimeException.class, testSuite::runTestSuite);
+
+                assertTrue(exception.getMessage().contains("java.io.IOException: Couldn't connect to target"));
+            } else {
+                final var run = testSuite.runTestSuite();
+                assertEquals(0, run, "SDCcc had an unexpected failure");
+
+                assertTrue(obs.hadDirectRun());
+                assertTrue(obs.hadInvariantRun());
+
+                // no invalidation is allowed in the test run
+                final var testRunObserver = injector.getInstance(TestRunObserver.class);
+
+                assertFalse(
+                        testRunObserver.isInvalid(),
+                        "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+            }
+        } finally {
+            provider.stopService(DEFAULT_TIMEOUT);
+        }
+    }
+
+    /**
      * Runs the test suite with a mock client and mock tests, expected to pass.
      */
     @Test
     @Timeout(TEST_TIMEOUT)
-    public void testConsumer() throws IOException {
+    public void testConsumer() throws IOException, PreprocessingException, TimeoutException {
+        testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false);
+        final var injector = getConsumerInjector(false, null);
 
         final var injectorSpy = spy(injector);
         final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -202,19 +380,20 @@ public class TestSuiteIT {
     }
 
     /**
-     * Runs the test suite with a mock client, mock tests and preconditions throwing an exception,
-     * expected to fail, but not abort on phase 3.
+     * Runs the test suite with a mock client, mock tests and preconditions throwing an exception, expected to fail, but
+     * not abort on phase 3.
      */
     @Test
     @Timeout(TEST_TIMEOUT)
-    public void testInvalid() throws IOException, PreconditionException {
+    public void testInvalid() throws IOException, PreconditionException, PreprocessingException, TimeoutException {
+        testProvider.startService(DEFAULT_TIMEOUT);
 
         final var preconditionRegistryMock = mock(PreconditionRegistry.class);
         doThrow(new NullPointerException("intentional exception for testing purposes"))
                 .when(preconditionRegistryMock)
                 .runPreconditions();
 
-        final var injector = getConsumerInjector(false, new AbstractModule() {
+        final var injector = getConsumerInjector(false, null, new AbstractModule() {
             /**
              * Configures a {@link Binder} via the exposed methods.
              */
@@ -247,12 +426,14 @@ public class TestSuiteIT {
     }
 
     /**
-     * Runs the test consumer and causes a failed renew, verifies that test run is marked invalid.
+     * Runs the test consumer and causes a failed renewal, verifies that test run is marked invalid.
      */
     @Test
     @Timeout(TEST_TIMEOUT)
     public void testConsumerUnexpectedSubscriptionEnd() throws Exception {
-        final var injector = getConsumerInjector(false);
+        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final var injector = getConsumerInjector(false, null);
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -310,7 +491,9 @@ public class TestSuiteIT {
     @Test
     @Timeout(TEST_TIMEOUT)
     public void testConsumerExpectedDisconnect() throws Exception {
-        final var injector = getConsumerInjector(false);
+        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final var injector = getConsumerInjector(false, null);
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -349,8 +532,10 @@ public class TestSuiteIT {
      */
     @Test
     @Timeout(TEST_TIMEOUT)
-    public void testMockConsumerFailures() throws IOException {
-        final var injector = getConsumerInjector(true);
+    public void testMockConsumerFailures() throws IOException, PreprocessingException, TimeoutException {
+        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final var injector = getConsumerInjector(true, null);
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -372,16 +557,32 @@ public class TestSuiteIT {
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
     }
 
+    private record LocationConfig(
+            @Nullable String facility,
+            @Nullable String building,
+            @Nullable String pointOfCare,
+            @Nullable String floor,
+            @Nullable String room,
+            @Nullable String bed) {}
+
     private static final class MockConfiguration extends AbstractConfigurationModule {
 
         private final CryptoSettings cryptoSettings;
         private final Path tempDir;
         private final boolean failingTests;
+        private final LocationConfig locationConfig;
 
-        private MockConfiguration(final CryptoSettings cryptoSettings, final Path tempDir, final boolean failingTests) {
+        private MockConfiguration(
+                final CryptoSettings cryptoSettings,
+                final Path tempDir,
+                final boolean failingTests,
+                @Nullable final LocationConfig locationConfig) {
             this.cryptoSettings = cryptoSettings;
             this.tempDir = tempDir;
             this.failingTests = failingTests;
+
+            this.locationConfig = Objects.requireNonNullElseGet(
+                    locationConfig, () -> new LocationConfig(null, null, null, null, null, null));
         }
 
         @Override
@@ -391,6 +592,12 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.CI_MODE, Boolean.class, true);
             bind(TestSuiteConfig.CONSUMER_ENABLE, Boolean.class, true);
             bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, this.locationConfig.facility);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, this.locationConfig.building);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, this.locationConfig.pointOfCare);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FLOOR, String.class, this.locationConfig.floor);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, this.locationConfig.room);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, this.locationConfig.bed);
 
             bind(TestSuiteConfig.PROVIDER_ENABLE, Boolean.class, true);
             bind(TestSuiteConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
