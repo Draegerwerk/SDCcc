@@ -9,6 +9,7 @@ package com.draeger.medical.sdccc.messages;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
@@ -2573,6 +2574,51 @@ public class TestMessageStorage {
             assertNotNull(result);
             assertEquals(content, result.getBody());
             verifyNoInteractions(testRunObserver);
+        }
+    }
+
+    /**
+     * Checks that convertMessageToMessageContent() uses the detected encoding.
+     *
+     * @param dir - a temporary directory.
+     * @throws IOException - when something goes wrong.
+     */
+    @Test
+    public void testConvertMessageToMessageContentUseAnotherEncoding(@TempDir final File dir) throws IOException {
+
+        final Charset charsetInHttpHeader = StandardCharsets.UTF_16LE;
+        final Charset charsetInXMLDeclaration = StandardCharsets.UTF_16LE;
+        final Charset charsetInXMLDeclarationEncoding = StandardCharsets.UTF_16LE;
+        final String mimeType = "application/xml";
+
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            // given
+            final ListMultimap<String, String> headers = ArrayListMultimap.create();
+            headers.put("Content-Type", String.format("%s;charset=%s", mimeType, charsetInHttpHeader));
+
+            final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
+            final TransportInfo transportInfo =
+                    new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
+            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    communicationContext,
+                    messageStorage);
+            final String content = String.format(
+                    "<?xml version=\"1.0\" encoding=\"%s\"?>%n<sometag></sometag>", charsetInXMLDeclaration);
+            final byte[] encodedContent = content.getBytes(charsetInXMLDeclarationEncoding);
+            message.write(encodedContent, 0, encodedContent.length);
+            message.close();
+
+            // when
+            final var result = messageStorage.convertMessageToMessageContent(message);
+
+            // then
+            assertNotNull(result);
+            assertNotEquals(new String(encodedContent, StandardCharsets.UTF_8), result.getBody());
+            assertEquals(content, result.getBody());
         }
     }
 
