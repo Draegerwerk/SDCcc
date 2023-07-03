@@ -431,6 +431,11 @@ public class TestSuite {
     private static Injector createTestRunInjector(final CommandLineOptions cmdLine, final File testRunDir)
             throws IOException {
 
+        final AbstractConfigurationModule baseConfigModule = new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {}
+        };
+
         final AbstractConfigurationModule configModule = new AbstractConfigurationModule() {
             @Override
             protected void defaultConfigure() {}
@@ -444,10 +449,48 @@ public class TestSuite {
         final AbstractConfigurationModule cliOverrideModule = new AbstractConfigurationModule() {
             @Override
             protected void defaultConfigure() {
-                cmdLine.getDeviceEpr().ifPresent(epr -> {
-                    LOG.info("Using consumer target epr from cli: {}", epr);
+                final String epr = cmdLine.getDeviceEpr();
+                if (epr != null) {
+                    LOG.info("Using target provider epr from cli: {}", epr);
                     bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, epr);
-                });
+                }
+
+                final String deviceFacility = cmdLine.getDeviceFacility();
+                if (deviceFacility != null) {
+                    LOG.info("Using target provider location facility from cli: {}", deviceFacility);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, deviceFacility);
+                }
+
+                final String deviceBuilding = cmdLine.getDeviceBuilding();
+                if (deviceBuilding != null) {
+                    LOG.info("Using target provider location building from cli: {}", deviceBuilding);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, deviceBuilding);
+                }
+
+                final String devicePointOfCare = cmdLine.getDevicePointOfCare();
+                if (devicePointOfCare != null) {
+                    LOG.info("Using target provider location point of care from cli: {}", devicePointOfCare);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, devicePointOfCare);
+                }
+
+                final String deviceFloor = cmdLine.getDeviceFloor();
+                if (deviceFloor != null) {
+                    LOG.info("Using target provider location floor from cli: {}", deviceFloor);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FLOOR, String.class, deviceFloor);
+                }
+
+                final String deviceRoom = cmdLine.getDeviceRoom();
+                if (deviceRoom != null) {
+                    LOG.info("Using target provider location room from cli: {}", deviceRoom);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, deviceRoom);
+                }
+
+                final String deviceBed = cmdLine.getDeviceBed();
+                if (deviceBed != null) {
+                    LOG.info("Using target provider location bed from cli: {}", deviceBed);
+                    bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, deviceBed);
+                }
+
                 cmdLine.getIpAddress().ifPresent(ip -> {
                     LOG.info("Using adapter ip from cli: {}", ip);
                     bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, ip);
@@ -458,6 +501,15 @@ public class TestSuite {
         try (final var configFileStream =
                 new FileInputStream(cmdLine.getConfigPath().toFile())) {
             final var configModuleParser = new TomlConfigParser(TestSuiteConfig.class);
+
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FLOOR, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, null);
+
             configModuleParser.parseToml(configFileStream, configModule);
         }
         try (final var testConfigFileStream =
@@ -467,8 +519,8 @@ public class TestSuite {
         }
 
         // cli overrides
-        final var configurationModule =
-                Modules.override(configModule, testConfigModule).with(cliOverrideModule);
+        final var configurationModule = Modules.override(baseConfigModule)
+                .with(Modules.override(configModule, testConfigModule).with(cliOverrideModule));
 
         return createInjector(configurationModule, new TestRunConfig(testRunDir));
     }

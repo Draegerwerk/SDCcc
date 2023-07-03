@@ -12,7 +12,9 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.dpws.soap.wseventing.SubscriptionManager;
+import org.somda.sdc.glue.provider.SdcDevice;
 
 /**
  * An SDC provider used for testing.
@@ -37,6 +39,10 @@ public interface TestProvider {
     void stopService(Duration waitTime) throws TimeoutException;
 
     Injector getInjector();
+
+    SdcDevice getSdcDevice();
+
+    Mdib getMdib();
 
     /**
      * Gets all currently active subscriptions for the Provider.
