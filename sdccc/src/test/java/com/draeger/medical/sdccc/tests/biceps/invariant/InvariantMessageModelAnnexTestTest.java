@@ -601,7 +601,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC5ReportDuplication() throws Exception {
+    public void testRequirementC5GoodReportDuplication() throws Exception {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
@@ -1655,7 +1655,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC11ReportDuplication() throws Exception {
+    public void testRequirementC11GoodReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicAlertReport(
@@ -1842,7 +1842,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC12ReportDuplication() throws Exception {
+    public void testRequirementC12GoodReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicComponentReport(
@@ -2043,7 +2043,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC13ReportDuplication() throws Exception {
+    public void testRequirementC13GoodReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicContextReport(
@@ -2290,7 +2290,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC14ReportDuplication() throws Exception {
+    public void testRequirementC14GoodReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicMetricReport(
@@ -2479,7 +2479,7 @@ public class InvariantMessageModelAnnexTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirementC15ReportDuplication() throws Exception {
+    public void testRequirementC15GoodReportDuplication() throws Exception {
         final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
 
         final var first = buildEpisodicOperationalStateReport(
