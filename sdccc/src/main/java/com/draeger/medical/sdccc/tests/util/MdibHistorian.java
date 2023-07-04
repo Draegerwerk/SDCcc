@@ -133,7 +133,7 @@ public class MdibHistorian {
                         List.of(DuplicateContextStateHandleHandler.class));
                 bind(
                         CommonConfig.CONSUMER_DESCRIPTION_PREPROCESSING_SEGMENTS,
-                        new TypeLiteral<List<Class<? extends DescriptionPreprocessingSegment>>>() {},
+                        new TypeLiteral<>() {},
                         List.of(DescriptorChildRemover.class, DuplicateChecker.class));
             }
         }
