@@ -1250,6 +1250,66 @@ public class InvariantParticipantModelVersioningTestTest {
     }
 
     /**
+     * Tests whether duplicated reports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR5003GoodReportDuplication() throws Exception {
+
+        final var initial = buildMdib(null, BigInteger.ZERO);
+
+        final var firstUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildMds(MDS_HANDLE, BigInteger.ONE, BigInteger.ONE),
+                        buildVmd(VMD_HANDLE, BigInteger.ONE, BigInteger.ONE),
+                        buildChannel(CHANNEL_HANDLE, BigInteger.ONE, BigInteger.ONE)));
+
+        final var secondUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildMds(MDS_HANDLE, BigInteger.TWO, BigInteger.TWO),
+                        buildVmd(VMD_HANDLE, BigInteger.TWO, BigInteger.TWO),
+                        buildChannel(CHANNEL_HANDLE, BigInteger.TWO, BigInteger.TWO)));
+
+        final var thirdUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildMds(MDS_HANDLE, BigInteger.valueOf(3), BigInteger.valueOf(3)),
+                        buildVmd(VMD_HANDLE, BigInteger.valueOf(3), BigInteger.valueOf(3))),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL, buildChannel(CHANNEL_HANDLE, BigInteger.TWO, BigInteger.TWO)));
+
+        final var fourthUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.valueOf(4),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildMds(MDS_HANDLE, BigInteger.valueOf(4), BigInteger.valueOf(4)),
+                        buildVmd(VMD_HANDLE, BigInteger.valueOf(4), BigInteger.valueOf(4))),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        VMD_HANDLE,
+                        buildChannel(CHANNEL_HANDLE, BigInteger.TWO, BigInteger.TWO)));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, thirdUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, fourthUpdate);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, fourthUpdate);
+
+        testClass.testRequirementR5003();
+    }
+
+    /**
      * Tests whether just the initial value of the descriptor version is implied.
      *
      * @throws Exception on any exception

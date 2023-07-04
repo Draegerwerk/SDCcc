@@ -365,7 +365,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                 var previousMdibVersion = BigInteger.valueOf(-1);
 
                 try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                        mdibHistorian.uniqueEpisodicReportBasedHistory(sequenceId)) {
                     RemoteMdibAccess current = history.next();
                     while (current != null) {
                         final var currentMdibVersion = ImpliedValueUtil.getMdibVersion(current.getMdibVersion());
