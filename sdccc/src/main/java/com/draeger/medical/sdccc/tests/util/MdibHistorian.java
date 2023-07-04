@@ -183,6 +183,15 @@ public class MdibHistorian {
         return convertToRemoteMdib(initialMdib);
     }
 
+    /**
+     * Generates an mdib history for a sequence id using the first available GetMdibResponse for said sequence id and
+     * all related episodic reports. Ensures that all reports in the history are unique by removing duplicates.
+     *
+     * @param sequenceId of the sequence to generate history for
+     * @return a new result based on episodic reports
+     * @throws PreprocessingException    if converting the initial mdib fails
+     * @throws ReportProcessingException if applying reports fails
+     */
     public HistorianResult uniqueEpisodicReportBasedHistory(final String sequenceId)
             throws PreprocessingException, ReportProcessingException {
         return getHistorianResultForEpisodicReportBasedHistory(sequenceId, true);
@@ -203,7 +212,9 @@ public class MdibHistorian {
         return getHistorianResultForEpisodicReportBasedHistory(sequenceId, false);
     }
 
-    private HistorianResult getHistorianResultForEpisodicReportBasedHistory(String sequenceId, boolean ensureUnique) throws PreprocessingException, ReportProcessingException {
+    private HistorianResult getHistorianResultForEpisodicReportBasedHistory(
+            final String sequenceId, final boolean ensureUnique)
+            throws PreprocessingException, ReportProcessingException {
         // create new storage
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
@@ -215,7 +226,7 @@ public class MdibHistorian {
             final var messages =
                     messageStorage.getInboundMessagesByBodyType(Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
             final BigInteger[] last = new BigInteger[1];
-            var stream = messages.getStream()
+            final var stream = messages.getStream()
                     .map(this::unmarshallReport)
                     .filter(report -> sequenceId.equals(report.getSequenceId()))
                     .filter(mdibVersionPredicate)
@@ -328,18 +339,18 @@ public class MdibHistorian {
             }
             final BigInteger[] last = new BigInteger[1];
             return iter.filter(it -> {
-                    if (last[0] == null) {
-                        last[0] = it.getMdibVersion();
-                        return true;
-                    }
-                    if (it.getMdibVersion().compareTo(last[0]) > 0) {
-                        last[0] = it.getMdibVersion();
-                        return true;
-                    } else {
-                        // found duplicate Version -> drop duplicate
-                        last[0] = it.getMdibVersion();
-                        return false;
-                    }
+                if (last[0] == null) {
+                    last[0] = it.getMdibVersion();
+                    return true;
+                }
+                if (it.getMdibVersion().compareTo(last[0]) > 0) {
+                    last[0] = it.getMdibVersion();
+                    return true;
+                } else {
+                    // found duplicate Version -> drop duplicate
+                    last[0] = it.getMdibVersion();
+                    return false;
+                }
             });
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve initial mdib from storage";
