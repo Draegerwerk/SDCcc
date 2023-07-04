@@ -222,7 +222,8 @@ public class MessageStorageUtil {
 
         final CommunicationContext messageContext = new CommunicationContext(
                 new HttpApplicationInfo(httpHeaders, "", ""),
-                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates));
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates),
+                null);
         addMessage(
                 storage,
                 messageStream,
@@ -256,7 +257,8 @@ public class MessageStorageUtil {
 
         final CommunicationContext messageContext = new CommunicationContext(
                 new HttpApplicationInfo(httpHeaders, "", ""),
-                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates));
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates),
+                null);
         addMessage(
                 storage,
                 message,
@@ -319,7 +321,8 @@ public class MessageStorageUtil {
         final CommunicationContext messageContext = new CommunicationContext(
                 new ApplicationInfo(),
                 new TransportInfo(
-                        DpwsConstants.URI_SCHEME_SOAP_OVER_UDP, null, null, null, null, Collections.emptyList()));
+                        DpwsConstants.URI_SCHEME_SOAP_OVER_UDP, null, null, null, null, Collections.emptyList()),
+                null);
         addMessage(
                 storage,
                 message,

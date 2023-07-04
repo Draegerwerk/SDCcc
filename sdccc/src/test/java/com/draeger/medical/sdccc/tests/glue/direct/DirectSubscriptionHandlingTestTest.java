@@ -828,9 +828,9 @@ public class DirectSubscriptionHandlingTestTest {
         final HashMap<String, List<Interceptor>> subscriptionIdsToInterceptors = new HashMap<>();
         final HashMap<NotificationSink, String> notificationSinkToSubscriptionId = new HashMap<>();
 
-        when(eventSink.subscribe(anyList(), any(), any())).thenAnswer(invocationOnMock -> {
-            final List<String> actions = invocationOnMock.getArgument(0);
-            final NotificationSink notificationSink = invocationOnMock.getArgument(2);
+        when(eventSink.subscribe(any(), anyList(), any(), any())).thenAnswer(invocationOnMock -> {
+            final List<String> actions = invocationOnMock.getArgument(1);
+            final NotificationSink notificationSink = invocationOnMock.getArgument(3);
 
             if (this.supportedReports.containsAll(actions)) {
                 final String subscriptionId = lastSubscriptionId.toString();
