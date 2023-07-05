@@ -111,8 +111,10 @@ public class InvariantParticipantModelVersioningTestTest {
     private static MessageBuilder messageBuilder;
     private MessageStorage storage;
     private InvariantParticipantModelVersioningTest testClass;
+
     @SuppressWarnings("FieldCanBeLocal")
     private Injector riInjector;
+
     private JaxbMarshalling baseMarshalling;
     private SoapMarshalling marshalling;
 
