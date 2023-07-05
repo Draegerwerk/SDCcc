@@ -151,9 +151,10 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             + " extends pm:AbstractDescriptor.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0034_0)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
-            + " verifies that descriptor versions are incremented whenever the descriptors attributes or content changes,\n"
+            + " verifies that descriptor versions are incremented whenever the descriptors attributes or content changes,"
             + " except for changes to children of any Type that extends AbstractDescriptor.")
-    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionChangedPrecondition.class})
+    @RequirePrecondition(
+            simplePreconditions = {ConditionalPreconditions.TriggerDescriptionModificationReportPrecondition.class})
     void testRequirementR0034() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
