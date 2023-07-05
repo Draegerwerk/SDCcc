@@ -40,7 +40,6 @@ import org.somda.sdc.biceps.common.access.ReadTransactionImpl;
 import org.somda.sdc.biceps.common.access.factory.ReadTransactionFactory;
 import org.somda.sdc.biceps.common.factory.MdibEntityGuiceAssistedFactory;
 import org.somda.sdc.biceps.common.preprocessing.DescriptorChildRemover;
-import org.somda.sdc.biceps.common.storage.DescriptionPreprocessingSegment;
 import org.somda.sdc.biceps.common.storage.MdibStorage;
 import org.somda.sdc.biceps.common.storage.MdibStorageImpl;
 import org.somda.sdc.biceps.common.storage.MdibStoragePreprocessingChain;
@@ -233,15 +232,15 @@ public class MdibHistorian {
                     .filter(it -> {
                         if (ensureUnique) {
                             if (last[0] == null) {
-                                last[0] = it.getMdibVersion();
+                                last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                                 return true;
                             }
-                            if (it.getMdibVersion().compareTo(last[0]) > 0) {
-                                last[0] = it.getMdibVersion();
+                            if (ImpliedValueUtil.getReportMdibVersion(it).compareTo(last[0]) > 0) {
+                                last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                                 return true;
                             } else {
                                 // found duplicate Version -> drop duplicate
-                                last[0] = it.getMdibVersion();
+                                last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                                 return false;
                             }
                         } else {
@@ -340,15 +339,15 @@ public class MdibHistorian {
             final BigInteger[] last = new BigInteger[1];
             return iter.filter(it -> {
                 if (last[0] == null) {
-                    last[0] = it.getMdibVersion();
+                    last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                     return true;
                 }
-                if (it.getMdibVersion().compareTo(last[0]) > 0) {
-                    last[0] = it.getMdibVersion();
+                if (ImpliedValueUtil.getReportMdibVersion(it).compareTo(last[0]) > 0) {
+                    last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                     return true;
                 } else {
                     // found duplicate Version -> drop duplicate
-                    last[0] = it.getMdibVersion();
+                    last[0] = ImpliedValueUtil.getReportMdibVersion(it);
                     return false;
                 }
             });
