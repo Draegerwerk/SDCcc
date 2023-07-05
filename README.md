@@ -262,7 +262,7 @@ this case in order to minimize the risk of such an invalid application going unn
 | R0025_0         | SetComponentActivation                                                                      |
 | R0029_0         | SetAlertActivation, SetAlertConditionPresence                                               |
 | R0033           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
-| R0034_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R0034_0         | TriggerReport                                                                               |
 | R0038_0         | TriggerReport                                                                               |
 | R0055_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R0097           | CreateContextStateWithAssociation                                                           |
@@ -279,6 +279,7 @@ this case in order to minimize the risk of such an invalid application going unn
 | C-13            | TriggerReport                                                                               |
 | C-14            | TriggerReport                                                                               |
 | C-15            | TriggerReport                                                                               |
+| R5024           | TriggerReport                                                                               |
 | R5025_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5046_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5051           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
