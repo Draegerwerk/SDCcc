@@ -31,7 +31,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
@@ -50,6 +54,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -166,10 +171,10 @@ public class MessageStorage implements AutoCloseable {
     private final CyclicBarrier flushBarrier;
 
     private final TestRunObserver testRunObserver;
-    private boolean summarizeMessageEncodingErrors;
-    private long messageEncodingErrorCount;
+    private final boolean summarizeMessageEncodingErrors;
+    private AtomicLong messageEncodingErrorCount;
     private int invalidMimeTypeCount;
-    private boolean enableEncodingCheck;
+    private final boolean enableEncodingCheck;
 
     @Inject
     MessageStorage(
@@ -185,7 +190,7 @@ public class MessageStorage implements AutoCloseable {
         this.blockingQueueSize = blockingQueueSize;
         this.summarizeMessageEncodingErrors = summarizeMessageEncodingErrors;
         this.enableEncodingCheck = enableEncodingCheck;
-        this.messageEncodingErrorCount = 0;
+        this.messageEncodingErrorCount = new AtomicLong(0);
         this.invalidMimeTypeCount = 0;
 
         this.actionExtractor = new XPathExtractor(String.format("//%s:Action", WsAddressingConstants.NAMESPACE_PREFIX));
@@ -259,7 +264,7 @@ public class MessageStorage implements AutoCloseable {
         return xmlInputFactory;
     }
 
-    private MessageContent convertMessageToMessageContent(final Message message) {
+    protected MessageContent convertMessageToMessageContent(final Message message) {
         boolean isSOAP = false;
         String body = "";
         final Set<String> actions = new HashSet<>();
@@ -270,8 +275,27 @@ public class MessageStorage implements AutoCloseable {
             if (this.enableEncodingCheck) {
                 messageCharset = determineCharsetFromMessage(message);
             }
-            // TODO: would it not be better to use CharsetDecoder here? (https://github.com/Draegerwerk/SDCcc/issues/2)
-            body = new String(message.getFinalMemory(), messageCharset);
+            final CharsetDecoder charsetDecoder = messageCharset.newDecoder();
+            charsetDecoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            charsetDecoder.onMalformedInput(CodingErrorAction.REPORT);
+            try {
+                final var decodingResult = charsetDecoder.decode(ByteBuffer.wrap(message.getFinalMemory()));
+                body = decodingResult.toString();
+            } catch (CharacterCodingException e) {
+                if (this.enableEncodingCheck) {
+                    if (this.summarizeMessageEncodingErrors) {
+                        // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
+                        this.messageEncodingErrorCount.incrementAndGet();
+                    } else {
+                        this.testRunObserver.invalidateTestRun(String.format(
+                                "Encountered message encoding problem: charset %s was specified, but message "
+                                        + "cannot be decoded using this charset. The specified charset is incorrect, "
+                                        + "or the message contains invalid characters (Message UID='%s').",
+                                messageCharset, message.getID()));
+                    }
+                }
+                body = new String(message.getFinalMemory(), messageCharset);
+            }
             isSOAP = processMessageBody(body, actions, mdibVersionGroups);
         }
         return new MessageContent(
@@ -351,7 +375,7 @@ public class MessageStorage implements AutoCloseable {
                     (String originA, String valueA, String originB, String valueB) -> {
                         if (this.summarizeMessageEncodingErrors) {
                             // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                            this.messageEncodingErrorCount += 1;
+                            this.messageEncodingErrorCount.incrementAndGet();
                         } else {
                             this.testRunObserver.invalidateTestRun(String.format(
                                     INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
@@ -375,7 +399,7 @@ public class MessageStorage implements AutoCloseable {
                 }
                 if (this.summarizeMessageEncodingErrors) {
                     // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                    this.messageEncodingErrorCount++;
+                    this.messageEncodingErrorCount.incrementAndGet();
                 } else {
                     this.testRunObserver.invalidateTestRun(String.format(
                             "Encountered a message whose encoding is declared to be %s. This violates"
@@ -410,7 +434,7 @@ public class MessageStorage implements AutoCloseable {
                 } else {
                     if (this.summarizeMessageEncodingErrors) {
                         // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                        this.messageEncodingErrorCount += 1;
+                        this.messageEncodingErrorCount.incrementAndGet();
                     } else {
                         this.testRunObserver.invalidateTestRun(
                                 "Message encoding could not be determined for message with ID '" + message.getID()
@@ -518,7 +542,7 @@ public class MessageStorage implements AutoCloseable {
         } catch (IOException e) {
             if (this.summarizeMessageEncodingErrors) {
                 // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                this.messageEncodingErrorCount += 1;
+                this.messageEncodingErrorCount.incrementAndGet();
             } else {
                 this.testRunObserver.invalidateTestRun(
                         "Unable to read message contents of message with ID '" + message.getID() + "'", e);
@@ -547,7 +571,7 @@ public class MessageStorage implements AutoCloseable {
                 (String originA, String valueA, String originB, String valueB) -> {
                     if (this.summarizeMessageEncodingErrors) {
                         // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                        this.messageEncodingErrorCount += 1;
+                        this.messageEncodingErrorCount.incrementAndGet();
                     } else {
                         this.testRunObserver.invalidateTestRun(String.format(
                                 INCONSISTENT_CHARSET_DECLARATION_WITH_ORIGINS,
@@ -713,7 +737,7 @@ public class MessageStorage implements AutoCloseable {
                         //       the Message before storing it in the DB.
                         if (this.summarizeMessageEncodingErrors) {
                             // TestRun will be invalidated in TestSuite if messageEncodingErrorCount > 0
-                            this.messageEncodingErrorCount += 1;
+                            this.messageEncodingErrorCount.incrementAndGet();
                         } else {
                             this.testRunObserver.invalidateTestRun(
                                     String.format(
@@ -1797,7 +1821,7 @@ public class MessageStorage implements AutoCloseable {
      * @return the count
      */
     public long getMessageEncodingErrorCount() {
-        return this.messageEncodingErrorCount;
+        return this.messageEncodingErrorCount.getPlain();
     }
 
     /**
@@ -1809,7 +1833,7 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
-     * Container for the query result stream and the information on whether or not the objects are present. This shall
+     * Container for the query result stream and the information on whether the objects are present. This shall
      * always be closed after usage!
      *
      * @param <T> query result stream type
