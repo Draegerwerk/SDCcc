@@ -22,9 +22,7 @@ jobs:
       - name: Retrieve current version from pom
         run: |
           echo RELEASE_VERSION=$(cat pom.xml | grep -o -P '(?<=revision\>).*(?=\<\/revision)') >> $GITHUB_ENV
-          echo "Release version is $RELEASE_VERSION"
           echo GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA") >> $GITHUB_ENV
-          echo "Git revision is is $GIT_HASH_SHORT"
 
       - name: Remove SNAPSHOT suffix for release
         if: startsWith(github.ref, 'refs/tags/v')
