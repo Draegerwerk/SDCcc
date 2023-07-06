@@ -226,6 +226,7 @@ public class MdibHistorian {
                     messageStorage.getInboundMessagesByBodyType(Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
             final BigInteger[] last = new BigInteger[1];
             final var stream = messages.getStream()
+                    .sequential() // the stateful filter operation below is not threadsafe
                     .map(this::unmarshallReport)
                     .filter(report -> sequenceId.equals(report.getSequenceId()))
                     .filter(mdibVersionPredicate)
@@ -331,7 +332,9 @@ public class MdibHistorian {
             final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
                     sequenceId, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
 
-            var iter = messages.getStream().map(this::unmarshallReport);
+            var iter = messages.getStream()
+                    .sequential() // the stateful filter operation below is not thread-safe
+                    .map(this::unmarshallReport);
             if (minimumMdibVersion != null) {
                 iter = iter.filter(
                         it -> ImpliedValueUtil.getReportMdibVersion(it).compareTo(minimumMdibVersion) >= 1);
