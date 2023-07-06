@@ -2578,7 +2578,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2623,7 +2624,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2667,7 +2669,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2709,7 +2712,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2753,7 +2757,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2802,7 +2807,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
@@ -2847,7 +2853,8 @@ public class TestMessageStorage {
             final HttpApplicationInfo applicationInfo = new HttpApplicationInfo(headers, "transactionId", "requestURI");
             final TransportInfo transportInfo =
                     new TransportInfo("http", "localhost", 1234, "remotehost", 4567, List.of());
-            final CommunicationContext communicationContext = new CommunicationContext(applicationInfo, transportInfo);
+            final CommunicationContext communicationContext =
+                    new CommunicationContext(applicationInfo, transportInfo, null);
             final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
                     CommunicationLog.MessageType.REQUEST,
