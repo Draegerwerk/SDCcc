@@ -30,6 +30,7 @@ import com.google.inject.name.Names;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
-import org.somda.sdc.dpws.factory.CommunicationLogFactory;
+import org.somda.sdc.dpws.DpwsConstants;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
@@ -547,21 +548,16 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             fail("failed to retrieve serviceProxy for " + serviceName);
         }
 
-        final List<String> actions = List.of(reportTestData.getReportAction());
-
         final RequestResponseClient requestResponseClient =
                 hostedServiceProxy.orElseThrow().getRequestResponseClient();
 
-        final EventSink eventSink = eventSinkFactory.createWsEventingEventSink(
-                requestResponseClient,
-                baseURI,
-                testClient
-                        .getInjector()
-                        .getInstance(CommunicationLogFactory.class)
-                        .createCommunicationLog());
+        final EventSink eventSink = eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI, null);
         final NotificationSink notificationSink = notificationSinkFactory.createNotificationSink(wsaServerInterceptor);
-        final ListenableFuture<SubscribeResult> subscribeResult =
-                eventSink.subscribe(actions, DURATION, notificationSink);
+        final ListenableFuture<SubscribeResult> subscribeResult = eventSink.subscribe(
+                DpwsConstants.WS_EVENTING_SUPPORTED_DIALECT,
+                Collections.singletonList(reportTestData.getReportAction()),
+                DURATION,
+                notificationSink);
         notificationSink.register(new Interceptor() {
 
             @MessageInterceptor(direction = Direction.NOTIFICATION)

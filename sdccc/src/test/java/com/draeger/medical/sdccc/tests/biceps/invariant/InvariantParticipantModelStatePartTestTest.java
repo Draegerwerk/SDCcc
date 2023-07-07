@@ -5831,7 +5831,8 @@ public class InvariantParticipantModelStatePartTestTest {
     private CommunicationContext createCommunicationContext() throws CertificateException, IOException {
         return new CommunicationContext(
                 new HttpApplicationInfo(ArrayListMultimap.create(), "", ""),
-                new TransportInfo("https", null, null, null, null, List.of(CertificateUtil.getDummyCert())));
+                new TransportInfo("https", null, null, null, null, List.of(CertificateUtil.getDummyCert())),
+                null);
     }
 
     private byte[] getMessageBytes(final Envelope message) throws Exception {
