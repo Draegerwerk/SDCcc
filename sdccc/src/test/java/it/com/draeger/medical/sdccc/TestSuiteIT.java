@@ -51,7 +51,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -70,11 +70,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
-import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 import org.somda.sdc.dpws.device.DiscoveryAccess;
-import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.factory.TransportBindingFactory;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
@@ -457,10 +455,7 @@ public class TestSuiteIT {
 
         // unsubscribe from outside the client, next renew should mark test run invalid
         final var transportBindingFactory = client.getInjector().getInstance(TransportBindingFactory.class);
-        final CommunicationLog communicationLog =
-                client.getInjector().getInstance(CommunicationLogFactory.class).createCommunicationLog();
-        final var transportBinding =
-                transportBindingFactory.createHttpBinding(subManAddress.getValue(), communicationLog);
+        final var transportBinding = transportBindingFactory.createHttpBinding(subManAddress.getValue(), null);
 
         final var rrClientFactory = client.getInjector().getInstance(RequestResponseClientFactory.class);
         final var requestResponseClient = rrClientFactory.createRequestResponseClient(transportBinding);
@@ -474,7 +469,7 @@ public class TestSuiteIT {
         assertFalse(response.isFault(), "unsubscribe faulted");
 
         // wait until subscription must've ended and renews must've failed
-        final var subscriptionEnd = Duration.between(LocalDateTime.now(), subMan.getExpiresTimeout());
+        final var subscriptionEnd = Duration.between(Instant.now(), subMan.getExpiresTimeout());
 
         if (!subscriptionEnd.isNegative()) {
             Thread.sleep(subscriptionEnd.toMillis());
@@ -514,7 +509,7 @@ public class TestSuiteIT {
         client.disconnect();
 
         // wait until subscription must've ended
-        final var subscriptionEnd = Duration.between(LocalDateTime.now(), subManTimeout);
+        final var subscriptionEnd = Duration.between(Instant.now(), subManTimeout);
 
         if (!subscriptionEnd.isNegative()) {
             Thread.sleep(subscriptionEnd.toMillis());
