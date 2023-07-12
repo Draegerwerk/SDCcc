@@ -519,19 +519,14 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationUptPrecondition correctly calls manipulation")
     public void testDescriptionModificationUptManipulation() {
-        final var descriptorHandle = "coolesHandle";
-
-        when(mockManipulations.triggerDescriptorUpdate(descriptorHandle))
+        when(mockManipulations.triggerAnyDescriptorUpdate())
                 .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-
-        when(mockDevice.getMdibAccess().getRootEntities().get(0).getDescriptor().getHandle())
-                .thenReturn(descriptorHandle);
 
         new ConditionalPreconditions.DescriptionModificationUptPrecondition();
 
         assertTrue(ConditionalPreconditions.DescriptionModificationUptPrecondition.manipulation(testInjector));
 
-        verify(mockManipulations, times(1)).triggerDescriptorUpdate(descriptorHandle);
+        verify(mockManipulations, times(1)).triggerAnyDescriptorUpdate();
     }
 
     /**

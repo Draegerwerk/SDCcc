@@ -136,6 +136,15 @@ public interface Manipulations {
     ResponseTypes.Result triggerDescriptorUpdate(String handle);
 
     /**
+     * Trigger a descriptor update for some descriptor handle.
+     * The handle is chosen by the device. It is expected that the manipulation
+     * succeeds as long as there is a handle than can be updated.
+     *
+     * @return the result of the manipulation
+     */
+    ResponseTypes.Result triggerAnyDescriptorUpdate();
+
+    /**
      * Trigger a report message of the provided type.
      *
      * @param reportType type of report a message should be triggered for.
