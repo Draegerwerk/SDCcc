@@ -272,7 +272,7 @@ this case in order to minimize the risk of such an invalid application going unn
 | R0125           | CreateContextStateWithAssociation                                                           |
 | R0133           | CreateContextStateWithAssociation                                                           |
 | B-128           | SetSystemSignalActivation, SetAlertActivation                                               |
-| C-5             | TriggerDescriptorUpdate                                                                     |
+| C-5             | TriggerAnyDescriptorUpdate                                                                  |
 | C-7             | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor, TriggerDescriptorUpdate |
 | C-11            | TriggerReport                                                                               |
 | C-12            | TriggerReport                                                                               |
@@ -283,7 +283,7 @@ this case in order to minimize the risk of such an invalid application going unn
 | R5025_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5046_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5051           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
-| R5052           | TriggerDescriptorUpdate                                                                     |
+| R5052           | TriggerAnyDescriptorUpdate                                                                  |
 | R5053           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                                                     |
 | 5-4-7_1         | SetComponentActivation, SetMetricStatus                                                     |
