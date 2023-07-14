@@ -233,8 +233,7 @@ public class FallbackManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result triggerAnyDescriptorUpdate() {
-        final var triggerReportString = "Trigger a descriptor update for some descriptor";
-        final var interactionMessage = triggerReportString;
+        final var interactionMessage = "Trigger a descriptor update for some descriptor";
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
                     @Override
