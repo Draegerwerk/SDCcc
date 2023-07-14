@@ -172,7 +172,7 @@ public class MessageStorage implements AutoCloseable {
 
     private final TestRunObserver testRunObserver;
     private final boolean summarizeMessageEncodingErrors;
-    private AtomicLong messageEncodingErrorCount;
+    private final AtomicLong messageEncodingErrorCount;
     private int invalidMimeTypeCount;
     private final boolean enableEncodingCheck;
 
@@ -1426,9 +1426,11 @@ public class MessageStorage implements AutoCloseable {
                             messageContentRoot.get(MessageContent_.direction), CommunicationLog.Direction.INBOUND),
                     criteriaBuilder.exists(mdibVersionGroupSubQuery)));
 
-            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
-                    .join(MessageContent_.mdibVersionGroups)
-                    .get(MdibVersionGroupEntity_.mdibVersion)));
+            messageContentQuery.orderBy(
+                    criteriaBuilder.asc(messageContentRoot
+                            .join(MessageContent_.mdibVersionGroups)
+                            .get(MdibVersionGroupEntity_.mdibVersion)),
+                    criteriaBuilder.asc(messageContentRoot.get(MessageContent_.timestamp)));
         }
 
         final boolean present;
