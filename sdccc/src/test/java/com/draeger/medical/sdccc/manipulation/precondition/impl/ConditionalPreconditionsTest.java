@@ -519,8 +519,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationUptPrecondition correctly calls manipulation")
     public void testDescriptionModificationUptManipulation() {
-        when(mockManipulations.triggerAnyDescriptorUpdate())
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.triggerAnyDescriptorUpdate()).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
 
         new ConditionalPreconditions.DescriptionModificationUptPrecondition();
 
