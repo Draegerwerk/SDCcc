@@ -172,7 +172,7 @@
         <dependency>
             <groupId>com.draeger.medical</groupId>
             <artifactId>t2iapi</artifactId>
-            <version>2.0.1-SHAPSHOT</version>
+            <version>3.0.0.226</version>
         </dependency>
 
         <dependency>
