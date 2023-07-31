@@ -178,24 +178,10 @@ public class ConditionalPreconditions {
                 && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }
 
-    private static boolean descriptionUpdateManipulation(final Injector injector, final Logger logger) {
+    private static boolean descriptionUpdateManipulation(final Injector injector) {
         final var manipulations = injector.getInstance(Manipulations.class);
-        final var testClient = injector.getInstance(TestClient.class);
 
-        final MdibAccess mdibAccess;
-        final SdcRemoteDevice remoteDevice;
-
-        remoteDevice = testClient.getSdcRemoteDevice();
-        if (remoteDevice == null) {
-            logger.error("remote device could not be accessed, likely due to a disconnect");
-            return false;
-        }
-        mdibAccess = remoteDevice.getMdibAccess();
-
-        final String handle =
-                mdibAccess.getRootEntities().get(0).getDescriptor().getHandle();
-
-        final ResponseTypes.Result manipulationResult = manipulations.triggerDescriptorUpdate(handle);
+        final ResponseTypes.Result manipulationResult = manipulations.triggerAnyDescriptorUpdate();
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
@@ -317,7 +303,7 @@ public class ConditionalPreconditions {
          * @return true if successful, false otherwise
          */
         static boolean manipulation(final Injector injector) {
-            return descriptionUpdateManipulation(injector, LOG);
+            return descriptionUpdateManipulation(injector);
         }
     }
 

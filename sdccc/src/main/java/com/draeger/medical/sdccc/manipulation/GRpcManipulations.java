@@ -302,6 +302,16 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
+    public ResponseTypes.Result triggerAnyDescriptorUpdate() {
+        return performCallWrapper(
+                v -> deviceStub.triggerAnyDescriptorUpdate(Empty.getDefaultInstance()),
+                v -> fallback.triggerAnyDescriptorUpdate(),
+                BasicResponses.BasicResponse::getResult,
+                BasicResponses.BasicResponse::getResult,
+                ManipulationParameterUtil.buildEmptyManipulationParameterData());
+    }
+
+    @Override
     public ResponseTypes.Result triggerReport(final QName report) {
         final var reportType = REPORT_TYPE_MAP.get(report);
         if (reportType == null) return ResponseTypes.Result.RESULT_FAIL;
