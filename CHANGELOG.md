@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SDCri version 5.0.0-SNAPSHOT
 - the precondition of biceps:R0133 so that it is now easier to satisfy.
 - the precondition of biceps:R0034_0 so that it is now easier to satisfy.
+- the precondition of biceps:C5 and biceps:R5052 so that it can be satisfied by devices that do not support updating
+  MDS descriptors.
 
 ### Fixed
 - the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
