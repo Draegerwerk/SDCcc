@@ -616,7 +616,7 @@ public class MdibHistorianTest {
             final var list = history.toList();
             assertEquals(1, list.size());
             assertEquals(
-                    ((EpisodicContextReport) contextReport.getBody().getAny().get(0)).getMdibVersion(),
+                    contextReportMdibVersion,
                     list.get(0).getMdibVersion());
             assertEquals(
                     ((EpisodicContextReport) contextReport.getBody().getAny().get(0))
