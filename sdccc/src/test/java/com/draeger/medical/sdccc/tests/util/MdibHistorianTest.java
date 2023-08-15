@@ -615,47 +615,31 @@ public class MdibHistorianTest {
         try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
             final var list = history.toList();
             assertEquals(1, list.size());
+            assertEquals(contextReportMdibVersion, list.get(0).getMdibVersion());
+            int numReportParts = firstMod
+                    .getReportPart()
+                    .size();
             assertEquals(
-                    ((EpisodicContextReport) contextReport.getBody().getAny().get(0)).getMdibVersion(),
-                    list.get(0).getMdibVersion());
-            assertEquals(
-                    ((EpisodicContextReport) contextReport.getBody().getAny().get(0))
-                            .getReportPart()
-                            .size(),
+                    numReportParts,
                     ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
                             .getReportPart()
                             .size());
-            for (int i = 0;
-                    i
-                            < ((EpisodicContextReport)
-                                            contextReport.getBody().getAny().get(0))
-                                    .getReportPart()
-                                    .size();
-                    i++) {
+            for (int i = 0; i < numReportParts; i++) {
+                int numContextStates = firstMod
+                        .getReportPart()
+                        .get(i)
+                        .getContextState()
+                        .size();
                 assertEquals(
-                        ((EpisodicContextReport)
-                                        contextReport.getBody().getAny().get(0))
-                                .getReportPart()
-                                .get(i)
-                                .getContextState()
-                                .size(),
+                        numContextStates,
                         ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
                                 .getReportPart()
                                 .get(i)
                                 .getContextState()
                                 .size());
-                for (int j = 0;
-                        j
-                                < ((EpisodicContextReport)
-                                                contextReport.getBody().getAny().get(0))
-                                        .getReportPart()
-                                        .get(i)
-                                        .getContextState()
-                                        .size();
-                        j++) {
+                for (int j = 0; j < numContextStates; j++) {
                     assertEquals(
-                            ((EpisodicContextReport)
-                                            contextReport.getBody().getAny().get(0))
+                            firstMod
                                     .getReportPart()
                                     .get(i)
                                     .getContextState()

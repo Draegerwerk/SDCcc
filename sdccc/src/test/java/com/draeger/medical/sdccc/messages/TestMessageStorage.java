@@ -1242,6 +1242,11 @@ public class TestMessageStorage {
                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
+                        if (count.get() == 1) {
+                            assertEquals(CommunicationLog.MessageType.REQUEST, message.getMessageType());
+                        } else {
+                            assertEquals(CommunicationLog.MessageType.RESPONSE, message.getMessageType());
+                        }
                         assertEquals(messageContent2, message.getBody());
                         assertTrue(message.getMdibVersionGroups().stream()
                                 .anyMatch(mdibVersionGroup ->
