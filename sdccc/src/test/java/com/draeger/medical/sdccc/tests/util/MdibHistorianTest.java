@@ -616,20 +616,15 @@ public class MdibHistorianTest {
             final var list = history.toList();
             assertEquals(1, list.size());
             assertEquals(contextReportMdibVersion, list.get(0).getMdibVersion());
-            int numReportParts = firstMod
-                    .getReportPart()
-                    .size();
+            final int numReportParts = firstMod.getReportPart().size();
             assertEquals(
                     numReportParts,
                     ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
                             .getReportPart()
                             .size());
             for (int i = 0; i < numReportParts; i++) {
-                int numContextStates = firstMod
-                        .getReportPart()
-                        .get(i)
-                        .getContextState()
-                        .size();
+                final int numContextStates =
+                        firstMod.getReportPart().get(i).getContextState().size();
                 assertEquals(
                         numContextStates,
                         ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
@@ -639,8 +634,7 @@ public class MdibHistorianTest {
                                 .size());
                 for (int j = 0; j < numContextStates; j++) {
                     assertEquals(
-                            firstMod
-                                    .getReportPart()
+                            firstMod.getReportPart()
                                     .get(i)
                                     .getContextState()
                                     .get(j)

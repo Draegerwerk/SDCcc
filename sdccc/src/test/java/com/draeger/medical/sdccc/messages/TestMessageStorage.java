@@ -1149,7 +1149,8 @@ public class TestMessageStorage {
      * @throws IOException on io exceptions
      */
     @Test
-    public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir) throws IOException {
+    public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir)
+            throws IOException, InterruptedException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 6, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
@@ -1191,6 +1192,8 @@ public class TestMessageStorage {
 
                 message.write(messageContent2.getBytes(StandardCharsets.UTF_8));
             }
+
+            Thread.sleep(5);
 
             try (final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
@@ -1242,7 +1245,7 @@ public class TestMessageStorage {
                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
-                        if (count.get() == 1) {
+                        if (count.get() == 0) {
                             assertEquals(CommunicationLog.MessageType.REQUEST, message.getMessageType());
                         } else {
                             assertEquals(CommunicationLog.MessageType.RESPONSE, message.getMessageType());
