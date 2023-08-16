@@ -1430,7 +1430,7 @@ public class MessageStorage implements AutoCloseable {
                     criteriaBuilder.asc(messageContentRoot
                             .join(MessageContent_.mdibVersionGroups)
                             .get(MdibVersionGroupEntity_.mdibVersion)),
-                    criteriaBuilder.asc(messageContentRoot.get(MessageContent_.timestamp)));
+                    criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
         }
 
         final boolean present;
