@@ -659,8 +659,9 @@ public class MdibHistorianTest {
         final var contextReport = buildEpisodicContextReport(
                 MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
-        final var firstMod =
+        EpisodicContextReport episodicContextReportBody =
                 (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        final var firstMod = episodicContextReportBody;
         firstMod.getReportPart().get(0).getContextState().add(operator1);
         firstMod.getReportPart().get(0).getContextState().add(operator2);
 
@@ -680,47 +681,28 @@ public class MdibHistorianTest {
         try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
             final var list = history.toList();
             assertEquals(2, list.size());
+            assertEquals(episodicContextReportBody.getMdibVersion(), list.get(0).getMdibVersion());
             assertEquals(
-                    ((EpisodicContextReport) contextReport.getBody().getAny().get(0)).getMdibVersion(),
-                    list.get(0).getMdibVersion());
-            assertEquals(
-                    ((EpisodicContextReport) contextReport.getBody().getAny().get(0))
-                            .getReportPart()
-                            .size(),
+                    episodicContextReportBody.getReportPart().size(),
                     ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
                             .getReportPart()
                             .size());
-            for (int i = 0;
-                    i
-                            < ((EpisodicContextReport)
-                                            contextReport.getBody().getAny().get(0))
-                                    .getReportPart()
-                                    .size();
-                    i++) {
+            for (int i = 0; i < episodicContextReportBody.getReportPart().size(); i++) {
+                int numContextStates = episodicContextReportBody
+                        .getReportPart()
+                        .get(i)
+                        .getContextState()
+                        .size();
                 assertEquals(
-                        ((EpisodicContextReport)
-                                        contextReport.getBody().getAny().get(0))
-                                .getReportPart()
-                                .get(i)
-                                .getContextState()
-                                .size(),
+                        numContextStates,
                         ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
                                 .getReportPart()
                                 .get(i)
                                 .getContextState()
                                 .size());
-                for (int j = 0;
-                        j
-                                < ((EpisodicContextReport)
-                                                contextReport.getBody().getAny().get(0))
-                                        .getReportPart()
-                                        .get(i)
-                                        .getContextState()
-                                        .size();
-                        j++) {
+                for (int j = 0; j < numContextStates; j++) {
                     assertEquals(
-                            ((EpisodicContextReport)
-                                            contextReport.getBody().getAny().get(0))
+                            episodicContextReportBody
                                     .getReportPart()
                                     .get(i)
                                     .getContextState()
