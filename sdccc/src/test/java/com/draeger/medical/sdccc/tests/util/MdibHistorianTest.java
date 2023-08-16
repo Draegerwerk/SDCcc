@@ -615,23 +615,17 @@ public class MdibHistorianTest {
         try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
             final var list = history.toList();
             assertEquals(1, list.size());
-            assertEquals(contextReportMdibVersion, list.get(0).getMdibVersion());
+            org.somda.sdc.biceps.model.message.EpisodicContextReport actualReport =
+                    (org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0);
+            assertEquals(contextReportMdibVersion, actualReport.getMdibVersion());
             final int numReportParts = firstMod.getReportPart().size();
-            assertEquals(
-                    numReportParts,
-                    ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
-                            .getReportPart()
-                            .size());
+            assertEquals(numReportParts, actualReport.getReportPart().size());
             for (int i = 0; i < numReportParts; i++) {
                 final int numContextStates =
                         firstMod.getReportPart().get(i).getContextState().size();
                 assertEquals(
                         numContextStates,
-                        ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
-                                .getReportPart()
-                                .get(i)
-                                .getContextState()
-                                .size());
+                        actualReport.getReportPart().get(i).getContextState().size());
                 for (int j = 0; j < numContextStates; j++) {
                     assertEquals(
                             firstMod.getReportPart()
@@ -639,7 +633,7 @@ public class MdibHistorianTest {
                                     .getContextState()
                                     .get(j)
                                     .getDescriptorHandle(),
-                            ((org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0))
+                            actualReport
                                     .getReportPart()
                                     .get(i)
                                     .getContextState()

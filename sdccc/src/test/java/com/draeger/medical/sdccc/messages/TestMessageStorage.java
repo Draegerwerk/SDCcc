@@ -1149,8 +1149,7 @@ public class TestMessageStorage {
      * @throws IOException on io exceptions
      */
     @Test
-    public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir)
-            throws IOException {
+    public void testGetInboundMessagesByBodyTypeAndSequenceId(@TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 6, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
