@@ -1289,14 +1289,14 @@ public class TestMessageStorage {
     }
 
     /**
-     * Tests whether getInboundMessageByBodyTypeAndSequenceId() orders the results by MdibVersion and Timestamp
+     * Tests whether getInboundMessageByBodyTypeAndSequenceId() orders the results by MdibVersion and Timestamp.
      *
      * @param dir message storage directory
      * @throws IOException on io exceptions
      */
     @Test
-    public void testGetInboundMessagesByBodyTypeAndSequenceIdGoodCheckOrderedByMdibVersionAndTimestamp(@TempDir final File dir)
-            throws IOException {
+    public void testGetInboundMessagesByBodyTypeAndSequenceIdGoodCheckOrderedByMdibVersionAndTimestamp(
+            @TempDir final File dir) throws IOException {
         try (final MessageStorage messageStorage = new MessageStorage(
                 6, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
 
@@ -1373,7 +1373,7 @@ public class TestMessageStorage {
 
             {
                 try (final var inboundMessages =
-                             messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
+                        messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         if (count.get() == 0) {
