@@ -1301,25 +1301,9 @@ public class TestMessageStorage {
             final String messageContent2 = String.format(
                     BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s2"));
 
-            final var mockMessage1 = mock(Message.class);
-            final var mockMessageId1 = UUID.randomUUID();
-            when(mockMessage1.getID()).thenReturn(mockMessageId1.toString());
-            when(mockMessage1.getDirection()).thenReturn(CommunicationLog.Direction.INBOUND);
-            when(mockMessage1.getMessageType()).thenReturn(CommunicationLog.MessageType.RESPONSE);
-            when(mockMessage1.getCommunicationContext()).thenReturn(this.messageContext);
-            when(mockMessage1.getNanoTimestamp()).thenReturn(10L);
-            when(mockMessage1.getFinalMemory()).thenReturn(messageContent2.getBytes(StandardCharsets.UTF_8));
-            messageStorage.addMessage(mockMessage1);
-
-            final var mockMessage2 = mock(Message.class);
-            final var mockMessageId2 = UUID.randomUUID();
-            when(mockMessage2.getID()).thenReturn(mockMessageId2.toString());
-            when(mockMessage2.getDirection()).thenReturn(CommunicationLog.Direction.INBOUND);
-            when(mockMessage2.getMessageType()).thenReturn(CommunicationLog.MessageType.REQUEST);
-            when(mockMessage2.getCommunicationContext()).thenReturn(this.messageContext);
-            when(mockMessage2.getNanoTimestamp()).thenReturn(20L);
-            when(mockMessage2.getFinalMemory()).thenReturn(messageContent2.getBytes(StandardCharsets.UTF_8));
-            messageStorage.addMessage(mockMessage2);
+            addMessageWithTimestamp(messageStorage, messageContent2, 30L);
+            addMessageWithTimestamp(messageStorage, messageContent2, 10L);
+            addMessageWithTimestamp(messageStorage, messageContent2, 20L);
 
             {
                 messageStorage.flush();
@@ -1331,9 +1315,11 @@ public class TestMessageStorage {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
                         if (count.get() == 0) {
-                            assertEquals(CommunicationLog.MessageType.RESPONSE, message.getMessageType());
-                        } else {
-                            assertEquals(CommunicationLog.MessageType.REQUEST, message.getMessageType());
+                            assertEquals(10, message.getNanoTimestamp());
+                        } if (count.get() == 1) {
+                            assertEquals(20, message.getNanoTimestamp());
+                        } if (count.get() == 2) {
+                            assertEquals(30, message.getNanoTimestamp());
                         }
                         assertEquals(messageContent2, message.getBody());
                         assertTrue(message.getMdibVersionGroups().stream()
@@ -1341,10 +1327,22 @@ public class TestMessageStorage {
                                         mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
                         count.incrementAndGet();
                     });
-                    assertEquals(2, count.get());
+                    assertEquals(3, count.get());
                 }
             }
         }
+    }
+
+    private void addMessageWithTimestamp(MessageStorage messageStorage, String messageContent2, Long timestamp) {
+        final var mockMessage1 = mock(Message.class);
+        final var mockMessageId1 = UUID.randomUUID();
+        when(mockMessage1.getID()).thenReturn(mockMessageId1.toString());
+        when(mockMessage1.getDirection()).thenReturn(CommunicationLog.Direction.INBOUND);
+        when(mockMessage1.getMessageType()).thenReturn(CommunicationLog.MessageType.REQUEST);
+        when(mockMessage1.getCommunicationContext()).thenReturn(this.messageContext);
+        when(mockMessage1.getNanoTimestamp()).thenReturn(timestamp);
+        when(mockMessage1.getFinalMemory()).thenReturn(messageContent2.getBytes(StandardCharsets.UTF_8));
+        messageStorage.addMessage(mockMessage1);
     }
 
     /**
