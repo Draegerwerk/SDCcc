@@ -615,7 +615,7 @@ public class MdibHistorianTest {
         try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
             final var list = history.toList();
             assertEquals(1, list.size());
-            org.somda.sdc.biceps.model.message.EpisodicContextReport actualReport =
+            final org.somda.sdc.biceps.model.message.EpisodicContextReport actualReport =
                     (org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0);
             assertEquals(contextReportMdibVersion, actualReport.getMdibVersion());
             final int numReportParts = firstMod.getReportPart().size();
@@ -659,11 +659,10 @@ public class MdibHistorianTest {
         final var contextReport = buildEpisodicContextReport(
                 MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
 
-        EpisodicContextReport episodicContextReportBody =
+        final EpisodicContextReport episodicContextReportBody =
                 (EpisodicContextReport) contextReport.getBody().getAny().get(0);
-        final var firstMod = episodicContextReportBody;
-        firstMod.getReportPart().get(0).getContextState().add(operator1);
-        firstMod.getReportPart().get(0).getContextState().add(operator2);
+        episodicContextReportBody.getReportPart().get(0).getContextState().add(operator1);
+        episodicContextReportBody.getReportPart().get(0).getContextState().add(operator2);
 
         final var metricReport = buildEpisodicMetricReport(
                 MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
@@ -688,7 +687,7 @@ public class MdibHistorianTest {
                             .getReportPart()
                             .size());
             for (int i = 0; i < episodicContextReportBody.getReportPart().size(); i++) {
-                int numContextStates = episodicContextReportBody
+                final int numContextStates = episodicContextReportBody
                         .getReportPart()
                         .get(i)
                         .getContextState()
