@@ -1316,9 +1316,11 @@ public class TestMessageStorage {
                     inboundMessages.getStream().forEach(message -> {
                         if (count.get() == 0) {
                             assertEquals(10, message.getNanoTimestamp());
-                        } if (count.get() == 1) {
+                        }
+                        if (count.get() == 1) {
                             assertEquals(20, message.getNanoTimestamp());
-                        } if (count.get() == 2) {
+                        }
+                        if (count.get() == 2) {
                             assertEquals(30, message.getNanoTimestamp());
                         }
                         assertEquals(messageContent2, message.getBody());
@@ -1333,7 +1335,8 @@ public class TestMessageStorage {
         }
     }
 
-    private void addMessageWithTimestamp(MessageStorage messageStorage, String messageContent2, Long timestamp) {
+    private void addMessageWithTimestamp(
+            final MessageStorage messageStorage, final String messageContent2, final Long timestamp) {
         final var mockMessage1 = mock(Message.class);
         final var mockMessageId1 = UUID.randomUUID();
         when(mockMessage1.getID()).thenReturn(mockMessageId1.toString());
