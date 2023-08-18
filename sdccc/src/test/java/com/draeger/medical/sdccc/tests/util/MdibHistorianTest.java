@@ -585,7 +585,8 @@ public class MdibHistorianTest {
     /**
      * Tests if Reports are filtered out by GetAllUniqueReports when
      * - they have the same MdibVersion.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
      */
     @Test
     void testGetAllUniqueReportsGoodDuplicateFilter() throws JAXBException, IOException {
@@ -649,7 +650,9 @@ public class MdibHistorianTest {
      * Tests if duplicated Reports are not filtered out by GetAllUniqueReports when
      * - they have the same MdibVersion,
      * - but different ReportTypes.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage or the
+     * @throws JAXBException  when these are thrown by the MessageStorage or the
+     * MdibHistorian.
+     * @throws IOException when these are thrown by the MessageStorage or the
      * MdibHistorian.
      */
     @Test
@@ -721,7 +724,8 @@ public class MdibHistorianTest {
      * - have the same MdibVersion,
      * - have the same ReportType, but
      * - have different Contents.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
      */
     @Test
     void testGetAllUniqueReportsFailInvalidateTestRunWhenSameReportTypeButContentDiffers()
@@ -766,9 +770,10 @@ public class MdibHistorianTest {
     /**
      * Tests if Reports are filtered out by uniqueEpisodicReportBasedHistory() when
      * - they have the same MdibVersion.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage.
-     * @throws ReportProcessingException, {@link PreprocessingException} when these are thrown by
-     * uniqueEpisodicReportBasedHistory().
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
      */
     @Test
     void testUniqueEpisodicReportBasedHistoryGoodDuplicateFilter()
@@ -808,9 +813,10 @@ public class MdibHistorianTest {
      * Tests if duplicated Reports are not filtered out by uniqueEpisodicReportBasedHistory() when
      * - they have the same MdibVersion,
      * - but different ReportTypes.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage.
-     * @throws ReportProcessingException, {@link PreprocessingException} when these are thrown by
-     * uniqueEpisodicReportBasedHistory().
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
      */
     @Test
     void testUniqueEpisodicReportBasedHistoryGoodDoNotFilterWhenReportTypeDiffers()
@@ -853,9 +859,10 @@ public class MdibHistorianTest {
      * - have the same MdibVersion,
      * - have the same ReportType, but
      * - have different Contents.
-     * @throws JAXBException, {@link IOException} when these are thrown by the MessageStorage.
-     * @throws ReportProcessingException, {@link PreprocessingException} when these are thrown by
-     * uniqueEpisodicReportBasedHistory().
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
      */
     @Test
     void testUniqueEpisodicReportBasedHistoryFailInvalidateTestRunWhenSameReportTypeButContentDiffers()
