@@ -30,6 +30,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Provider;
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.CommonConfig;
@@ -40,7 +42,6 @@ import org.somda.sdc.biceps.common.access.ReadTransactionImpl;
 import org.somda.sdc.biceps.common.access.factory.ReadTransactionFactory;
 import org.somda.sdc.biceps.common.factory.MdibEntityGuiceAssistedFactory;
 import org.somda.sdc.biceps.common.preprocessing.DescriptorChildRemover;
-import org.somda.sdc.biceps.common.storage.DescriptionPreprocessingSegment;
 import org.somda.sdc.biceps.common.storage.MdibStorage;
 import org.somda.sdc.biceps.common.storage.MdibStorageImpl;
 import org.somda.sdc.biceps.common.storage.MdibStoragePreprocessingChain;
@@ -133,7 +134,7 @@ public class MdibHistorian {
                         List.of(DuplicateContextStateHandleHandler.class));
                 bind(
                         CommonConfig.CONSUMER_DESCRIPTION_PREPROCESSING_SEGMENTS,
-                        new TypeLiteral<List<Class<? extends DescriptionPreprocessingSegment>>>() {},
+                        new TypeLiteral<>() {},
                         List.of(DescriptorChildRemover.class, DuplicateChecker.class));
             }
         }
@@ -185,6 +186,20 @@ public class MdibHistorian {
 
     /**
      * Generates an mdib history for a sequence id using the first available GetMdibResponse for said sequence id and
+     * all related episodic reports. Ensures that all reports in the history are unique by removing duplicates.
+     *
+     * @param sequenceId of the sequence to generate history for
+     * @return a new result based on episodic reports
+     * @throws PreprocessingException    if converting the initial mdib fails
+     * @throws ReportProcessingException if applying reports fails
+     */
+    public HistorianResult uniqueEpisodicReportBasedHistory(final String sequenceId)
+            throws PreprocessingException, ReportProcessingException {
+        return getHistorianResultForEpisodicReportBasedHistory(sequenceId, true);
+    }
+
+    /**
+     * Generates an mdib history for a sequence id using the first available GetMdibResponse for said sequence id and
      * all related episodic reports.
      *
      * @param sequenceId of the sequence to generate history for
@@ -195,45 +210,55 @@ public class MdibHistorian {
     public HistorianResult episodicReportBasedHistory(final String sequenceId)
             throws PreprocessingException, ReportProcessingException {
 
+        return getHistorianResultForEpisodicReportBasedHistory(sequenceId, false);
+    }
+
+    private HistorianResult getHistorianResultForEpisodicReportBasedHistory(
+            final String sequenceId, final boolean ensureUnique)
+            throws PreprocessingException, ReportProcessingException {
         // create new storage
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
         reportProcessor.startApplyingReportsOnMdib(storage, null);
         final var mdibVersionPredicate =
-                new InitialMdibVersionPredicate(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
+                new InitialMdibVersionPredicateWithUUID(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
 
         try {
             final var messages =
                     messageStorage.getInboundMessagesByBodyType(Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
-            final var stream = messages.getStream()
-                    .map(this::unmarshallReport)
-                    .filter(report -> sequenceId.equals(report.getSequenceId()))
-                    .filter(mdibVersionPredicate)
-                    .map(report -> {
-                        try {
-                            final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
-                                    .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
-                            if (cmp > 0) {
-                                fail("Cannot apply report older than current storage."
-                                        + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
-                                        + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
-                                        + " " + report.getClass().getSimpleName());
-                            } else if (cmp == 0) {
-                                LOG.debug(
-                                        "Cannot apply report of equal mdib version. This means that another report with the"
-                                                + " same version has already been applied, and is expected behavior when e.g."
-                                                + " descriptors update, as both a report for description and state will arrive.");
-                            }
-                            LOG.debug(
-                                    "Applying report with mdib version {}, type {}",
-                                    report::getMdibVersion,
-                                    () -> report.getClass().getSimpleName());
-                            reportProcessor.processReport(report);
-                        } catch (final Exception e) {
-                            fail(e);
-                        }
-                        return storage;
-                    });
+            var preStream = messages.getStream()
+                    .sequential() // the stateful filter operation below is not threadsafe
+                    .map(this::unmarshallReportKeepUUID)
+                    .filter(report -> sequenceId.equals(report.getLeft().getSequenceId()))
+                    .filter(mdibVersionPredicate);
+            if (ensureUnique) {
+                preStream = filterReportDuplicates(preStream);
+            }
+            final var stream = preStream.map(pair -> {
+                final var report = pair.getLeft();
+                try {
+                    final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                            .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
+                    if (cmp > 0) {
+                        fail("Cannot apply report older than current storage."
+                                + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                                + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
+                                + " " + report.getClass().getSimpleName());
+                    } else if (cmp == 0) {
+                        LOG.debug("Cannot apply report of equal mdib version. This means that another report with the"
+                                + " same version has already been applied, and is expected behavior when e.g."
+                                + " descriptors update, as both a report for description and state will arrive.");
+                    }
+                    LOG.debug(
+                            "Applying report with mdib version {}, type {}",
+                            ImpliedValueUtil.getReportMdibVersion(report),
+                            report.getClass().getSimpleName());
+                    reportProcessor.processReport(report);
+                } catch (final Exception e) {
+                    fail(e);
+                }
+                return storage;
+            });
 
             // initial mdib stream
             final var initialMdibStream = Stream.of(storage);
@@ -277,6 +302,85 @@ public class MdibHistorian {
             // unreachable, silence warnings
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Retrieves all episodic reports for a given sequence id while
+     * removing duplicates.
+     *
+     * @param sequenceId         of the sequence to retrieve reports for
+     * @param minimumMdibVersion optional minimum mdib version to retrieve for the reports, if null all are returned
+     * @return list of the reports
+     */
+    public Stream<AbstractReport> getAllUniqueReports(
+            final String sequenceId, @Nullable final BigInteger minimumMdibVersion) {
+        try {
+            final var messages = messageStorage.getInboundMessagesByBodyTypeAndSequenceId(
+                    sequenceId, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
+
+            var iter = messages.getStream()
+                    .sequential() // the stateful filter operation below is not thread-safe
+                    .map(this::unmarshallReportKeepUUID);
+            if (minimumMdibVersion != null) {
+                iter = iter.filter(it ->
+                        ImpliedValueUtil.getReportMdibVersion(it.getLeft()).compareTo(minimumMdibVersion) >= 1);
+            }
+            return filterReportDuplicates(iter).map(Pair::getLeft);
+        } catch (IOException e) {
+            final var errorMessage = "Error while trying to retrieve initial mdib from storage";
+            LOG.error("{}: {}", errorMessage, e.getMessage());
+            LOG.debug("{}", errorMessage, e);
+            fail(e);
+            // unreachable, silence warnings
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Stream<Pair<AbstractReport, String>> filterReportDuplicates(
+            final Stream<Pair<AbstractReport, String>> iter) {
+        final Pair<AbstractReport, String>[] last = new ImmutablePair[1];
+
+        return iter.filter(it -> {
+            if (last[0] == null) {
+                last[0] = it;
+                return true;
+            }
+            if (ImpliedValueUtil.getReportMdibVersion(it.getLeft())
+                            .compareTo(ImpliedValueUtil.getReportMdibVersion(last[0].getLeft()))
+                    > 0) {
+                last[0] = it;
+                return true;
+            } else {
+                // found duplicate Version
+                if (last[0].getLeft().getClass().equals(it.getLeft().getClass())) {
+                    // same ReportType
+                    if (it.getLeft().equals(last[0].getLeft())) {
+                        // Report Contents are identical -> drop duplicate
+                        last[0] = it;
+                        return false;
+                    } else {
+                        // Reports have the same MdibVersion, the same ReportType, but different Content
+                        // this should never happen in an SDC protocol run
+                        // -> flag the error by invalidating the test run
+                        testRunObserver.invalidateTestRun(String.format(
+                                "encountered 2 reports [UUID=%s, UUID=%s] with the same "
+                                        + "MdibVersion (%d), the same ReportType (%s), but different "
+                                        + "contents. This clearly violates the Requirement SDPi:R1006 "
+                                        + "and indicates a problem with MdibVersion handling.",
+                                last[0].getRight(),
+                                it.getRight(),
+                                ImpliedValueUtil.getReportMdibVersion(it.getLeft()),
+                                it.getLeft().getClass().getSimpleName()));
+                        last[0] = it;
+                        return true;
+                    }
+                } else {
+                    // different ReportType -> do not drop
+                    last[0] = it;
+                    return true;
+                }
+            }
+        });
     }
 
     /**
@@ -339,6 +443,10 @@ public class MdibHistorian {
                 report.getClass().getSimpleName());
         reportProcessor.processReport(report);
         return storage;
+    }
+
+    private Pair<AbstractReport, String> unmarshallReportKeepUUID(final MessageContent messageContent) {
+        return new ImmutablePair<>(unmarshallReport(messageContent), messageContent.getUuid());
     }
 
     private AbstractReport unmarshallReport(final MessageContent messageContent) {
