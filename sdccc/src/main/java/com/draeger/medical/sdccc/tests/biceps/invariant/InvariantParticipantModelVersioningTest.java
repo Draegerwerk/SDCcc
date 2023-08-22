@@ -56,8 +56,6 @@ import org.somda.sdc.glue.consumer.report.ReportProcessingException;
  * BICEPS participant model versioning tests (ch. 5.2.5).
  */
 public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
-    public static final String IMPLIED_VALUE_ERROR_MESSAGE =
-            "Handle %s has an implied value, but was already seen" + " without an implied value.";
     public static final String DECREMENTED_VERSION_ERROR_MESSAGE =
             "The version of %s has been decremented in" + " MdibVersion %s. It was %s and is now %s.";
 
@@ -366,7 +364,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                 var previousMdibVersion = BigInteger.valueOf(-1);
 
                 try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                        mdibHistorian.uniqueEpisodicReportBasedHistory(sequenceId)) {
                     RemoteMdibAccess current = history.next();
                     while (current != null) {
                         final var currentMdibVersion = ImpliedValueUtil.getMdibVersion(current.getMdibVersion());
@@ -534,7 +532,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
     }
 
     private boolean isNotDecrementedVersion(final BigInteger version, final BigInteger nextVersion) {
-        return -1 != nextVersion.compareTo(version);
+        return nextVersion.compareTo(version) >= 0;
     }
 
     private boolean isIncrementedVersion(final BigInteger version, final BigInteger nextVersion) {

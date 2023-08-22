@@ -9,23 +9,24 @@ package com.draeger.medical.sdccc.tests.util;
 
 import java.math.BigInteger;
 import java.util.function.Predicate;
+import org.apache.commons.lang3.tuple.Pair;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 
 /**
- * Predicate to filter reports based on the provided initial mdib version.
- * All reports with a smaller version are filtered until a version larger than the initial version was seen.
+ * Predicate that does the same as InitialMdibVersionPredicate, but also passes the UUID Strings through.
  */
-public class InitialMdibVersionPredicate implements Predicate<AbstractReport> {
+public class InitialMdibVersionPredicateWithUUID implements Predicate<Pair<AbstractReport, String>> {
     private final BigInteger initialMdibVersion;
     private boolean seenLargerVersion;
 
-    InitialMdibVersionPredicate(final BigInteger initialValue) {
+    InitialMdibVersionPredicateWithUUID(final BigInteger initialValue) {
         initialMdibVersion = initialValue;
         seenLargerVersion = false;
     }
 
     @Override
-    public boolean test(final AbstractReport report) {
+    public boolean test(final Pair<AbstractReport, String> pair) {
+        final var report = pair.getLeft();
         final var mdibVersion = ImpliedValueUtil.getReportMdibVersion(report);
         if (!seenLargerVersion) {
             if (mdibVersion.compareTo(initialMdibVersion) > 0) {

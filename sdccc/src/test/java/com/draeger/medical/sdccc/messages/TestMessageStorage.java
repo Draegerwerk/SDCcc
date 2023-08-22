@@ -1170,7 +1170,6 @@ public class TestMessageStorage {
                     CommunicationLog.MessageType.RESPONSE,
                     this.messageContext,
                     messageStorage)) {
-
                 message.write(messageContent2.getBytes(StandardCharsets.UTF_8));
             }
 
@@ -1242,6 +1241,11 @@ public class TestMessageStorage {
                         messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
                     final var count = new AtomicInteger(0);
                     inboundMessages.getStream().forEach(message -> {
+                        if (count.get() == 0) {
+                            assertEquals(CommunicationLog.MessageType.REQUEST, message.getMessageType());
+                        } else {
+                            assertEquals(CommunicationLog.MessageType.RESPONSE, message.getMessageType());
+                        }
                         assertEquals(messageContent2, message.getBody());
                         assertTrue(message.getMdibVersionGroups().stream()
                                 .anyMatch(mdibVersionGroup ->
@@ -1278,6 +1282,70 @@ public class TestMessageStorage {
                 }
             }
         }
+    }
+
+    /**
+     * Tests whether getInboundMessageByBodyTypeAndSequenceId() orders the results by MdibVersion and Timestamp.
+     *
+     * @param dir message storage directory
+     * @throws IOException on io exceptions
+     */
+    @Test
+    public void testGetInboundMessagesByBodyTypeAndSequenceIdGoodCheckOrderedByMdibVersionAndTimestamp(
+            @TempDir final File dir) throws IOException {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                6, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+
+            final var expectedQName2 = new QName(CommonConstants.NAMESPACE_MESSAGE, "EpisodicMetricReport", "msg");
+
+            final String messageContent2 = String.format(
+                    BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "1", "s2"));
+
+            addMessageWithTimestamp(messageStorage, messageContent2, 30L);
+            addMessageWithTimestamp(messageStorage, messageContent2, 10L);
+            addMessageWithTimestamp(messageStorage, messageContent2, 20L);
+
+            {
+                messageStorage.flush();
+            }
+
+            {
+                try (final var inboundMessages =
+                        messageStorage.getInboundMessagesByBodyTypeAndSequenceId("urn:uuid:s2", expectedQName2)) {
+                    final var count = new AtomicInteger(0);
+                    inboundMessages.getStream().forEach(message -> {
+                        if (count.get() == 0) {
+                            assertEquals(10, message.getNanoTimestamp());
+                        }
+                        if (count.get() == 1) {
+                            assertEquals(20, message.getNanoTimestamp());
+                        }
+                        if (count.get() == 2) {
+                            assertEquals(30, message.getNanoTimestamp());
+                        }
+                        assertEquals(messageContent2, message.getBody());
+                        assertTrue(message.getMdibVersionGroups().stream()
+                                .anyMatch(mdibVersionGroup ->
+                                        mdibVersionGroup.getBodyElement().equals(expectedQName2.toString())));
+                        count.incrementAndGet();
+                    });
+                    assertEquals(3, count.get());
+                }
+            }
+        }
+    }
+
+    private void addMessageWithTimestamp(
+            final MessageStorage messageStorage, final String messageContent2, final Long timestamp) {
+        final var mockMessage1 = mock(Message.class);
+        final var mockMessageId1 = UUID.randomUUID();
+        when(mockMessage1.getID()).thenReturn(mockMessageId1.toString());
+        when(mockMessage1.getDirection()).thenReturn(CommunicationLog.Direction.INBOUND);
+        when(mockMessage1.getMessageType()).thenReturn(CommunicationLog.MessageType.REQUEST);
+        when(mockMessage1.getCommunicationContext()).thenReturn(this.messageContext);
+        when(mockMessage1.getNanoTimestamp()).thenReturn(timestamp);
+        when(mockMessage1.getFinalMemory()).thenReturn(messageContent2.getBytes(StandardCharsets.UTF_8));
+        messageStorage.addMessage(mockMessage1);
     }
 
     /**

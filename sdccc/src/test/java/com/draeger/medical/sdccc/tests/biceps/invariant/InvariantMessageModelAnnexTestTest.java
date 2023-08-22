@@ -596,6 +596,52 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Checks whether duplicated DescriptionModificationReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC5GoodReportDuplication() throws Exception {
+        final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
+        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+
+        final Envelope first = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT, new ImmutablePair<>(mdsDescriptor, mdsState)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+
+        final var crtPart1Handle = "second vmd";
+        final Envelope second = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        MdibBuilder.DEFAULT_MDS_HANDLE,
+                        mdibBuilder.buildVmd(crtPart1Handle)),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT, crtPart1Handle, mdibBuilder.buildChannel("second channel")));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        final Envelope third = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.DEL,
+                        mdibBuilder.buildSystemContext(SYSTEM_CONTEXT_HANDLE),
+                        mdibBuilder.buildSco(SCO_HANDLE)));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC5();
+    }
+
+    /**
      * Checks whether a DescriptionModificationReport
      * containing an AbstractDescriptor without any change,
      * fails the test.
@@ -1148,6 +1194,51 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests if duplicated DescriptionModificationReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR50460GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var alertSignal = mdibBuilder.buildAlertSignal(
+                MDS_SECOND_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, true, AlertActivation.ON);
+        final var reportOnePart = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertSignal);
+        final var reportOne = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.ONE, reportOnePart);
+
+        final var alertCondition = mdibBuilder.buildAlertCondition(
+                MDS_SECOND_ALERT_CONDITION_HANDLE,
+                AlertConditionKind.PHY,
+                AlertConditionPriority.HI,
+                AlertActivation.ON);
+        final var alertCondition2 = mdibBuilder.buildAlertCondition(
+                MDS_ALERT_CONDITION_HANDLE, AlertConditionKind.PHY, AlertConditionPriority.HI, AlertActivation.ON);
+        final var alertSignal2 = mdibBuilder.buildAlertSignal(
+                MDS_ALERT_SIGNAL_HANDLE, AlertSignalManifestation.AUD, true, AlertActivation.ON);
+        final var reportTwoPart1 = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertCondition);
+        final var reportTwoPart2 = buildDescriptionModificationReportPart(
+                DescriptionModificationType.DEL, MDS_ALERT_SIGNAL_HANDLE, alertCondition2, alertSignal2);
+        final var reportTwo =
+                buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.TWO, reportTwoPart1, reportTwoPart2);
+
+        final var mdsAlertSystem = mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON);
+        final var reportThreePart =
+                buildDescriptionModificationReportPart(DescriptionModificationType.DEL, mdsAlertSystem);
+        final var reportThree = buildDescriptionModificationReport(SEQUENCE_ID, BigInteger.valueOf(3), reportThreePart);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportOne);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportOne);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportTwo);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, reportThree);
+
+        testClass.testRequirementR50460();
+    }
+
+    /**
      * Tests if deleting descriptors with child descriptors fails the test.
      *
      * @throws Exception on any exception
@@ -1559,6 +1650,46 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether duplicated EpisodicAlertReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC11GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+
+        final var third = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildAlertSystemState(VMD_ALERT_SYSTEM_HANDLE, AlertActivation.PSD),
+                buildAlertSignalState(VMD_ALERT_SIGNAL_HANDLE, AlertActivation.PSD),
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC11();
+    }
+
+    /**
      * Tests whether seeing one acceptable sequence is sufficient to pass the test.
      *
      * @throws Exception on any exception
@@ -1699,6 +1830,41 @@ public class InvariantMessageModelAnnexTestTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC12();
+    }
+
+    /**
+     * Tests whether duplicated EpisodicComponentReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC12GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.ON, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.STND_BY),
+                buildScoState(SCO_HANDLE, ComponentActivation.SHTDN));
+
+        final var second = buildEpisodicComponentReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildBatteryState(BATTERY_HANDLE, ComponentActivation.OFF, 101L),
+                buildSystemContextState(SYSTEM_CONTEXT_HANDLE, ComponentActivation.ON),
+                buildScoState(SCO_HANDLE, ComponentActivation.OFF));
+
+        final var third = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.valueOf(3), buildBatteryState(BATTERY_HANDLE, ComponentActivation.NOT_RDY, 0L));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
 
@@ -1864,6 +2030,56 @@ public class InvariantMessageModelAnnexTestTest {
                         mdibBuilder.buildCodedValue("newValue")));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC13();
+    }
+
+    /**
+     * Tests whether duplicated EpisodicContextReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC13GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
+
+        final var second = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.DIS,
+                        mdibBuilder.buildCodedValue("initial")));
+
+        final var third = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("otherValue")),
+                buildLocationContextState(
+                        LOCATION_CONTEXT_DESCRIPTOR_HANDLE,
+                        LOCATION_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.PRE,
+                        mdibBuilder.buildCodedValue("newValue")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
@@ -2069,6 +2285,52 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether duplicated EpisodicMetricReports pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC14GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
+
+        final var second = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("otherValue"),
+                        ComponentActivation.SHTDN));
+
+        final var third = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.valueOf(11L)),
+                        ComponentActivation.ON),
+                buildStringMetricState(
+                        STRING_METRIC_HANDLE,
+                        mdibBuilder.buildStringMetricValue("changedValue"),
+                        ComponentActivation.ON));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC14();
+    }
+
+    /**
      * Tests whether seeing one acceptable sequence is sufficient to pass the test.
      *
      * @throws Exception on any exception
@@ -2204,6 +2466,38 @@ public class InvariantMessageModelAnnexTestTest {
                 buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN));
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC15();
+    }
+
+    /**
+     * Tests whether duplicated EpisodicOperationalStateReport pass the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC15GoodReportDuplication() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
+
+        final var second = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID, BigInteger.TWO, buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.NA));
+
+        final var third = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.valueOf(3),
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.EN),
+                buildActivateOperationState(ACTIVATE_OPERATION_HANDLE, OperatingMode.EN));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);

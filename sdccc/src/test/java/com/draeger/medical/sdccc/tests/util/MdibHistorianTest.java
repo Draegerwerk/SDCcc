@@ -13,7 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
@@ -466,7 +469,7 @@ public class MdibHistorianTest {
             final var sequence = sequenceIds.get(1);
 
             final var error = assertThrows(AssertionError.class, () -> {
-                try (final var history = historian.episodicReportBasedHistory(sequence)) {
+                try (final var ignored = historian.episodicReportBasedHistory(sequence)) {
                     fail("Unreachable");
                 }
             });
@@ -577,6 +580,329 @@ public class MdibHistorianTest {
                 assertEquals(RuntimeException.class, error.getCause().getClass());
             }
         }
+    }
+
+    /**
+     * Tests if Reports are filtered out by GetAllUniqueReports when
+     * - they have the same MdibVersion.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     */
+    @Test
+    void testGetAllUniqueReportsGoodDuplicateFilter() throws JAXBException, IOException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        firstMod.getReportPart().get(0).getContextState().add(operator1);
+        firstMod.getReportPart().get(0).getContextState().add(operator2);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
+            final var list = history.toList();
+            assertEquals(1, list.size());
+            final org.somda.sdc.biceps.model.message.EpisodicContextReport actualReport =
+                    (org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0);
+            assertEquals(contextReportMdibVersion, actualReport.getMdibVersion());
+            final int numReportParts = firstMod.getReportPart().size();
+            assertEquals(numReportParts, actualReport.getReportPart().size());
+            for (int i = 0; i < numReportParts; i++) {
+                final int numContextStates =
+                        firstMod.getReportPart().get(i).getContextState().size();
+                assertEquals(
+                        numContextStates,
+                        actualReport.getReportPart().get(i).getContextState().size());
+                for (int j = 0; j < numContextStates; j++) {
+                    assertEquals(
+                            firstMod.getReportPart()
+                                    .get(i)
+                                    .getContextState()
+                                    .get(j)
+                                    .getDescriptorHandle(),
+                            actualReport
+                                    .getReportPart()
+                                    .get(i)
+                                    .getContextState()
+                                    .get(j)
+                                    .getDescriptorHandle());
+                }
+            }
+        }
+    }
+
+    /**
+     * Tests if duplicated Reports are not filtered out by GetAllUniqueReports when
+     * - they have the same MdibVersion,
+     * - but different ReportTypes.
+     * @throws JAXBException  when these are thrown by the MessageStorage or the
+     * MdibHistorian.
+     * @throws IOException when these are thrown by the MessageStorage or the
+     * MdibHistorian.
+     */
+    @Test
+    void testGetAllUniqueReportsGoodDoNotFilterWhenReportTypeDiffers() throws JAXBException, IOException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final EpisodicContextReport episodicContextReportBody =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        episodicContextReportBody.getReportPart().get(0).getContextState().add(operator1);
+        episodicContextReportBody.getReportPart().get(0).getContextState().add(operator2);
+
+        final var metricReport = buildEpisodicMetricReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport); // same MdibVersion,
+        // but different ReportType
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        try (final var history = historian.getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)) {
+            final var list = history.toList();
+            assertEquals(2, list.size());
+            assertEquals(episodicContextReportBody.getMdibVersion(), list.get(0).getMdibVersion());
+            final org.somda.sdc.biceps.model.message.EpisodicContextReport report =
+                    (org.somda.sdc.biceps.model.message.EpisodicContextReport) list.get(0);
+            assertEquals(
+                    episodicContextReportBody.getReportPart().size(),
+                    report.getReportPart().size());
+            for (int i = 0; i < episodicContextReportBody.getReportPart().size(); i++) {
+                final int numContextStates = episodicContextReportBody
+                        .getReportPart()
+                        .get(i)
+                        .getContextState()
+                        .size();
+                assertEquals(
+                        numContextStates,
+                        report.getReportPart().get(i).getContextState().size());
+                for (int j = 0; j < numContextStates; j++) {
+                    assertEquals(
+                            episodicContextReportBody
+                                    .getReportPart()
+                                    .get(i)
+                                    .getContextState()
+                                    .get(j)
+                                    .getDescriptorHandle(),
+                            report.getReportPart()
+                                    .get(i)
+                                    .getContextState()
+                                    .get(j)
+                                    .getDescriptorHandle());
+                }
+            }
+        }
+    }
+
+    /**
+     * Tests if GetAllUniqueReports invalidates the Test run when encountering 2 reports that
+     * - have the same MdibVersion,
+     * - have the same ReportType, but
+     * - have different Contents.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     */
+    @Test
+    void testGetAllUniqueReportsFailInvalidateTestRunWhenSameReportTypeButContentDiffers()
+            throws JAXBException, IOException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        firstMod.getReportPart().get(0).getContextState().add(operator1);
+        firstMod.getReportPart().get(0).getContextState().add(operator2);
+
+        final var contextReport2 = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+        final var secondMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        secondMod.getReportPart().get(0).getContextState().add(operator1);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport2); // same MdibVersion,
+        // but different ReportType
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        final List<AbstractReport> actualResult = historian
+                .getAllUniqueReports(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO)
+                .toList();
+        assertEquals(2, actualResult.size());
+
+        verify(mockObserver).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Tests if Reports are filtered out by uniqueEpisodicReportBasedHistory() when
+     * - they have the same MdibVersion.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     */
+    @Test
+    void testUniqueEpisodicReportBasedHistoryGoodDuplicateFilter()
+            throws JAXBException, IOException, ReportProcessingException, PreprocessingException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState1");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState2");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        firstMod.getReportPart().get(0).getContextState().add(operator1);
+        firstMod.getReportPart().get(0).getContextState().add(operator2);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport); // duplicate
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        try (final var history = historian.uniqueEpisodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
+            history.next(); // initial state
+            history.next(); // state after contextReport
+            assertNull(history.next()); // no more states as the other reports were filtered out as duplicates
+        }
+    }
+
+    /**
+     * Tests if duplicated Reports are not filtered out by uniqueEpisodicReportBasedHistory() when
+     * - they have the same MdibVersion,
+     * - but different ReportTypes.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     */
+    @Test
+    void testUniqueEpisodicReportBasedHistoryGoodDoNotFilterWhenReportTypeDiffers()
+            throws JAXBException, IOException, ReportProcessingException, PreprocessingException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState1");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState2");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        firstMod.getReportPart().get(0).getContextState().add(operator1);
+        firstMod.getReportPart().get(0).getContextState().add(operator2);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        final var metricReport = buildEpisodicMetricReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        try (final var history = historian.uniqueEpisodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
+            history.next(); // initial state
+            history.next(); // state after contextReport
+            history.next(); // stare after metricReport
+            assertNull(history.next()); // no more states
+        }
+    }
+
+    /**
+     * Tests if uniqueEpisodicReportBasedHistory() invalidates the Test run when encountering 2 reports that
+     * - have the same MdibVersion,
+     * - have the same ReportType, but
+     * - have different Contents.
+     * @throws JAXBException when these are thrown by the MessageStorage.
+     * @throws IOException when these are thrown by the MessageStorage.
+     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     */
+    @Test
+    void testUniqueEpisodicReportBasedHistoryFailInvalidateTestRunWhenSameReportTypeButContentDiffers()
+            throws JAXBException, IOException, ReportProcessingException, PreprocessingException {
+        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState1");
+        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState2");
+
+        final var contextReportMdibVersion = BigInteger.ONE;
+        final var contextReportStateVersion = BigInteger.TWO;
+        final var contextReport = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+
+        final var firstMod =
+                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
+        firstMod.getReportPart().get(0).getContextState().add(operator1);
+        firstMod.getReportPart().get(0).getContextState().add(operator2);
+
+        final var contextReport2 = buildEpisodicContextReport(
+                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+        final var secondMod =
+                (EpisodicContextReport) contextReport2.getBody().getAny().get(0);
+        secondMod.getReportPart().get(0).getContextState().add(operator1);
+
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport2); // duplicate
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        try (final var history = historian.uniqueEpisodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
+            history.next(); // initial state
+            history.next(); // state after contextReport
+            history.next(); // state after contextReport2
+            assertNull(history.next()); // no more states as the other reports were filtered out as duplicates
+        }
+
+        verify(mockObserver).invalidateTestRun(anyString());
     }
 
     Envelope buildMdibEnvelope(final String sequenceId, @Nullable final BigInteger mdibVersion) {
