@@ -1154,7 +1154,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1181,7 +1180,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1208,7 +1206,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1234,7 +1231,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1260,7 +1256,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1286,7 +1281,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1312,7 +1306,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1338,7 +1331,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1364,7 +1356,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1390,7 +1381,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1416,7 +1406,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1442,7 +1431,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1468,7 +1456,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1494,7 +1481,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1520,7 +1506,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1546,7 +1531,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1572,7 +1556,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
@@ -1598,7 +1581,6 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
             return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
