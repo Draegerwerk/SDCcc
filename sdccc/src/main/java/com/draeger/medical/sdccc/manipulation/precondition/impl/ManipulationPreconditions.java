@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -21,10 +22,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -62,60 +67,44 @@ import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 public class ManipulationPreconditions {
 
     private static boolean manipulateMetricStatus(
-            final Injector injector,
-            final Logger log,
-            final MetricCategory metricCategory,
-            final ComponentActivation activationState,
-            final ComponentActivation startingActivationState) {
+        final Injector injector,
+        final Logger log,
+        final MetricCategory metricCategory,
+        final ComponentActivation activationState) {
+
+        final var timeBufferInSeconds = injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        final var timeBuffer = TimeUnit.MILLISECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
-                testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
+            testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
         for (var entity : metricEntities) {
             final var metricDescriptor = entity.getDescriptor(AbstractMetricDescriptor.class);
             final var category = metricDescriptor.orElseThrow().getMetricCategory();
             if (category.equals(metricCategory)) {
                 final var metricState =
-                        entity.getStates(AbstractMetricState.class).get(0);
+                    entity.getStates(AbstractMetricState.class).get(0);
                 final var handle = metricState.getDescriptorHandle();
-                final var resultStartingActivationState =
-                        manipulations.setComponentActivation(handle, startingActivationState);
-                // change activation state to something other than expected result to ensure the transition
-
-                switch (resultStartingActivationState) {
-                    case RESULT_NOT_SUPPORTED -> log.debug(
-                            "Manipulating the activation state to {} was not supported for metric state with handle {}."
-                                    + " Changing the activation state to something other than {} is required to ensure that a transition occurs when the setMetric manipulation is called.",
-                            startingActivationState,
-                            handle,
-                            activationState);
-                    case RESULT_SUCCESS -> {
-                        final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
-                        log.debug(
-                                "Manipulation setMetricStatus was {} for metric state with handle {}",
-                                manipulationResult,
-                                handle);
-                        if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
-                                || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
-                            log.error("Setting the metric status for metric with handle {} failed", handle);
-                            return false;
-                        }
-                        manipulationResults.add(manipulationResult);
-                    }
-                    default -> {
-                        log.error(
-                                "Manipulating the activation state to {} was {} for metric state with handle {}."
-                                        + " This needs to be successful, to ensure that the metric is set to {} after performing"
-                                        + " the setMetricStatus manipulation.",
-                                startingActivationState,
-                                resultStartingActivationState,
-                                handle,
-                                activationState);
-                        return false;
-                    }
+                final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
+                log.debug(
+                    "Manipulation setMetricStatus was {} for metric state with handle {}",
+                    manipulationResult,
+                    handle);
+                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                    || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                    log.error("Setting the metric status for metric with handle {} failed", handle);
+                    return false;
+                }
+                manipulationResults.add(manipulationResult);
+                try {
+                    Thread.sleep(timeBuffer);
+                } catch (InterruptedException e) {
+                    log.error("Failed to wait the time frame of {} after setMetricStatus manipulation", timeBuffer);
+                    return false;
                 }
             }
+
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }
@@ -1166,7 +1155,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.ON;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1193,7 +1182,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.NOT_RDY;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1220,7 +1209,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.STND_BY;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1246,7 +1235,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.SHTDN;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1272,7 +1261,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.OFF;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1298,7 +1287,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.FAIL;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1324,7 +1313,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.ON;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1350,7 +1339,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.NOT_RDY;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1376,7 +1365,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.STND_BY;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1402,7 +1391,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.SHTDN;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1428,7 +1417,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.OFF;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1454,7 +1443,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.FAIL;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1480,7 +1469,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.ON;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1506,7 +1495,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.NOT_RDY;
             final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1532,7 +1521,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.STND_BY;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1558,7 +1547,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.SHTDN;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1584,7 +1573,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.OFF;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1610,7 +1599,7 @@ public class ManipulationPreconditions {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.FAIL;
             final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 

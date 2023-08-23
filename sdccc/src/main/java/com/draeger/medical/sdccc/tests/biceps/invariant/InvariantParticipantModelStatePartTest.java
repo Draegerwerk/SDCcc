@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
@@ -30,7 +31,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,7 +65,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                     + " %s found, test failed.";
     public static final String WRONG_ACTIVATION_STATE =
             "The manipulated activation state for metric %s should be %s but is %s";
-    private static final long BUFFER = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
+    private long BUFFER;
     private MessageStorage messageStorage;
     private MarshallingService marshalling;
     private SoapUtil soapUtil;
@@ -71,6 +76,8 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
         this.marshalling = riInjector.getInstance(MarshallingService.class);
         this.soapUtil = riInjector.getInstance(SoapUtil.class);
+        final var timeBufferInSeconds = getInjector().getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        BUFFER = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
     }
 
     @Test
