@@ -525,24 +525,31 @@ public class TestSuite {
         return createInjector(configurationModule, new TestRunConfig(testRunDir));
     }
 
-    private static void exit(final int exitCode, final Injector injector, final File testRunDir) {
+    private static void exit(final long numberOfTestFailures, boolean hadError, final Injector injector, final File testRunDir) {
 
+        final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
         try {
             LOG.info("Stopping SDCcc");
-            printVerdict(exitCode, testRunDir, injector);
+            printVerdict(numberOfTestFailures, testRunDir, injector);
 
             injector.getInstance(MessageStorage.class).close();
         } catch (final RuntimeException | Error e) {
 
             LOG.error("Unchecked exception during cleanup", e);
-            printVerdict(1, testRunDir, injector);
-            System.exit(1);
+            printVerdict(numberOfTestFailures, testRunDir, injector);
+            System.exit(2); // exitCode != 0 to indicate Error
         }
 
-        System.exit(exitCode);
+        if (numberOfTestFailures > 0) {
+            System.exit(1); // exitCode != 0 to indicate Failure
+        } if (hadError || testRunObserver.isInvalid()) {
+            System.exit(2); // exitCode != 0 to indicate Error
+        } else {
+            System.exit(0); // exitCode == 0 to indicate Success
+        }
     }
 
-    private static void printVerdict(final int exitCode, final File testRunDir, final Injector injector) {
+    private static void printVerdict(final long numberOfTestFailures, final File testRunDir, final Injector injector) {
         final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
         final Boolean summarizeMessageEncodingErrors = injector.getInstance(
                 Key.get(Boolean.class, Names.named(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS)));
@@ -567,7 +574,7 @@ public class TestSuite {
             }
         }
 
-        if (exitCode == 0) {
+        if (numberOfTestFailures == 0) {
             LOG.info(
                     "Test run with {} Tests was completed successfully. No problems were found.",
                     testRunObserver.getTotalNumberOfTestsRun());
@@ -668,16 +675,11 @@ public class TestSuite {
 
             InjectorTestBase.setInjector(injector);
             final var testSuite = injector.getInstance(TestSuite.class);
-
-            if (testSuite.runTestSuite() == 0) {
-                TestSuite.exit(0, injector, testRunDir);
-            } else {
-                TestSuite.exit(1, injector, testRunDir);
-            }
+            TestSuite.exit(testSuite.runTestSuite(), false, injector, testRunDir);
         } catch (final RuntimeException | Error e) {
 
             LOG.error("Unchecked exception while setting up or running the TestSuite", e);
-            TestSuite.exit(1, injector, testRunDir);
+            TestSuite.exit(0, true, injector, testRunDir);
         }
     }
 
