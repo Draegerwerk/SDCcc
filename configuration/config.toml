@@ -31,4 +31,4 @@ Enable=false
 ServerAddress="localhost:50051"
 
 [SDCcc.TestParameter]
-Biceps547TimeInterval=1
+Biceps547TimeInterval=5

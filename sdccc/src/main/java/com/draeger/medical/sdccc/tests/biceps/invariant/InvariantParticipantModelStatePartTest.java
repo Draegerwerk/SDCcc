@@ -26,16 +26,14 @@ import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,7 +74,8 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
         this.marshalling = riInjector.getInstance(MarshallingService.class);
         this.soapUtil = riInjector.getInstance(SoapUtil.class);
-        final var timeBufferInSeconds = getInjector().getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        final var timeBufferInSeconds = getInjector()
+                .getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
         BUFFER = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
     }
 

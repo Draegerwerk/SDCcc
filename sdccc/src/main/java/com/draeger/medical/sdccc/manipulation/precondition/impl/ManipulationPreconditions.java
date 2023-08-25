@@ -16,6 +16,8 @@ import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,9 +29,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -67,32 +66,33 @@ import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 public class ManipulationPreconditions {
 
     private static boolean manipulateMetricStatus(
-        final Injector injector,
-        final Logger log,
-        final MetricCategory metricCategory,
-        final ComponentActivation activationState) {
+            final Injector injector,
+            final Logger log,
+            final MetricCategory metricCategory,
+            final ComponentActivation activationState) {
 
-        final var timeBufferInSeconds = injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        final var timeBufferInSeconds =
+                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
         final var timeBuffer = TimeUnit.MILLISECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
         final var metricEntities =
-            testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
+                testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class);
         for (var entity : metricEntities) {
             final var metricDescriptor = entity.getDescriptor(AbstractMetricDescriptor.class);
             final var category = metricDescriptor.orElseThrow().getMetricCategory();
             if (category.equals(metricCategory)) {
                 final var metricState =
-                    entity.getStates(AbstractMetricState.class).get(0);
+                        entity.getStates(AbstractMetricState.class).get(0);
                 final var handle = metricState.getDescriptorHandle();
                 final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
                 log.debug(
-                    "Manipulation setMetricStatus was {} for metric state with handle {}",
-                    manipulationResult,
-                    handle);
+                        "Manipulation setMetricStatus was {} for metric state with handle {}",
+                        manipulationResult,
+                        handle);
                 if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
-                    || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
                     log.error("Setting the metric status for metric with handle {} failed", handle);
                     return false;
                 }
@@ -104,7 +104,6 @@ public class ManipulationPreconditions {
                     return false;
                 }
             }
-
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
     }

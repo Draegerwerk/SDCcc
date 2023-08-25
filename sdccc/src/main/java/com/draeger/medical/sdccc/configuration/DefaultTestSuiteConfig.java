@@ -64,7 +64,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
     }
 
     void configureTestParameter() {
-        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 5000L);
+        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 5L);
     }
 
     void configureInternalSettings() {
