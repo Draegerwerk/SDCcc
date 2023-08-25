@@ -525,7 +525,8 @@ public class TestSuite {
         return createInjector(configurationModule, new TestRunConfig(testRunDir));
     }
 
-    private static void exit(final long numberOfTestFailures, boolean hadError, final Injector injector, final File testRunDir) {
+    private static void exit(
+            final long numberOfTestFailures, final boolean hadError, final Injector injector, final File testRunDir) {
 
         final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
         try {
@@ -542,7 +543,8 @@ public class TestSuite {
 
         if (numberOfTestFailures > 0) {
             System.exit(1); // exitCode != 0 to indicate Failure
-        } if (hadError || testRunObserver.isInvalid()) {
+        }
+        if (hadError || testRunObserver.isInvalid()) {
             System.exit(2); // exitCode != 0 to indicate Error
         } else {
             System.exit(0); // exitCode == 0 to indicate Success
