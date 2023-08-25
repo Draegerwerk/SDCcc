@@ -239,11 +239,12 @@ this case in order to minimize the risk of such an invalid application going unn
 
 [General]
 
-| **Limitation**                                                                                                                                                                                                                                  |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li><li>content-type: multipart/related</li></ul> |
-| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                                                       |
-| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                                                           |
+| **Limitation**                                                                                                                                                                                           |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul>  |
+| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                |
+| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                    |
+| Multipart/Related Content-Type is not supported                                                                                                                                                          |
 
 [MDPWS]
 
@@ -252,7 +253,6 @@ this case in order to minimize the risk of such an invalid application going unn
 | WSDLs embedded in {http\://schemas.xmlsoap.org/ws/2004/09/mex}MetadataReference entries are currently unsupported | R0010, R0011, R0014       |
 | {http\://www\.w3.org/ns/ws-policy}PolicyURIs checking is not supported                                            | R0010, R0011              |
 | ArchiveService messages are not supported                                                                         | R0006                     |
-| Multipart/Related Content-Type is not supported                                                                   | R0006                     |
 
 ## Which Manipulation is required for which test
 [BICEPS]
