@@ -318,6 +318,15 @@ this case in order to minimize the risk of such an invalid application going unn
 | R0056           | TriggerDescriptorUpdate |
 | R0078_0         | TriggerReport           |
 
+## Exit Codes
+
+SDCcc's exitCode should be interpreted as follows:
+
+| **ExitCode** | **Semantics**                                                                                                        |
+|--------------|----------------------------------------------------------------------------------------------------------------------|
+| 0            | Success - SDC-Compliance could be successfully measured and the Device Under Test satisfies all tested Requirements  |
+| 1            | Failure - SDC-Compliance could be successfully measured, but the Device Under Test violated Requirements             |
+| 2            | Error - SDC-Compliance could not be measured                                                                         |
 
 ## Notices
 SDCcc is not intended for use in medical products, clinical trials, clinical studies, or in clinical routine.
