@@ -156,6 +156,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 // Component activation should be ON to be relevant for testRequirement54700.
@@ -199,6 +200,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -232,6 +234,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -263,6 +266,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -296,6 +300,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 RTSA_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -327,6 +332,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -339,6 +345,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -373,6 +380,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -406,6 +414,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -441,6 +450,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -473,6 +483,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -505,6 +516,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -541,6 +553,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -574,6 +587,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -605,6 +619,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -639,6 +654,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 RTSA_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -669,6 +685,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -681,6 +698,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -715,6 +733,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -748,6 +767,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -783,6 +803,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -815,6 +836,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -847,6 +869,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -883,6 +906,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -916,6 +940,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -947,6 +972,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -978,11 +1004,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1025,6 +1053,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1058,6 +1087,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1093,6 +1123,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1125,6 +1156,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1156,6 +1188,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1192,6 +1225,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1225,6 +1259,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -1256,6 +1291,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1287,11 +1323,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1334,6 +1372,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1367,6 +1406,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1402,6 +1442,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1434,6 +1475,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1465,6 +1507,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -1501,6 +1544,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1534,6 +1578,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1565,6 +1610,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1597,11 +1643,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1644,6 +1692,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1677,6 +1726,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1712,6 +1762,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1744,6 +1795,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1775,6 +1827,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -1811,6 +1864,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -1844,6 +1898,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -1875,6 +1930,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -1907,11 +1963,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -1954,6 +2012,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -1987,6 +2046,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -2022,6 +2082,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -2054,6 +2115,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -2085,6 +2147,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -2121,6 +2184,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2154,6 +2218,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2184,6 +2249,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2220,6 +2286,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2231,6 +2298,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2265,6 +2333,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2298,6 +2367,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2333,6 +2403,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2365,6 +2436,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2396,6 +2468,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -2432,6 +2505,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2465,6 +2539,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2495,6 +2570,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2531,6 +2607,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2543,6 +2620,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2578,6 +2656,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2611,6 +2690,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2646,6 +2726,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2678,6 +2759,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2709,6 +2791,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -2745,6 +2828,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2778,6 +2862,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2808,6 +2893,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2844,6 +2930,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2856,6 +2943,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2891,6 +2979,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2924,6 +3013,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2959,6 +3049,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -2991,6 +3082,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -3022,6 +3114,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -3058,6 +3151,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3091,6 +3185,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3121,6 +3216,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3156,6 +3252,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3168,6 +3265,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3203,6 +3301,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3236,6 +3335,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3271,6 +3371,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3303,6 +3404,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3334,6 +3436,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -3370,6 +3473,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3405,6 +3509,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3435,6 +3540,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3466,6 +3572,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3478,6 +3585,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3512,6 +3620,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3545,6 +3654,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3580,6 +3690,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3612,6 +3723,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3643,6 +3755,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -3679,6 +3792,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3714,6 +3828,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3744,6 +3859,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3775,6 +3891,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3787,6 +3904,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 parameters);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3821,6 +3939,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3854,6 +3973,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3889,6 +4009,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3921,6 +4042,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3952,6 +4074,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -3988,6 +4111,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4021,6 +4145,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4051,6 +4176,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4083,6 +4209,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4094,6 +4221,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4128,6 +4256,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4161,6 +4290,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4196,6 +4326,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4228,6 +4359,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4259,6 +4391,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
@@ -4295,6 +4428,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4328,6 +4462,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4358,6 +4493,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4391,6 +4527,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4402,6 +4539,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4436,6 +4574,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4469,6 +4608,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4504,6 +4644,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4536,6 +4677,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4567,6 +4709,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
@@ -4603,6 +4746,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4636,6 +4780,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4666,6 +4811,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4697,11 +4843,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4744,6 +4892,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4777,6 +4926,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4812,6 +4962,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4844,6 +4995,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4875,6 +5027,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
@@ -4911,6 +5064,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -4944,6 +5098,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -4974,6 +5129,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5005,11 +5161,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5052,6 +5210,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5085,6 +5244,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5120,6 +5280,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5152,6 +5313,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5183,6 +5345,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
@@ -5219,6 +5382,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5252,6 +5416,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5282,6 +5447,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5314,11 +5480,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5361,6 +5529,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5394,6 +5563,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5429,6 +5599,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5461,6 +5632,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5492,6 +5664,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
@@ -5528,6 +5701,7 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5561,6 +5735,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5591,6 +5766,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5623,11 +5799,13 @@ public class InvariantParticipantModelStatePartTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5670,6 +5848,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5703,6 +5882,7 @@ public class InvariantParticipantModelStatePartTestTest {
 
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5738,6 +5918,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5770,6 +5951,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
@@ -5801,6 +5983,7 @@ public class InvariantParticipantModelStatePartTestTest {
         final var result = ResponseTypes.Result.RESULT_SUCCESS;
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);

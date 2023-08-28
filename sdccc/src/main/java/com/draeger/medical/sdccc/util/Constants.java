@@ -222,6 +222,7 @@ public final class Constants {
 
     // Manipulation Data for Hibernation
     public static final String MANIPULATION_PARAMETER_HANDLE = "Handle";
+    public static final String MANIPULATION_PARAMETER_SEQUENCE_ID = "SequenceId";
     public static final String MANIPULATION_PARAMETER_LOCATION_DETAIL = "LocationDetail";
     public static final String MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION = "ContextAssociation";
     public static final String MANIPULATION_PARAMETER_ALERT_ACTIVATION = "AlertActivation";

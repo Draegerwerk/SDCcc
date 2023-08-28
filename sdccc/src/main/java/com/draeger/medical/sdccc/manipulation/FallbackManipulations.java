@@ -203,7 +203,10 @@ public class FallbackManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result setMetricStatus(
-            final String handle, final MetricCategory category, final ComponentActivation activation) {
+            final String sequenceId,
+            final String handle,
+            final MetricCategory category,
+            final ComponentActivation activation) {
 
         final var metricStatusString = getMetricStatus(activation);
         if (metricStatusString.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;

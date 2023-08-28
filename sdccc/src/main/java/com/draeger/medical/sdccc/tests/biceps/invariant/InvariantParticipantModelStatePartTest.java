@@ -63,7 +63,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                     + " %s found, test failed.";
     public static final String WRONG_ACTIVATION_STATE =
             "The manipulated activation state for metric %s should be %s but is %s";
-    private long BUFFER;
+    private long buffer;
     private MessageStorage messageStorage;
     private MarshallingService marshalling;
     private SoapUtil soapUtil;
@@ -76,7 +76,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         this.soapUtil = riInjector.getInstance(SoapUtil.class);
         final var timeBufferInSeconds = getInjector()
                 .getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
-        BUFFER = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
+        buffer = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
     }
 
     @Test
@@ -397,7 +397,7 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
                 .orElseThrow();
         try (final var relevantReports = messageStorage.getInboundMessagesByTimeIntervalAndBodyType(
                 manipulationData.getStartTimestamp(),
-                manipulationData.getFinishTimestamp() + BUFFER,
+                manipulationData.getFinishTimestamp() + buffer,
                 Constants.MSG_EPISODIC_METRIC_REPORT,
                 Constants.MSG_WAVEFORM_STREAM)) {
             assertTestData(

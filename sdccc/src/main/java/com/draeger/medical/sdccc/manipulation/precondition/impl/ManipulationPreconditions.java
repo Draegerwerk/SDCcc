@@ -86,7 +86,13 @@ public class ManipulationPreconditions {
                 final var metricState =
                         entity.getStates(AbstractMetricState.class).get(0);
                 final var handle = metricState.getDescriptorHandle();
-                final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
+                final var sequenceId = testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getMdibVersion()
+                        .getSequenceId();
+                final var manipulationResult =
+                        manipulations.setMetricStatus(sequenceId, handle, category, activationState);
                 log.debug(
                         "Manipulation setMetricStatus was {} for metric state with handle {}",
                         manipulationResult,

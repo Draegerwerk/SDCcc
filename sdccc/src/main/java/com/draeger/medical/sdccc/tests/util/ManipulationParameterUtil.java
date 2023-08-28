@@ -159,14 +159,19 @@ public final class ManipulationParameterUtil {
     /**
      * Build manipulation parameter data containing the handle, category and activation of the metric to set the status for.
      *
+     * @param sequenceId in which the manipulation is performed
      * @param handle of the metric
      * @param category of the metric
      * @param activation of the metric
      * @return the manipulation parameter data
      */
     public static ManipulationParameterData buildMetricStatusManipulationParameterData(
-            final String handle, final MetricCategory category, final ComponentActivation activation) {
+            final String sequenceId,
+            final String handle,
+            final MetricCategory category,
+            final ComponentActivation activation) {
         return new ManipulationParameterData(List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_SEQUENCE_ID, sequenceId),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLE, handle),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_METRIC_CATEGORY, category.value()),
                 new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_COMPONENT_ACTIVATION, activation.value())));
