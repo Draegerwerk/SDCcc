@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - setComponentActivation stores incorrect manipulation data in the database resulting in no test data being available for 5-4-7_* tests
 - that preconditions of the following requirements could not handle the T2IAPI manipulation result RESULT_NOT_SUPPORTED: biceps:R0029_0 biceps:R0116 biceps:5-4-7_0_0 biceps:5-4-7_1 biceps:5-4-7_2 biceps:5-4-7_3 biceps:5-4-7_4 biceps:5-4-7_5 biceps:5-4-7_6_0 biceps:5-4-7_7 biceps:5-4-7_8 biceps:5-4-7_9 biceps:5-4-7_10 biceps:5-4-7_11 biceps:5-4-7_12_0 biceps:5-4-7_13 biceps:5-4-7_14 biceps:5-4-7_15 biceps:5-4-7_16 biceps:5-4-7_17
 - biceps:R0034_0 does not track changes when reinserting descriptors.
-- report duplication issue in biceps:C11-C15, biceps:C5, biceps:R5046_0, biceps:B-284_0 as well as biceps:R5003. 
+- report duplication issue in biceps:C11-C15, biceps:C5, biceps:R5046_0, biceps:B-284_0 as well as biceps:R5003.
+- biceps:5-4-7 tests confusing changes made by SetComponentActivation manipulations with changes made by SetMetricStatus (#118)
 
 ## [7.0.1] - 2023-03-17
 
