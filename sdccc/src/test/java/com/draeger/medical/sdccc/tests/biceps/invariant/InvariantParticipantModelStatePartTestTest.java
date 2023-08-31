@@ -13,11 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.biceps.model.message.AbstractMetricReport;
 import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
 import com.draeger.medical.dpws.soap.model.Envelope;
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.Message;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -36,6 +36,8 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import jakarta.xml.bind.JAXBElement;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -76,6 +78,7 @@ public class InvariantParticipantModelStatePartTestTest {
     private static final String SET_METRIC_HANDLE2 = "someSetStringMetric2";
     private static final String CLC_METRIC_HANDLE = "someClcStringMetric";
     private static final String CLC_METRIC_HANDLE2 = "someClcStringMetric2";
+    private static final String SOME_NON_EXISTENT_HANDLE = "someNonExistentHandle";
     private static final String SEQUENCE_ID = MdibBuilder.DEFAULT_SEQUENCE_ID;
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
@@ -86,7 +89,6 @@ public class InvariantParticipantModelStatePartTestTest {
     private static final long TIMESTAMP_FINISH2 = 1800;
     private static final long TIMESTAMP_IN_INTERVAL = 1500;
     private static final long TIMESTAMP_IN_INTERVAL2 = 1550;
-    private static final long TIMESTAMP_NOT_IN_INTERVAL = TimeUnit.NANOSECONDS.convert(10, TimeUnit.SECONDS);
     private static MessageStorageUtil messageStorageUtil;
     private static MdibBuilder mdibBuilder;
     private static MessageBuilder messageBuilder;
@@ -96,6 +98,8 @@ public class InvariantParticipantModelStatePartTestTest {
     private JaxbMarshalling baseMarshalling;
     private SoapMarshalling marshalling;
     private DatatypeFactory datatypeFactory;
+
+    private long buffer;
 
     @BeforeAll
     static void setupMarshalling() {
@@ -132,6 +136,9 @@ public class InvariantParticipantModelStatePartTestTest {
 
         datatypeFactory = DatatypeFactory.newInstance();
 
+        buffer = TimeUnit.NANOSECONDS.convert(
+                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL))),
+                TimeUnit.SECONDS);
         testClass = new InvariantParticipantModelStatePartTest();
         testClass.setUp();
     }
@@ -196,26 +203,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54700NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54700);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -227,24 +225,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54700BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement54700WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54700);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -253,96 +246,120 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with a timestamp less than the manipulation
+     * end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.ON is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        MSRMT_METRIC_HANDLE,
+                        ComponentActivation.ON,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54700Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.ON);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54700();
     }
 
     /**
-     * Tests if the test passes if for each 'setMetricStatus' manipulation for metrics with category 'Msrmt' only
-     * WaveformStream messages exist that contain the expected handle and were received within the time interval
-     * of the manipulation.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54700GoodWaveforms() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                RTSA_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var waveformStream = buildWaveformStream(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, RTSA_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, waveformStream));
-
-        testClass.testRequirement54700();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54700GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -356,180 +373,63 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-
-        testClass.testRequirement54700();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54700BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54700NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54700BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be on
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54700);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        MSRMT_METRIC_HANDLE,
-                        ComponentActivation.ON,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54700GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        // should not fail the test, since the first report in the time interval is relevant for the test
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54700();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp
+     * is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54700GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // another report for the same metric with the wrong activation state but a smaller mdib version should not
+        // fail the test
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement54700();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp
+     * is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54700BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // another report for the same metric with the wrong activation state but a bigger mdib version should
+        // fail the test
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54700);
     }
@@ -549,26 +449,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5471NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5471);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -580,24 +471,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5471BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement5471WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5471);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -606,96 +492,120 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation
+     * end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5471NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5471NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5471BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.NOT_RDY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        MSRMT_METRIC_HANDLE,
+                        ComponentActivation.NOT_RDY,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5471Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        final var unrelatedPart =
-                buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement5471();
     }
 
     /**
-     * Tests if the test passes if for each 'setMetricStatus' manipulation for metrics with category 'Msrmt' only
-     * WaveformStream messages exist that contain the expected handle and were received within the time interval
-     * of the manipulation.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5471GoodWaveforms() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                RTSA_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var waveformStream = buildWaveformStream(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, RTSA_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, waveformStream));
-
-        testClass.testRequirement5471();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5471GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -709,180 +619,61 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
                 SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-
-        testClass.testRequirement5471();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5471BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5471NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5471BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be on
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5471);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        MSRMT_METRIC_HANDLE,
-                        ComponentActivation.NOT_RDY,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5471GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5471();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp
+     * is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5471GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement5471();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp
+     * is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5471BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5471);
     }
@@ -902,26 +693,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5472NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5472);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -933,24 +715,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5472BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement5472WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5472);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -959,181 +736,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5472Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5472NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement5472();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5472GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement5472();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5472BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5472);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5472NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5472);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5472NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5472);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5472BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5472BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be stndby
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.STND_BY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5472);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1144,64 +811,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5472GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5472Good() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement5472();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5472GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5472();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5472GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement5472();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5472BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5472);
     }
@@ -1221,26 +933,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5473NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5473);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -1252,24 +955,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5473BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement5473WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5473);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1278,181 +976,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5473Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5473NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement5473();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5473GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement5473();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5473BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5473);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5473NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5473);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5473NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5473);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5473BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5473BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be shtdn
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.SHTDN is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5473);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1463,64 +1051,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5473GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5473Good() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement5473();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5473GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.SHTDN);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5473();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5473GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement5473();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5473BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.SHTDN);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5473);
     }
@@ -1540,26 +1173,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5474NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5474);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -1571,24 +1195,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5474BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement5474WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5474);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1597,182 +1216,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5474Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5474NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement5474();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5474GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement5474();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5474BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5474);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5474NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5474);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5474NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5474);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5474BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5474BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be OFF
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.OFF is expected
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement5474);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1783,64 +1291,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5474GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement5474Good() throws Exception {
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement5474();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5474GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                MSRMT_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5474();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5474GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement5474();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5474BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5474);
     }
@@ -1860,26 +1413,17 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5475NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5475);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
@@ -1891,24 +1435,19 @@ public class InvariantParticipantModelStatePartTestTest {
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5475BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement5475WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                // the test expects manipulations with metric category msrmt
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category msrmt in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5475);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -1917,56 +1456,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5475BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                MSRMT_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.FAIL is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        MSRMT_METRIC_HANDLE,
+                        ComponentActivation.FAIL,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Msrmt' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'Msrmt' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5475Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement5475();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Msrmt'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5475GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -1975,192 +1576,64 @@ public class InvariantParticipantModelStatePartTestTest {
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5475();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5475BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5475NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE2, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, MSRMT_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5475BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be FAIL
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5475);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        MSRMT_METRIC_HANDLE,
-                        ComponentActivation.FAIL,
-                        ComponentActivation.ON)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5475GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement5475();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5475BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 MSRMT_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.FAIL);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                MSRMT_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5475);
     }
@@ -2180,55 +1653,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54760NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54760);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54760BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
+    public void testRequirement54760WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category set in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54760);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -2236,67 +1695,119 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54760NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54760NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54760BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.ON is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.ON,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54760Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedReportPart =
-                buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
-        final var relatedReportPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        final var unrelatedReportPart2 =
-                buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.ON);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, unrelatedReportPart, relatedReportPart, unrelatedReportPart2);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54760();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54760GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
                 SET_METRIC_HANDLE2,
@@ -2309,179 +1820,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54760();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54760BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54760NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54760BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be on
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54760);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.ON,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54760GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement54760();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54760BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54760);
     }
@@ -2501,55 +1892,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5477NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5477);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5477BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+    public void testRequirement5477WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category set in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5477);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -2557,67 +1934,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5477NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5477NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5477BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.NOT_RDY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.NOT_RDY,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5477Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        final var unrelatedPart =
-                buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        final var unrelatedPart2 =
-                buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-
-        final var metricReport =
-                buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart, unrelatedPart2);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement5477();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5477GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -2631,180 +2059,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5477();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5477BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5477NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5477BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be NotRdy
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5477);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.NOT_RDY,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5477GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement5477();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5477BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.NOT_RDY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5477);
     }
@@ -2824,55 +2131,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5478NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5478);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5478BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+    public void testRequirement5478WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category set in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5478);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -2880,67 +2173,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5478NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5478NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5478BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.STND_BY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.STND_BY,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5478Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        final var unrelatedPart =
-                buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        final var unrelatedPart2 =
-                buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-
-        final var metricReport =
-                buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart, unrelatedPart2);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement5478();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5478GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -2954,180 +2298,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5478();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5478BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5478NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5478BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be stndby
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5478);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.STND_BY,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5478GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement5478();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5478BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5478);
     }
@@ -3147,55 +2370,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement5479NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5479);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement5479BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
+    public void testRequirement5479WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category set in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement5479);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -3203,66 +2412,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5479NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5479NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement5479BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.SHTDN is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.SHTDN,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5479Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        final var unrelatedPart2 =
-                buildMetricReportPart(BigInteger.ONE, MSRMT_METRIC_HANDLE, ComponentActivation.STND_BY);
-
-        final var metricReport =
-                buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart, unrelatedPart2);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement5479();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5479GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -3276,180 +2537,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.SHTDN);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.SHTDN);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement5479();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5479BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5479NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement5479BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be shtdn
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement5479);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.SHTDN,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5479GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement5479();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement5479BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement5479);
     }
@@ -3469,57 +2609,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54710NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54710);
-        assertTrue(
-                error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION),
-                error.getMessage());
+        assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54710BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
+    public void testRequirement54710WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category SET in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54710);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -3527,62 +2651,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54710NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54710NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54710BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.OFF is expected
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.OFF,
+                        ComponentActivation.ON)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54710Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54710();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54710GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -3596,179 +2776,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54710();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54710BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54710NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54710BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be OFF
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54710);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.OFF,
-                        ComponentActivation.ON)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54710GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement54710();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54710BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54710);
     }
@@ -3788,57 +2848,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54711NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54711);
-        assertTrue(
-                error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION),
-                error.getMessage());
+        assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Set' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'SET' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54711BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
+    public void testRequirement54711WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                // the test expects manipulations with metric category SET
                 org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category SET in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54711);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -3846,62 +2890,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54711NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54711NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54711BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                SET_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.FAIL is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        SET_METRIC_HANDLE,
+                        ComponentActivation.FAIL,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Set' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'SET' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54711Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.FAIL);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54711();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Set'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54711GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -3915,179 +3015,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.FAIL);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.FAIL);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54711();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54711BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54711NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE2, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, SET_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54711BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be FAIL
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54711);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        SET_METRIC_HANDLE,
-                        ComponentActivation.FAIL,
-                        ComponentActivation.ON)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54711GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement54711();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54711BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 SET_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54711);
     }
@@ -4107,55 +3087,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement547120NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement547120);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement547120BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+    public void testRequirement547120WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement547120);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -4163,63 +3129,119 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement547120BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.ON is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        CLC_METRIC_HANDLE,
+                        ComponentActivation.ON,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement547120Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement547120();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement547120GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
@@ -4232,179 +3254,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement547120();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement547120BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement547120NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement547120BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be on
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement547120);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        CLC_METRIC_HANDLE,
-                        ComponentActivation.ON,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement547120GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement547120();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement547120BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.ON,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement547120);
     }
@@ -4424,55 +3326,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54713NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54713);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54713BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+    public void testRequirement54713WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
+                org.somda.sdc.biceps.model.participant.MetricCategory.SET,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                MSRMT_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.MSRMT,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54713);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -4480,64 +3368,119 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54713NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54713NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54713BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.NOT_RDY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        CLC_METRIC_HANDLE,
+                        ComponentActivation.NOT_RDY,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54713Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        final var unrelatedPart =
-                buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54713();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54713GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
                 CLC_METRIC_HANDLE2,
@@ -4550,179 +3493,59 @@ public class InvariantParticipantModelStatePartTestTest {
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54713();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54713BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54713NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.NOT_RDY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54713BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be not_rdy
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54713);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        CLC_METRIC_HANDLE,
-                        ComponentActivation.NOT_RDY,
-                        ComponentActivation.OFF)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54713GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement54713();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54713BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.NOT_RDY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.NOT_RDY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.NOT_RDY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54713);
     }
@@ -4742,55 +3565,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54714NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54714);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54714BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement54714WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54714);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -4798,181 +3607,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54714Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54714NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.STND_BY);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement54714();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54714GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement54714();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54714BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54714);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54714NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.STND_BY);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54714);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54714NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54714);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54714BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54714BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be stndby
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.STND_BY is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54714);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -4983,64 +3682,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54714GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54714Good() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement54714();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54714GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.STND_BY);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54714();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54714GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement54714();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54714BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.STND_BY);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.STND_BY,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                SET_METRIC_HANDLE,
+                ComponentActivation.STND_BY,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54714);
     }
@@ -5060,55 +3804,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54715NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54715);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54715BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement54715WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54715);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -5116,181 +3846,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54715Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54715NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.SHTDN);
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, unrelatedPart, relatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement54715();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54715GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement54715();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54715BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54715);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54715NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.SHTDN);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54715);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54715NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54715);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54715BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54715BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be shtdn
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.SHTDN is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54715);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -5301,64 +3921,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54715GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54715Good() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement54715();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54715GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.SHTDN);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54715();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54715GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement54715();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54715BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.SHTDN);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.SHTDN,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.SHTDN,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54715);
     }
@@ -5378,55 +4043,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54716NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54716);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54716BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement54716WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54716);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -5434,182 +4085,71 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54716Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54716NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        testClass.testRequirement54716();
-    }
-
-    /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54716GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-
-        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE2,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
                 ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START2,
-                TIMESTAMP_FINISH2,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
-
-        testClass.testRequirement54716();
-    }
-
-    /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54716BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54716);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54716NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54716);
         assertTrue(error.getMessage()
                 .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
     }
 
     /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54716NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54716);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54716BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54716BadWrongActivation() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be OFF
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.OFF is expected
+                ComponentActivation.ON,
+                TIMESTAMP_IN_INTERVAL);
         final var error = assertThrows(AssertionError.class, testClass::testRequirement54716);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -5620,64 +4160,109 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54716GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+    public void testRequirement54716Good() throws Exception {
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        testClass.testRequirement54716();
+    }
 
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+    /**
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54716GoodOverlappingTimeInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+
+        final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                CLC_METRIC_HANDLE2,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
+        messageStorageUtil.addManipulation(
+                storage,
+                TIMESTAMP_START2,
+                TIMESTAMP_FINISH2,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54716();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54716GoodMultipleReportsInInterval() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
+        final var metricReport2 = buildMetricReport(
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
+
+        testClass.testRequirement54716();
+    }
+
+    /**
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54716BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.OFF,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54716);
     }
@@ -5697,55 +4282,41 @@ public class InvariantParticipantModelStatePartTestTest {
      */
     @Test
     public void testRequirement54717NoSuccessfulManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        // add manipulation data with result fail
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                // no manipulation with result success
+                ResponseTypes.Result.RESULT_FAIL,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_FAIL,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54717);
         assertTrue(error.getMessage().contains(InvariantParticipantModelStatePartTest.NO_SUCCESSFUL_MANIPULATION));
     }
 
     /**
-     * Test whether the test fails, when no manipulation data with category 'Clc' is in storage.
+     * Test whether the test fails, when no manipulation data with category 'CLC' is in storage.
      *
      * @throws Exception on any exception
      */
     @Test
-    public void testRequirement54717BadWrongMetricCategory() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                SET_METRIC_HANDLE,
+    public void testRequirement54717WrongMetricCategory() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                // the test expects manipulations with metric category CLC
                 org.somda.sdc.biceps.model.participant.MetricCategory.SET,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, SET_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        // no manipulation with category clc in storage
         final var error = assertThrows(NoTestData.class, testClass::testRequirement54717);
         assertTrue(error.getMessage()
                 .contains(String.format(
@@ -5753,56 +4324,118 @@ public class InvariantParticipantModelStatePartTestTest {
     }
 
     /**
+     * Tests whether the test fails, when no metric report is present with timestamp less than the manipulation end timestamp + buffer.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54717NoReportUntilEndTimestamp() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                // the timestamp of the report is not < manipulation end timestamp + buffer
+                TIMESTAMP_FINISH + buffer);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME, TIMESTAMP_FINISH + buffer)));
+    }
+
+    /**
+     * Tests whether the test fails, when the handle in the manipulation data parameters is unknown.
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54717NoMetricWithExpectedHandle() throws Exception {
+        requirement547SetUp(
+                // this handle is not present in mdib
+                SOME_NON_EXISTENT_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.NO_METRIC_WITH_EXPECTED_HANDLE,
+                        SOME_NON_EXISTENT_HANDLE)));
+    }
+
+    /**
+     * Tests whether the test fails, when the metric has not the expected activation state after the manipulation.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirement54717BadWrongActivation() throws Exception {
+        requirement547SetUp(
+                CLC_METRIC_HANDLE,
+                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                // the metric has the wrong activation state, ComponentActivation.FAIL is expected
+                ComponentActivation.OFF,
+                TIMESTAMP_IN_INTERVAL);
+        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
+        assertTrue(error.getMessage()
+                .contains(String.format(
+                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
+                        CLC_METRIC_HANDLE,
+                        ComponentActivation.FAIL,
+                        ComponentActivation.OFF)));
+    }
+
+    /**
      * Tests whether the test passes, when for each manipulation data for 'setMetricStatus' manipulations and metrics
-     * with category 'Clc' a metric report containing the manipulated metric with the expected activation state exists
-     * and is in the time interval of the manipulation data.
+     * with category 'CLC' a metric with the expected activation state exists and is in the time interval of the manipulation data.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54717Good() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var relatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
-        final var unrelatedPart = buildMetricReportPart(BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.FAIL);
-
-        final var metricReport = buildMetricReport(SEQUENCE_ID, BigInteger.ONE, relatedPart, unrelatedPart);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
         testClass.testRequirement54717();
     }
 
     /**
-     * Tests whether the test correctly retrieves the first relevant report in the time interval for each manipulation
-     * data with category 'Clc'.
+     * Tests whether the test correctly checks the metric with the handle from the manipulation data parameter.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54717GoodOverlappingTimeInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
 
         final var parameters2 = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 MdibBuilder.DEFAULT_SEQUENCE_ID,
@@ -5811,192 +4444,64 @@ public class InvariantParticipantModelStatePartTestTest {
                 org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
         messageStorageUtil.addManipulation(
                 storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                ResponseTypes.Result.RESULT_SUCCESS,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters2);
-
-        messageStorageUtil.addManipulation(
-                storage,
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+                parameters2);
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.FAIL);
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.FAIL);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
 
         testClass.testRequirement54717();
     }
 
     /**
-     * Tests whether the test fails, when no metric report is present in the time interval of a manipulation data.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54717BadNoMetricReportFollowingManipulation() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // this metric report is not in the time interval of the setMetricStatus manipulation
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_NOT_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
-        assertTrue(error.getCause() instanceof NoTestData);
-        assertTrue(error.getCause()
-                .getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_IN_TIME_INTERVAL,
-                        methodName,
-                        TIMESTAMP_START,
-                        TIMESTAMP_FINISH)));
-    }
-
-    /**
-     * Tests whether the test fails, when no reports with the expected handle from the manipulation data are in storage.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54717NoReportsWithExpectedHandle() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(
-                storage,
-                TIMESTAMP_START,
-                TIMESTAMP_FINISH,
-                result,
-                Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
-                parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE2, ComponentActivation.FAIL);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.NO_REPORT_WITH_EXPECTED_HANDLE, CLC_METRIC_HANDLE)));
-    }
-
-    /**
-     * Tests whether the test fails, when the metric from the manipulation data has the wrong activation state in the
-     * following metric report.
-     *
-     * @throws Exception on any exception
-     */
-    @Test
-    public void testRequirement54717BadWrongActivationInFollowingReport() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
-                CLC_METRIC_HANDLE,
-                org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // activation state should be FAIL
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-
-        final var error = assertThrows(AssertionError.class, testClass::testRequirement54717);
-        assertTrue(error.getMessage()
-                .contains(String.format(
-                        InvariantParticipantModelStatePartTest.WRONG_ACTIVATION_STATE,
-                        CLC_METRIC_HANDLE,
-                        ComponentActivation.FAIL,
-                        ComponentActivation.ON)));
-    }
-
-    /**
-     * Tests whether the test retrieves the first metric report in the time interval of a manipulation data.
+     * Tests whether the test passes when the last update of the activation state of the metric until the end timestamp is as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54717GoodMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        // good report in time interval
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
-        // should not fail the test, since the first report in the time interval is relevant for the test
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport2));
+                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
 
         testClass.testRequirement54717();
     }
 
     /**
-     * Tests whether the test do not pass when the first report in the time interval is bad, even if followed by a
-     * report that would pass the test.
+     * Tests whether the test fails when the last update of the activation state of the metric until the end timestamp is not as expected.
      *
      * @throws Exception on any exception
      */
     @Test
     public void testRequirement54717BadMultipleReportsInInterval() throws Exception {
-        final var initial = buildMdib(SEQUENCE_ID);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
-
-        final var result = ResponseTypes.Result.RESULT_SUCCESS;
-        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
-        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
-                MdibBuilder.DEFAULT_SEQUENCE_ID,
+        requirement547SetUp(
                 CLC_METRIC_HANDLE,
                 org.somda.sdc.biceps.model.participant.MetricCategory.CLC,
-                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
-
-        final var metricReport = buildMetricReport(
-                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.FAIL);
+                org.somda.sdc.biceps.model.participant.ComponentActivation.FAIL,
+                ResponseTypes.Result.RESULT_SUCCESS,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                CLC_METRIC_HANDLE,
+                ComponentActivation.FAIL,
+                TIMESTAMP_IN_INTERVAL);
+        // add another report for the same metric handle with the wrong activation state
         final var metricReport2 = buildMetricReport(
-                SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.ON);
-
-        // the first report in the time interval has the wrong activation state
+                SEQUENCE_ID, BigInteger.valueOf(10), BigInteger.ONE, CLC_METRIC_HANDLE, ComponentActivation.OFF);
         messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport2));
-        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL2, metricReport));
 
         assertThrows(AssertionError.class, testClass::testRequirement54717);
     }
@@ -6133,27 +4638,6 @@ public class InvariantParticipantModelStatePartTestTest {
                 ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
     }
 
-    private AbstractMetricReport.ReportPart buildMetricReportPart(
-            final BigInteger metricVersion, final String metricHandle, final ComponentActivation activation) {
-        final var metricState = mdibBuilder.buildStringMetricState(metricHandle);
-        metricState.setStateVersion(metricVersion);
-        metricState.setActivationState(activation);
-
-        final var reportPart = messageBuilder.buildAbstractMetricReportReportPart();
-        reportPart.getMetricState().add(metricState);
-        return reportPart;
-    }
-
-    private Envelope buildMetricReport(
-            final String sequenceId, final BigInteger mdibVersion, final AbstractMetricReport.ReportPart... parts) {
-        final var report = messageBuilder.buildEpisodicMetricReport(sequenceId);
-        report.setMdibVersion(mdibVersion);
-        for (var part : parts) {
-            report.getReportPart().add(part);
-        }
-        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_METRIC_REPORT, report);
-    }
-
     private Envelope buildMetricReport(
             final String sequenceId,
             final BigInteger mdibVersion,
@@ -6174,19 +4658,75 @@ public class InvariantParticipantModelStatePartTestTest {
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_METRIC_REPORT, report);
     }
 
-    private Envelope buildWaveformStream(
-            final String sequenceId,
-            final BigInteger mdibVersion,
-            final BigInteger metricVersion,
-            final String metricHandle,
-            final ComponentActivation activation) {
+    private void noSuccessfulManipulationBiceps547Setup(
+            final String manipulationHandle,
+            final org.somda.sdc.biceps.model.participant.MetricCategory metricCategory,
+            final org.somda.sdc.biceps.model.participant.ComponentActivation activation,
+            final ComponentActivation reportActivation)
+            throws Exception {
+        requirement547SetUp(
+                manipulationHandle,
+                metricCategory,
+                activation,
+                ResponseTypes.Result.RESULT_FAIL,
+                TIMESTAMP_START,
+                TIMESTAMP_FINISH,
+                manipulationHandle,
+                reportActivation,
+                TIMESTAMP_IN_INTERVAL);
+    }
 
-        final var metricState = mdibBuilder.buildRealTimeSampleArrayMetricState(metricHandle);
-        metricState.setStateVersion(metricVersion);
-        metricState.setActivationState(activation);
+    private void wrongMetricCategorySetup(
+            final String manipulationHandle,
+            final org.somda.sdc.biceps.model.participant.MetricCategory wrongMetricCategory,
+            final org.somda.sdc.biceps.model.participant.ComponentActivation manipulationActivation,
+            final ComponentActivation expectedActivation)
+            throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final var waveform = messageBuilder.buildWaveformStream(sequenceId, List.of(metricState));
-        waveform.setMdibVersion(mdibVersion);
-        return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_WAVEFORM_STREAM, waveform);
+        final var result = ResponseTypes.Result.RESULT_SUCCESS;
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                SEQUENCE_ID, manipulationHandle, wrongMetricCategory, manipulationActivation);
+        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+
+        final var metricReport =
+                buildMetricReport(SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, manipulationHandle, expectedActivation);
+        messageStorageUtil.addMessage(storage, buildTestMessage(TIMESTAMP_IN_INTERVAL, metricReport));
+    }
+
+    private void requirement547SetUp(
+            final String manipulationParameterHandle,
+            final org.somda.sdc.biceps.model.participant.MetricCategory manipulationParameterCategory,
+            final org.somda.sdc.biceps.model.participant.ComponentActivation manipulationParameterActivation,
+            final ResponseTypes.Result manipulationResult,
+            final long manipulationStartTimestamp,
+            final long manipulationEndTimestamp,
+            final String metricReportHandle,
+            final ComponentActivation metricReportActivation,
+            final long metricReportTimestamp)
+            throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+
+        final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
+        final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                MdibBuilder.DEFAULT_SEQUENCE_ID,
+                manipulationParameterHandle,
+                manipulationParameterCategory,
+                manipulationParameterActivation);
+        messageStorageUtil.addManipulation(
+                storage,
+                manipulationStartTimestamp,
+                manipulationEndTimestamp,
+                manipulationResult,
+                methodName,
+                parameters);
+
+        // activation state should be on
+        final var metricReport = buildMetricReport(
+                SEQUENCE_ID, BigInteger.TWO, BigInteger.ONE, metricReportHandle, metricReportActivation);
+        messageStorageUtil.addMessage(storage, buildTestMessage(metricReportTimestamp, metricReport));
     }
 }
