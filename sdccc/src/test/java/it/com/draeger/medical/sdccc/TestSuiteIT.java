@@ -79,7 +79,7 @@ import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
 import org.somda.sdc.glue.GlueConstants;
-import org.somda.sdc.mdpws.common.CommonConstants;
+import org.somda.sdc.glue.common.CommonConstants;
 
 /**
  * SDCcc system test.
