@@ -131,6 +131,9 @@ public class MessageStorage implements AutoCloseable {
             "getInboundMessagesByBodyType called on closed storage";
     private static final String GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE =
             "getInboundMessagesByTimeInterval called on closed storage";
+    // getInboundMessagesByTimestampAndBodyType
+    private static final String GET_INBOUND_MESSAGE_BY_TIMESTAMP_CALLED_ON_CLOSED_STORAGE =
+            "getInboundMessagesByTimestampAndBodyType called on closed storage";
     private static final String GET_MANIPULATION_DATA_BY_MANIPULATION =
             "getManipulationDataByManipulation called on closed storage";
     private static final String FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED =
@@ -1648,6 +1651,86 @@ public class MessageStorage implements AutoCloseable {
     }
 
     /**
+     * Retrieves all incoming messages which match any of the provided body element QNames and that were received before the given
+     * timestamp and with the same sequenceId.
+     *
+     * <p>
+     * Messages are sorted by MdibVersion on the inner join result.
+     *
+     * @param sequenceId SequenceId attribute value to filter for
+     * @param finishTimestamp timestamp to filter out reports with a higher value
+     * @param reportTypes     to match message against
+     * @return container with stream of all matching inbound {@linkplain MessageContent}s
+     * @throws IOException if storage is closed
+     */
+    public GetterResult<MessageContent> getInboundMessagesByTimestampAndBodyType(
+            final String sequenceId, final long finishTimestamp, final QName... reportTypes) throws IOException {
+        if (this.closed.get()) {
+            LOG.error(GET_INBOUND_MESSAGE_BY_TIMESTAMP_CALLED_ON_CLOSED_STORAGE);
+            throw new IOException(GET_INBOUND_MESSAGE_BY_TIMESTAMP_CALLED_ON_CLOSED_STORAGE);
+        }
+
+        for (final QName qname : reportTypes) {
+            if (!this.checkElementSupportsMdibVersionSorting(qname)) {
+                final String localErrorMessage = String.format(FILTERING_FOR_GIVEN_ELEMENT_NAME_NOT_IMPLEMENTED, qname);
+                this.testRunObserver.invalidateTestRun(localErrorMessage);
+                throw new UnsupportedOperationException(localErrorMessage);
+            }
+        }
+
+        final CriteriaQuery<MessageContent> messageContentQuery;
+        try (final Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+
+            final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            messageContentQuery = criteriaBuilder.createQuery(MessageContent.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(messageContentRoot);
+
+            final Subquery<MdibVersionGroupEntity> mdibVersionGroupSubQuery =
+                    messageContentQuery.subquery(MdibVersionGroupEntity.class);
+            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot =
+                    mdibVersionGroupSubQuery.from(MdibVersionGroupEntity.class);
+            mdibVersionGroupSubQuery.select(mdibVersionGroupEntityRoot);
+            final List<Predicate> bodyElementPredicates = new ArrayList<>();
+
+            for (final QName bodyElement : reportTypes) {
+                bodyElementPredicates.add(criteriaBuilder.and(
+                        criteriaBuilder.equal(
+                                mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.bodyElement),
+                                bodyElement.toString()),
+                        criteriaBuilder.equal(
+                                mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.sequenceId), sequenceId)));
+            }
+
+            mdibVersionGroupSubQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.equal(
+                            mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.messageContent),
+                            messageContentRoot.get(MessageContent_.incId)),
+                    criteriaBuilder.or(bodyElementPredicates.toArray(new Predicate[0]))));
+
+            messageContentQuery.where(criteriaBuilder.and(
+                    criteriaBuilder.lt(messageContentRoot.get(MessageContent_.nanoTimestamp), finishTimestamp),
+                    criteriaBuilder.and(
+                            criteriaBuilder.equal(
+                                    messageContentRoot.get(MessageContent_.direction),
+                                    CommunicationLog.Direction.INBOUND),
+                            criteriaBuilder.exists(mdibVersionGroupSubQuery))));
+
+            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
+                    .join(MessageContent_.mdibVersionGroups)
+                    .get(MdibVersionGroupEntity_.mdibVersion)));
+        }
+
+        final boolean present;
+        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+            present = countingStream.findAny().isPresent();
+        }
+
+        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+    }
+
+    /**
      * Retrieves all manipulation data which match any of the provided manipulation names.
      *
      * <p>
@@ -1697,7 +1780,7 @@ public class MessageStorage implements AutoCloseable {
      * <p>
      * Manipulations are sorted by their timestamp.
      *
-     * @param parameter       of the manipulation
+     * @param parameter        of the manipulation
      * @param manipulationName to match manipulation data against
      * @return container with stream of all matching {@linkplain ManipulationData}s
      * @throws IOException if storage is closed
@@ -1820,6 +1903,7 @@ public class MessageStorage implements AutoCloseable {
 
     /**
      * Get the number of messages detected by the MessageStorage where the encoding could not be determined.
+     *
      * @return the count
      */
     public long getMessageEncodingErrorCount() {
@@ -1828,6 +1912,7 @@ public class MessageStorage implements AutoCloseable {
 
     /**
      * Get the number of messages detected by the MessageStorage where the MIME type has an unexpected value.
+     *
      * @return the count
      */
     public long getInvalidMimeTypeErrorCount() {

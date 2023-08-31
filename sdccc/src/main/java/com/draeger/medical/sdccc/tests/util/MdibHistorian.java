@@ -276,6 +276,75 @@ public class MdibHistorian {
     }
 
     /**
+     * Generates an mdib history for a sequence id using the first available GetMdibResponse for said sequence id and
+     * all related episodic reports until the specified timestamp, exclusive.
+     *
+     * @param sequenceId of the sequence to generate history for
+     * @param timestamp to retrieve reports for, exclusive
+     * @return a new result based on episodic reports
+     * @throws PreprocessingException    if converting the initial mdib fails
+     * @throws ReportProcessingException if applying reports fails
+     */
+    public HistorianResult uniqueEpisodicReportBasedHistoryUntilTimestamp(final String sequenceId, final long timestamp)
+            throws PreprocessingException, ReportProcessingException {
+        final var storage = createNewStorage(sequenceId);
+        final var reportProcessor = reportProcessorProvider.get();
+        reportProcessor.startApplyingReportsOnMdib(storage, null);
+        final var mdibVersionPredicate =
+                new InitialMdibVersionPredicateWithUUID(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
+
+        try {
+            final var messages = messageStorage.getInboundMessagesByTimestampAndBodyType(
+                    sequenceId, timestamp, Constants.RELEVANT_REPORT_BODIES.toArray(new QName[0]));
+            var preStream = messages.getStream()
+                    .sequential() // the stateful filter operation below is not threadsafe
+                    .map(this::unmarshallReportKeepUUID)
+                    .filter(report -> sequenceId.equals(report.getLeft().getSequenceId()))
+                    .filter(mdibVersionPredicate);
+
+            preStream = filterReportDuplicates(preStream);
+
+            final var stream = preStream.map(pair -> {
+                final var report = pair.getLeft();
+                try {
+                    final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                            .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
+                    if (cmp > 0) {
+                        fail("Cannot apply report older than current storage."
+                                + " Storage " + ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+                                + " Report " + ImpliedValueUtil.getReportMdibVersion(report)
+                                + " " + report.getClass().getSimpleName());
+                    } else if (cmp == 0) {
+                        LOG.debug("Cannot apply report of equal mdib version. This means that another report with the"
+                                + " same version has already been applied, and is expected behavior when e.g."
+                                + " descriptors update, as both a report for description and state will arrive.");
+                    }
+                    LOG.debug(
+                            "Applying report with mdib version {}, type {}",
+                            ImpliedValueUtil.getReportMdibVersion(report),
+                            report.getClass().getSimpleName());
+                    reportProcessor.processReport(report);
+                } catch (final Exception e) {
+                    fail(e);
+                }
+                return storage;
+            });
+
+            // initial mdib stream
+            final var initialMdibStream = Stream.of(storage);
+            return new HistorianResult(messages, Stream.concat(initialMdibStream, stream));
+        } catch (IOException e) {
+            final var errorMessage = "Error while trying to retrieve reports from storage";
+            LOG.error("{}: {}", errorMessage, e.getMessage());
+            LOG.debug("{}", errorMessage, e);
+            testRunObserver.invalidateTestRun(errorMessage, e);
+            fail(e);
+            // unreachable code, silence warnings
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Retrieves all episodic reports for a given sequence id.
      *
      * @param sequenceId         of the sequence to retrieve reports for
@@ -389,7 +458,7 @@ public class MdibHistorian {
      *
      * @param sequenceId         of the sequence to retrieve reports for
      * @param maximumMdibVersion maximum mdib version to retrieve for the reports
-     * @param bodyTypes  to match messages against
+     * @param bodyTypes          to match messages against
      * @return list of the reports
      */
     public Stream<AbstractReport> getAllReportsWithLowerMdibVersion(
@@ -400,6 +469,35 @@ public class MdibHistorian {
             final var iter = messages.getStream().map(this::unmarshallReport);
 
             return iter.filter(it -> ImpliedValueUtil.getReportMdibVersion(it).compareTo(maximumMdibVersion) < 0);
+        } catch (IOException e) {
+            final var errorMessage = "Error while trying to retrieve reports from storage";
+            LOG.error("{}: {}", errorMessage, e.getMessage());
+            LOG.debug("{}", errorMessage, e);
+            fail(e);
+            // unreachable, silence warnings
+            throw new RuntimeException(e);
+        }
+    }
+
+    // TODO javadoc and maybe instead of getting all reports with lowertimestamp get the storage directly. So dont apply
+    // every report manually but provide a result
+    public Stream<AbstractReport> getAllReportsWithLowerTimestamp(
+            final String sequenceId,
+            @Nullable final BigInteger minimumMdibVersion,
+            final long maximumTimestamp,
+            final QName... bodyTypes) {
+        try {
+            final var messages =
+                    messageStorage.getInboundMessagesByTimestampAndBodyType(sequenceId, maximumTimestamp, bodyTypes);
+
+            var iter = messages.getStream()
+                    .sequential() // the stateful filter operation below is not thread-safe
+                    .map(this::unmarshallReportKeepUUID);
+            if (minimumMdibVersion != null) {
+                iter = iter.filter(it ->
+                        ImpliedValueUtil.getReportMdibVersion(it.getLeft()).compareTo(minimumMdibVersion) >= 1);
+            }
+            return filterReportDuplicates(iter).map(Pair::getLeft);
         } catch (IOException e) {
             final var errorMessage = "Error while trying to retrieve reports from storage";
             LOG.error("{}: {}", errorMessage, e.getMessage());
