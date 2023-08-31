@@ -41,7 +41,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.DpwsConstants;
-import org.somda.sdc.mdpws.common.CommonConstants;
+import org.somda.sdc.glue.common.CommonConstants;
 
 /**
  * Unit test for the MDPWS {@linkplain InvariantDynamicDiscoveryTest}.
