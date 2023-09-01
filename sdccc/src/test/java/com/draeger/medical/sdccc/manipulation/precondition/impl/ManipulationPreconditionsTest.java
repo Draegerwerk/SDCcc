@@ -1275,7 +1275,7 @@ public class ManipulationPreconditionsTest {
     // 1. the specific method of the precondition to be tested
     // 2. the metric category
     // 4. the expected component activation after the setMetricStatus manipulation finished successfully
-    private static Stream<Arguments> metricStatusManipulationXActivationStateXArguments() {
+    private static Stream<Arguments> metricStatusManipulationXActivationStateYArguments() {
         return Stream.of(
                 // arguments for MetricStatusManipulationXActivationStateON preconditions
                 Arguments.of(
@@ -1385,8 +1385,8 @@ public class ManipulationPreconditionsTest {
 
     @DisplayName("The precondition is successful when setMetricStatus work as intended")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXGood(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYGood(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
             final ComponentActivation expectedActivation) {
@@ -1402,8 +1402,8 @@ public class ManipulationPreconditionsTest {
 
     @DisplayName("The precondition does not fail if setMetricStatus is not supported by all metrics.")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXAllowNotSupported2(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYAllowNotSupported2(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
             final ComponentActivation expectedActivation) {
@@ -1424,8 +1424,8 @@ public class ManipulationPreconditionsTest {
 
     @DisplayName("The precondition fails when setMetricStatus failed.")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXBadSecondManipulationFailed(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYBadSecondManipulationFailed(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
             final ComponentActivation expectedActivation) {

@@ -131,7 +131,6 @@ public class MessageStorage implements AutoCloseable {
             "getInboundMessagesByBodyType called on closed storage";
     private static final String GET_INBOUND_MESSAGE_BY_TIME_INTERVAL_CALLED_ON_CLOSED_STORAGE =
             "getInboundMessagesByTimeInterval called on closed storage";
-    // getInboundMessagesByTimestampAndBodyType
     private static final String GET_INBOUND_MESSAGE_BY_TIMESTAMP_CALLED_ON_CLOSED_STORAGE =
             "getInboundMessagesByTimestampAndBodyType called on closed storage";
     private static final String GET_MANIPULATION_DATA_BY_MANIPULATION =
