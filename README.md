@@ -293,24 +293,24 @@ this case in order to minimize the risk of such an invalid application going unn
 | R5051           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5052           | TriggerAnyDescriptorUpdate                                                                  |
 | R5053           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
-| 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_1         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_2         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_3         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_4         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_5         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_7         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_8         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_9         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_10        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_11        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_12_0      | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_13        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_14        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_15        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_16        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_17        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_0_0       | SetMetricStatus                                                                             |
+| 5-4-7_1         | SetMetricStatus                                                                             |
+| 5-4-7_2         | SetMetricStatus                                                                             |
+| 5-4-7_3         | SetMetricStatus                                                                             |
+| 5-4-7_4         | SetMetricStatus                                                                             |
+| 5-4-7_5         | SetMetricStatus                                                                             |
+| 5-4-7_6_0       | SetMetricStatus                                                                             |
+| 5-4-7_7         | SetMetricStatus                                                                             |
+| 5-4-7_8         | SetMetricStatus                                                                             |
+| 5-4-7_9         | SetMetricStatus                                                                             |
+| 5-4-7_10        | SetMetricStatus                                                                             |
+| 5-4-7_11        | SetMetricStatus                                                                             |
+| 5-4-7_12_0      | SetMetricStatus                                                                             |
+| 5-4-7_13        | SetMetricStatus                                                                             |
+| 5-4-7_14        | SetMetricStatus                                                                             |
+| 5-4-7_15        | SetMetricStatus                                                                             |
+| 5-4-7_16        | SetMetricStatus                                                                             |
+| 5-4-7_17        | SetMetricStatus                                                                             |
 
 [MDPWS]
 
