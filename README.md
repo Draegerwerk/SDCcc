@@ -183,6 +183,14 @@ in high numbers. When this option is set to true, then the errors will not be di
 at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
 these problems.
 
+```
+[SDCcc.TestParameter]
+Biceps547TimeInterval=5
+```
+When running biceps:5-4-7 tests the Biceps547TimeInterval parameter is used to pause between the SetMetricStatus 
+manipulation calls with a default of 5 seconds. The report that follows a SetMetricStatus manipulation is expected 
+within the specified seconds.
+
 ## Running SDCcc
 The following command line options are supported by the test tool, the first two need to be provided.
 
