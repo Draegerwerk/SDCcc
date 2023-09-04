@@ -120,12 +120,14 @@ public interface Manipulations {
     /**
      * Set the metric to a specific state to trigger the setting of the ActivationState.
      *
+     * @param sequenceId during which the manipulation was performed
      * @param handle state handle to set the status of the metric for
      * @param category of the metric to set the status for
      * @param activation the activation state the metric should have, after manipulation
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setMetricStatus(String handle, MetricCategory category, ComponentActivation activation);
+    ResponseTypes.Result setMetricStatus(
+            String sequenceId, String handle, MetricCategory category, ComponentActivation activation);
 
     /**
      * Trigger a descriptor update for the provided descriptor handle.

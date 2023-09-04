@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
+import com.draeger.medical.sdccc.util.MdibBuilder;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
@@ -184,7 +185,7 @@ public class ManipulationPreconditionsTest {
         mockSystemSignalActivationVis = mock(SystemSignalActivation.class);
         mockEntity = mock(MdibEntity.class);
         mockEntity2 = mock(MdibEntity.class);
-        mockMdibAccess = mock(MdibAccess.class);
+        mockMdibAccess = mock(MdibAccess.class, Answers.RETURNS_DEEP_STUBS);
 
         mockTestClient = mock(TestClient.class, Answers.RETURNS_DEEP_STUBS);
         when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
@@ -844,147 +845,6 @@ public class ManipulationPreconditionsTest {
         }
     }
 
-    @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNGood: Set ActivationState "
-            + "of all MSRMT-Metrics to SHTDN.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNGood() {
-
-        // given
-
-        final ComponentActivation startActivationState = ComponentActivation.ON;
-        final MetricCategory metricCategory = MetricCategory.MSRMT;
-        final ComponentActivation activationState = ComponentActivation.SHTDN;
-        final String metricStateHandle = "metricStateHandle";
-
-        setupMetricStatusManipulation(metricCategory, metricStateHandle);
-
-        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-
-        // when
-
-        final boolean result =
-                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
-
-        // then
-
-        assertTrue(result);
-        assertFalse(
-                testRunObserver.isInvalid(),
-                "Test run should not have been invalidated. Reason(s): " + testRunObserver.getReasons());
-        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
-        verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
-    }
-
-    @Test
-    @DisplayName(
-            "MetricStatusManipulationMSRMTActivationStateSHTDN: The precondition does not fail if setComponentActivation is not supported by all metrics.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNAllowNotSupported1() {
-        metricMockSetup(
-                MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.ON, ComponentActivation.SHTDN);
-
-        // let one metric not support setComponentActivation manipulation
-        when(mockManipulations.setComponentActivation(eq(SOME_HANDLE), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-
-        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-                .thenReturn(List.of(mockEntity2, mockEntity));
-
-        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector));
-
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.SHTDN);
-    }
-
-    @Test
-    @DisplayName(
-            "MetricStatusManipulationMSRMTActivationStateSHTDN: The precondition does not fail if setMetricStatus is not supported by all metrics.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNAllowNotSupported2() {
-        metricMockSetup(
-                MetricCategory.MSRMT, METRIC_HANDLE, SOME_HANDLE, ComponentActivation.ON, ComponentActivation.SHTDN);
-
-        // let one metric not support setMetricStatus manipulation
-        when(mockManipulations.setMetricStatus(
-                        eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-
-        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-                .thenReturn(List.of(mockEntity2, mockEntity));
-
-        assertTrue(ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector));
-
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setComponentActivation(SOME_HANDLE, ComponentActivation.ON);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, MetricCategory.MSRMT, ComponentActivation.SHTDN);
-    }
-
-    @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: First Manipulation failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadFirstManipulationFailed() {
-
-        // given
-
-        final ComponentActivation startActivationState = ComponentActivation.ON;
-        final MetricCategory metricCategory = MetricCategory.MSRMT;
-        final ComponentActivation activationState = ComponentActivation.SHTDN;
-        final String metricStateHandle = "metricStateHandle";
-
-        setupMetricStatusManipulation(metricCategory, metricStateHandle);
-
-        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-
-        // when
-
-        final boolean result =
-                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
-
-        // then
-        assertFalse(result);
-        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
-    }
-
-    @Test
-    @DisplayName("testMetricStatusManipulationMSRMTActivationStateSHTDNBad: Second Manipulation Failed.")
-    void testMetricStatusManipulationMSRMTActivationStateSHTDNBadSecondManipulationFailed() {
-
-        // given
-        final ComponentActivation startActivationState = ComponentActivation.ON;
-        final MetricCategory metricCategory = MetricCategory.MSRMT;
-        final ComponentActivation activationState = ComponentActivation.SHTDN;
-        final String metricStateHandle = "metricStateHandle";
-
-        setupMetricStatusManipulation(metricCategory, metricStateHandle);
-
-        when(mockManipulations.setComponentActivation(metricStateHandle, startActivationState))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-        when(mockManipulations.setMetricStatus(metricStateHandle, metricCategory, activationState))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-
-        // when
-        final boolean result =
-                ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN.manipulation(injector);
-
-        // then
-        assertFalse(result);
-        verify(mockManipulations).setComponentActivation(metricStateHandle, startActivationState);
-        verify(mockManipulations).setMetricStatus(metricStateHandle, metricCategory, activationState);
-    }
-
-    private void setupMetricStatusManipulation(final MetricCategory metricCategory, final String metricStateHandle) {
-        when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
-        when(mockMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class)).thenReturn(List.of(mockEntity));
-        when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
-        when(mockMetricDescriptor.getMetricCategory()).thenReturn(metricCategory);
-        when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState));
-        when(mockMetricState.getDescriptorHandle()).thenReturn(metricStateHandle);
-    }
-
     private void alertConditionPresenceManipulationSetup() {
         when(mockDevice.getMdibAccess()).thenReturn(mockMdibAccess);
         when(mockMdibAccess.findEntitiesByType(AlertConditionDescriptor.class))
@@ -1372,102 +1232,66 @@ public class ManipulationPreconditionsTest {
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalid.");
     }
 
-    private void metricMockSetup(
-            final MetricCategory category,
-            final String metricHandle,
-            final String secondMetricHandle,
-            final ComponentActivation startingState,
-            final ComponentActivation endState) {
-        // create mock metric
-        when(mockMetricDescriptor.getHandle()).thenReturn(metricHandle);
-        when(mockMetricDescriptor.getMetricCategory()).thenReturn(category);
-        when(mockMetricState.getDescriptorHandle()).thenReturn(metricHandle);
-        when(mockMetricState.getActivationState()).thenReturn(startingState).thenReturn(endState);
-
-        // create second mock metric
-        when(mockMetricDescriptor2.getHandle()).thenReturn(secondMetricHandle);
-        when(mockMetricDescriptor2.getMetricCategory()).thenReturn(category);
-        when(mockMetricState2.getDescriptorHandle()).thenReturn(secondMetricHandle);
-        when(mockMetricState2.getActivationState()).thenReturn(startingState).thenReturn(endState);
-
-        // create mock entities to hold the states
-        when(mockEntity.getHandle()).thenReturn(metricHandle);
-        when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
-        when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState));
-        when(mockEntity2.getHandle()).thenReturn(secondMetricHandle);
-        when(mockEntity2.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor2));
-        when(mockEntity2.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState2));
-
-        // make setComponentActivation return true for the manipulations and false afterwards
-        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-
-        // make setMetricStatus return true for the manipulations and false afterwards
-        when(mockManipulations.setMetricStatus(
-                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-    }
-
     @SuppressWarnings("SameParameterValue")
     private void setMetricStatusSetup(
             final MetricCategory category,
             final String metricHandle,
-            final ComponentActivation startingState,
+            final String otherMetricHandle,
             final ComponentActivation endState) {
         // create mock metric
         when(mockMetricDescriptor.getHandle()).thenReturn(metricHandle);
         when(mockMetricDescriptor.getMetricCategory()).thenReturn(category);
         when(mockMetricState.getDescriptorHandle()).thenReturn(metricHandle);
-        when(mockMetricState.getActivationState()).thenReturn(startingState).thenReturn(endState);
+        when(mockMetricState.getActivationState()).thenReturn(endState);
 
-        // make setComponentActivation return true for the manipulations and false afterwards
-        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-
-        // make setMetricStatus return true for the manipulations and false afterwards
-        when(mockManipulations.setMetricStatus(
-                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        // create second mock metric
+        when(mockMetricDescriptor2.getHandle()).thenReturn(otherMetricHandle);
+        when(mockMetricDescriptor2.getMetricCategory()).thenReturn(category);
+        when(mockMetricState2.getDescriptorHandle()).thenReturn(otherMetricHandle);
+        when(mockMetricState2.getActivationState()).thenReturn(endState);
 
         // create mock entities to hold the states
         when(mockEntity.getHandle()).thenReturn(metricHandle);
         when(mockEntity.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor));
         when(mockEntity.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState));
+        when(mockEntity2.getHandle()).thenReturn(otherMetricHandle);
+        when(mockEntity2.getDescriptor(AbstractMetricDescriptor.class)).thenReturn(Optional.of(mockMetricDescriptor2));
+        when(mockEntity2.getStates(AbstractMetricState.class)).thenReturn(List.of(mockMetricState2));
+
+        when(mockDevice.getMdibAccess().getMdibVersion().getSequenceId()).thenReturn(MdibBuilder.DEFAULT_SEQUENCE_ID);
         when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-                .thenReturn(List.of(mockEntity));
+                .thenReturn(List.of(mockEntity, mockEntity2));
+        // let setMetricStatus manipulation for first handle be successful
+        when(mockManipulations.setMetricStatus(
+                        eq(MdibBuilder.DEFAULT_SEQUENCE_ID), eq(metricHandle), eq(category), eq(endState)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        // let setMetricStatus manipulation for second handle be successful
+        when(mockManipulations.setMetricStatus(
+                        eq(MdibBuilder.DEFAULT_SEQUENCE_ID), eq(otherMetricHandle), eq(category), eq(endState)))
+                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
     }
 
     // the argument source for the setMetricStatus preconditions
     // 1. the specific method of the precondition to be tested
     // 2. the metric category
-    // 3. the component activation of the metric before the setMetricStatus manipulation
     // 4. the expected component activation after the setMetricStatus manipulation finished successfully
-    private static Stream<Arguments> metricStatusManipulationXActivationStateXArguments() {
+    private static Stream<Arguments> metricStatusManipulationXActivationStateYArguments() {
         return Stream.of(
                 // arguments for MetricStatusManipulationXActivationStateON preconditions
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateON::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.OFF,
                         ComponentActivation.ON),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateON::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.OFF,
                         ComponentActivation.ON),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateON::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.OFF,
                         ComponentActivation.ON),
                 // arguments for MetricStatusManipulationXActivationStateNOTRDY preconditions
                 Arguments.of(
@@ -1475,21 +1299,18 @@ public class ManipulationPreconditionsTest {
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateNOTRDY
                                         ::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.OFF,
                         ComponentActivation.NOT_RDY),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateNOTRDY
                                         ::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.OFF,
                         ComponentActivation.NOT_RDY),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateNOTRDY
                                         ::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.OFF,
                         ComponentActivation.NOT_RDY),
                 // arguments for MetricStatusManipulationXActivationStateSTNDBY preconditions
                 Arguments.of(
@@ -1497,21 +1318,18 @@ public class ManipulationPreconditionsTest {
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSTNDBY
                                         ::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.ON,
                         ComponentActivation.STND_BY),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSTNDBY
                                         ::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.ON,
                         ComponentActivation.STND_BY),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateSTNDBY
                                         ::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.ON,
                         ComponentActivation.STND_BY),
                 // arguments for MetricStatusManipulationXActivationStateSHTDN preconditions
                 Arguments.of(
@@ -1519,38 +1337,32 @@ public class ManipulationPreconditionsTest {
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateSHTDN
                                         ::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.ON,
                         ComponentActivation.SHTDN),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateSHTDN::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.ON,
                         ComponentActivation.SHTDN),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateSHTDN::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.ON,
                         ComponentActivation.SHTDN),
                 // arguments for MetricStatusManipulationXActivationStateOFF preconditions
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateOFF::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.ON,
                         ComponentActivation.OFF),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateOFF::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.ON,
                         ComponentActivation.OFF),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateOFF::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.ON,
                         ComponentActivation.OFF),
                 // arguments for MetricStatusManipulationXActivationStateFAIL preconditions
                 Arguments.of(
@@ -1558,124 +1370,79 @@ public class ManipulationPreconditionsTest {
                                 ManipulationPreconditions.MetricStatusManipulationMSRMTActivationStateFAIL
                                         ::manipulation,
                         MetricCategory.MSRMT,
-                        ComponentActivation.ON,
                         ComponentActivation.FAIL),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationCLCActivationStateFAIL::manipulation,
                         MetricCategory.CLC,
-                        ComponentActivation.ON,
                         ComponentActivation.FAIL),
                 Arguments.of(
                         (Function<Injector, Boolean>)
                                 ManipulationPreconditions.MetricStatusManipulationSETActivationStateFAIL::manipulation,
                         MetricCategory.SET,
-                        ComponentActivation.ON,
                         ComponentActivation.FAIL));
     }
 
-    @DisplayName("The precondition is successful when setComponentActivation and setMetricStatus work as intended")
+    @DisplayName("The precondition is successful when setMetricStatus work as intended")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXGood(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYGood(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
-            final ComponentActivation startActivation,
             final ComponentActivation expectedActivation) {
-        setMetricStatusSetup(category, METRIC_HANDLE, startActivation, expectedActivation);
-        assertTrue(manipulation.apply(injector));
-
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, startActivation);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, category, expectedActivation);
-    }
-
-    @DisplayName("The precondition does not fail if setComponentActivation is not supported by all metrics.")
-    @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXAllowNotSupported1(
-            final Function<Injector, Boolean> manipulation,
-            final MetricCategory category,
-            final ComponentActivation startActivation,
-            final ComponentActivation expectedActivation) {
-        metricMockSetup(category, METRIC_HANDLE, SOME_HANDLE, startActivation, expectedActivation);
-
-        // let one metric not support setComponentActivation manipulation
-        when(mockManipulations.setComponentActivation(eq(SOME_HANDLE), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-
-        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-                .thenReturn(List.of(mockEntity2, mockEntity));
+        setMetricStatusSetup(category, METRIC_HANDLE, SOME_HANDLE, expectedActivation);
 
         assertTrue(manipulation.apply(injector));
 
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, startActivation);
-        verify(mockManipulations).setComponentActivation(SOME_HANDLE, startActivation);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, category, expectedActivation);
+        verify(mockManipulations)
+                .setMetricStatus(MdibBuilder.DEFAULT_SEQUENCE_ID, METRIC_HANDLE, category, expectedActivation);
+        verify(mockManipulations)
+                .setMetricStatus(MdibBuilder.DEFAULT_SEQUENCE_ID, SOME_HANDLE, category, expectedActivation);
     }
 
     @DisplayName("The precondition does not fail if setMetricStatus is not supported by all metrics.")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXAllowNotSupported2(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYAllowNotSupported2(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
-            final ComponentActivation startActivation,
             final ComponentActivation expectedActivation) {
-        metricMockSetup(category, METRIC_HANDLE, SOME_HANDLE, startActivation, expectedActivation);
+        setMetricStatusSetup(category, METRIC_HANDLE, SOME_HANDLE, expectedActivation);
 
         // let one metric not support setMetricStatus manipulation
         when(mockManipulations.setMetricStatus(
-                        eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
+                        any(String.class), eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-
-        when(mockDevice.getMdibAccess().findEntitiesByType(AbstractMetricDescriptor.class))
-                .thenReturn(List.of(mockEntity2, mockEntity));
 
         assertTrue(manipulation.apply(injector));
 
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, startActivation);
-        verify(mockManipulations).setComponentActivation(SOME_HANDLE, startActivation);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, category, expectedActivation);
-    }
-
-    @DisplayName("The precondition fails when setComponentActivation failed.")
-    @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXBadFirstManipulationFailed(
-            final Function<Injector, Boolean> manipulation,
-            final MetricCategory category,
-            final ComponentActivation startActivation,
-            final ComponentActivation expectedActivation) {
-        setMetricStatusSetup(category, METRIC_HANDLE, startActivation, expectedActivation);
-
-        // let setComponentActivation fail
-        when(mockManipulations.setComponentActivation(any(String.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-
-        assertFalse(manipulation.apply(injector));
-
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, startActivation);
+        verify(mockManipulations)
+                .setMetricStatus(MdibBuilder.DEFAULT_SEQUENCE_ID, METRIC_HANDLE, category, expectedActivation);
+        verify(mockManipulations)
+                .setMetricStatus(MdibBuilder.DEFAULT_SEQUENCE_ID, SOME_HANDLE, category, expectedActivation);
     }
 
     @DisplayName("The precondition fails when setMetricStatus failed.")
     @ParameterizedTest
-    @MethodSource("metricStatusManipulationXActivationStateXArguments")
-    void testMetricStatusManipulationXActivationStateXBadSecondManipulationFailed(
+    @MethodSource("metricStatusManipulationXActivationStateYArguments")
+    void testMetricStatusManipulationXActivationStateYBadSecondManipulationFailed(
             final Function<Injector, Boolean> manipulation,
             final MetricCategory category,
-            final ComponentActivation startActivation,
             final ComponentActivation expectedActivation) {
-        setMetricStatusSetup(category, METRIC_HANDLE, startActivation, expectedActivation);
+        setMetricStatusSetup(category, METRIC_HANDLE, SOME_HANDLE, expectedActivation);
 
         // let setMetricStatus fail
         when(mockManipulations.setMetricStatus(
-                        any(String.class), any(MetricCategory.class), any(ComponentActivation.class)))
+                        any(String.class),
+                        any(String.class),
+                        any(MetricCategory.class),
+                        any(ComponentActivation.class)))
                 .thenReturn(ResponseTypes.Result.RESULT_FAIL);
 
         assertFalse(manipulation.apply(injector));
 
-        verify(mockManipulations).setComponentActivation(METRIC_HANDLE, startActivation);
-        verify(mockManipulations).setMetricStatus(METRIC_HANDLE, category, expectedActivation);
+        verify(mockManipulations)
+                .setMetricStatus(MdibBuilder.DEFAULT_SEQUENCE_ID, METRIC_HANDLE, category, expectedActivation);
     }
 
     @Test
