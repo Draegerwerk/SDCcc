@@ -320,11 +320,11 @@ this case in order to minimize the risk of such an invalid application going unn
 
 [GLUE]
 
-| **Requirement** | **T2IAPI Manipulation** |
-|-----------------|-------------------------|
-| R0036_0         | SetLocationDetail       |
-| R0056           | TriggerDescriptorUpdate |
-| R0078_0         | TriggerReport           |
+| **Requirement** | **T2IAPI Manipulation**    |
+|-----------------|----------------------------|
+| R0036_0         | SetLocationDetail          |
+| R0056           | TriggerAnyDescriptorUpdate |
+| R0078_0         | TriggerReport              |
 
 
 ## Notices
