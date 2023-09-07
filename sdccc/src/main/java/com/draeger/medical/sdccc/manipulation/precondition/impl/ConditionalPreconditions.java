@@ -216,6 +216,9 @@ public class ConditionalPreconditions {
 
         Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
         for (MdibEntity entity : entities) {
+            if (entity.getDescriptor() instanceof MdsDescriptor) {
+                continue;  // we are not interested in MdsDescriptors as many Devices do not support modifying them.
+            }
             List<String> children = entity.getChildren();
             if (children.size() > 0) {
                 return Pair.of(entity.getHandle(), children.get(0));
