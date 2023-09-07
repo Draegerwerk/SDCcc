@@ -332,7 +332,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestDescription("For every DescriptionModificationReport received from the DUT, and for all parent-child"
             + " relationships between the elements contained in the report, checks that the reportPart containing"
             + " the parent comes before the reportPart containing the child.")
-    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
+    @RequirePrecondition(
+            simplePreconditions =
+                    ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
     void testRequirementR5025() throws NoTestData, IOException {
         try (final var messages =
                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {

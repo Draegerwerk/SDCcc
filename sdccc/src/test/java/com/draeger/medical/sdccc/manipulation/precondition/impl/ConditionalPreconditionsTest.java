@@ -286,7 +286,8 @@ public class ConditionalPreconditionsTest {
     public void testDescriptionModificationCrtOrDelPreconditionCheck()
             throws PreconditionException, IOException, JAXBException {
         // no messages
-        assertFalse(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
 
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.CRT);
@@ -298,7 +299,8 @@ public class ConditionalPreconditionsTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
 
-        assertTrue(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
+        assertTrue(
+                ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
     }
 
     /**
@@ -371,12 +373,13 @@ public class ConditionalPreconditionsTest {
      * always returns false.
      */
     @Test
-    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition preconditionCheck always returns" +
-            " false to trigger the manipulation.")
-    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionCheck()
-    {
+    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition preconditionCheck always returns"
+            + " false to trigger the manipulation.")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionCheck() {
         // no messages - does not matter as the preconditionCheck should always return false
-        assertFalse(ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.preconditionCheck(testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition
+                        .preconditionCheck(testInjector));
     }
 
     /**
@@ -407,22 +410,23 @@ public class ConditionalPreconditionsTest {
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
         when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-        MdibEntity mockEntity = mock(MdibEntity.class);
+        final MdibEntity mockEntity = mock(MdibEntity.class);
         when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
         when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
         when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
                 .thenReturn(List.of(mockEntity));
-        MdibEntity mockEntity2 = mock(MdibEntity.class);
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
-                .thenAnswer(args -> {
-                    if ( presenceMap.get((String)args.getArgument(0))) {
-                        return Optional.of(mockEntity2);
-                    } else {
-                        return Optional.empty();
-                    }
-                });
+        final MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(any())).thenAnswer(args -> {
+            if (presenceMap.get((String) args.getArgument(0))) {
+                return Optional.of(mockEntity2);
+            } else {
+                return Optional.empty();
+            }
+        });
 
-        assertTrue(ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.manipulation(testInjector));
+        assertTrue(
+                ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.manipulation(
+                        testInjector));
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
@@ -458,7 +462,6 @@ public class ConditionalPreconditionsTest {
                         .filter(descriptor2Handle::equals)
                         .count());
     }
-
 
     /**
      * Tests whether DescriptionModificationCrtPrecondition correctly checks for precondition.

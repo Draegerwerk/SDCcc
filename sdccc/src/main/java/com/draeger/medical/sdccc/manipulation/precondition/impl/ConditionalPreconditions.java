@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -188,23 +187,26 @@ public class ConditionalPreconditions {
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
 
-    private static boolean descriptionUpdateWithParentChildRelationshipManipulation(final Injector injector, final Logger log) {
-        Pair<String, String> descriptorHandles = findFirstDescriptorHandleWithChildren(injector, log);
+    private static boolean descriptionUpdateWithParentChildRelationshipManipulation(
+            final Injector injector, final Logger log) {
+        final Pair<String, String> descriptorHandles = findFirstDescriptorHandleWithChildren(injector, log);
         if (descriptorHandles == null) {
-            log.error("Could not trigger a Descriptor Update with Parent Child Relationship as there are no " +
-                    "Descriptors with Children in the Mdib.");
+            log.error("Could not trigger a descriptor update with parent child relationship as there are no "
+                    + "descriptors with children in the mdib.");
             return false;
         }
-        String parentDescriptorHandle = descriptorHandles.getLeft();
-        String childDescriptorHandle = descriptorHandles.getRight();
+        final String parentDescriptorHandle = descriptorHandles.getLeft();
+        final String childDescriptorHandle = descriptorHandles.getRight();
         final var manipulations = injector.getInstance(Manipulations.class);
 
-        final ResponseTypes.Result manipulationResult = manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
+        final ResponseTypes.Result manipulationResult =
+                manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
 
-    private static Pair<String, String> findFirstDescriptorHandleWithChildren(Injector injector, Logger log) {
+    private static Pair<String, String> findFirstDescriptorHandleWithChildren(
+            final Injector injector, final Logger log) {
         final var testClient = injector.getInstance(TestClient.class);
 
         final var remoteDevice = testClient.getSdcRemoteDevice();
@@ -212,15 +214,15 @@ public class ConditionalPreconditions {
             log.error("remote device could not be accessed, likely due to a disconnect");
             return null;
         }
-        var mdibAccess = remoteDevice.getMdibAccess();
+        final var mdibAccess = remoteDevice.getMdibAccess();
 
-        Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
+        final Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
         for (MdibEntity entity : entities) {
             if (entity.getDescriptor() instanceof MdsDescriptor) {
-                continue;  // we are not interested in MdsDescriptors as many Devices do not support modifying them.
+                continue; // we are not interested in MdsDescriptors as many Devices do not support modifying them.
             }
-            List<String> children = entity.getChildren();
-            if (children.size() > 0) {
+            final List<String> children = entity.getChildren();
+            if (!children.isEmpty()) {
                 return Pair.of(entity.getHandle(), children.get(0));
             }
         }
@@ -706,10 +708,12 @@ public class ConditionalPreconditions {
         private static final Logger LOG = LogManager.getLogger(DescriptionModificationCrtOrDelPrecondition.class);
 
         /**
-         * Creates a description changed precondition check.
+         * Creates a description modification crt or del precondition check.
          */
         public DescriptionModificationCrtOrDelPrecondition() {
-            super(DescriptionModificationCrtOrDelPrecondition::preconditionCheck, DescriptionModificationCrtOrDelPrecondition::manipulation);
+            super(
+                    DescriptionModificationCrtOrDelPrecondition::preconditionCheck,
+                    DescriptionModificationCrtOrDelPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -734,13 +738,16 @@ public class ConditionalPreconditions {
      */
     public static class DescriptionModificationAllWithParentChildRelationshipPrecondition extends SimplePrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
+        private static final Logger LOG =
+                LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
 
         /**
-         * Creates a description changed precondition check.
+         * Creates a description modification all with parent child relationship precondition check.
          */
         public DescriptionModificationAllWithParentChildRelationshipPrecondition() {
-            super(DescriptionModificationAllWithParentChildRelationshipPrecondition::preconditionCheck, DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
+            super(
+                    DescriptionModificationAllWithParentChildRelationshipPrecondition::preconditionCheck,
+                    DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) {
@@ -755,8 +762,8 @@ public class ConditionalPreconditions {
          * @throws PreconditionException on errors
          */
         static boolean manipulation(final Injector injector) {
-            boolean result1 = descriptionModificationManipulation(injector, LOG);
-            boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
+            final boolean result1 = descriptionModificationManipulation(injector, LOG);
+            final boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
             return result1 && result2;
         }
     }

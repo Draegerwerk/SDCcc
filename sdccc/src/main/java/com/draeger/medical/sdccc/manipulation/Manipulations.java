@@ -138,19 +138,18 @@ public interface Manipulations {
     ResponseTypes.Result triggerDescriptorUpdate(String handle);
 
     /**
-     * Trigger a descriptor update for the provided handles (DescriptionModificationReport with one Upt-ReportPart
-     * for each one of the provided descriptor handles).
+     * Trigger a descriptor update for the provided descriptor handles.
      *
-     * @param handles list of descriptor handles to trigger an Update for.
+     * @param handles list of descriptor handles to trigger an update for.
      * @return the result of the manipulation
      */
-    ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles);
+    ResponseTypes.Result triggerDescriptorUpdate(List<String> handles);
 
-        /**
-         * Trigger a descriptor update for some descriptor (chosen by the device).
-         *
-         * @return the result of the manipulation
-         */
+    /**
+     * Trigger a descriptor update for some descriptor (chosen by the device).
+     *
+     * @return the result of the manipulation
+     */
     ResponseTypes.Result triggerAnyDescriptorUpdate();
 
     /**
