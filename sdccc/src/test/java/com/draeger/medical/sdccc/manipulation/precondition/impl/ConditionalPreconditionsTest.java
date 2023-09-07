@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -282,10 +283,10 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionChangedPrecondition correctly checks for precondition")
-    public void testDescriptionModificationPreconditionCheck()
+    public void testDescriptionModificationCrtOrDelPreconditionCheck()
             throws PreconditionException, IOException, JAXBException {
         // no messages
-        assertFalse(ConditionalPreconditions.DescriptionChangedPrecondition.preconditionCheck(testInjector));
+        assertFalse(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
 
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.CRT);
@@ -297,7 +298,7 @@ public class ConditionalPreconditionsTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
 
-        assertTrue(ConditionalPreconditions.DescriptionChangedPrecondition.preconditionCheck(testInjector));
+        assertTrue(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
     }
 
     /**
@@ -334,7 +335,7 @@ public class ConditionalPreconditionsTest {
                     }
                 });
 
-        assertTrue(ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
+        assertTrue(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.manipulation(testInjector));
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
@@ -364,6 +365,100 @@ public class ConditionalPreconditionsTest {
                         .filter(descriptor2Handle::equals)
                         .count());
     }
+
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition.preconditionCheck
+     * always returns false.
+     */
+    @Test
+    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition preconditionCheck always returns" +
+            " false to trigger the manipulation.")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionCheck()
+    {
+        // no messages - does not matter as the preconditionCheck should always return false
+        assertFalse(ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.preconditionCheck(testInjector));
+    }
+
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition correctly calls manipulation.
+     */
+    @Test
+    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition correctly calls manipulation")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionManipulation() {
+
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+        final var parentDescriptorHandle = "parentHandle";
+        final var childDescriptorHandle = "childHandle";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        MdibEntity mockEntity = mock(MdibEntity.class);
+        when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
+        when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
+        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of(mockEntity));
+        MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
+                .thenAnswer(args -> {
+                    if ( presenceMap.get((String)args.getArgument(0))) {
+                        return Optional.of(mockEntity2);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        assertTrue(ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.manipulation(testInjector));
+
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var handleCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
+        verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(handleCaptor.capture());
+
+        assertEquals(2, handleCaptor.getAllValues().get(0).size());
+        assertEquals(childDescriptorHandle, handleCaptor.getAllValues().get(0).get(0));
+        assertEquals(parentDescriptorHandle, handleCaptor.getAllValues().get(0).get(1));
+
+        assertEquals(
+                2,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+    }
+
 
     /**
      * Tests whether DescriptionModificationCrtPrecondition correctly checks for precondition.
@@ -640,7 +735,7 @@ public class ConditionalPreconditionsTest {
     @DisplayName("DescriptionModificationPrecondition throws exception if no removable descriptors are present")
     void testDescriptionModificationModificationNoDescriptors() {
         // must fail without any removable descriptors
-        assertFalse(ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
+        assertFalse(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.manipulation(testInjector));
         reset(mockManipulations);
     }
 

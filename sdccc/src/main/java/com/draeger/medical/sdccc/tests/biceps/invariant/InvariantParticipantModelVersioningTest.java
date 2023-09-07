@@ -80,7 +80,7 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
     @TestDescription(
             "Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
                     + " verifies that descriptor versions are incremented by 1 whenever a child descriptor is added or deleted.")
-    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionChangedPrecondition.class})
+    @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.class})
     void testRequirementR0033() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));

@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.xml.namespace.QName;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
@@ -294,15 +295,19 @@ public class GRpcManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
+        return triggerDescriptorUpdate(List.of(handle));
+    }
+
+    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
         final var message =
-                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
+                DeviceRequests.TriggerDescriptorUpdateRequest.newBuilder().addAllHandle(handles).build();
 
         return performCallWrapper(
                 v -> deviceStub.triggerDescriptorUpdate(message),
-                v -> fallback.triggerDescriptorUpdate(handle),
+                v -> fallback.triggerDescriptorUpdate(handles),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
+                ManipulationParameterUtil.buildTriggerDescriptorUpdateParameterData(handles));
     }
 
     @Override

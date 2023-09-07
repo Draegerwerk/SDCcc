@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -184,6 +186,42 @@ public class ConditionalPreconditions {
         final ResponseTypes.Result manipulationResult = manipulations.triggerAnyDescriptorUpdate();
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
+    }
+
+    private static boolean descriptionUpdateWithParentChildRelationshipManipulation(final Injector injector, final Logger log) {
+        Pair<String, String> descriptorHandles = findFirstDescriptorHandleWithChildren(injector, log);
+        if (descriptorHandles == null) {
+            log.error("Could not trigger a Descriptor Update with Parent Child Relationship as there are no " +
+                    "Descriptors with Children in the Mdib.");
+            return false;
+        }
+        String parentDescriptorHandle = descriptorHandles.getLeft();
+        String childDescriptorHandle = descriptorHandles.getRight();
+        final var manipulations = injector.getInstance(Manipulations.class);
+
+        final ResponseTypes.Result manipulationResult = manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
+
+        return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
+    }
+
+    private static Pair<String, String> findFirstDescriptorHandleWithChildren(Injector injector, Logger log) {
+        final var testClient = injector.getInstance(TestClient.class);
+
+        final var remoteDevice = testClient.getSdcRemoteDevice();
+        if (remoteDevice == null) {
+            log.error("remote device could not be accessed, likely due to a disconnect");
+            return null;
+        }
+        var mdibAccess = remoteDevice.getMdibAccess();
+
+        Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
+        for (MdibEntity entity : entities) {
+            List<String> children = entity.getChildren();
+            if (children.size() > 0) {
+                return Pair.of(entity.getHandle(), children.get(0));
+            }
+        }
+        return null;
     }
 
     private static boolean triggerReportPreconditionCheck(
@@ -461,11 +499,11 @@ public class ConditionalPreconditions {
             }
 
             // all options exhausted and the goal is still not reached
-            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
+            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfClass() manipulation "
                     + "that can be inserted, updated and removed (at least one for each is required for the test "
                     + "applying this precondition). "
                     + "Please check if the test case applying this precondition is applicable to your device and if the "
-                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                    + "GetRemovableDescriptorsOfClass, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
                     + "manipulations have been implemented correctly.");
             return false;
         }
@@ -660,15 +698,15 @@ public class ConditionalPreconditions {
      * Precondition which checks whether DescriptionModificationReport messages containing an insertion
      * or deletion have been received, triggering description changes otherwise.
      */
-    public static class DescriptionChangedPrecondition extends SimplePrecondition {
+    public static class DescriptionModificationCrtOrDelPrecondition extends SimplePrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(DescriptionChangedPrecondition.class);
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationCrtOrDelPrecondition.class);
 
         /**
          * Creates a description changed precondition check.
          */
-        public DescriptionChangedPrecondition() {
-            super(DescriptionChangedPrecondition::preconditionCheck, DescriptionChangedPrecondition::manipulation);
+        public DescriptionModificationCrtOrDelPrecondition() {
+            super(DescriptionModificationCrtOrDelPrecondition::preconditionCheck, DescriptionModificationCrtOrDelPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {
@@ -685,6 +723,38 @@ public class ConditionalPreconditions {
          */
         static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
+        }
+    }
+
+    /**
+     * Precondition which triggers all possible description changes with parent-child relationships.
+     */
+    public static class DescriptionModificationAllWithParentChildRelationshipPrecondition extends SimplePrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
+
+        /**
+         * Creates a description changed precondition check.
+         */
+        public DescriptionModificationAllWithParentChildRelationshipPrecondition() {
+            super(DescriptionModificationAllWithParentChildRelationshipPrecondition::preconditionCheck, DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
+        }
+
+        static boolean preconditionCheck(final Injector injector) {
+            return false; // always trigger description changes
+        }
+
+        /**
+         * Performs the removal, reinsertion and update of all modifiable descriptors in the mdib to trigger reports.
+         *
+         * @param injector to analyze mdib on
+         * @return true if successful, false otherwise
+         * @throws PreconditionException on errors
+         */
+        static boolean manipulation(final Injector injector) {
+            boolean result1 = descriptionModificationManipulation(injector, LOG);
+            boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
+            return result1 && result2;
         }
     }
 
