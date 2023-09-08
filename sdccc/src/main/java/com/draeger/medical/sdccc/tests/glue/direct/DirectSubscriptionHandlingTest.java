@@ -418,8 +418,8 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         LOG.info("Triggering a Report and intentionally causing a failure...");
         triggerableReport.setReportReceived(false);
         triggerableReport.setFailOnReceivingReport(true);
+        triggerableReport.trigger();
         synchronized (triggerableReport.getSyncPoint()) {
-            triggerableReport.trigger();
             final long timeout = System.nanoTime() + TIMEOUT_NANOS;
             while (!triggerableReport.getReportReceived() && System.nanoTime() < timeout) {
                 try {
