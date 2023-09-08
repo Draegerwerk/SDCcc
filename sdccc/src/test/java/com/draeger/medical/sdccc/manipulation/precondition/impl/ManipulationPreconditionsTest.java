@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.Manipulations;
-import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -101,7 +100,6 @@ public class ManipulationPreconditionsTest {
     private static final String ALERT_SYSTEM_CONTEXT_HANDLE2 = "alerthandle2";
     private static final String ALERT_CONDITION_HANDLE = "alertconditionhandle";
     private static final String ALERT_CONDITION_HANDLE2 = "alertconditionhandle2";
-    private static final String ALERT_SIGNAL_HANDLE = "alertSignalHandle";
     private static final String AUD_ALERT_SIGNAL_HANDLE = "audAlertSignalHandle";
     private static final String OTH_ALERT_SIGNAL_HANDLE = "othAlertSignalHandle";
     private static final String TAN_ALERT_SIGNAL_HANDLE = "tanAlertSignalHandle";
@@ -1943,17 +1941,18 @@ public class ManipulationPreconditionsTest {
         when(mockTestClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
                 .thenReturn(List.of(mockEntity));
         final MdibEntity mockEntity2 = mock(MdibEntity.class);
-        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any())).thenAnswer(args -> {
-            if (presenceMap.get((String) args.getArgument(0))) {
-                return Optional.of(mockEntity2);
-            } else {
-                return Optional.empty();
-            }
-        });
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
+                .thenAnswer(args -> {
+                    if (presenceMap.get((String) args.getArgument(0))) {
+                        return Optional.of(mockEntity2);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
 
         assertTrue(
-                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.manipulation(
-                        injector));
+                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition
+                        .manipulation(injector));
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
@@ -1990,4 +1989,211 @@ public class ManipulationPreconditionsTest {
                         .count());
     }
 
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition succeeds even when
+     * GetRemovableDescriptors failed.
+     */
+    @Test
+    @DisplayName(
+            "DescriptionModificationAllWithParentChildRelationshipPrecondition when GetRemovableDescriptors failed.")
+    public void
+            testDescriptionModificationAllWithParentChildRelationshipPreconditionManipulationGetRemovableDescriptorsFailed() {
+
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+        final var parentDescriptorHandle = "parentHandle";
+        final var childDescriptorHandle = "childHandle";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of()); // WHen the Manipulation is NOT_SUPPORTED, an empty List is returned.
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        final MdibEntity mockEntity = mock(MdibEntity.class);
+        when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
+        when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of(mockEntity));
+        final MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
+                .thenAnswer(args -> {
+                    if (presenceMap.get((String) args.getArgument(0))) {
+                        return Optional.of(mockEntity2);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        assertTrue(
+                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition
+                        .manipulation(injector));
+
+        final var handleCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
+        verify(mockManipulations, times(0)).insertDescriptor(any());
+        verify(mockManipulations, times(0)).removeDescriptor(any());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(handleCaptor.capture());
+
+        assertEquals(2, handleCaptor.getAllValues().get(0).size());
+        assertEquals(childDescriptorHandle, handleCaptor.getAllValues().get(0).get(0));
+        assertEquals(parentDescriptorHandle, handleCaptor.getAllValues().get(0).get(1));
+    }
+
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition succeeds even though the
+     * TriggerDescriptorUpdate manipulation failed.
+     */
+    @Test
+    @DisplayName(
+            "DescriptionModificationAllWithParentChildRelationshipPrecondition when TriggerDescriptorUpdate Failed")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionManipulationFailed2() {
+
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+        final var parentDescriptorHandle = "parentHandle";
+        final var childDescriptorHandle = "childHandle";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        final MdibEntity mockEntity = mock(MdibEntity.class);
+        when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
+        when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of(mockEntity));
+        final MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
+                .thenAnswer(args -> {
+                    if (presenceMap.get((String) args.getArgument(0))) {
+                        return Optional.of(mockEntity2);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        assertTrue(
+                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition
+                        .manipulation(injector));
+
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var handleCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
+        verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(handleCaptor.capture());
+
+        assertEquals(2, handleCaptor.getAllValues().get(0).size());
+        assertEquals(childDescriptorHandle, handleCaptor.getAllValues().get(0).get(0));
+        assertEquals(parentDescriptorHandle, handleCaptor.getAllValues().get(0).get(1));
+
+        assertEquals(
+                2,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+    }
+
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition fails when both the
+     * GetRemovableDescriptors manipulation and the TriggerDescriptorUpdate manipulation failed.
+     */
+    @Test
+    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition when both GetRemovableDescriptors "
+            + "and TriggerDescriptorUpdate fail")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionManipulationFailed3() {
+
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+        final var parentDescriptorHandle = "parentHandle";
+        final var childDescriptorHandle = "childHandle";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of()); // When the manipulation returns RESULT_NOT_SUPPORTED, then an empty list
+        // is returned
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        final MdibEntity mockEntity = mock(MdibEntity.class);
+        when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
+        when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of(mockEntity));
+        final MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any()))
+                .thenAnswer(args -> {
+                    if (presenceMap.get((String) args.getArgument(0))) {
+                        return Optional.of(mockEntity2);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+
+        assertFalse(
+                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition
+                        .manipulation(injector));
+
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var handleCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
+        verify(mockManipulations, times(0)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(0)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(handleCaptor.capture());
+
+        assertEquals(2, handleCaptor.getAllValues().get(0).size());
+        assertEquals(childDescriptorHandle, handleCaptor.getAllValues().get(0).get(0));
+        assertEquals(parentDescriptorHandle, handleCaptor.getAllValues().get(0).get(1));
+    }
 }

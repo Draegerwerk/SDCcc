@@ -30,7 +30,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1727,7 +1726,8 @@ public class ManipulationPreconditions {
     /**
      * Precondition which triggers all possible description changes with parent-child relationships.
      */
-    public static class DescriptionModificationAllWithParentChildRelationshipPrecondition extends ManipulationPrecondition {
+    public static class DescriptionModificationAllWithParentChildRelationshipPrecondition
+            extends ManipulationPrecondition {
 
         private static final Logger LOG =
                 LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
@@ -1736,8 +1736,7 @@ public class ManipulationPreconditions {
          * Creates a description modification all with parent child relationship precondition check.
          */
         public DescriptionModificationAllWithParentChildRelationshipPrecondition() {
-            super(
-                    DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
+            super(DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
         }
 
         /**
@@ -1750,8 +1749,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final boolean result1 = removeAndReinsertDescriptors(injector, LOG);
             final boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
-            return result1 && result2;
+            return result1 || result2;
         }
     }
-
 }
