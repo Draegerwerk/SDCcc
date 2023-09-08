@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -336,8 +337,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     //       descriptors returned by the getRemovableDescriptors() manipulation should include at least one descriptor
     //       that has child descriptors.
     @RequirePrecondition(
-            simplePreconditions =
-                    ConditionalPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
+            manipulationPreconditions =
+                    ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
     void testRequirementR5025() throws NoTestData, IOException {
         try (final var messages =
                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {

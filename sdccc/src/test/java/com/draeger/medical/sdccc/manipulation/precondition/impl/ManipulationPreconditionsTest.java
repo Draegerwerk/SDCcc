@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -23,7 +24,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
+import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
+import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.util.MdibBuilder;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -32,6 +36,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +52,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.common.access.MdibAccess;
 import org.somda.sdc.biceps.common.access.MdibAccessObservable;
@@ -188,7 +194,11 @@ public class ManipulationPreconditionsTest {
         mockMdibAccess = mock(MdibAccess.class, Answers.RETURNS_DEEP_STUBS);
 
         mockTestClient = mock(TestClient.class, Answers.RETURNS_DEEP_STUBS);
+        final var clientInjector = TestClientUtil.createClientInjector();
         when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
+        when(mockTestClient.isClientRunning()).thenReturn(true);
+        when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
+        when(mockTestClient.getInjector()).thenReturn(clientInjector);
 
         injector = InjectorUtil.setupInjector(new AbstractModule() {
             @Override
@@ -199,6 +209,7 @@ public class ManipulationPreconditionsTest {
             }
         });
 
+        InjectorTestBase.setInjector(injector);
         testRunObserver = injector.getInstance(TestRunObserver.class);
     }
 
@@ -1897,4 +1908,86 @@ public class ManipulationPreconditionsTest {
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
+
+    /**
+     * Tests whether DescriptionModificationAllWithParentChildRelationshipPrecondition correctly calls manipulation.
+     */
+    @Test
+    @DisplayName("DescriptionModificationAllWithParentChildRelationshipPrecondition correctly calls manipulation")
+    public void testDescriptionModificationAllWithParentChildRelationshipPreconditionManipulation() {
+
+        final var descriptor1Handle = "superHandle";
+        final var descriptor2Handle = "handle;Süper;";
+        final var parentDescriptorHandle = "parentHandle";
+        final var childDescriptorHandle = "childHandle";
+
+        final var presenceMap = new HashMap<>(Map.of(
+                descriptor1Handle, false,
+                descriptor2Handle, true));
+
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), true);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+            presenceMap.put(invocation.getArgument(0), false);
+            return ResponseTypes.Result.RESULT_SUCCESS;
+        });
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        final MdibEntity mockEntity = mock(MdibEntity.class);
+        when(mockEntity.getHandle()).thenReturn(parentDescriptorHandle);
+        when(mockEntity.getChildren()).thenReturn(List.of(childDescriptorHandle));
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()))
+                .thenReturn(List.of(mockEntity));
+        final MdibEntity mockEntity2 = mock(MdibEntity.class);
+        when(mockTestClient.getSdcRemoteDevice().getMdibAccess().getEntity(any())).thenAnswer(args -> {
+            if (presenceMap.get((String) args.getArgument(0))) {
+                return Optional.of(mockEntity2);
+            } else {
+                return Optional.empty();
+            }
+        });
+
+        assertTrue(
+                ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.manipulation(
+                        injector));
+
+        final var insertCaptor = ArgumentCaptor.forClass(String.class);
+        final var removeCaptor = ArgumentCaptor.forClass(String.class);
+        final var handleCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockManipulations, times(1)).getRemovableDescriptorsOfClass();
+        verify(mockManipulations, times(3)).insertDescriptor(insertCaptor.capture());
+        verify(mockManipulations, times(2)).removeDescriptor(removeCaptor.capture());
+        verify(mockManipulations, times(1)).triggerDescriptorUpdate(handleCaptor.capture());
+
+        assertEquals(2, handleCaptor.getAllValues().get(0).size());
+        assertEquals(childDescriptorHandle, handleCaptor.getAllValues().get(0).get(0));
+        assertEquals(parentDescriptorHandle, handleCaptor.getAllValues().get(0).get(1));
+
+        assertEquals(
+                2,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                insertCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor1Handle::equals)
+                        .count());
+        assertEquals(
+                1,
+                removeCaptor.getAllValues().stream()
+                        .filter(descriptor2Handle::equals)
+                        .count());
+    }
+
 }
