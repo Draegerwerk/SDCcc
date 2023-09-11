@@ -29,3 +29,6 @@ Enable=false
 
 [SDCcc.gRPC]
 ServerAddress="localhost:50051"
+
+[SDCcc.TestParameter]
+Biceps547TimeInterval=5

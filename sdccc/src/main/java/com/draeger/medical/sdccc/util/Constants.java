@@ -71,7 +71,7 @@ public final class Constants {
             "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
 
     public static final String MDPWS_NAMESPACE_PREFIX = "mdpws";
-    public static final String MDPWS_NAMESPACE = org.somda.sdc.mdpws.common.CommonConstants.NAMESPACE;
+    public static final String MDPWS_NAMESPACE = org.somda.sdc.glue.common.CommonConstants.NAMESPACE_MDPWS;
 
     public static final QName WSDL_INPUT = new QName(WSDL_NAMESPACE, "input");
     public static final QName WSDL_OUTPUT = new QName(WSDL_NAMESPACE, "output");
@@ -222,6 +222,8 @@ public final class Constants {
 
     // Manipulation Data for Hibernation
     public static final String MANIPULATION_PARAMETER_HANDLE = "Handle";
+    public static final String MANIPULATION_PARAMETER_HANDLES = "Handles";
+    public static final String MANIPULATION_PARAMETER_SEQUENCE_ID = "SequenceId";
     public static final String MANIPULATION_PARAMETER_LOCATION_DETAIL = "LocationDetail";
     public static final String MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION = "ContextAssociation";
     public static final String MANIPULATION_PARAMETER_ALERT_ACTIVATION = "AlertActivation";

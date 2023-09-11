@@ -28,7 +28,7 @@ import javax.xml.namespace.QName;
 import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.dpws.DpwsConstants;
-import org.somda.sdc.mdpws.common.CommonConstants;
+import org.somda.sdc.glue.common.CommonConstants;
 import org.w3c.dom.Node;
 
 /**

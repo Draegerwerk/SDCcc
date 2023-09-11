@@ -461,11 +461,11 @@ public class ConditionalPreconditions {
             }
 
             // all options exhausted and the goal is still not reached
-            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfType() manipulation "
+            LOG.error("Unable to find any MdsDescriptors using the GetRemovableDescriptorsOfClass() manipulation "
                     + "that can be inserted, updated and removed (at least one for each is required for the test "
                     + "applying this precondition). "
                     + "Please check if the test case applying this precondition is applicable to your device and if the "
-                    + "GetRemovableDescriptorsOfType, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
+                    + "GetRemovableDescriptorsOfClass, InsertDescriptor, RemoveDescriptor, and TriggerDescriptorUpdate "
                     + "manipulations have been implemented correctly.");
             return false;
         }
@@ -660,15 +660,17 @@ public class ConditionalPreconditions {
      * Precondition which checks whether DescriptionModificationReport messages containing an insertion
      * or deletion have been received, triggering description changes otherwise.
      */
-    public static class DescriptionChangedPrecondition extends SimplePrecondition {
+    public static class DescriptionModificationCrtOrDelPrecondition extends SimplePrecondition {
 
-        private static final Logger LOG = LogManager.getLogger(DescriptionChangedPrecondition.class);
+        private static final Logger LOG = LogManager.getLogger(DescriptionModificationCrtOrDelPrecondition.class);
 
         /**
-         * Creates a description changed precondition check.
+         * Creates a description modification crt or del precondition check.
          */
-        public DescriptionChangedPrecondition() {
-            super(DescriptionChangedPrecondition::preconditionCheck, DescriptionChangedPrecondition::manipulation);
+        public DescriptionModificationCrtOrDelPrecondition() {
+            super(
+                    DescriptionModificationCrtOrDelPrecondition::preconditionCheck,
+                    DescriptionModificationCrtOrDelPrecondition::manipulation);
         }
 
         static boolean preconditionCheck(final Injector injector) throws PreconditionException {

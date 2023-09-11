@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
@@ -332,7 +333,9 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestDescription("For every DescriptionModificationReport received from the DUT, and for all parent-child"
             + " relationships between the elements contained in the report, checks that the reportPart containing"
             + " the parent comes before the reportPart containing the child.")
-    @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionChangedPrecondition.class)
+    @RequirePrecondition(
+            manipulationPreconditions =
+                    ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
     void testRequirementR5025() throws NoTestData, IOException {
         try (final var messages =
                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
@@ -353,7 +356,10 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             assertTestData(
                     descriptorsSeen.get(),
                     "No DescriptionModificationReports with Parent-Child Relationships between Descriptors "
-                            + " seen during test run, test failed.");
+                            + " seen during test run, test failed."
+                            + " Please make sure that the device either supports descriptor updates or that the list"
+                            + " of removable descriptors returned by the getRemovableDescriptors() manipulation"
+                            + " includes at least one descriptor that has child descriptors.");
         }
     }
 

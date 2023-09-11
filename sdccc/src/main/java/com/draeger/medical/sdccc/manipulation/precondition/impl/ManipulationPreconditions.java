@@ -7,24 +7,30 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
+import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -34,6 +40,7 @@ import org.somda.sdc.biceps.common.access.MdibAccessObserver;
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
@@ -51,6 +58,7 @@ import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
@@ -65,8 +73,11 @@ public class ManipulationPreconditions {
             final Injector injector,
             final Logger log,
             final MetricCategory metricCategory,
-            final ComponentActivation activationState,
-            final ComponentActivation startingActivationState) {
+            final ComponentActivation activationState) {
+
+        final var timeBufferInSeconds =
+                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        final var timeBuffer = TimeUnit.MILLISECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);
         final var manipulationResults = new HashSet<ResponseTypes.Result>();
@@ -79,45 +90,140 @@ public class ManipulationPreconditions {
                 final var metricState =
                         entity.getStates(AbstractMetricState.class).get(0);
                 final var handle = metricState.getDescriptorHandle();
-                final var resultStartingActivationState =
-                        manipulations.setComponentActivation(handle, startingActivationState);
-                // change activation state to something other than expected result to ensure the transition
-
-                switch (resultStartingActivationState) {
-                    case RESULT_NOT_SUPPORTED -> log.debug(
-                            "Manipulating the activation state to {} was not supported for metric state with handle {}."
-                                    + " Changing the activation state to something other than {} is required to ensure that a transition occurs when the setMetric manipulation is called.",
-                            startingActivationState,
-                            handle,
-                            activationState);
-                    case RESULT_SUCCESS -> {
-                        final var manipulationResult = manipulations.setMetricStatus(handle, category, activationState);
-                        log.debug(
-                                "Manipulation setMetricStatus was {} for metric state with handle {}",
-                                manipulationResult,
-                                handle);
-                        if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
-                                || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
-                            log.error("Setting the metric status for metric with handle {} failed", handle);
-                            return false;
-                        }
-                        manipulationResults.add(manipulationResult);
-                    }
-                    default -> {
-                        log.error(
-                                "Manipulating the activation state to {} was {} for metric state with handle {}."
-                                        + " This needs to be successful, to ensure that the metric is set to {} after performing"
-                                        + " the setMetricStatus manipulation.",
-                                startingActivationState,
-                                resultStartingActivationState,
-                                handle,
-                                activationState);
-                        return false;
-                    }
+                final var sequenceId = testClient
+                        .getSdcRemoteDevice()
+                        .getMdibAccess()
+                        .getMdibVersion()
+                        .getSequenceId();
+                final var manipulationResult =
+                        manipulations.setMetricStatus(sequenceId, handle, category, activationState);
+                log.debug(
+                        "Manipulation setMetricStatus was {} for metric state with handle {}",
+                        manipulationResult,
+                        handle);
+                if (manipulationResult == ResponseTypes.Result.RESULT_FAIL
+                        || manipulationResult == ResponseTypes.Result.RESULT_NOT_IMPLEMENTED) {
+                    log.error("Setting the metric status for metric with handle {} failed", handle);
+                    return false;
+                }
+                manipulationResults.add(manipulationResult);
+                try {
+                    Thread.sleep(timeBuffer);
+                } catch (InterruptedException e) {
+                    log.error("Failed to wait the time frame of {} after setMetricStatus manipulation", timeBuffer);
+                    return false;
                 }
             }
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+    }
+
+    private static boolean removeAndReinsertDescriptors(final Injector injector, final Logger log) {
+        final var manipulations = injector.getInstance(Manipulations.class);
+        final var testClient = injector.getInstance(TestClient.class);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+
+        final MdibAccess mdibAccess;
+        final SdcRemoteDevice remoteDevice;
+
+        remoteDevice = testClient.getSdcRemoteDevice();
+        if (remoteDevice == null) {
+            testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
+            return false;
+        }
+
+        mdibAccess = remoteDevice.getMdibAccess();
+
+        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
+        if (modifiableDescriptors.isEmpty()) {
+            log.info("No modifiable descriptors available for manipulation");
+            return false;
+        }
+
+        final var manipulationResults = new HashSet<ResponseTypes.Result>();
+        for (String handle : modifiableDescriptors) {
+            // determine if descriptor is currently present
+            var descriptorEntity = mdibAccess.getEntity(handle);
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            // if the descriptor is not present, insert it first
+            if (descriptorEntity.isEmpty()) {
+                manipulationResults.add(manipulations.insertDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+            }
+
+            // remove descriptor
+            manipulationResults.add(manipulations.removeDescriptor(handle));
+            descriptorEntity = mdibAccess.getEntity(handle);
+            if (descriptorEntity.isPresent()) {
+                manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+            }
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            // reinsert descriptor
+            manipulationResults.add(manipulations.insertDescriptor(handle));
+            descriptorEntity = mdibAccess.getEntity(handle);
+            if (descriptorEntity.isEmpty()) {
+                manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+            }
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
+                testRunObserver.invalidateTestRun(String.format(
+                        "Could not successfully modify descriptor %s, stopping the precondition", handle));
+                break;
+            }
+        }
+
+        return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+    }
+
+    private static boolean descriptionUpdateWithParentChildRelationshipManipulation(
+            final Injector injector, final Logger log) {
+        final Pair<String, String> descriptorHandles = findFirstDescriptorHandleWithChildren(injector, log);
+        if (descriptorHandles == null) {
+            log.error("Could not trigger a descriptor update with parent child relationship as there are no "
+                    + "descriptors with children in the mdib.");
+            return false;
+        }
+        final String parentDescriptorHandle = descriptorHandles.getLeft();
+        final String childDescriptorHandle = descriptorHandles.getRight();
+        final var manipulations = injector.getInstance(Manipulations.class);
+
+        final ResponseTypes.Result manipulationResult =
+                manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
+
+        return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
+    }
+
+    private static Pair<String, String> findFirstDescriptorHandleWithChildren(
+            final Injector injector, final Logger log) {
+        final var testClient = injector.getInstance(TestClient.class);
+
+        final var remoteDevice = testClient.getSdcRemoteDevice();
+        if (remoteDevice == null) {
+            log.error("remote device could not be accessed, likely due to a disconnect");
+            return null;
+        }
+        final var mdibAccess = remoteDevice.getMdibAccess();
+
+        final Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
+        for (MdibEntity entity : entities) {
+            if (entity.getDescriptor() instanceof MdsDescriptor) {
+                continue; // we are not interested in MdsDescriptors as many Devices do not support modifying them.
+            }
+            final List<String> children = entity.getChildren();
+            if (!children.isEmpty()) {
+                return Pair.of(entity.getHandle(), children.get(0));
+            }
+        }
+        return null;
     }
 
     /**
@@ -1165,8 +1271,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1192,8 +1297,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1219,8 +1323,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1245,8 +1348,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1271,8 +1373,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1297,8 +1398,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.MSRMT;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1323,8 +1423,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1349,8 +1448,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1375,8 +1473,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1401,8 +1498,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1427,8 +1523,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1453,8 +1548,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.SET;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1479,8 +1573,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.ON;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1505,8 +1598,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.NOT_RDY;
-            final var startingActivationState = ComponentActivation.OFF;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1531,8 +1623,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.STND_BY;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1557,8 +1648,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.SHTDN;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1583,8 +1673,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.OFF;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1609,8 +1698,7 @@ public class ManipulationPreconditions {
         static boolean manipulation(final Injector injector) {
             final var metricCategory = MetricCategory.CLC;
             final var activationState = ComponentActivation.FAIL;
-            final var startingActivationState = ComponentActivation.ON;
-            return manipulateMetricStatus(injector, LOG, metricCategory, activationState, startingActivationState);
+            return manipulateMetricStatus(injector, LOG, metricCategory, activationState);
         }
     }
 
@@ -1631,69 +1719,37 @@ public class ManipulationPreconditions {
          * @return true if successful, false otherwise
          */
         static boolean manipulation(final Injector injector) {
-            final var manipulations = injector.getInstance(Manipulations.class);
-            final var testClient = injector.getInstance(TestClient.class);
-            final var testRunObserver = injector.getInstance(TestRunObserver.class);
+            return removeAndReinsertDescriptors(injector, LOG);
+        }
+    }
 
-            final MdibAccess mdibAccess;
-            final SdcRemoteDevice remoteDevice;
+    /**
+     * Precondition which triggers all possible description changes with parent-child relationships.
+     */
+    public static class DescriptionModificationAllWithParentChildRelationshipPrecondition
+            extends ManipulationPrecondition {
 
-            remoteDevice = testClient.getSdcRemoteDevice();
-            if (remoteDevice == null) {
-                testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
-                return false;
-            }
+        private static final Logger LOG =
+                LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
 
-            mdibAccess = remoteDevice.getMdibAccess();
+        /**
+         * Creates a description modification all with parent child relationship precondition check.
+         */
+        public DescriptionModificationAllWithParentChildRelationshipPrecondition() {
+            super(DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
+        }
 
-            final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
-            if (modifiableDescriptors.isEmpty()) {
-                LOG.info("No modifiable descriptors available for manipulation");
-                return false;
-            }
-
-            final var manipulationResults = new HashSet<ResponseTypes.Result>();
-            for (String handle : modifiableDescriptors) {
-                // determine if descriptor is currently present
-                var descriptorEntity = mdibAccess.getEntity(handle);
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                // if the descriptor is not present, insert it first
-                if (descriptorEntity.isEmpty()) {
-                    manipulationResults.add(manipulations.insertDescriptor(handle));
-                    descriptorEntity = mdibAccess.getEntity(handle);
-                    if (descriptorEntity.isEmpty()) {
-                        manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                    }
-                    LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-                }
-
-                // remove descriptor
-                manipulationResults.add(manipulations.removeDescriptor(handle));
-                descriptorEntity = mdibAccess.getEntity(handle);
-                if (descriptorEntity.isPresent()) {
-                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                }
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                // reinsert descriptor
-                manipulationResults.add(manipulations.insertDescriptor(handle));
-                descriptorEntity = mdibAccess.getEntity(handle);
-                if (descriptorEntity.isEmpty()) {
-                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                }
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
-                    testRunObserver.invalidateTestRun(String.format(
-                            "Could not successfully modify descriptor %s, stopping the precondition", handle));
-                    break;
-                }
-            }
-
-            return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                    && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                    && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+        /**
+         * Performs the removal, reinsertion and update of all modifiable descriptors in the mdib to trigger reports.
+         *
+         * @param injector to analyze mdib on
+         * @return true if successful, false otherwise
+         * @throws PreconditionException on errors
+         */
+        static boolean manipulation(final Injector injector) {
+            final boolean result1 = removeAndReinsertDescriptors(injector, LOG);
+            final boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
+            return result1 || result2;
         }
     }
 }

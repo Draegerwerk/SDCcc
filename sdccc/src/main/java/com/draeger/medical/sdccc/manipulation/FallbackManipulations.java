@@ -203,7 +203,10 @@ public class FallbackManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result setMetricStatus(
-            final String handle, final MetricCategory category, final ComponentActivation activation) {
+            final String sequenceId,
+            final String handle,
+            final MetricCategory category,
+            final ComponentActivation activation) {
 
         final var metricStatusString = getMetricStatus(activation);
         if (metricStatusString.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;
@@ -222,6 +225,19 @@ public class FallbackManipulations implements Manipulations {
     public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
         final var triggerReportString = "Trigger a descriptor update for handle %s";
         final var interactionMessage = String.format(triggerReportString, handle);
+        final var interactionResult = interactionFactory
+                .createUserInteraction(new FilterInputStream(System.in) {
+                    @Override
+                    public void close() {}
+                })
+                .displayYesNoUserInteraction(interactionMessage);
+        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+    }
+
+    @Override
+    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+        final var triggerReportString = "Trigger a descriptor update for handles %s";
+        final var interactionMessage = String.format(triggerReportString, String.join(", ", handles));
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
                     @Override

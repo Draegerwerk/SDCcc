@@ -272,7 +272,10 @@ public class GRpcManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result setMetricStatus(
-            final String handle, final MetricCategory category, final ComponentActivation activation) {
+            final String sequenceId,
+            final String handle,
+            final MetricCategory category,
+            final ComponentActivation activation) {
         final var metricStatus = getMetricStatus(activation);
         if (metricStatus.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;
         final var message = MetricRequests.SetMetricStatusRequest.newBuilder()
@@ -282,23 +285,30 @@ public class GRpcManipulations implements Manipulations {
 
         return performCallWrapper(
                 v -> metricStub.setMetricStatus(message),
-                v -> fallback.setMetricStatus(handle, category, activation),
+                v -> fallback.setMetricStatus(sequenceId, handle, category, activation),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                ManipulationParameterUtil.buildMetricStatusManipulationParameterData(handle, category, activation));
+                ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
+                        sequenceId, handle, category, activation));
     }
 
     @Override
     public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
-        final var message =
-                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
+        return triggerDescriptorUpdate(List.of(handle));
+    }
+
+    @Override
+    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+        final var message = DeviceRequests.TriggerDescriptorUpdateRequest.newBuilder()
+                .addAllHandle(handles)
+                .build();
 
         return performCallWrapper(
                 v -> deviceStub.triggerDescriptorUpdate(message),
-                v -> fallback.triggerDescriptorUpdate(handle),
+                v -> fallback.triggerDescriptorUpdate(handles),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
+                ManipulationParameterUtil.buildTriggerDescriptorUpdateParameterData(handles));
     }
 
     @Override

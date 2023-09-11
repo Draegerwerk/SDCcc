@@ -130,7 +130,7 @@ Enable=true
 will make all devices match during discovery.
 
 ### Manipulation API
-The test tool uses *T2IAPI* version `2.0.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
+The test tool uses *T2IAPI* version `3.0.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
 state, or to trigger a certain behavior. When using SDCcc with automated manipulations, it must be ensured that the same
 version of *T2IAPI* is used for the test execution by both parties. It must also be ensured that the device's 
 manipulations are implemented according to the descriptions in the T2IAPI sources. Further information can be found 
@@ -182,6 +182,14 @@ are presented during an SDCcc TestRun. Note that devices that have encoding prob
 in high numbers. When this option is set to true, then the errors will not be displayed individually, but summarized
 at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
 these problems.
+
+```
+[SDCcc.TestParameter]
+Biceps547TimeInterval=5
+```
+When running biceps:5-4-7 tests the Biceps547TimeInterval parameter is used to pause between the SetMetricStatus 
+manipulation calls with a default of 5 seconds. The report that follows a SetMetricStatus manipulation is expected 
+within the specified seconds.
 
 ## Running SDCcc
 The following command line options are supported by the test tool, the first two need to be provided.
@@ -280,29 +288,29 @@ this case in order to minimize the risk of such an invalid application going unn
 | C-14            | TriggerReport                                                                               |
 | C-15            | TriggerReport                                                                               |
 | R5024           | TriggerReport                                                                               |
-| R5025_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
+| R5025_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor, TriggerDescriptorUpdate |
 | R5046_0         | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5051           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
 | R5052           | TriggerAnyDescriptorUpdate                                                                  |
 | R5053           | GetRemovableDescriptorsOfClass, RemoveDescriptor, InsertDescriptor                          |
-| 5-4-7_0_0       | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_1         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_2         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_3         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_4         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_5         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_6_0       | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_7         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_8         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_9         | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_10        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_11        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_12_0      | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_13        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_14        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_15        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_16        | SetComponentActivation, SetMetricStatus                                                     |
-| 5-4-7_17        | SetComponentActivation, SetMetricStatus                                                     |
+| 5-4-7_0_0       | SetMetricStatus                                                                             |
+| 5-4-7_1         | SetMetricStatus                                                                             |
+| 5-4-7_2         | SetMetricStatus                                                                             |
+| 5-4-7_3         | SetMetricStatus                                                                             |
+| 5-4-7_4         | SetMetricStatus                                                                             |
+| 5-4-7_5         | SetMetricStatus                                                                             |
+| 5-4-7_6_0       | SetMetricStatus                                                                             |
+| 5-4-7_7         | SetMetricStatus                                                                             |
+| 5-4-7_8         | SetMetricStatus                                                                             |
+| 5-4-7_9         | SetMetricStatus                                                                             |
+| 5-4-7_10        | SetMetricStatus                                                                             |
+| 5-4-7_11        | SetMetricStatus                                                                             |
+| 5-4-7_12_0      | SetMetricStatus                                                                             |
+| 5-4-7_13        | SetMetricStatus                                                                             |
+| 5-4-7_14        | SetMetricStatus                                                                             |
+| 5-4-7_15        | SetMetricStatus                                                                             |
+| 5-4-7_16        | SetMetricStatus                                                                             |
+| 5-4-7_17        | SetMetricStatus                                                                             |
 
 [MDPWS]
 
@@ -312,11 +320,11 @@ this case in order to minimize the risk of such an invalid application going unn
 
 [GLUE]
 
-| **Requirement** | **T2IAPI Manipulation** |
-|-----------------|-------------------------|
-| R0036_0         | SetLocationDetail       |
-| R0056           | TriggerDescriptorUpdate |
-| R0078_0         | TriggerReport           |
+| **Requirement** | **T2IAPI Manipulation**    |
+|-----------------|----------------------------|
+| R0036_0         | SetLocationDetail          |
+| R0056           | TriggerAnyDescriptorUpdate |
+| R0078_0         | TriggerReport              |
 
 ## Exit Codes
 
