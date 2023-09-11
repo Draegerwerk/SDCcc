@@ -541,11 +541,10 @@ public class TestSuite {
             System.exit(2); // exitCode != 0 to indicate Error
         }
 
-        if (numberOfTestFailures > 0) {
-            System.exit(1); // exitCode != 0 to indicate Failure
-        }
         if (hadError || testRunObserver.isInvalid()) {
             System.exit(2); // exitCode != 0 to indicate Error
+        } else if (numberOfTestFailures > 0) {
+            System.exit(1); // exitCode != 0 to indicate Failure
         } else {
             System.exit(0); // exitCode == 0 to indicate Success
         }
