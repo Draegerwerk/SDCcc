@@ -10,6 +10,7 @@ package com.draeger.medical.sdccc.manipulation.precondition.impl;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
+import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -29,6 +30,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -38,6 +40,7 @@ import org.somda.sdc.biceps.common.access.MdibAccessObserver;
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
+import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
@@ -55,6 +58,7 @@ import org.somda.sdc.biceps.model.participant.ComponentActivation;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
+import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.biceps.model.participant.MetricCategory;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
@@ -112,6 +116,114 @@ public class ManipulationPreconditions {
             }
         }
         return manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+    }
+
+    private static boolean removeAndReinsertDescriptors(final Injector injector, final Logger log) {
+        final var manipulations = injector.getInstance(Manipulations.class);
+        final var testClient = injector.getInstance(TestClient.class);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+
+        final MdibAccess mdibAccess;
+        final SdcRemoteDevice remoteDevice;
+
+        remoteDevice = testClient.getSdcRemoteDevice();
+        if (remoteDevice == null) {
+            testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
+            return false;
+        }
+
+        mdibAccess = remoteDevice.getMdibAccess();
+
+        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
+        if (modifiableDescriptors.isEmpty()) {
+            log.info("No modifiable descriptors available for manipulation");
+            return false;
+        }
+
+        final var manipulationResults = new HashSet<ResponseTypes.Result>();
+        for (String handle : modifiableDescriptors) {
+            // determine if descriptor is currently present
+            var descriptorEntity = mdibAccess.getEntity(handle);
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            // if the descriptor is not present, insert it first
+            if (descriptorEntity.isEmpty()) {
+                manipulationResults.add(manipulations.insertDescriptor(handle));
+                descriptorEntity = mdibAccess.getEntity(handle);
+                if (descriptorEntity.isEmpty()) {
+                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+                }
+                log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+            }
+
+            // remove descriptor
+            manipulationResults.add(manipulations.removeDescriptor(handle));
+            descriptorEntity = mdibAccess.getEntity(handle);
+            if (descriptorEntity.isPresent()) {
+                manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+            }
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            // reinsert descriptor
+            manipulationResults.add(manipulations.insertDescriptor(handle));
+            descriptorEntity = mdibAccess.getEntity(handle);
+            if (descriptorEntity.isEmpty()) {
+                manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
+            }
+            log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
+
+            if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
+                testRunObserver.invalidateTestRun(String.format(
+                        "Could not successfully modify descriptor %s, stopping the precondition", handle));
+                break;
+            }
+        }
+
+        return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
+                && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
+                && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+    }
+
+    private static boolean descriptionUpdateWithParentChildRelationshipManipulation(
+            final Injector injector, final Logger log) {
+        final Pair<String, String> descriptorHandles = findFirstDescriptorHandleWithChildren(injector, log);
+        if (descriptorHandles == null) {
+            log.error("Could not trigger a descriptor update with parent child relationship as there are no "
+                    + "descriptors with children in the mdib.");
+            return false;
+        }
+        final String parentDescriptorHandle = descriptorHandles.getLeft();
+        final String childDescriptorHandle = descriptorHandles.getRight();
+        final var manipulations = injector.getInstance(Manipulations.class);
+
+        final ResponseTypes.Result manipulationResult =
+                manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
+
+        return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
+    }
+
+    private static Pair<String, String> findFirstDescriptorHandleWithChildren(
+            final Injector injector, final Logger log) {
+        final var testClient = injector.getInstance(TestClient.class);
+
+        final var remoteDevice = testClient.getSdcRemoteDevice();
+        if (remoteDevice == null) {
+            log.error("remote device could not be accessed, likely due to a disconnect");
+            return null;
+        }
+        final var mdibAccess = remoteDevice.getMdibAccess();
+
+        final Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
+        for (MdibEntity entity : entities) {
+            if (entity.getDescriptor() instanceof MdsDescriptor) {
+                continue; // we are not interested in MdsDescriptors as many Devices do not support modifying them.
+            }
+            final List<String> children = entity.getChildren();
+            if (!children.isEmpty()) {
+                return Pair.of(entity.getHandle(), children.get(0));
+            }
+        }
+        return null;
     }
 
     /**
@@ -1607,69 +1719,37 @@ public class ManipulationPreconditions {
          * @return true if successful, false otherwise
          */
         static boolean manipulation(final Injector injector) {
-            final var manipulations = injector.getInstance(Manipulations.class);
-            final var testClient = injector.getInstance(TestClient.class);
-            final var testRunObserver = injector.getInstance(TestRunObserver.class);
+            return removeAndReinsertDescriptors(injector, LOG);
+        }
+    }
 
-            final MdibAccess mdibAccess;
-            final SdcRemoteDevice remoteDevice;
+    /**
+     * Precondition which triggers all possible description changes with parent-child relationships.
+     */
+    public static class DescriptionModificationAllWithParentChildRelationshipPrecondition
+            extends ManipulationPrecondition {
 
-            remoteDevice = testClient.getSdcRemoteDevice();
-            if (remoteDevice == null) {
-                testRunObserver.invalidateTestRun("Remote device could not be accessed, likely due to a disconnect");
-                return false;
-            }
+        private static final Logger LOG =
+                LogManager.getLogger(DescriptionModificationAllWithParentChildRelationshipPrecondition.class);
 
-            mdibAccess = remoteDevice.getMdibAccess();
+        /**
+         * Creates a description modification all with parent child relationship precondition check.
+         */
+        public DescriptionModificationAllWithParentChildRelationshipPrecondition() {
+            super(DescriptionModificationAllWithParentChildRelationshipPrecondition::manipulation);
+        }
 
-            final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
-            if (modifiableDescriptors.isEmpty()) {
-                LOG.info("No modifiable descriptors available for manipulation");
-                return false;
-            }
-
-            final var manipulationResults = new HashSet<ResponseTypes.Result>();
-            for (String handle : modifiableDescriptors) {
-                // determine if descriptor is currently present
-                var descriptorEntity = mdibAccess.getEntity(handle);
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                // if the descriptor is not present, insert it first
-                if (descriptorEntity.isEmpty()) {
-                    manipulationResults.add(manipulations.insertDescriptor(handle));
-                    descriptorEntity = mdibAccess.getEntity(handle);
-                    if (descriptorEntity.isEmpty()) {
-                        manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                    }
-                    LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-                }
-
-                // remove descriptor
-                manipulationResults.add(manipulations.removeDescriptor(handle));
-                descriptorEntity = mdibAccess.getEntity(handle);
-                if (descriptorEntity.isPresent()) {
-                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                }
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                // reinsert descriptor
-                manipulationResults.add(manipulations.insertDescriptor(handle));
-                descriptorEntity = mdibAccess.getEntity(handle);
-                if (descriptorEntity.isEmpty()) {
-                    manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
-                }
-                LOG.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
-
-                if (manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)) {
-                    testRunObserver.invalidateTestRun(String.format(
-                            "Could not successfully modify descriptor %s, stopping the precondition", handle));
-                    break;
-                }
-            }
-
-            return !manipulationResults.contains(ResponseTypes.Result.RESULT_FAIL)
-                    && !manipulationResults.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
-                    && manipulationResults.contains(ResponseTypes.Result.RESULT_SUCCESS);
+        /**
+         * Performs the removal, reinsertion and update of all modifiable descriptors in the mdib to trigger reports.
+         *
+         * @param injector to analyze mdib on
+         * @return true if successful, false otherwise
+         * @throws PreconditionException on errors
+         */
+        static boolean manipulation(final Injector injector) {
+            final boolean result1 = removeAndReinsertDescriptors(injector, LOG);
+            final boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
+            return result1 || result2;
         }
     }
 }

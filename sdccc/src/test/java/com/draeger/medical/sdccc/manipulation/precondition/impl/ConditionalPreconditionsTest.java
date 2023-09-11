@@ -282,10 +282,11 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("DescriptionChangedPrecondition correctly checks for precondition")
-    public void testDescriptionModificationPreconditionCheck()
+    public void testDescriptionModificationCrtOrDelPreconditionCheck()
             throws PreconditionException, IOException, JAXBException {
         // no messages
-        assertFalse(ConditionalPreconditions.DescriptionChangedPrecondition.preconditionCheck(testInjector));
+        assertFalse(
+                ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
 
         final var reportPart = messageBuilder.buildDescriptionModificationReportReportPart();
         reportPart.setModificationType(DescriptionModificationType.CRT);
@@ -297,7 +298,8 @@ public class ConditionalPreconditionsTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, message);
 
-        assertTrue(ConditionalPreconditions.DescriptionChangedPrecondition.preconditionCheck(testInjector));
+        assertTrue(
+                ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.preconditionCheck(testInjector));
     }
 
     /**
@@ -334,7 +336,7 @@ public class ConditionalPreconditionsTest {
                     }
                 });
 
-        assertTrue(ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
+        assertTrue(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.manipulation(testInjector));
 
         final var insertCaptor = ArgumentCaptor.forClass(String.class);
         final var removeCaptor = ArgumentCaptor.forClass(String.class);
@@ -640,7 +642,7 @@ public class ConditionalPreconditionsTest {
     @DisplayName("DescriptionModificationPrecondition throws exception if no removable descriptors are present")
     void testDescriptionModificationModificationNoDescriptors() {
         // must fail without any removable descriptors
-        assertFalse(ConditionalPreconditions.DescriptionChangedPrecondition.manipulation(testInjector));
+        assertFalse(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.manipulation(testInjector));
         reset(mockManipulations);
     }
 

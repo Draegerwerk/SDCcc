@@ -20,11 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - precondition for biceps:R5024 to trigger description modification reports for test data
 
 ### Changed
-- SDCri version 5.0.0-SNAPSHOT
 - the precondition of biceps:R0133 so that it is now easier to satisfy.
 - the precondition of biceps:R0034_0 so that it is now easier to satisfy.
 - the precondition of biceps:C5 and biceps:R5052 so that it can be satisfied by devices that do not support updating
   MDS descriptors.
+- SDCri version 5.0.0
 
 ### Fixed
 - the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - biceps:R0034_0 does not track changes when reinserting descriptors.
 - report duplication issue in biceps:C11-C15, biceps:C5, biceps:R5046_0, biceps:B-284_0 as well as biceps:R5003.
 - biceps:5-4-7 tests confusing changes made by SetComponentActivation manipulations with changes made by SetMetricStatus.
+- glue:R0036_0 test can be blocked by long-running t2iapi RPCs.
+- biceps:5025_0 test case could not be satisfied by devices that do not support inserting and removing descriptors.
 
 ## [7.0.1] - 2023-03-17
 

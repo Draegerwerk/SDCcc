@@ -235,6 +235,19 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
+    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+        final var triggerReportString = "Trigger a descriptor update for handles %s";
+        final var interactionMessage = String.format(triggerReportString, String.join(", ", handles));
+        final var interactionResult = interactionFactory
+                .createUserInteraction(new FilterInputStream(System.in) {
+                    @Override
+                    public void close() {}
+                })
+                .displayYesNoUserInteraction(interactionMessage);
+        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+    }
+
+    @Override
     public ResponseTypes.Result triggerAnyDescriptorUpdate() {
         final var interactionMessage = "Trigger a descriptor update for some descriptor";
         final var interactionResult = interactionFactory
