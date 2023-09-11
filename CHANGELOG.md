@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the precondition of biceps:C5 and biceps:R5052 so that it can be satisfied by devices that do not support updating
   MDS descriptors.
 - SDCri version 5.0.0
+- t2iapi version 3.0.0
 
 ### Fixed
 - the occurrence of the sequence ']]>' in the content of CDATA sections in the result xmls
