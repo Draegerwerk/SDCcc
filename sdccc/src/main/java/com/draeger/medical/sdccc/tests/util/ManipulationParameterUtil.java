@@ -49,6 +49,17 @@ public final class ManipulationParameterUtil {
     }
 
     /**
+     * Build manipulation parameter data containing the handles that are needed for the manipulation.
+     *
+     * @param handles for which manipulation parameter data will be built.
+     * @return the manipulation parameter data
+     */
+    public static ManipulationParameterData buildTriggerDescriptorUpdateParameterData(final List<String> handles) {
+        return new ManipulationParameterData(
+                List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_HANDLES, String.join(", ", handles))));
+    }
+
+    /**
      * Build manipulation parameter data containing the location detail that is needed for the manipulation.
      *
      * @param locationDetail for which manipulation parameter data will be built.

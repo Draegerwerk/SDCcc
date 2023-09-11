@@ -294,15 +294,21 @@ public class GRpcManipulations implements Manipulations {
 
     @Override
     public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
-        final var message =
-                BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
+        return triggerDescriptorUpdate(List.of(handle));
+    }
+
+    @Override
+    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+        final var message = DeviceRequests.TriggerDescriptorUpdateRequest.newBuilder()
+                .addAllHandle(handles)
+                .build();
 
         return performCallWrapper(
                 v -> deviceStub.triggerDescriptorUpdate(message),
-                v -> fallback.triggerDescriptorUpdate(handle),
+                v -> fallback.triggerDescriptorUpdate(handles),
                 BasicResponses.BasicResponse::getResult,
                 BasicResponses.BasicResponse::getResult,
-                ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
+                ManipulationParameterUtil.buildTriggerDescriptorUpdateParameterData(handles));
     }
 
     @Override
