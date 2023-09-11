@@ -2002,7 +2002,7 @@ public class ManipulationPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of()); // When the Manipulation is NOT_SUPPORTED, an empty List is returned.
+                .thenReturn(List.of()); // When the manipulation is NOT_SUPPORTED, an empty list is returned.
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
