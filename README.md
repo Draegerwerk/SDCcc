@@ -324,9 +324,9 @@ SDCcc's exitCode should be interpreted as follows:
 
 | **ExitCode** | **Semantics**                                                                                                        |
 |--------------|----------------------------------------------------------------------------------------------------------------------|
-| 0            | Success - SDC-Compliance could be successfully measured and the Device Under Test satisfies all tested Requirements  |
-| 1            | Failure - SDC-Compliance could be successfully measured, but the Device Under Test violated Requirements             |
-| 2            | Error - SDC-Compliance could not be measured                                                                         |
+| 0            | Success - Test run execution was successful and the device under test satisfies all tested requirements  |
+| 1            | Failure - Test run execution was successful, but the device under test violated requirements             |
+| 2            | Error - Test run execution was not successful                                                                         |
 
 ## Notices
 SDCcc is not intended for use in medical products, clinical trials, clinical studies, or in clinical routine.
