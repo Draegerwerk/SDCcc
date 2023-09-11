@@ -333,9 +333,6 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestDescription("For every DescriptionModificationReport received from the DUT, and for all parent-child"
             + " relationships between the elements contained in the report, checks that the reportPart containing"
             + " the parent comes before the reportPart containing the child.")
-    // NOTE: for this test case to succeed, the device should support descriptor updates or the list of removable
-    //       descriptors returned by the getRemovableDescriptors() manipulation should include at least one descriptor
-    //       that has child descriptors.
     @RequirePrecondition(
             manipulationPreconditions =
                     ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
@@ -359,7 +356,10 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             assertTestData(
                     descriptorsSeen.get(),
                     "No DescriptionModificationReports with Parent-Child Relationships between Descriptors "
-                            + " seen during test run, test failed.");
+                            + " seen during test run, test failed."
+                            + " Please make sure that the device either supports descriptor updates or that the list"
+                            + " of removable descriptors returned by the getRemovableDescriptors() manipulation"
+                            + " includes at least one descriptor that has child descriptors.");
         }
     }
 
