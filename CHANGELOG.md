@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - biceps:5-4-7 tests confusing changes made by SetComponentActivation manipulations with changes made by SetMetricStatus.
 - glue:R0036_0 test can be blocked by long-running t2iapi RPCs.
 - biceps:5025_0 test case could not be satisfied by devices that do not support inserting and removing descriptors.
+- SDCcc previously terminated with exitCode 0 despite certain Errors.
 
 ## [7.0.1] - 2023-03-17
 
