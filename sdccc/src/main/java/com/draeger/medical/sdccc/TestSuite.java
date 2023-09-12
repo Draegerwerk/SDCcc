@@ -255,7 +255,7 @@ public class TestSuite {
         directSummary
                 .getSummary()
                 .getFailures()
-                .forEach(failure -> LOG.error("{}", failure.getTestIdentifier(), failure.getException()));
+                .forEach(failure -> LOG.info("{}", failure.getTestIdentifier(), failure.getException()));
 
         return totalTestFailures + directSummary.getSummary().getTotalFailureCount();
     }
