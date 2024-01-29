@@ -207,7 +207,6 @@ The following command line options are supported by the test tool, the first two
 | device_bed           | bed       | the bed of the target provider, overrides setting from configuration if provided                     | no           |
 | ipaddress            | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
 | test_run_directory   | d         | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
-| ipaddress            | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
 | file_log_level       | fll       | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                    | no           |
 
 ### Enabling Tests
