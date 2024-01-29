@@ -11,10 +11,8 @@ import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.somda.sdc.dpws.network.LocalAddressResolver;
-
 import java.util.Optional;
-
+import org.somda.sdc.dpws.network.LocalAddressResolver;
 
 /**
  * Implementation of {@linkplain LocalAddressResolver} that uses the configured address.
@@ -24,9 +22,7 @@ public class LocalAddressResolverImpl implements LocalAddressResolver {
     private final String adapterAddress;
 
     @Inject
-    LocalAddressResolverImpl(
-        @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress
-    ) {
+    LocalAddressResolverImpl(@Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress) {
         this.adapterAddress = adapterAddress;
     }
 

@@ -89,7 +89,7 @@ public final class LoggingConfigurator {
                     .addAttribute("append", true)
                     .add(layoutBuilder);
             appenderBuilder.addComponent(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
-                .addAttribute("level", fileLogLevel));
+                    .addAttribute("level", fileLogLevel));
             builder.add(appenderBuilder);
 
             rootLogger.add(builder.newAppenderRef(appenderBuilder.getName()));

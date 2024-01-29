@@ -9,6 +9,12 @@ package com.draeger.medical.sdccc.configuration;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Optional;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -18,13 +24,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.Optional;
 
 /**
  * Command line option parser.
@@ -63,8 +62,8 @@ public class CommandLineOptions {
      * @param commandLineArguments array of commandline options, as usually passed to a main function.
      */
     @SuppressFBWarnings(
-        value = {"DM_EXIT"},
-        justification = "Invalid arguments must lead to a halt.")
+            value = {"DM_EXIT"},
+            justification = "Invalid arguments must lead to a halt.")
     public CommandLineOptions(final String[] commandLineArguments) {
 
         final var options = setupOptions();
@@ -126,21 +125,21 @@ public class CommandLineOptions {
         }
         {
             final String description =
-                "Facility of the target provider, overrides setting from configuration if provided";
+                    "Facility of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("fac", DEVICE_LOCATION_FACILITY, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
             final String description =
-                "Building of the target provider, overrides setting from configuration if provided";
+                    "Building of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("bldng", DEVICE_LOCATION_BUILDING, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
         }
         {
             final String description =
-                "Point of care of the target provider, overrides setting from configuration if provided";
+                    "Point of care of the target provider, overrides setting from configuration if provided";
             final var deviceLocOpt = new Option("poc", DEVICE_LOCATION_POINT_OF_CARE, true, description);
             deviceLocOpt.setRequired(false);
             options.addOption(deviceLocOpt);
@@ -165,14 +164,14 @@ public class CommandLineOptions {
         }
         {
             final String description = "IP address of the adapter to use for communication,"
-                + " overrides setting from configuration if provided";
+                    + " overrides setting from configuration if provided";
             final var consumerTargetIpOpt = new Option("ip", IP_ADDRESS, true, description);
             consumerTargetIpOpt.setRequired(false);
             options.addOption(consumerTargetIpOpt);
         }
         {
             final String description = "Base directory to store test runs in, creates a timestamped SDCcc run"
-                + " directory inside the base directory. Defaults to current working directory as base.";
+                    + " directory inside the base directory. Defaults to current working directory as base.";
             final var testRunDirectoryOpt = new Option("d", TEST_RUN_DIRECTORY, true, description);
             testRunDirectoryOpt.setRequired(false);
             options.addOption(testRunDirectoryOpt);
@@ -251,20 +250,19 @@ public class CommandLineOptions {
     private static void printNetworkAdapterInformation() throws SocketException {
         System.out.println("%nAvailable network adapters are:%n");
         final Iterator<NetworkInterface> networkInterfaceIterator =
-            NetworkInterface.getNetworkInterfaces().asIterator();
+                NetworkInterface.getNetworkInterfaces().asIterator();
         while (networkInterfaceIterator.hasNext()) {
             final NetworkInterface networkInterface = networkInterfaceIterator.next();
             System.out.printf(
-                "\tNetwork interface: %s [isUp=%s;isLoopBack=%s,supportsMulticast=%s,MTU=%s,isVirtual=%s]%n",
-                networkInterface.getName(),
-                networkInterface.isUp(),
-                networkInterface.isLoopback(),
-                networkInterface.supportsMulticast(),
-                networkInterface.getMTU(),
-                networkInterface.isVirtual()
-            );
+                    "\tNetwork interface: %s [isUp=%s;isLoopBack=%s,supportsMulticast=%s,MTU=%s,isVirtual=%s]%n",
+                    networkInterface.getName(),
+                    networkInterface.isUp(),
+                    networkInterface.isLoopback(),
+                    networkInterface.supportsMulticast(),
+                    networkInterface.getMTU(),
+                    networkInterface.isVirtual());
             final Iterator<InetAddress> inetAddressIterator =
-                networkInterface.getInetAddresses().asIterator();
+                    networkInterface.getInetAddresses().asIterator();
             int i = 0;
             while (inetAddressIterator.hasNext()) {
                 final var addr = inetAddressIterator.next();

@@ -642,16 +642,16 @@ public class TestSuite {
             try {
                 setupSwingTheme();
             } catch (final ClassNotFoundException
-                | UnsupportedLookAndFeelException
-                | InstantiationException
-                | IllegalAccessException e) {
+                    | UnsupportedLookAndFeelException
+                    | InstantiationException
+                    | IllegalAccessException e) {
                 LOG.warn("Error while setting swing look and feel options.", e);
             }
 
             final Injector injector = createTestRunInjector(cmdLine, testRunDir);
 
             final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
-                findTriggerOnErrorOrWorseLogAppender(logConfig);
+                    findTriggerOnErrorOrWorseLogAppender(logConfig);
             if (triggerOnErrorOrWorseLogAppender == null) {
                 // should never happen
                 throw new IllegalStateException("Could not find an TriggerOnErrorOrWorseLogAppender in the logConfig.");
@@ -662,12 +662,12 @@ public class TestSuite {
                 triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler(null);
                 // invalidate test run
                 testRunObserver.invalidateTestRun("TriggerOnErrorOrWorseLogAppender observed an ERROR or worse."
-                    + " Invalidating TestRun."
-                    + " Please see the Log for more Details.");
+                        + " Invalidating TestRun."
+                        + " Please see the Log for more Details.");
             });
 
             String versionString =
-                triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
+                    triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
             if (versionString != null) {
                 versionString = " version " + versionString;
             } else {
@@ -689,12 +689,20 @@ public class TestSuite {
     }
 
     private static void setSystemProperties() {
-        System.setProperty("javax.xml.xpath.XPathFactory:http://java.sun.com/jaxp/xpath/dom", "com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl");
-        System.setProperty("javax.xml.stream.XMLEventFactory", "com.sun.xml.internal.stream.events.XMLEventFactoryImpl");
+        System.setProperty(
+                "javax.xml.xpath.XPathFactory:http://java.sun.com/jaxp/xpath/dom",
+                "com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl");
+        System.setProperty(
+                "javax.xml.stream.XMLEventFactory", "com.sun.xml.internal.stream.events.XMLEventFactoryImpl");
         System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
-        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-        System.setProperty("javax.xml.validation.SchemaFactory:http://www.w3.org/2001/XMLSchema", "com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory");
-        System.setProperty("javax.xml.parsers.SAXParserFactory", "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
+        System.setProperty(
+                "javax.xml.parsers.DocumentBuilderFactory",
+                "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        System.setProperty(
+                "javax.xml.validation.SchemaFactory:http://www.w3.org/2001/XMLSchema",
+                "com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory");
+        System.setProperty(
+                "javax.xml.parsers.SAXParserFactory", "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
         System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
     }
 

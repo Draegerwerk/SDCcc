@@ -20,6 +20,11 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.inject.Named;
+import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
@@ -38,13 +43,6 @@ import org.somda.sdc.glue.consumer.ConsumerConfig;
 import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
 import org.somda.sdc.glue.guice.DefaultGlueModule;
 import org.somda.sdc.glue.guice.GlueDpwsConfigModule;
-
-import javax.inject.Named;
-import javax.net.ssl.HostnameVerifier;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Utility for a {@linkplain TestClient} instance.
