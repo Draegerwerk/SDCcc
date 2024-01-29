@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- a command line parameter to change the log level threshold of the log file
+
 ### Fixed
 
 - a performance issue with xml unmarshalling due to finding an interface implementation for TransformerFactory
