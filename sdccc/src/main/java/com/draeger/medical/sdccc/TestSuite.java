@@ -620,68 +620,82 @@ public class TestSuite {
      * @param args array of command line arguments
      */
     public static void main(final String[] args) throws IOException {
+        // improve xml interaction performance
+        setSystemProperties();
+
         // parse command line options
         final var cmdLine = new CommandLineOptions(args);
 
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
                 cmdLine.getTestRunDirectory().orElse(null));
-        final var logConfig = LoggingConfigurator.loggerConfig(testRunDir);
+        final var logConfig = LoggingConfigurator.loggerConfig(testRunDir, cmdLine.getFileLogLevel());
         checkLogConfig(logConfig);
 
-        Configurator.initialize(logConfig);
-        final var ctx = (LoggerContext) LogManager.getContext(false);
-        ctx.setConfiguration(logConfig);
-        ctx.updateLoggers();
-        // we can only log this after setting up the logger
-        LOG.info("Using test run directory {}", testRunDir);
+        try (final var ignored = Configurator.initialize(logConfig)) {
+            final var ctx = (LoggerContext) LogManager.getContext(false);
+            ctx.setConfiguration(logConfig);
+            ctx.updateLoggers();
+            // we can only log this after setting up the logger
+            LOG.info("Using test run directory {}", testRunDir);
 
-        try {
-            setupSwingTheme();
-        } catch (final ClassNotFoundException
+            try {
+                setupSwingTheme();
+            } catch (final ClassNotFoundException
                 | UnsupportedLookAndFeelException
                 | InstantiationException
                 | IllegalAccessException e) {
-            LOG.warn("Error while setting swing look and feel options.", e);
-        }
+                LOG.warn("Error while setting swing look and feel options.", e);
+            }
 
-        final Injector injector = createTestRunInjector(cmdLine, testRunDir);
+            final Injector injector = createTestRunInjector(cmdLine, testRunDir);
 
-        final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
+            final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
                 findTriggerOnErrorOrWorseLogAppender(logConfig);
-        if (triggerOnErrorOrWorseLogAppender == null) {
-            // should never happen
-            throw new IllegalStateException("Could not find an TriggerOnErrorOrWorseLogAppender in the logConfig.");
-        }
-        triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler((LogEvent event) -> {
-            final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
-            // stop observing the logs
-            triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler(null);
-            // invalidate test run
-            testRunObserver.invalidateTestRun("TriggerOnErrorOrWorseLogAppender observed an ERROR or worse."
+            if (triggerOnErrorOrWorseLogAppender == null) {
+                // should never happen
+                throw new IllegalStateException("Could not find an TriggerOnErrorOrWorseLogAppender in the logConfig.");
+            }
+            triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler((LogEvent event) -> {
+                final TestRunObserver testRunObserver = injector.getInstance(TestRunObserver.class);
+                // stop observing the logs
+                triggerOnErrorOrWorseLogAppender.setOnErrorOrWorseHandler(null);
+                // invalidate test run
+                testRunObserver.invalidateTestRun("TriggerOnErrorOrWorseLogAppender observed an ERROR or worse."
                     + " Invalidating TestRun."
                     + " Please see the Log for more Details.");
-        });
+            });
 
-        String versionString =
+            String versionString =
                 triggerOnErrorOrWorseLogAppender.getClass().getPackage().getImplementationVersion();
-        if (versionString != null) {
-            versionString = " version " + versionString;
-        } else {
-            versionString = "";
+            if (versionString != null) {
+                versionString = " version " + versionString;
+            } else {
+                versionString = "";
+            }
+            LOG.info("Starting SDCcc {}", versionString);
+
+            try {
+
+                InjectorTestBase.setInjector(injector);
+                final var testSuite = injector.getInstance(TestSuite.class);
+                TestSuite.exit(testSuite.runTestSuite(), false, injector, testRunDir);
+            } catch (final RuntimeException | Error e) {
+
+                LOG.error("Unchecked exception while setting up or running the TestSuite", e);
+                TestSuite.exit(0, true, injector, testRunDir);
+            }
         }
-        LOG.info("Starting SDCcc {}", versionString);
+    }
 
-        try {
-
-            InjectorTestBase.setInjector(injector);
-            final var testSuite = injector.getInstance(TestSuite.class);
-            TestSuite.exit(testSuite.runTestSuite(), false, injector, testRunDir);
-        } catch (final RuntimeException | Error e) {
-
-            LOG.error("Unchecked exception while setting up or running the TestSuite", e);
-            TestSuite.exit(0, true, injector, testRunDir);
-        }
+    private static void setSystemProperties() {
+        System.setProperty("javax.xml.xpath.XPathFactory:http://java.sun.com/jaxp/xpath/dom", "com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl");
+        System.setProperty("javax.xml.stream.XMLEventFactory", "com.sun.xml.internal.stream.events.XMLEventFactoryImpl");
+        System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        System.setProperty("javax.xml.validation.SchemaFactory:http://www.w3.org/2001/XMLSchema", "com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory");
+        System.setProperty("javax.xml.parsers.SAXParserFactory", "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
+        System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
     }
 
     private static TriggerOnErrorOrWorseLogAppender findTriggerOnErrorOrWorseLogAppender(

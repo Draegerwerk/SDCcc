@@ -67,6 +67,7 @@ public class HibernateConfigBase implements HibernateConfig {
         config.setProperty(Environment.ORDER_UPDATES, TRUE_SETTING_VALUE);
         config.setProperty(Environment.ORDER_INSERTS, TRUE_SETTING_VALUE);
         config.setProperty(Environment.BATCH_VERSIONED_DATA, TRUE_SETTING_VALUE);
+        config.setProperty(Environment.AUTOCOMMIT, FALSE_SETTING_VALUE);
 
         config.addAnnotatedClass(HTTPHeaderEntity.class);
         config.addAnnotatedClass(MdibVersionGroupEntity.class);
