@@ -11,8 +11,8 @@ jobs:
     steps:
       # Run `git checkout`
       - uses: actions/checkout@v3
-      - uses: viperproject/check-license-header@v2
+      - uses: maximilianpilz/file-header-check@v1
         with:
-          path: .
-          config: .github/license-check/license-config.json
-          strict: false # <boolean indicating whether files not covered by the configuration should be reported as errors>
+          config: '.github/license-check/license-config'
+          config-encoding: 'utf-8'
+          log-level: 'DEBUG'
