@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -684,7 +683,6 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
         static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
@@ -746,7 +744,7 @@ public class ConditionalPreconditions {
                                         "Could not retrieve episodic context report body from message")))
                         .forEach(message -> message.getReportPart().stream()
                                 .map(AbstractContextReport.ReportPart::getContextState)
-                                .collect(Collectors.toList())
+                                .toList()
                                 .forEach(contextStates::addAll));
                 for (var state : contextStates) {
                     if (ImpliedValueUtil.getContextAssociation(state) == ContextAssociation.ASSOC) {

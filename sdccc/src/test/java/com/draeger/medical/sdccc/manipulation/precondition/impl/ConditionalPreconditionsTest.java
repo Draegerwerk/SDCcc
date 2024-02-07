@@ -223,6 +223,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("HelloMessagePrecondition correctly checks for precondition")
+    @SuppressWarnings("resource")
     public void testHelloMessagePreconditionCheck() throws PreconditionException, IOException {
         final var mockStorage = mock(MessageStorage.class);
         final var mockMessage = mock(MessageContent.class);
@@ -1549,7 +1550,7 @@ public class ConditionalPreconditionsTest {
 
         final var report = messageBuilder.buildEpisodicContextReport("SomeSequence");
         report.getReportPart().clear();
-        report.getReportPart().addAll(List.of(reportPart));
+        report.getReportPart().add(reportPart);
 
         final var message =
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
@@ -1605,7 +1606,7 @@ public class ConditionalPreconditionsTest {
                         workflowContextState, workflowContextState2));
         final var secondReport = messageBuilder.buildEpisodicContextReport("SomeSequence");
         secondReport.getReportPart().clear();
-        secondReport.getReportPart().addAll(List.of(secondReportPart));
+        secondReport.getReportPart().add(secondReportPart);
 
         final var secondMessage =
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, secondReport);
@@ -1660,7 +1661,7 @@ public class ConditionalPreconditionsTest {
                 ConditionalPreconditions.AllKindsOfContextStatesAssociatedPrecondition.ALREADY_ASSOCIATED_CONTEXTS
                         .entrySet()) {
             if (entry.getKey().equals(PatientContextState.class)) {
-                entry.getValue().addAll(List.of(PATIENT_CONTEXT_STATE_HANDLE));
+                entry.getValue().add(PATIENT_CONTEXT_STATE_HANDLE);
             } else if (entry.getKey().equals(LocationContextState.class)) {
                 entry.getValue().addAll(List.of(LOCATION_CONTEXT_STATE_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2));
             } else if (entry.getKey().equals(EnsembleContextState.class)) {
@@ -2189,6 +2190,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("Different TriggerReportPreconditions correctly check for precondition")
     public void testTriggerReportPreconditionCheck() throws IOException, PreconditionException {
+        @SuppressWarnings("resource")
         final var mockStorage = mock(MessageStorage.class);
         @SuppressWarnings("unchecked")
         final MessageStorage.GetterResult<MessageContent> mockGetter = mock(MessageStorage.GetterResult.class);
@@ -2493,8 +2495,8 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("StateChangedPrecondition correctly checks for preconditions")
     public void testStateChangedPreconditionCheck() throws Exception {
+        @SuppressWarnings("resource")
         final var mockStorage = mock(MessageStorage.class);
-        @SuppressWarnings("unchecked")
         final MessageStorage.GetterResult<MessageContent> mockGetter = mock(MessageStorage.GetterResult.class);
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
