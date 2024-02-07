@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.xml.namespace.QName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -96,7 +97,7 @@ public class ConditionalPreconditions {
                             .orElseThrow(() -> new RuntimeException(
                                     "Could not retrieve description modification report body from message")))
                     .anyMatch(message -> message.getReportPart().stream()
-                            .map(DescriptionModificationReport.ReportPart::getModificationType)
+                            .map(ImpliedValueUtil::getModificationType)
                             .anyMatch(modificationTypesList::contains));
         } catch (final IOException e) {
             throw new PreconditionException(

@@ -516,6 +516,45 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
+     * Tests that DescriptionModificationUptPrecondition does not fail when a DescriptionModificationReport
+     * contains ReportParts without a ModificationType attribute.
+     *
+     * @throws PreconditionException on precondition exceptions
+     * @throws IOException           on io exceptions
+     * @throws JAXBException         on marshalling failures
+     */
+    @Test
+    @DisplayName("DescriptionModificationCrtPrecondition when @ModificationType is omitted")
+    public void testDescriptionModificationUptPreconditionCheckWhenModificationTypeIsNotSet()
+            throws PreconditionException, IOException, JAXBException {
+        // no messagess
+        assertFalse(ConditionalPreconditions.DescriptionModificationUptPrecondition.preconditionCheck(testInjector));
+
+        final var reportPartDel = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var reportPartCrt = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var firstReport = messageBuilder.buildDescriptionModificationReport(
+                "SomeSequence", List.of(reportPartDel, reportPartCrt));
+
+        final var messageWithDelReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, firstReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithDelReportPart);
+        // no messages with report parts crt
+        final var reportPartNoModificationType = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var secondReport =
+                messageBuilder.buildDescriptionModificationReport("SomeSequence", List.of(reportPartNoModificationType));
+
+        final var messageWithUpdReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithUpdReportPart);
+        assertTrue(ConditionalPreconditions.DescriptionModificationUptPrecondition.preconditionCheck(testInjector));
+    }
+
+    /**
      * Tests whether DescriptionModificationUptPrecondition correctly calls manipulation.
      */
     @Test
