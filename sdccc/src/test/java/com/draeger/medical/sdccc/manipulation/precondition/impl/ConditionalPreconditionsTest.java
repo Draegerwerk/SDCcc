@@ -545,8 +545,8 @@ public class ConditionalPreconditionsTest {
         // no messages with report parts crt
         final var reportPartNoModificationType = messageBuilder.buildDescriptionModificationReportReportPart();
 
-        final var secondReport =
-                messageBuilder.buildDescriptionModificationReport("SomeSequence", List.of(reportPartNoModificationType));
+        final var secondReport = messageBuilder.buildDescriptionModificationReport(
+                "SomeSequence", List.of(reportPartNoModificationType));
 
         final var messageWithUpdReportPart = messageBuilder.createSoapMessageWithBody(
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
