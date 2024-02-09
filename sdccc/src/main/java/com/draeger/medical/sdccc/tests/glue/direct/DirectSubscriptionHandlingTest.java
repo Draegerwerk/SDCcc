@@ -145,7 +145,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         final var hostedServices = testClient.getHostingServiceProxy().getHostedServices();
         final var serviceIds = hostedServices.values().stream()
                 .map(hostedServiceProxy -> hostedServiceProxy.getType().getServiceId())
-                .collect(Collectors.toList());
+                .toList();
         if (hostedServices.values().size() != new HashSet<>(serviceIds).size()) {
             fail(String.format("Some Hosted Services share the same service id: %s, test failed.", serviceIds));
         }
@@ -596,7 +596,15 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             reportTestData.setSubscription(result);
             reportTestData.setEventSink(eventSink);
         } catch (InterruptedException | ExecutionException e) {
-            fail("encountered exception while subscribing to " + reportTestData.getReportName(), e);
+            if (e instanceof ExecutionException &&
+                    e.getCause() instanceof SoapFaultException) {
+                // according to WS-Eventing, answering a Subscribe with a SOAPFault is a normal way of
+                //   declining a subscription. We hence interpret it as "Report is not supported" and do
+                //   not fail the test case.
+                result = null;
+            } else {
+                fail("encountered exception while subscribing to " + reportTestData.getReportName(), e);
+            }
         }
         return result;
     }
