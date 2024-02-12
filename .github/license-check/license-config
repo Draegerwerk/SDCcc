@@ -1,0 +1,5 @@
+[DraegerLicenseMIT]
+file_name_pattern: sdccc/src/**/*.java
+file_header_encoding: utf-8
+header_regex_file: .github/license-check/header-MIT-draeger-java.txt
+header_regex_file_encoding: utf-8

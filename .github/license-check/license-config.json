@@ -1,9 +1,0 @@
-
-[
-  {
-    "include": [
-      "sdccc/src/**/*.java"
-    ],
-    "license": "./.github/license-check/header-MIT-draeger-java.txt"
-  }
-]

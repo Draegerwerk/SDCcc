@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -33,9 +33,10 @@ public final class LoggingConfigurator {
      * Generates a logger configuration storing the log in the given folder.
      *
      * @param loggingFolder to store log in
+     * @param fileLogLevel log level to use for the log file
      * @return new configuration
      */
-    public static BuiltConfiguration loggerConfig(final File loggingFolder) {
+    public static BuiltConfiguration loggerConfig(final File loggingFolder, final Level fileLogLevel) {
         final ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
         builder.setStatusLevel(Level.ERROR);
         builder.setConfigurationName("SDCcc");
@@ -87,6 +88,8 @@ public final class LoggingConfigurator {
                     .addAttribute("fileName", filePath.toString())
                     .addAttribute("append", true)
                     .add(layoutBuilder);
+            appenderBuilder.addComponent(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.DENY)
+                    .addAttribute("level", fileLogLevel));
             builder.add(appenderBuilder);
 
             rootLogger.add(builder.newAppenderRef(appenderBuilder.getName()));

@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- a command line parameter to change the log level threshold of the log file
+
+### Fixed
+
+- a performance issue with xml unmarshalling due to finding an interface implementation for TransformerFactory
+- slowdown and high memory usage due to large unfiltered logs, filter can be configured, default shrinks the log
+- autocommit of the database being on, it is now always off
+- local address resolver sometimes giving a wrong address
+- local address resolver doing a probe which may not be tolerated by some peers
+
 ## [8.0.1] - 2023-09-13
 
 ### Fixed
