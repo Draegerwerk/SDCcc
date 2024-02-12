@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Test Case for Glue:R0036_0 now accepts SOAPFault as a valid answer for Subscribe messages.
+
 ## [8.0.1] - 2023-09-13
 
 ### Fixed
