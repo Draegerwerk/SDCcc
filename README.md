@@ -207,6 +207,7 @@ The following command line options are supported by the test tool, the first two
 | device_bed           | bed       | the bed of the target provider, overrides setting from configuration if provided                     | no           |
 | ipaddress            | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
 | test_run_directory   | d         | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
+| file_log_level       | fll       | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                    | no           |
 
 ### Enabling Tests
 The *test_configuration.toml* file contains the identifiers of all implemented requirement tests. It is located in the
@@ -233,7 +234,8 @@ be changed with the command line argument `test_run_directory` (see Section **Ru
 saved in that folder. Each test run gets its own directory named according to the scheme
 *SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*. Inside this directory there is a subdirectory *Database* and three files
 *SDCcc.log*, *TEST-SDCcc_direct.xml* and *TEST-SDCcc_invariant.xml*. *Database* is a database in which all messages
-exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run. The test results
+exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run 
+in accordance to the log file log level. The test results
 are located in the two result XML files, *TEST-SDCcc_direct.xml* for the direct tests and *TEST-SDCcc_invariant.xml*
 for the invariant tests.
 

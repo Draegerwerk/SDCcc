@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -21,6 +21,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,6 +42,7 @@ public class CommandLineOptions {
     private static final String DEVICE_LOCATION_BED = "device_bed";
     private static final String IP_ADDRESS = "ipaddress";
     private static final String TEST_RUN_DIRECTORY = "test_run_directory";
+    private static final String FILE_LOG_LEVEL = "file_log_level";
     private final Path configPath;
     private final Path testConfigPath;
     private final String deviceEpr;
@@ -52,6 +54,7 @@ public class CommandLineOptions {
     private final String deviceBed;
     private final String ipAddress;
     private final String testRunDirectory;
+    private final Level fileLogLevel;
 
     /**
      * Parse the command line options passed.
@@ -96,6 +99,7 @@ public class CommandLineOptions {
         this.deviceBed = cmd.getOptionValue(DEVICE_LOCATION_BED);
         this.ipAddress = cmd.getOptionValue(IP_ADDRESS);
         this.testRunDirectory = cmd.getOptionValue(TEST_RUN_DIRECTORY);
+        this.fileLogLevel = Level.toLevel(cmd.getOptionValue(FILE_LOG_LEVEL), Level.INFO);
     }
 
     private Options setupOptions() {
@@ -172,6 +176,12 @@ public class CommandLineOptions {
             testRunDirectoryOpt.setRequired(false);
             options.addOption(testRunDirectoryOpt);
         }
+        {
+            final String description = "The log level to be used for the log file. e.g. DEBUG . The default is INFO.";
+            final var fileLogLevelOpt = new Option("fll", FILE_LOG_LEVEL, true, description);
+            fileLogLevelOpt.setRequired(false);
+            options.addOption(fileLogLevelOpt);
+        }
 
         return options;
     }
@@ -231,6 +241,10 @@ public class CommandLineOptions {
      */
     public Optional<String> getTestRunDirectory() {
         return Optional.ofNullable(testRunDirectory);
+    }
+
+    public Level getFileLogLevel() {
+        return this.fileLogLevel;
     }
 
     private static void printNetworkAdapterInformation() throws SocketException {

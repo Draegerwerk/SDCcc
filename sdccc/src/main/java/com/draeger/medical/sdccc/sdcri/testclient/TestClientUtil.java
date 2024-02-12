@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -38,6 +38,7 @@ import org.somda.sdc.dpws.crypto.CryptoConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.guice.DefaultDpwsModule;
+import org.somda.sdc.dpws.network.LocalAddressResolver;
 import org.somda.sdc.glue.consumer.ConsumerConfig;
 import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
 import org.somda.sdc.glue.guice.DefaultGlueModule;
@@ -55,6 +56,7 @@ public class TestClientUtil {
      * @param cryptoSettings                 crypto setting
      * @param communicationLogMessageStorage connector to the {@linkplain MessageStorage} to write to
      * @param testRunObserver                observer for invalidating test runs on unexpected errors
+     * @param localAddressResolver           resolver for getting the local address to use
      * @param multicastTTL                   TTL for multicast packets used in Discovery.
      *                                       Values from 1 to 255 are valid.
      */
@@ -63,6 +65,7 @@ public class TestClientUtil {
             final CryptoSettings cryptoSettings,
             final CommunicationLogMessageStorage communicationLogMessageStorage,
             final TestRunObserver testRunObserver,
+            final LocalAddressResolver localAddressResolver,
             @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL) {
 
         injector = createClientInjector(List.of(
@@ -87,6 +90,7 @@ public class TestClientUtil {
                                 .build(CommunicationLogFactory.class));
                         bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
                         bind(TestRunObserver.class).toInstance(testRunObserver);
+                        bind(LocalAddressResolver.class).toInstance(localAddressResolver);
                     }
                 }));
     }
