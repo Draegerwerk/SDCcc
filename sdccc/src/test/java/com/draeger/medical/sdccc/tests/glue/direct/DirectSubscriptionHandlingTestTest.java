@@ -746,7 +746,7 @@ public class DirectSubscriptionHandlingTestTest {
             final int delayBeforeCancellingInSeconds,
             final boolean sendSubscriptionEnd,
             final String subscriptionEndStatus,
-            boolean faultOnUnsupportedSubscription)
+            final boolean faultOnUnsupportedSubscription)
             throws Exception {
         testDeviceForR00360(
                 expectFailure,
@@ -880,12 +880,12 @@ public class DirectSubscriptionHandlingTestTest {
                 return createListenableFuture(new SubscribeResult(subscriptionId, Duration.ofSeconds(60)));
             } else {
                 if (faultOnUnsupportedSubscription) {
-                    var unsupportedActions = actions.stream().filter((action) ->
+                    final var unsupportedActions = actions.stream().filter((action) ->
                             !this.supportedReports.contains(action)
                     ).toList();
-                    var message = soapFaultFactory.createReceiverFault(
+                    final var message = soapFaultFactory.createReceiverFault(
                             String.join(", ", unsupportedActions) + " not supported");
-                    var e = new SoapFaultException(message);
+                    final var e = new SoapFaultException(message);
                     return createListenableFutureThatExecutes(() -> {
                                 throw new ExecutionException(e);
                     });
@@ -1037,11 +1037,7 @@ public class DirectSubscriptionHandlingTestTest {
         };
     }
 
-    interface CallbackReturningT<T> {
-        T execute() throws ExecutionException;
-    }
-
-    private <T> ListenableFuture<T> createListenableFutureThatExecutes(CallbackReturningT<T> callback) {
+    private <T> ListenableFuture<T> createListenableFutureThatExecutes(final CallbackReturningT<T> callback) {
         return new ListenableFuture<>() {
             @Override
             public void addListener(final Runnable runnable, final Executor executor) {}
@@ -1082,6 +1078,10 @@ public class DirectSubscriptionHandlingTestTest {
         when(service.getType()).thenReturn(serviceType);
         when(service.getRequestResponseClient()).thenReturn(requestResponseClient);
         return service;
+    }
+
+    interface CallbackReturningT<T> {
+        T execute() throws ExecutionException;
     }
 
     /**
