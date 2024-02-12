@@ -596,8 +596,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
             reportTestData.setSubscription(result);
             reportTestData.setEventSink(eventSink);
         } catch (InterruptedException | ExecutionException e) {
-            if (e instanceof ExecutionException &&
-                    e.getCause() instanceof SoapFaultException) {
+            if (e instanceof ExecutionException && e.getCause() instanceof SoapFaultException) {
                 // according to WS-Eventing, answering a Subscribe with a SOAPFault is a normal way of
                 //   declining a subscription. We hence interpret it as "Report is not supported" and do
                 //   not fail the test case.

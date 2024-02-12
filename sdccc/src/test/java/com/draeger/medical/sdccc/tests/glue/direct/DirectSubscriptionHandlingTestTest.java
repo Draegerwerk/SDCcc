@@ -550,13 +550,7 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
                 ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT,
                 ActionConstants.ACTION_SYSTEM_ERROR_REPORT));
-        testDeviceForR00360(
-                false,
-                0,
-                true,
-                SUBSCRIPTION_END_STATUS_DELIVERY_FAILED,
-                true
-        );
+        testDeviceForR00360(false, 0, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED, true);
     }
 
     /**
@@ -658,7 +652,8 @@ public class DirectSubscriptionHandlingTestTest {
                 ActionConstants.ACTION_EPISODIC_COMPONENT_REPORT,
                 ActionConstants.ACTION_EPISODIC_METRIC_REPORT,
                 ActionConstants.ACTION_EPISODIC_OPERATIONAL_STATE_REPORT));
-        testDeviceForR00360(false, INSIGNIFICANT_DELAY_IN_SECONDS, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED, false);
+        testDeviceForR00360(
+                false, INSIGNIFICANT_DELAY_IN_SECONDS, true, SUBSCRIPTION_END_STATUS_DELIVERY_FAILED, false);
     }
 
     /**
@@ -880,14 +875,14 @@ public class DirectSubscriptionHandlingTestTest {
                 return createListenableFuture(new SubscribeResult(subscriptionId, Duration.ofSeconds(60)));
             } else {
                 if (faultOnUnsupportedSubscription) {
-                    final var unsupportedActions = actions.stream().filter((action) ->
-                            !this.supportedReports.contains(action)
-                    ).toList();
+                    final var unsupportedActions = actions.stream()
+                            .filter((action) -> !this.supportedReports.contains(action))
+                            .toList();
                     final var message = soapFaultFactory.createReceiverFault(
                             String.join(", ", unsupportedActions) + " not supported");
                     final var e = new SoapFaultException(message);
                     return createListenableFutureThatExecutes(() -> {
-                                throw new ExecutionException(e);
+                        throw new ExecutionException(e);
                     });
                 } else {
                     return createListenableFuture(null);
@@ -1068,7 +1063,6 @@ public class DirectSubscriptionHandlingTestTest {
             }
         };
     }
-
 
     private HostedServiceProxy setupServiceMock(
             final QName portTypeContextQname, final RequestResponseClient requestResponseClient) {
