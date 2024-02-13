@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
@@ -41,6 +42,7 @@ import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +52,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.message.AbstractReport;
+import org.somda.sdc.biceps.model.message.OperationInvokedReport;
+import org.somda.sdc.biceps.model.participant.MdibVersion;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
@@ -903,6 +908,36 @@ public class MdibHistorianTest {
         }
 
         verify(mockObserver).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Tests if applyReportOnStorage() can gracefully ignore OperationInvokedReports.
+     * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
+     *       in this case.
+     * @throws ReportProcessingException - when applyReportOnStorage() throws it
+     * @throws PreprocessingException - when applyReportOnStorage() throws it
+     */
+    @Test
+    void testApplyReportOnStorageBadCalledWithOperationInvokedReport() throws ReportProcessingException, PreprocessingException {
+
+        // given
+        BigInteger numericMdibVersion = BigInteger.ZERO;
+        String sequenceId = "abc";
+        final MdibVersion mdibVersion = new MdibVersion(sequenceId, numericMdibVersion);
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+        final var report = new OperationInvokedReport();
+        final var reportParts = new ArrayList();
+        reportParts.add(new OperationInvokedReport.ReportPart());
+        report.setReportPart(reportParts);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+        RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
+
+        when(mdibAccess.getMdibVersion()).thenReturn(mdibVersion);
+
+        // when
+        historianUnderTest.applyReportOnStorage(mdibAccess, report);
     }
 
     Envelope buildMdibEnvelope(final String sequenceId, @Nullable final BigInteger mdibVersion) {

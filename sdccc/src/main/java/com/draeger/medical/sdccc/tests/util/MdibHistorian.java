@@ -53,8 +53,15 @@ import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccessImpl;
 import org.somda.sdc.biceps.consumer.access.factory.RemoteMdibAccessFactory;
 import org.somda.sdc.biceps.consumer.preprocessing.DuplicateContextStateHandleHandler;
+import org.somda.sdc.biceps.model.message.AbstractAlertReport;
+import org.somda.sdc.biceps.model.message.AbstractComponentReport;
+import org.somda.sdc.biceps.model.message.AbstractContextReport;
+import org.somda.sdc.biceps.model.message.AbstractMetricReport;
+import org.somda.sdc.biceps.model.message.AbstractOperationalStateReport;
 import org.somda.sdc.biceps.model.message.AbstractReport;
+import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.GetMdibResponse;
+import org.somda.sdc.biceps.model.message.WaveformStream;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdibVersion;
 import org.somda.sdc.biceps.provider.preprocessing.DuplicateChecker;
@@ -535,11 +542,25 @@ public class MdibHistorian {
                     + " same version has already been applied, and is expected behavior when e.g."
                     + " descriptors update, as both a report for description and state will arrive.");
         }
-        LOG.debug(
-                "Applying report with mdib version {}, type {}",
-                ImpliedValueUtil.getReportMdibVersion(report),
-                report.getClass().getSimpleName());
-        reportProcessor.processReport(report);
+
+        if (report instanceof WaveformStream ||
+            report instanceof AbstractMetricReport ||
+            report instanceof AbstractAlertReport ||
+            report instanceof AbstractOperationalStateReport ||
+            report instanceof AbstractComponentReport ||
+            report instanceof AbstractContextReport ||
+            report instanceof DescriptionModificationReport
+        ) {
+            LOG.debug(
+                    "Applying report with mdib version {}, type {}",
+                    ImpliedValueUtil.getReportMdibVersion(report),
+                    report.getClass().getSimpleName());
+            reportProcessor.processReport(report);
+        } else {
+            // other reports do not modify the Mdib and hence cannot be passed into
+            //   reportProcessor.processReport().
+            // simply ignore them.
+        }
         return storage;
     }
 
