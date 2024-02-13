@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -67,6 +67,7 @@ public class HibernateConfigBase implements HibernateConfig {
         config.setProperty(Environment.ORDER_UPDATES, TRUE_SETTING_VALUE);
         config.setProperty(Environment.ORDER_INSERTS, TRUE_SETTING_VALUE);
         config.setProperty(Environment.BATCH_VERSIONED_DATA, TRUE_SETTING_VALUE);
+        config.setProperty(Environment.AUTOCOMMIT, FALSE_SETTING_VALUE);
 
         config.addAnnotatedClass(HTTPHeaderEntity.class);
         config.addAnnotatedClass(MdibVersionGroupEntity.class);
