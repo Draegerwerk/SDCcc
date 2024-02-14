@@ -530,7 +530,7 @@ public class MdibHistorian {
         final var reportProcessor = reportProcessorProvider.get();
         reportProcessor.startApplyingReportsOnMdib(storage, null);
 
-        var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+        final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
                 .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
         if (cmp > 0) {
             fail("Cannot apply report older than current storage."
@@ -561,7 +561,7 @@ public class MdibHistorian {
             //   reportProcessor.processReport().
             // simply ignore them.
             @SuppressWarnings("unused")
-            var _ignored = 1; // make Checkstyle happy
+            final var ignored = 1; // make Checkstyle happy
         }
         return storage;
     }
