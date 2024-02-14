@@ -543,14 +543,13 @@ public class MdibHistorian {
                     + " descriptors update, as both a report for description and state will arrive.");
         }
 
-        if (report instanceof WaveformStream ||
-            report instanceof AbstractMetricReport ||
-            report instanceof AbstractAlertReport ||
-            report instanceof AbstractOperationalStateReport ||
-            report instanceof AbstractComponentReport ||
-            report instanceof AbstractContextReport ||
-            report instanceof DescriptionModificationReport
-        ) {
+        if (report instanceof WaveformStream
+                || report instanceof AbstractMetricReport
+                || report instanceof AbstractAlertReport
+                || report instanceof AbstractOperationalStateReport
+                || report instanceof AbstractComponentReport
+                || report instanceof AbstractContextReport
+                || report instanceof DescriptionModificationReport) {
             LOG.debug(
                     "Applying report with mdib version {}, type {}",
                     ImpliedValueUtil.getReportMdibVersion(report),

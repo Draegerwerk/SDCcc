@@ -918,7 +918,8 @@ public class MdibHistorianTest {
      * @throws PreprocessingException - when applyReportOnStorage() throws it
      */
     @Test
-    void testApplyReportOnStorageBadCalledWithOperationInvokedReport() throws ReportProcessingException, PreprocessingException {
+    void testApplyReportOnStorageBadCalledWithOperationInvokedReport()
+            throws ReportProcessingException, PreprocessingException {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
