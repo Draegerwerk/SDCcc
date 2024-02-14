@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -921,18 +921,18 @@ public class MdibHistorianTest {
     void testApplyReportOnStorageBadCalledWithOperationInvokedReport() throws ReportProcessingException, PreprocessingException {
 
         // given
-        BigInteger numericMdibVersion = BigInteger.ZERO;
-        String sequenceId = "abc";
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
         final MdibVersion mdibVersion = new MdibVersion(sequenceId, numericMdibVersion);
         final var mockObserver = mock(TestRunObserver.class);
         final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
         final var report = new OperationInvokedReport();
-        final var reportParts = new ArrayList();
+        final var reportParts = new ArrayList<OperationInvokedReport.ReportPart>();
+        final RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
         reportParts.add(new OperationInvokedReport.ReportPart());
         report.setReportPart(reportParts);
         report.setMdibVersion(numericMdibVersion);
         report.setSequenceId(sequenceId);
-        RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
 
         when(mdibAccess.getMdibVersion()).thenReturn(mdibVersion);
 

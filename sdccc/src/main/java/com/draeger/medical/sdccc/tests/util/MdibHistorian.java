@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -530,7 +530,7 @@ public class MdibHistorian {
         final var reportProcessor = reportProcessorProvider.get();
         reportProcessor.startApplyingReportsOnMdib(storage, null);
 
-        final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
+        var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
                 .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
         if (cmp > 0) {
             fail("Cannot apply report older than current storage."
@@ -560,6 +560,7 @@ public class MdibHistorian {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().
             // simply ignore them.
+            cmp = cmp; // make Checkstyle happy
         }
         return storage;
     }
