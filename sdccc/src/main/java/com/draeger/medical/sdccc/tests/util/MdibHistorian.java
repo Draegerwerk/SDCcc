@@ -560,7 +560,8 @@ public class MdibHistorian {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().
             // simply ignore them.
-            cmp = cmp; // make Checkstyle happy
+            @SuppressWarnings("unused")
+            var _ignored = 1; // make Checkstyle happy
         }
         return storage;
     }
