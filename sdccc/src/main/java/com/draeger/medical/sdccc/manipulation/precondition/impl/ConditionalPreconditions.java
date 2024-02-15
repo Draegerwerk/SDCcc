@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -96,7 +96,7 @@ public class ConditionalPreconditions {
                             .orElseThrow(() -> new RuntimeException(
                                     "Could not retrieve description modification report body from message")))
                     .anyMatch(message -> message.getReportPart().stream()
-                            .map(DescriptionModificationReport.ReportPart::getModificationType)
+                            .map(ImpliedValueUtil::getModificationType)
                             .anyMatch(modificationTypesList::contains));
         } catch (final IOException e) {
             throw new PreconditionException(
@@ -683,7 +683,6 @@ public class ConditionalPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
         static boolean manipulation(final Injector injector) {
             return descriptionModificationManipulation(injector, LOG);
@@ -745,7 +744,7 @@ public class ConditionalPreconditions {
                                         "Could not retrieve episodic context report body from message")))
                         .forEach(message -> message.getReportPart().stream()
                                 .map(AbstractContextReport.ReportPart::getContextState)
-                                .collect(Collectors.toList())
+                                .toList()
                                 .forEach(contextStates::addAll));
                 for (var state : contextStates) {
                     if (ImpliedValueUtil.getContextAssociation(state) == ContextAssociation.ASSOC) {
