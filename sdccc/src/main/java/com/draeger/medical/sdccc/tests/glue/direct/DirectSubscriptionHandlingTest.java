@@ -600,7 +600,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                 // according to WS-Eventing, answering a Subscribe with a SOAPFault is a normal way of
                 //   declining a subscription. We hence interpret it as "Report is not supported" and do
                 //   not fail the test case.
-                result = null;
+                LOG.warn(
+                        "Subscription was answered by SOAPFault. The Device seems not to support "
+                                + reportTestData.getReportName(),
+                        e);
             } else {
                 fail("encountered exception while subscribing to " + reportTestData.getReportName(), e);
             }
