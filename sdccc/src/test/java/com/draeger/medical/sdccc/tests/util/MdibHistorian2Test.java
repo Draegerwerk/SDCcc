@@ -171,7 +171,11 @@ public class MdibHistorian2Test {
         testUniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, soapMessage);
     }
 
+<<<<<<< HEAD
     @SuppressWarnings({"EmptyBlock"})
+=======
+    @SuppressWarnings({"StatementWithEmptyBody", "EmptyBlock"})
+>>>>>>> 220a098118234c925a9bf3686926f470dfae743d
     private void testUniqueEpisodicReportBasedHistoryUntilTimestamp(final String sequenceId, final Envelope report)
             throws ReportProcessingException, PreprocessingException, JAXBException, IOException {
         final var mockObserver = mock(TestRunObserver.class);
