@@ -260,7 +260,21 @@ public class MdibHistorian {
                             "Applying report with mdib version {}, type {}",
                             ImpliedValueUtil.getReportMdibVersion(report),
                             report.getClass().getSimpleName());
-                    reportProcessor.processReport(report);
+                    if (report instanceof WaveformStream
+                            || report instanceof AbstractMetricReport
+                            || report instanceof AbstractAlertReport
+                            || report instanceof AbstractOperationalStateReport
+                            || report instanceof AbstractComponentReport
+                            || report instanceof AbstractContextReport
+                            || report instanceof DescriptionModificationReport) {
+                        reportProcessor.processReport(report);
+                    } else {
+                        // other reports do not modify the Mdib and hence cannot be passed into
+                        //   reportProcessor.processReport().
+                        // simply ignore them.
+                        @SuppressWarnings("unused")
+                        final var ignored = 1; // make Checkstyle happy
+                    }
                 } catch (final Exception e) {
                     fail(e);
                 }
@@ -330,7 +344,21 @@ public class MdibHistorian {
                             "Applying report with mdib version {}, type {}",
                             ImpliedValueUtil.getReportMdibVersion(report),
                             report.getClass().getSimpleName());
-                    reportProcessor.processReport(report);
+                    if (report instanceof WaveformStream
+                            || report instanceof AbstractMetricReport
+                            || report instanceof AbstractAlertReport
+                            || report instanceof AbstractOperationalStateReport
+                            || report instanceof AbstractComponentReport
+                            || report instanceof AbstractContextReport
+                            || report instanceof DescriptionModificationReport) {
+                        reportProcessor.processReport(report);
+                    } else {
+                        // other reports do not modify the Mdib and hence cannot be passed into
+                        //   reportProcessor.processReport().
+                        // simply ignore them.
+                        @SuppressWarnings("unused")
+                        final var ignored = 1; // make Checkstyle happy
+                    }
                 } catch (final Exception e) {
                     fail(e);
                 }

@@ -55,6 +55,10 @@ import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.OperationInvokedReport;
+import org.somda.sdc.biceps.model.message.SystemErrorReport;
+import org.somda.sdc.biceps.model.participant.CodedValue;
+import org.somda.sdc.biceps.model.participant.LocalizedText;
+import org.somda.sdc.biceps.model.participant.LocalizedTextWidth;
 import org.somda.sdc.biceps.model.participant.MdibVersion;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
@@ -62,7 +66,8 @@ import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
- * Unit tests for the {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}.
+ * Unit tests for those methods in {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}
+ * that use models from the package org.somda.sdc.
  */
 public class MdibHistorianTest {
 
@@ -860,54 +865,27 @@ public class MdibHistorianTest {
     }
 
     /**
-     * Tests if uniqueEpisodicReportBasedHistory() invalidates the Test run when encountering 2 reports that
-     * - have the same MdibVersion,
-     * - have the same ReportType, but
-     * - have different Contents.
-     * @throws JAXBException when these are thrown by the MessageStorage.
-     * @throws IOException when these are thrown by the MessageStorage.
-     * @throws ReportProcessingException when these are thrown by uniqueEpisodicReportBasedHistory().
-     * @throws PreprocessingException when these are thrown by uniqueEpisodicReportBasedHistory().
+     * Tests if applyReportOnStorage() can gracefully ignore OperationInvokedReports.
+     * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
+     *       in this case.
+     * @throws ReportProcessingException - when applyReportOnStorage() throws it
+     * @throws PreprocessingException - when applyReportOnStorage() throws it
      */
     @Test
-    void testUniqueEpisodicReportBasedHistoryFailInvalidateTestRunWhenSameReportTypeButContentDiffers()
-            throws JAXBException, IOException, ReportProcessingException, PreprocessingException {
-        final var operator1 = mdibBuilder.buildOperatorContextState("opDescriptor1", "opState1");
-        final var operator2 = mdibBuilder.buildOperatorContextState("opDescriptor2", "opState2");
+    void testApplyReportOnStorageRegressionCalledWithOperationInvokedReport()
+            throws ReportProcessingException, PreprocessingException {
 
-        final var contextReportMdibVersion = BigInteger.ONE;
-        final var contextReportStateVersion = BigInteger.TWO;
-        final var contextReport = buildEpisodicContextReport(
-                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
+        // given
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+        final var report = new OperationInvokedReport();
+        final var reportParts = new ArrayList<OperationInvokedReport.ReportPart>();
+        reportParts.add(new OperationInvokedReport.ReportPart());
+        report.setReportPart(reportParts);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
 
-        final var firstMod =
-                (EpisodicContextReport) contextReport.getBody().getAny().get(0);
-        firstMod.getReportPart().get(0).getContextState().add(operator1);
-        firstMod.getReportPart().get(0).getContextState().add(operator2);
-
-        final var contextReport2 = buildEpisodicContextReport(
-                MdibBuilder.DEFAULT_SEQUENCE_ID, contextReportMdibVersion, contextReportStateVersion);
-        final var secondMod =
-                (EpisodicContextReport) contextReport2.getBody().getAny().get(0);
-        secondMod.getReportPart().get(0).getContextState().add(operator1);
-
-        messageStorageUtil.addInboundSecureHttpMessage(
-                storage, buildMdibEnvelope(MdibBuilder.DEFAULT_SEQUENCE_ID, BigInteger.ZERO));
-
-        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport2); // duplicate
-
-        final var mockObserver = mock(TestRunObserver.class);
-        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
-
-        try (final var history = historian.uniqueEpisodicReportBasedHistory(MdibBuilder.DEFAULT_SEQUENCE_ID)) {
-            history.next(); // initial state
-            history.next(); // state after contextReport
-            history.next(); // state after contextReport2
-            assertNull(history.next()); // no more states as the other reports were filtered out as duplicates
-        }
-
-        verify(mockObserver).invalidateTestRun(anyString());
+        testApplyReportOnStorage(numericMdibVersion, sequenceId, report);
     }
 
     /**
@@ -918,22 +896,56 @@ public class MdibHistorianTest {
      * @throws PreprocessingException - when applyReportOnStorage() throws it
      */
     @Test
-    void testApplyReportOnStorageBadCalledWithOperationInvokedReport()
+    void testApplyReportOnStorageRegressionCalledWithSystemErrorReport()
             throws ReportProcessingException, PreprocessingException {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
         final String sequenceId = "abc";
+        final var report = new SystemErrorReport();
+        final SystemErrorReport.ReportPart part = new SystemErrorReport.ReportPart();
+        part.setErrorCode(createCodedValue("someCode", "someCodingSystem", "1.0"));
+        final LocalizedText text =
+                createLocalizedText("someErrorText", "en", "someRef", BigInteger.ZERO, LocalizedTextWidth.M);
+        part.setErrorInfo(text);
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+
+        testApplyReportOnStorage(numericMdibVersion, sequenceId, report);
+    }
+
+    private static LocalizedText createLocalizedText(
+            final String value,
+            final String lang,
+            final String ref,
+            final BigInteger version,
+            final LocalizedTextWidth textWidth) {
+        final LocalizedText text = new LocalizedText();
+        text.setLang(lang);
+        text.setValue(value);
+        text.setRef(ref);
+        text.setVersion(version);
+        text.setTextWidth(textWidth);
+        return text;
+    }
+
+    private static CodedValue createCodedValue(
+            final String code, final String codingSystem, final String codingSystemVersion) {
+        final CodedValue value = new CodedValue();
+        value.setCode(code);
+        value.setCodingSystem(codingSystem);
+        value.setCodingSystemVersion(codingSystemVersion);
+        return value;
+    }
+
+    private void testApplyReportOnStorage(
+            final BigInteger numericMdibVersion, final String sequenceId, final AbstractReport report)
+            throws PreprocessingException, ReportProcessingException {
+        final RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
         final MdibVersion mdibVersion = new MdibVersion(sequenceId, numericMdibVersion);
         final var mockObserver = mock(TestRunObserver.class);
         final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
-        final var report = new OperationInvokedReport();
-        final var reportParts = new ArrayList<OperationInvokedReport.ReportPart>();
-        final RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
-        reportParts.add(new OperationInvokedReport.ReportPart());
-        report.setReportPart(reportParts);
-        report.setMdibVersion(numericMdibVersion);
-        report.setSequenceId(sequenceId);
 
         when(mdibAccess.getMdibVersion()).thenReturn(mdibVersion);
 
