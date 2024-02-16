@@ -272,8 +272,8 @@ public class MdibHistorian {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        @SuppressWarnings("unused")
-                        final var ignored = 1; // make Checkstyle happy
+                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
+                                "as it is not expected to change the Mdib anyway.");
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -356,8 +356,8 @@ public class MdibHistorian {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        @SuppressWarnings("unused")
-                        final var ignored = 1; // make Checkstyle happy
+                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
+                                "as it is not expected to change the Mdib anyway.");
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -587,8 +587,8 @@ public class MdibHistorian {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().
             // simply ignore them.
-            @SuppressWarnings("unused")
-            final var ignored = 1; // make Checkstyle happy
+            LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
+                    "as it is not expected to change the Mdib anyway.");
         }
         return storage;
     }
