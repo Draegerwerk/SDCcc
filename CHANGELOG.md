@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - autocommit of the database being on, it is now always off
 - local address resolver sometimes giving a wrong address
 - local address resolver doing a probe which may not be tolerated by some peers
+- potential NullPointerException in DescriptionModificationUptPrecondition
 - ReportWriter.write() could be called with ReportTypes it did not support.
 
 ## [8.0.1] - 2023-09-13

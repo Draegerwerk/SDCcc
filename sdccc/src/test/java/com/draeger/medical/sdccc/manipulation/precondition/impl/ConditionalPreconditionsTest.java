@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -223,6 +223,7 @@ public class ConditionalPreconditionsTest {
      */
     @Test
     @DisplayName("HelloMessagePrecondition correctly checks for precondition")
+    @SuppressWarnings("resource")
     public void testHelloMessagePreconditionCheck() throws PreconditionException, IOException {
         final var mockStorage = mock(MessageStorage.class);
         final var mockMessage = mock(MessageContent.class);
@@ -512,6 +513,45 @@ public class ConditionalPreconditionsTest {
                 ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithCrtReportPart);
+        assertTrue(ConditionalPreconditions.DescriptionModificationUptPrecondition.preconditionCheck(testInjector));
+    }
+
+    /**
+     * Tests that DescriptionModificationUptPrecondition does not fail when a DescriptionModificationReport
+     * contains ReportParts without a ModificationType attribute.
+     *
+     * @throws PreconditionException on precondition exceptions
+     * @throws IOException           on io exceptions
+     * @throws JAXBException         on marshalling failures
+     */
+    @Test
+    @DisplayName("DescriptionModificationCrtPrecondition when @ModificationType is omitted")
+    public void testDescriptionModificationUptPreconditionCheckWhenModificationTypeIsNotSet()
+            throws PreconditionException, IOException, JAXBException {
+        // no messagess
+        assertFalse(ConditionalPreconditions.DescriptionModificationUptPrecondition.preconditionCheck(testInjector));
+
+        final var reportPartDel = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var reportPartCrt = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var firstReport = messageBuilder.buildDescriptionModificationReport(
+                "SomeSequence", List.of(reportPartDel, reportPartCrt));
+
+        final var messageWithDelReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, firstReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithDelReportPart);
+        // no messages with report parts crt
+        final var reportPartNoModificationType = messageBuilder.buildDescriptionModificationReportReportPart();
+
+        final var secondReport = messageBuilder.buildDescriptionModificationReport(
+                "SomeSequence", List.of(reportPartNoModificationType));
+
+        final var messageWithUpdReportPart = messageBuilder.createSoapMessageWithBody(
+                ActionConstants.ACTION_DESCRIPTION_MODIFICATION_REPORT, secondReport);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, messageWithUpdReportPart);
         assertTrue(ConditionalPreconditions.DescriptionModificationUptPrecondition.preconditionCheck(testInjector));
     }
 
@@ -1510,7 +1550,7 @@ public class ConditionalPreconditionsTest {
 
         final var report = messageBuilder.buildEpisodicContextReport("SomeSequence");
         report.getReportPart().clear();
-        report.getReportPart().addAll(List.of(reportPart));
+        report.getReportPart().add(reportPart);
 
         final var message =
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, report);
@@ -1566,7 +1606,7 @@ public class ConditionalPreconditionsTest {
                         workflowContextState, workflowContextState2));
         final var secondReport = messageBuilder.buildEpisodicContextReport("SomeSequence");
         secondReport.getReportPart().clear();
-        secondReport.getReportPart().addAll(List.of(secondReportPart));
+        secondReport.getReportPart().add(secondReportPart);
 
         final var secondMessage =
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_CONTEXT_REPORT, secondReport);
@@ -1621,7 +1661,7 @@ public class ConditionalPreconditionsTest {
                 ConditionalPreconditions.AllKindsOfContextStatesAssociatedPrecondition.ALREADY_ASSOCIATED_CONTEXTS
                         .entrySet()) {
             if (entry.getKey().equals(PatientContextState.class)) {
-                entry.getValue().addAll(List.of(PATIENT_CONTEXT_STATE_HANDLE));
+                entry.getValue().add(PATIENT_CONTEXT_STATE_HANDLE);
             } else if (entry.getKey().equals(LocationContextState.class)) {
                 entry.getValue().addAll(List.of(LOCATION_CONTEXT_STATE_HANDLE, LOCATION_CONTEXT_STATE_HANDLE2));
             } else if (entry.getKey().equals(EnsembleContextState.class)) {
@@ -2150,6 +2190,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("Different TriggerReportPreconditions correctly check for precondition")
     public void testTriggerReportPreconditionCheck() throws IOException, PreconditionException {
+        @SuppressWarnings("resource")
         final var mockStorage = mock(MessageStorage.class);
         @SuppressWarnings("unchecked")
         final MessageStorage.GetterResult<MessageContent> mockGetter = mock(MessageStorage.GetterResult.class);
@@ -2454,8 +2495,8 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("StateChangedPrecondition correctly checks for preconditions")
     public void testStateChangedPreconditionCheck() throws Exception {
+        @SuppressWarnings("resource")
         final var mockStorage = mock(MessageStorage.class);
-        @SuppressWarnings("unchecked")
         final MessageStorage.GetterResult<MessageContent> mockGetter = mock(MessageStorage.GetterResult.class);
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
