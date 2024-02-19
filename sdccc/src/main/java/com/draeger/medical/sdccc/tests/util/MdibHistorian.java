@@ -256,10 +256,6 @@ public class MdibHistorian {
                                 + " same version has already been applied, and is expected behavior when e.g."
                                 + " descriptors update, as both a report for description and state will arrive.");
                     }
-                    LOG.debug(
-                            "Applying report with mdib version {}, type {}",
-                            ImpliedValueUtil.getReportMdibVersion(report),
-                            report.getClass().getSimpleName());
                     if (report instanceof WaveformStream
                             || report instanceof AbstractMetricReport
                             || report instanceof AbstractAlertReport
@@ -267,13 +263,20 @@ public class MdibHistorian {
                             || report instanceof AbstractComponentReport
                             || report instanceof AbstractContextReport
                             || report instanceof DescriptionModificationReport) {
+                        LOG.debug(
+                                "Applying report with mdib version {}, type {}",
+                                ImpliedValueUtil.getReportMdibVersion(report),
+                                report.getClass().getSimpleName());
                         reportProcessor.processReport(report);
                     } else {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
-                                + "as it is not expected to change the Mdib anyway.");
+                        LOG.debug(
+                                "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                                        + "change the Mdib anyway.",
+                                report.getClass().getSimpleName(),
+                                ImpliedValueUtil.getReportMdibVersion(report));
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -351,13 +354,20 @@ public class MdibHistorian {
                             || report instanceof AbstractComponentReport
                             || report instanceof AbstractContextReport
                             || report instanceof DescriptionModificationReport) {
+                        LOG.debug(
+                                "Applying report with mdib version {}, type {}",
+                                ImpliedValueUtil.getReportMdibVersion(report),
+                                report.getClass().getSimpleName());
                         reportProcessor.processReport(report);
                     } else {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
-                                + "as it is not expected to change the Mdib anyway.");
+                        LOG.debug(
+                                "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                                        + "change the Mdib anyway.",
+                                report.getClass().getSimpleName(),
+                                ImpliedValueUtil.getReportMdibVersion(report));
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -558,8 +568,11 @@ public class MdibHistorian {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().
             // simply ignore them.
-            LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
-                    + "as it is not expected to change the Mdib anyway.");
+            LOG.debug(
+                    "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                            + "change the Mdib anyway.",
+                    report.getClass().getSimpleName(),
+                    ImpliedValueUtil.getReportMdibVersion(report));
         }
         return storage;
     }
