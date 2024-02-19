@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - local address resolver sometimes giving a wrong address
 - local address resolver doing a probe which may not be tolerated by some peers
 - potential NullPointerException in DescriptionModificationUptPrecondition
+- the test case for Glue:R0036_0 not accepting a SOAPFault as a valid answer for Subscribe messages
 - ReportWriter.write() could be called with ReportTypes it did not support.
 
 ## [8.0.1] - 2023-09-13
