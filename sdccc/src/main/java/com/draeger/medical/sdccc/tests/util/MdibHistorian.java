@@ -272,8 +272,8 @@ public class MdibHistorian {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
-                                "as it is not expected to change the Mdib anyway.");
+                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
+                                + "as it is not expected to change the Mdib anyway.");
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -356,8 +356,8 @@ public class MdibHistorian {
                         // other reports do not modify the Mdib and hence cannot be passed into
                         //   reportProcessor.processReport().
                         // simply ignore them.
-                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
-                                "as it is not expected to change the Mdib anyway.");
+                        LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
+                                + "as it is not expected to change the Mdib anyway.");
                     }
                 } catch (final Exception e) {
                     fail(e);
@@ -514,35 +514,6 @@ public class MdibHistorian {
         }
     }
 
-    // TODO javadoc and maybe instead of getting all reports with lowertimestamp get the storage directly. So dont apply
-    // every report manually but provide a result
-    public Stream<AbstractReport> getAllReportsWithLowerTimestamp(
-            final String sequenceId,
-            @Nullable final BigInteger minimumMdibVersion,
-            final long maximumTimestamp,
-            final QName... bodyTypes) {
-        try {
-            final var messages =
-                    messageStorage.getInboundMessagesByTimestampAndBodyType(sequenceId, maximumTimestamp, bodyTypes);
-
-            var iter = messages.getStream()
-                    .sequential() // the stateful filter operation below is not thread-safe
-                    .map(this::unmarshallReportKeepUUID);
-            if (minimumMdibVersion != null) {
-                iter = iter.filter(it ->
-                        ImpliedValueUtil.getReportMdibVersion(it.getLeft()).compareTo(minimumMdibVersion) >= 1);
-            }
-            return filterReportDuplicates(iter).map(Pair::getLeft);
-        } catch (IOException e) {
-            final var errorMessage = "Error while trying to retrieve reports from storage";
-            LOG.error("{}: {}", errorMessage, e.getMessage());
-            LOG.debug("{}", errorMessage, e);
-            fail(e);
-            // unreachable, silence warnings
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * Applies a report on a stored mdib.
      *
@@ -587,8 +558,8 @@ public class MdibHistorian {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().
             // simply ignore them.
-            LOG.debug("ignoring report of type " + report.getClass().getSimpleName() +
-                    "as it is not expected to change the Mdib anyway.");
+            LOG.debug("ignoring report of type " + report.getClass().getSimpleName()
+                    + "as it is not expected to change the Mdib anyway.");
         }
         return storage;
     }
