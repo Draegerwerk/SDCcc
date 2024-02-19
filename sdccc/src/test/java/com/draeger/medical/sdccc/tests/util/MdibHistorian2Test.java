@@ -116,7 +116,7 @@ public class MdibHistorian2Test {
         final BigInteger numericMdibVersion = BigInteger.ZERO;
         final String sequenceId = "abc";
         final var report = new OperationInvokedReport();
-        final com.draeger.medical.biceps.model.message.OperationInvokedReport.ReportPart part = createOIRReportPart(
+        final OperationInvokedReport.ReportPart part = createOIRReportPart(
                 createInvocationInfo(InvocationError.OTH, InvocationState.FAIL, 123),
                 "opTarget",
                 "opHandle",
@@ -156,7 +156,7 @@ public class MdibHistorian2Test {
         final BigInteger numericMdibVersion = BigInteger.ZERO;
         final String sequenceId = "abc";
         final var report = new OperationInvokedReport();
-        final com.draeger.medical.biceps.model.message.OperationInvokedReport.ReportPart part = createOIRReportPart(
+        final OperationInvokedReport.ReportPart part = createOIRReportPart(
                 createInvocationInfo(InvocationError.OTH, InvocationState.FAIL, 123),
                 "opTarget",
                 "opHandle",
@@ -200,14 +200,14 @@ public class MdibHistorian2Test {
         return info;
     }
 
-    private static com.draeger.medical.biceps.model.message.OperationInvokedReport.ReportPart createOIRReportPart(
+    private static OperationInvokedReport.ReportPart createOIRReportPart(
             final InvocationInfo invocationInfo,
             final String opTarget,
             final String opHandleRef,
             final InstanceIdentifier invocationSource,
             final String sourceMds) {
-        final com.draeger.medical.biceps.model.message.OperationInvokedReport.ReportPart part =
-                new com.draeger.medical.biceps.model.message.OperationInvokedReport.ReportPart();
+        final OperationInvokedReport.ReportPart part =
+                new OperationInvokedReport.ReportPart();
         part.setInvocationInfo(invocationInfo);
         part.setOperationTarget(opTarget);
         part.setOperationHandleRef(opHandleRef);
