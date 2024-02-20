@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
+import com.draeger.medical.biceps.model.message.ObjectFactory;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
@@ -66,8 +67,7 @@ import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
- * Unit tests for those methods in {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}
- * that use models from the package org.somda.sdc.
+ * Unit tests for {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}.
  */
 public class MdibHistorianTest {
 
@@ -913,6 +913,120 @@ public class MdibHistorianTest {
         report.setSequenceId(sequenceId);
 
         testApplyReportOnStorage(numericMdibVersion, sequenceId, report);
+    }
+
+    @Test
+    void testUniqueEpisodicReportBasedHistoryUntilTimestampRegressionWithOperationInvokedReport()
+            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+
+        final var messageObjectFactory = new ObjectFactory();
+        final var participantObjectFactory = new com.draeger.medical.biceps.model.participant.ObjectFactory();
+
+        final var report = messageObjectFactory.createOperationInvokedReport();
+        final var part = messageObjectFactory.createOperationInvokedReportReportPart();
+        final var invInfo = messageObjectFactory.createInvocationInfo();
+        invInfo.setInvocationError(com.draeger.medical.biceps.model.message.InvocationError.OTH);
+        invInfo.setInvocationState(com.draeger.medical.biceps.model.message.InvocationState.FAIL);
+        invInfo.setTransactionId(123);
+        part.setInvocationInfo(invInfo);
+        part.setOperationTarget("opTarget");
+        part.setOperationHandleRef("opHandle");
+
+        final var invSrc = participantObjectFactory.createInstanceIdentifier();
+        final var type = participantObjectFactory.createCodedValue();
+        type.setCode("33");
+        type.setCodingSystem("JOCS");
+        type.setCodingSystemVersion("2.0");
+        invSrc.setType(type);
+        invSrc.setRootName("rootName");
+        invSrc.setExtensionName("extName");
+        part.setInvocationSource(invSrc);
+        part.setSourceMds("sourceMds");
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
+
+        testUniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, soapMessage);
+    }
+
+    @Test
+    void testEpisodicReportBasedHistoryRegressionWithOperationInvokedReport()
+            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+
+        // given
+        final var messageObjectFactory = new ObjectFactory();
+        final var participantObjectFactory = new com.draeger.medical.biceps.model.participant.ObjectFactory();
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+        final var report = messageObjectFactory.createOperationInvokedReport();
+        final var part = messageObjectFactory.createOperationInvokedReportReportPart();
+        final var invSrc = participantObjectFactory.createInstanceIdentifier();
+        invSrc.setRootName("rootName");
+        invSrc.setExtensionName("extName");
+        final var type = participantObjectFactory.createCodedValue();
+        type.setCode("33");
+        type.setCodingSystem("JOCS");
+        type.setCodingSystemVersion("2.0");
+        invSrc.setType(type);
+        part.setInvocationSource(invSrc);
+        final var invInfo = messageObjectFactory.createInvocationInfo();
+        invInfo.setTransactionId(123);
+        invInfo.setInvocationError(com.draeger.medical.biceps.model.message.InvocationError.OTH);
+        invInfo.setInvocationState(com.draeger.medical.biceps.model.message.InvocationState.FAIL);
+        part.setInvocationInfo(invInfo);
+        part.setOperationTarget("opTarget");
+        part.setOperationHandleRef("opHandle");
+        part.setSourceMds("sourceMds");
+
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
+
+        testEpisodicReportBasedHistory(soapMessage, sequenceId);
+    }
+
+    @SuppressWarnings({"EmptyBlock"})
+    void testEpisodicReportBasedHistory(final Envelope report, final String sequenceId)
+            throws ReportProcessingException, PreprocessingException, JAXBException, IOException {
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceId, BigInteger.ZERO));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        try (MdibHistorian.HistorianResult historianResult =
+                historianUnderTest.episodicReportBasedHistory(sequenceId)) {
+            while (historianResult.next() != null) {
+                // query all of them
+                final var ignored = false; // make Checkstyle happy
+            }
+        }
+    }
+
+    @SuppressWarnings({"EmptyBlock"})
+    private void testUniqueEpisodicReportBasedHistoryUntilTimestamp(final String sequenceId, final Envelope report)
+            throws ReportProcessingException, PreprocessingException, JAXBException, IOException {
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceId, BigInteger.ZERO));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        final long timestamp = System.nanoTime();
+
+        try (var result = historianUnderTest.uniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, timestamp)) {
+            while (result.next() != null) {
+                // query them all
+                final var ignored = false; // make Checkstyle happy
+            }
+        }
     }
 
     private static LocalizedText createLocalizedText(
