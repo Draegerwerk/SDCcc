@@ -1131,7 +1131,6 @@ public class MdibHistorianTest {
      * @throws PreprocessingException -  when thrown by episodicReportBasedHistory()
      * @throws IOException - when thrown by the MessageStorage
      */
-    @SuppressWarnings({"EmptyBlock"})
     void testEpisodicReportBasedHistory(final Envelope report, final String sequenceId)
             throws ReportProcessingException, PreprocessingException, JAXBException, IOException {
         // given
