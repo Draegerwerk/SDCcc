@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -53,8 +53,15 @@ import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccessImpl;
 import org.somda.sdc.biceps.consumer.access.factory.RemoteMdibAccessFactory;
 import org.somda.sdc.biceps.consumer.preprocessing.DuplicateContextStateHandleHandler;
+import org.somda.sdc.biceps.model.message.AbstractAlertReport;
+import org.somda.sdc.biceps.model.message.AbstractComponentReport;
+import org.somda.sdc.biceps.model.message.AbstractContextReport;
+import org.somda.sdc.biceps.model.message.AbstractMetricReport;
+import org.somda.sdc.biceps.model.message.AbstractOperationalStateReport;
 import org.somda.sdc.biceps.model.message.AbstractReport;
+import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.GetMdibResponse;
+import org.somda.sdc.biceps.model.message.WaveformStream;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdibVersion;
 import org.somda.sdc.biceps.provider.preprocessing.DuplicateChecker;
@@ -249,11 +256,28 @@ public class MdibHistorian {
                                 + " same version has already been applied, and is expected behavior when e.g."
                                 + " descriptors update, as both a report for description and state will arrive.");
                     }
-                    LOG.debug(
-                            "Applying report with mdib version {}, type {}",
-                            ImpliedValueUtil.getReportMdibVersion(report),
-                            report.getClass().getSimpleName());
-                    reportProcessor.processReport(report);
+                    if (report instanceof WaveformStream
+                            || report instanceof AbstractMetricReport
+                            || report instanceof AbstractAlertReport
+                            || report instanceof AbstractOperationalStateReport
+                            || report instanceof AbstractComponentReport
+                            || report instanceof AbstractContextReport
+                            || report instanceof DescriptionModificationReport) {
+                        LOG.debug(
+                                "Applying report with mdib version {}, type {}",
+                                ImpliedValueUtil.getReportMdibVersion(report),
+                                report.getClass().getSimpleName());
+                        reportProcessor.processReport(report);
+                    } else {
+                        // other reports do not modify the Mdib and hence cannot be passed into
+                        //   reportProcessor.processReport().
+                        // simply ignore them.
+                        LOG.debug(
+                                "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                                        + "change the Mdib anyway.",
+                                report.getClass().getSimpleName(),
+                                ImpliedValueUtil.getReportMdibVersion(report));
+                    }
                 } catch (final Exception e) {
                     fail(e);
                 }
@@ -323,7 +347,28 @@ public class MdibHistorian {
                             "Applying report with mdib version {}, type {}",
                             ImpliedValueUtil.getReportMdibVersion(report),
                             report.getClass().getSimpleName());
-                    reportProcessor.processReport(report);
+                    if (report instanceof WaveformStream
+                            || report instanceof AbstractMetricReport
+                            || report instanceof AbstractAlertReport
+                            || report instanceof AbstractOperationalStateReport
+                            || report instanceof AbstractComponentReport
+                            || report instanceof AbstractContextReport
+                            || report instanceof DescriptionModificationReport) {
+                        LOG.debug(
+                                "Applying report with mdib version {}, type {}",
+                                ImpliedValueUtil.getReportMdibVersion(report),
+                                report.getClass().getSimpleName());
+                        reportProcessor.processReport(report);
+                    } else {
+                        // other reports do not modify the Mdib and hence cannot be passed into
+                        //   reportProcessor.processReport().
+                        // simply ignore them.
+                        LOG.debug(
+                                "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                                        + "change the Mdib anyway.",
+                                report.getClass().getSimpleName(),
+                                ImpliedValueUtil.getReportMdibVersion(report));
+                    }
                 } catch (final Exception e) {
                     fail(e);
                 }
@@ -479,35 +524,6 @@ public class MdibHistorian {
         }
     }
 
-    // TODO javadoc and maybe instead of getting all reports with lowertimestamp get the storage directly. So dont apply
-    // every report manually but provide a result
-    public Stream<AbstractReport> getAllReportsWithLowerTimestamp(
-            final String sequenceId,
-            @Nullable final BigInteger minimumMdibVersion,
-            final long maximumTimestamp,
-            final QName... bodyTypes) {
-        try {
-            final var messages =
-                    messageStorage.getInboundMessagesByTimestampAndBodyType(sequenceId, maximumTimestamp, bodyTypes);
-
-            var iter = messages.getStream()
-                    .sequential() // the stateful filter operation below is not thread-safe
-                    .map(this::unmarshallReportKeepUUID);
-            if (minimumMdibVersion != null) {
-                iter = iter.filter(it ->
-                        ImpliedValueUtil.getReportMdibVersion(it.getLeft()).compareTo(minimumMdibVersion) >= 1);
-            }
-            return filterReportDuplicates(iter).map(Pair::getLeft);
-        } catch (IOException e) {
-            final var errorMessage = "Error while trying to retrieve reports from storage";
-            LOG.error("{}: {}", errorMessage, e.getMessage());
-            LOG.debug("{}", errorMessage, e);
-            fail(e);
-            // unreachable, silence warnings
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * Applies a report on a stored mdib.
      *
@@ -535,11 +551,29 @@ public class MdibHistorian {
                     + " same version has already been applied, and is expected behavior when e.g."
                     + " descriptors update, as both a report for description and state will arrive.");
         }
-        LOG.debug(
-                "Applying report with mdib version {}, type {}",
-                ImpliedValueUtil.getReportMdibVersion(report),
-                report.getClass().getSimpleName());
-        reportProcessor.processReport(report);
+
+        if (report instanceof WaveformStream
+                || report instanceof AbstractMetricReport
+                || report instanceof AbstractAlertReport
+                || report instanceof AbstractOperationalStateReport
+                || report instanceof AbstractComponentReport
+                || report instanceof AbstractContextReport
+                || report instanceof DescriptionModificationReport) {
+            LOG.debug(
+                    "Applying report with mdib version {}, type {}",
+                    ImpliedValueUtil.getReportMdibVersion(report),
+                    report.getClass().getSimpleName());
+            reportProcessor.processReport(report);
+        } else {
+            // other reports do not modify the Mdib and hence cannot be passed into
+            //   reportProcessor.processReport().
+            // simply ignore them.
+            LOG.debug(
+                    "Ignoring report of type {} with MdibVersion {} as it is not expected to "
+                            + "change the Mdib anyway.",
+                    report.getClass().getSimpleName(),
+                    ImpliedValueUtil.getReportMdibVersion(report));
+        }
         return storage;
     }
 

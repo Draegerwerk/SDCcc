@@ -1,12 +1,13 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
 
 package com.draeger.medical.sdccc.tests.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -16,8 +17,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.draeger.medical.biceps.model.message.EpisodicContextReport;
+import com.draeger.medical.biceps.model.message.InvocationError;
+import com.draeger.medical.biceps.model.message.InvocationState;
 import com.draeger.medical.biceps.model.participant.AlertActivation;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
@@ -41,6 +45,7 @@ import com.google.inject.Injector;
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,14 +55,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
+import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.message.AbstractReport;
+import org.somda.sdc.biceps.model.message.OperationInvokedReport;
+import org.somda.sdc.biceps.model.message.SystemErrorReport;
+import org.somda.sdc.biceps.model.participant.CodedValue;
+import org.somda.sdc.biceps.model.participant.LocalizedText;
+import org.somda.sdc.biceps.model.participant.LocalizedTextWidth;
+import org.somda.sdc.biceps.model.participant.MdibVersion;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
- * Unit tests for the {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}.
+ * Unit tests for {@linkplain com.draeger.medical.sdccc.tests.util.MdibHistorian}.
  */
 public class MdibHistorianTest {
 
@@ -71,9 +83,7 @@ public class MdibHistorianTest {
     private static final String SCO_HANDLE = "sco_what?";
     private static final String SET_STRING_HANDLE = "sadString";
 
-    private Injector historianInjector;
     private MdibHistorianFactory historianFactory;
-    private Injector marshallingInjector;
     private MessageStorageUtil messageStorageUtil;
     private MessageBuilder messageBuilder;
     private MessageStorage storage;
@@ -83,10 +93,10 @@ public class MdibHistorianTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        historianInjector = TestClientUtil.createClientInjector();
+        final Injector historianInjector = TestClientUtil.createClientInjector();
         historianFactory = historianInjector.getInstance(MdibHistorianFactory.class);
 
-        marshallingInjector = MarshallingUtil.createMarshallingTestInjector(true);
+        final Injector marshallingInjector = MarshallingUtil.createMarshallingTestInjector(true);
         messageStorageUtil = marshallingInjector.getInstance(MessageStorageUtil.class);
         messageBuilder = marshallingInjector.getInstance(MessageBuilder.class);
         mdibBuilder = marshallingInjector.getInstance(MdibBuilder.class);
@@ -903,6 +913,266 @@ public class MdibHistorianTest {
         }
 
         verify(mockObserver).invalidateTestRun(anyString());
+    }
+
+    /**
+     * Tests if applyReportOnStorage() can gracefully ignore OperationInvokedReports.
+     * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
+     *       in this case.
+     */
+    @Test
+    void testApplyReportOnStorageRegressionCalledWithOperationInvokedReport() {
+
+        // given
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+        final var report = new OperationInvokedReport();
+        final var reportParts = new ArrayList<OperationInvokedReport.ReportPart>();
+        reportParts.add(new OperationInvokedReport.ReportPart());
+        report.setReportPart(reportParts);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+
+        testApplyReportOnStorage(numericMdibVersion, sequenceId, report);
+    }
+
+    /**
+     * Tests if applyReportOnStorage() can gracefully ignore SystemErrorReports.
+     */
+    @Test
+    void testApplyReportOnStorageRegressionCalledWithSystemErrorReport() {
+
+        // given
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+        final var report = new SystemErrorReport();
+        final SystemErrorReport.ReportPart part = new SystemErrorReport.ReportPart();
+        part.setErrorCode(createCodedValue("someCode", "someCodingSystem", "1.0"));
+        final LocalizedText text =
+                createLocalizedText("someErrorText", "en", "someRef", BigInteger.ZERO, LocalizedTextWidth.M);
+        part.setErrorInfo(text);
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        report.setSequenceId(sequenceId);
+
+        testApplyReportOnStorage(numericMdibVersion, sequenceId, report);
+    }
+
+    /**
+     * Tests if uniqueEpisodicReportBasedHistoryUntilTimestamp() gracefully ignores OperationInvokedReports.
+     * NOTE: this is a regression test as uniqueEpisodicReportBasedHistoryUntilTimestamp() failed in this case
+     *       before.
+     * @throws JAXBException - when thrown by the MessageStorage
+     * @throws IOException - when thrown by the MessageStorage
+     */
+    @Test
+    void testUniqueEpisodicReportBasedHistoryUntilTimestampRegressionWithOperationInvokedReport()
+            throws JAXBException, IOException {
+
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+
+        final var report = messageBuilder.buildOperationInvokedReport(sequenceId);
+        final var part = messageBuilder.buildOperationInvokedReportReportPart();
+        final var invInfo = messageBuilder.buildInvocationInfo(123, InvocationState.FAIL);
+        invInfo.setInvocationError(InvocationError.OTH);
+        part.setInvocationInfo(invInfo);
+        part.setOperationTarget("opTarget");
+        part.setOperationHandleRef("opHandle");
+
+        final var invSrc = mdibBuilder.buildInstanceIdentifier();
+        final var type = mdibBuilder.buildCodedValue("33");
+        type.setCodingSystem("JOCS");
+        type.setCodingSystemVersion("2.0");
+        invSrc.setType(type);
+        invSrc.setRootName("rootName");
+        invSrc.setExtensionName("extName");
+        part.setInvocationSource(invSrc);
+        part.setSourceMds("sourceMds");
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
+
+        testUniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, soapMessage);
+    }
+
+    /**
+     * Tests if uniqueEpisodicReportBasedHistoryUntilTimestamp() gracefully ignores SystemErrorReports.
+     * @throws JAXBException - when thrown by the MessageStorage
+     * @throws IOException - when thrown by the MessageStorage
+     */
+    @Test
+    void testUniqueEpisodicReportBasedHistoryUntilTimestampRegressionWithSystemErrorReport()
+            throws JAXBException, IOException {
+
+        final String sequenceId = "abc";
+
+        final var part = messageBuilder.buildSystemErrorReportReportPart(mdibBuilder.buildCodedValue("97"));
+        final var report = messageBuilder.buildSystemErrorReport(sequenceId, List.of(part));
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_SYSTEM_ERROR_REPORT, report);
+
+        testUniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, soapMessage);
+    }
+
+    private void testUniqueEpisodicReportBasedHistoryUntilTimestamp(final String sequenceId, final Envelope soapMessage)
+            throws IOException, JAXBException {
+        // given
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceId, BigInteger.ZERO));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, soapMessage);
+
+        final long timestamp = System.nanoTime();
+
+        // when & then
+        assertDoesNotThrow(() -> {
+            try (var result =
+                    historianUnderTest.uniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, timestamp)) {
+                // then
+                RemoteMdibAccess lastMdib = null;
+                RemoteMdibAccess mdib = result.next();
+                while (mdib != null) {
+                    if (lastMdib != null) {
+                        assertEquals(lastMdib, mdib); // nothing changed
+                    }
+                    lastMdib = mdib;
+                    mdib = result.next();
+                }
+            }
+        });
+    }
+
+    /**
+     * Tests if episodicReportBasedHistory() gracefully ignores OperationInvokedReports.
+     * NOTE: this is a regression test as episodicReportBasedHistory() failed in this case before.
+     * @throws JAXBException - when thrown by the MessageStorage
+     * @throws IOException - when thrown by the MessageStorage
+     */
+    @Test
+    void testEpisodicReportBasedHistoryRegressionWithOperationInvokedReport() throws JAXBException, IOException {
+
+        // given
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+        final var report = messageBuilder.buildOperationInvokedReport(sequenceId);
+        final var part = messageBuilder.buildOperationInvokedReportReportPart();
+        final var invSrc = mdibBuilder.buildInstanceIdentifier();
+        invSrc.setRootName("rootName");
+        invSrc.setExtensionName("extName");
+        final var type = mdibBuilder.buildCodedValue("33");
+        type.setCodingSystem("JOCS");
+        type.setCodingSystemVersion("2.0");
+        invSrc.setType(type);
+        part.setInvocationSource(invSrc);
+        final var invInfo = messageBuilder.buildInvocationInfo(123, InvocationState.FAIL);
+        invInfo.setInvocationError(InvocationError.OTH);
+        part.setInvocationInfo(invInfo);
+        part.setOperationTarget("opTarget");
+        part.setOperationHandleRef("opHandle");
+        part.setSourceMds("sourceMds");
+
+        report.getReportPart().add(part);
+        report.setMdibVersion(numericMdibVersion);
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
+
+        testEpisodicReportBasedHistory(soapMessage, sequenceId);
+    }
+
+    /**
+     * Tests if episodicReportBasedHistory() gracefully ignores SystemErrorReports.
+     * @throws JAXBException - when thrown by the MessageStorage
+     * @throws IOException - when thrown by the MessageStorage
+     */
+    @Test
+    void testEpisodicReportBasedHistoryRegressionWithSystemErrorReport() throws JAXBException, IOException {
+
+        // given
+        final BigInteger numericMdibVersion = BigInteger.ZERO;
+        final String sequenceId = "abc";
+
+        final var part = messageBuilder.buildSystemErrorReportReportPart(mdibBuilder.buildCodedValue("97"));
+        final var report = messageBuilder.buildSystemErrorReport(sequenceId, List.of(part));
+        report.setMdibVersion(numericMdibVersion);
+
+        final Envelope soapMessage =
+                messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
+
+        testEpisodicReportBasedHistory(soapMessage, sequenceId);
+    }
+
+    /**
+     * Tests if episodicReportBasedHistory() gracefully ignores a given report.
+     * @param report - the report to ignore
+     * @param sequenceId - the sequenceId of the report
+     * @throws JAXBException - when thrown by the MessageStorage
+     * @throws IOException - when thrown by the MessageStorage
+     */
+    void testEpisodicReportBasedHistory(final Envelope report, final String sequenceId)
+            throws JAXBException, IOException {
+        // given
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceId, BigInteger.ZERO));
+        messageStorageUtil.addInboundSecureHttpMessage(storage, report);
+
+        // when & then
+        assertDoesNotThrow(() -> {
+            try (MdibHistorian.HistorianResult historianResult =
+                    historianUnderTest.episodicReportBasedHistory(sequenceId)) {
+                // then
+                RemoteMdibAccess lastMdib = null;
+                RemoteMdibAccess mdib = historianResult.next();
+                while (mdib != null) {
+                    if (lastMdib != null) {
+                        assertEquals(lastMdib, mdib); // nothing changed
+                    }
+                    lastMdib = mdib;
+                    mdib = historianResult.next();
+                }
+            }
+        });
+    }
+
+    private static LocalizedText createLocalizedText(
+            final String value,
+            final String lang,
+            final String ref,
+            final BigInteger version,
+            final LocalizedTextWidth textWidth) {
+        final LocalizedText text = new LocalizedText();
+        text.setLang(lang);
+        text.setValue(value);
+        text.setRef(ref);
+        text.setVersion(version);
+        text.setTextWidth(textWidth);
+        return text;
+    }
+
+    private static CodedValue createCodedValue(
+            final String code, final String codingSystem, final String codingSystemVersion) {
+        final CodedValue value = new CodedValue();
+        value.setCode(code);
+        value.setCodingSystem(codingSystem);
+        value.setCodingSystemVersion(codingSystemVersion);
+        return value;
+    }
+
+    private void testApplyReportOnStorage(
+            final BigInteger numericMdibVersion, final String sequenceId, final AbstractReport report) {
+        final RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
+        final MdibVersion mdibVersion = new MdibVersion(sequenceId, numericMdibVersion);
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        when(mdibAccess.getMdibVersion()).thenReturn(mdibVersion);
+
+        // when & then
+        assertDoesNotThrow(() -> historianUnderTest.applyReportOnStorage(mdibAccess, report));
     }
 
     Envelope buildMdibEnvelope(final String sequenceId, @Nullable final BigInteger mdibVersion) {
