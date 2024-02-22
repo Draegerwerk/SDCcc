@@ -938,8 +938,6 @@ public class MdibHistorianTest {
 
     /**
      * Tests if applyReportOnStorage() can gracefully ignore SystemErrorReports.
-     * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
-     *       in this case.
      */
     @Test
     void testApplyReportOnStorageRegressionCalledWithSystemErrorReport() {
@@ -1001,8 +999,6 @@ public class MdibHistorianTest {
 
     /**
      * Tests if uniqueEpisodicReportBasedHistoryUntilTimestamp() gracefully ignores SystemErrorReports.
-     * NOTE: this is a regression test as uniqueEpisodicReportBasedHistoryUntilTimestamp() failed in this case
-     *       before.
      * @throws JAXBException - when thrown by the MessageStorage
      * @throws IOException - when thrown by the MessageStorage
      */
@@ -1088,7 +1084,6 @@ public class MdibHistorianTest {
 
     /**
      * Tests if episodicReportBasedHistory() gracefully ignores SystemErrorReports.
-     * NOTE: this is a regression test as episodicReportBasedHistory() failed in this case before.
      * @throws JAXBException - when thrown by the MessageStorage
      * @throws IOException - when thrown by the MessageStorage
      */
