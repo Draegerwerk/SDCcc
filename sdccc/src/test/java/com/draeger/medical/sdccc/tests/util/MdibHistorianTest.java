@@ -919,12 +919,9 @@ public class MdibHistorianTest {
      * Tests if applyReportOnStorage() can gracefully ignore OperationInvokedReports.
      * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
      *       in this case.
-     * @throws ReportProcessingException - when applyReportOnStorage() throws it
-     * @throws PreprocessingException - when applyReportOnStorage() throws it
      */
     @Test
-    void testApplyReportOnStorageRegressionCalledWithOperationInvokedReport()
-            throws ReportProcessingException, PreprocessingException {
+    void testApplyReportOnStorageRegressionCalledWithOperationInvokedReport() {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
@@ -943,12 +940,9 @@ public class MdibHistorianTest {
      * Tests if applyReportOnStorage() can gracefully ignore SystemErrorReports.
      * NOTE: this is a regression test: before it was fixed, applyReportOnStorage() did fail with an Exception
      *       in this case.
-     * @throws ReportProcessingException - when applyReportOnStorage() throws it
-     * @throws PreprocessingException - when applyReportOnStorage() throws it
      */
     @Test
-    void testApplyReportOnStorageRegressionCalledWithSystemErrorReport()
-            throws ReportProcessingException, PreprocessingException {
+    void testApplyReportOnStorageRegressionCalledWithSystemErrorReport() {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
@@ -970,14 +964,12 @@ public class MdibHistorianTest {
      * Tests if uniqueEpisodicReportBasedHistoryUntilTimestamp() gracefully ignores OperationInvokedReports.
      * NOTE: this is a regression test as uniqueEpisodicReportBasedHistoryUntilTimestamp() failed in this case
      *       before.
-     * @throws ReportProcessingException - when thrown by uniqueEpisodicReportBasedHistoryUntilTimestamp()
      * @throws JAXBException - when thrown by the MessageStorage
-     * @throws PreprocessingException - when thrown by uniqueEpisodicReportBasedHistoryUntilTimestamp()
      * @throws IOException - when thrown by the MessageStorage
      */
     @Test
     void testUniqueEpisodicReportBasedHistoryUntilTimestampRegressionWithOperationInvokedReport()
-            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+            throws JAXBException, IOException {
 
         final BigInteger numericMdibVersion = BigInteger.ZERO;
         final String sequenceId = "abc";
@@ -1011,14 +1003,12 @@ public class MdibHistorianTest {
      * Tests if uniqueEpisodicReportBasedHistoryUntilTimestamp() gracefully ignores SystemErrorReports.
      * NOTE: this is a regression test as uniqueEpisodicReportBasedHistoryUntilTimestamp() failed in this case
      *       before.
-     * @throws ReportProcessingException - when thrown by uniqueEpisodicReportBasedHistoryUntilTimestamp()
      * @throws JAXBException - when thrown by the MessageStorage
-     * @throws PreprocessingException - when thrown by uniqueEpisodicReportBasedHistoryUntilTimestamp()
      * @throws IOException - when thrown by the MessageStorage
      */
     @Test
     void testUniqueEpisodicReportBasedHistoryUntilTimestampRegressionWithSystemErrorReport()
-            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+            throws JAXBException, IOException {
 
         final String sequenceId = "abc";
 
@@ -1031,7 +1021,7 @@ public class MdibHistorianTest {
     }
 
     private void testUniqueEpisodicReportBasedHistoryUntilTimestamp(final String sequenceId, final Envelope soapMessage)
-            throws IOException, JAXBException, ReportProcessingException, PreprocessingException {
+            throws IOException, JAXBException {
         // given
         final var mockObserver = mock(TestRunObserver.class);
         final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
@@ -1062,14 +1052,11 @@ public class MdibHistorianTest {
     /**
      * Tests if episodicReportBasedHistory() gracefully ignores OperationInvokedReports.
      * NOTE: this is a regression test as episodicReportBasedHistory() failed in this case before.
-     * @throws ReportProcessingException -  when thrown by episodicReportBasedHistory()
      * @throws JAXBException - when thrown by the MessageStorage
-     * @throws PreprocessingException -  when thrown by episodicReportBasedHistory()
      * @throws IOException - when thrown by the MessageStorage
      */
     @Test
-    void testEpisodicReportBasedHistoryRegressionWithOperationInvokedReport()
-            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+    void testEpisodicReportBasedHistoryRegressionWithOperationInvokedReport() throws JAXBException, IOException {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
@@ -1102,14 +1089,11 @@ public class MdibHistorianTest {
     /**
      * Tests if episodicReportBasedHistory() gracefully ignores SystemErrorReports.
      * NOTE: this is a regression test as episodicReportBasedHistory() failed in this case before.
-     * @throws ReportProcessingException -  when thrown by episodicReportBasedHistory()
      * @throws JAXBException - when thrown by the MessageStorage
-     * @throws PreprocessingException -  when thrown by episodicReportBasedHistory()
      * @throws IOException - when thrown by the MessageStorage
      */
     @Test
-    void testEpisodicReportBasedHistoryRegressionWithSystemErrorReport()
-            throws ReportProcessingException, JAXBException, PreprocessingException, IOException {
+    void testEpisodicReportBasedHistoryRegressionWithSystemErrorReport() throws JAXBException, IOException {
 
         // given
         final BigInteger numericMdibVersion = BigInteger.ZERO;
@@ -1129,13 +1113,11 @@ public class MdibHistorianTest {
      * Tests if episodicReportBasedHistory() gracefully ignores a given report.
      * @param report - the report to ignore
      * @param sequenceId - the sequenceId of the report
-     * @throws ReportProcessingException -  when thrown by episodicReportBasedHistory()
      * @throws JAXBException - when thrown by the MessageStorage
-     * @throws PreprocessingException -  when thrown by episodicReportBasedHistory()
      * @throws IOException - when thrown by the MessageStorage
      */
     void testEpisodicReportBasedHistory(final Envelope report, final String sequenceId)
-            throws ReportProcessingException, PreprocessingException, JAXBException, IOException {
+            throws JAXBException, IOException {
         // given
         final var mockObserver = mock(TestRunObserver.class);
         final var historianUnderTest = historianFactory.createMdibHistorian(storage, mockObserver);
@@ -1186,8 +1168,7 @@ public class MdibHistorianTest {
     }
 
     private void testApplyReportOnStorage(
-            final BigInteger numericMdibVersion, final String sequenceId, final AbstractReport report)
-            throws PreprocessingException, ReportProcessingException {
+            final BigInteger numericMdibVersion, final String sequenceId, final AbstractReport report) {
         final RemoteMdibAccess mdibAccess = mock(RemoteMdibAccess.class);
         final MdibVersion mdibVersion = new MdibVersion(sequenceId, numericMdibVersion);
         final var mockObserver = mock(TestRunObserver.class);
