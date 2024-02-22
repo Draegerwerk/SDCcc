@@ -130,7 +130,7 @@ Enable=true
 will make all devices match during discovery.
 
 ### Manipulation API
-The test tool uses *T2IAPI* version `3.0.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
+The test tool uses *T2IAPI* version `4.1.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
 state, or to trigger a certain behavior. When using SDCcc with automated manipulations, it must be ensured that the same
 version of *T2IAPI* is used for the test execution by both parties. It must also be ensured that the device's 
 manipulations are implemented according to the descriptions in the T2IAPI sources. Further information can be found 
