@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -35,6 +35,7 @@ public final class TestSuiteConfig {
     public static final String TRUST_STORE_PASSWORD = SDCCC + TLS + "TrustStorePassword";
     public static final String PARTICIPANT_PRIVATE_PASSWORD = SDCCC + TLS + "ParticipantPrivatePassword";
     public static final String TLS_ENABLED_PROTOCOLS = SDCCC + TLS + "EnabledProtocols";
+    public static final String TLS_ENABLED_CIPHERS = SDCCC + TLS + "EnabledCiphers";
 
     /*
      * Network configuration

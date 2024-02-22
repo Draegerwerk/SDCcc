@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -47,6 +47,18 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
         bind(TestSuiteConfig.TRUST_STORE_PASSWORD, String.class, "");
         bind(TestSuiteConfig.PARTICIPANT_PRIVATE_PASSWORD, String.class, "");
         bind(TestSuiteConfig.TLS_ENABLED_PROTOCOLS, String[].class, new String[] {"TLSv1.2", "TLSv1.3"});
+        bind(TestSuiteConfig.TLS_ENABLED_CIPHERS, String[].class, new String[] {
+            // TLS 1.2
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+            // TLS 1.3
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_AES_256_GCM_SHA384",
+        });
     }
 
     void configureNetwork() {

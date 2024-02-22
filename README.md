@@ -63,6 +63,9 @@ Different combinations can be used to establish a connection:
 * participant_public, participant_private and ca_certificate
 * participant_public, participant_private and truststore
 
+Optionally the TLS protocol versions to be enabled can be specified as well as the ciphers to be enabled for
+the TLS protocol. An example can be found in configuration/config.toml, the values there are also the default values.
+
 ### Network setup
 To select the network interface that should be used, the interface address can be set under
 ```

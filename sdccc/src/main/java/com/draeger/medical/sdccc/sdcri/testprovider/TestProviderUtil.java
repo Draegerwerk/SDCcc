@@ -1,12 +1,13 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
 
 package com.draeger.medical.sdccc.sdcri.testprovider;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.CommunicationLogMessageStorage;
 import com.google.inject.AbstractModule;
@@ -15,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import javax.inject.Named;
 import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
@@ -43,10 +45,15 @@ public class TestProviderUtil {
      *
      * @param cryptoSettings                 crypto setting
      * @param communicationLogMessageStorage connector to the {@linkplain MessageStorage} to write to
+     * @param enabledTlsProtocols            TLS protocol versions to be enabled
+     * @param enabledCiphers                 ciphers to be enabled
      */
     @Inject
     public TestProviderUtil(
-            final CryptoSettings cryptoSettings, final CommunicationLogMessageStorage communicationLogMessageStorage) {
+            final CryptoSettings cryptoSettings,
+            final CommunicationLogMessageStorage communicationLogMessageStorage,
+            @Named(TestSuiteConfig.TLS_ENABLED_PROTOCOLS) final String[] enabledTlsProtocols,
+            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers) {
         injector = Guice.createInjector(Modules.override(
                         new DefaultCommonConfigModule(),
                         new DefaultGlueModule(),
@@ -60,6 +67,8 @@ public class TestProviderUtil {
                             protected void customConfigure() {
                                 super.customConfigure();
                                 bind(CryptoConfig.CRYPTO_SETTINGS, CryptoSettings.class, cryptoSettings);
+                                bind(CryptoConfig.CRYPTO_TLS_ENABLED_VERSIONS, String[].class, enabledTlsProtocols);
+                                bind(CryptoConfig.CRYPTO_TLS_ENABLED_CIPHERS, String[].class, enabledCiphers);
                                 bind(
                                         CryptoConfig.CRYPTO_DEVICE_HOSTNAME_VERIFIER,
                                         HostnameVerifier.class,

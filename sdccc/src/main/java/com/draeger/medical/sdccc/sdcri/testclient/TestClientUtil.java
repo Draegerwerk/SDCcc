@@ -59,6 +59,8 @@ public class TestClientUtil {
      * @param localAddressResolver           resolver for getting the local address to use
      * @param multicastTTL                   TTL for multicast packets used in Discovery.
      *                                       Values from 1 to 255 are valid.
+     * @param enabledTlsProtocols            TLS protocol versions to be enabled
+     * @param enabledCiphers                 ciphers to be enabled
      */
     @Inject
     public TestClientUtil(
@@ -66,13 +68,17 @@ public class TestClientUtil {
             final CommunicationLogMessageStorage communicationLogMessageStorage,
             final TestRunObserver testRunObserver,
             final LocalAddressResolver localAddressResolver,
-            @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL) {
+            @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL,
+            @Named(TestSuiteConfig.TLS_ENABLED_PROTOCOLS) final String[] enabledTlsProtocols,
+            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
                         bind(CryptoConfig.CRYPTO_SETTINGS, CryptoSettings.class, cryptoSettings);
+                        bind(CryptoConfig.CRYPTO_TLS_ENABLED_VERSIONS, String[].class, enabledTlsProtocols);
+                        bind(CryptoConfig.CRYPTO_TLS_ENABLED_CIPHERS, String[].class, enabledCiphers);
                         bind(
                                 CryptoConfig.CRYPTO_CLIENT_HOSTNAME_VERIFIER,
                                 HostnameVerifier.class,
