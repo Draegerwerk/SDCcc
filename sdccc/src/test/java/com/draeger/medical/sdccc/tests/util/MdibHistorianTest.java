@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -1000,7 +1001,6 @@ public class MdibHistorianTest {
         part.setSourceMds("sourceMds");
         report.getReportPart().add(part);
         report.setMdibVersion(numericMdibVersion);
-        report.setSequenceId(sequenceId);
         final Envelope soapMessage =
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
 
@@ -1041,19 +1041,22 @@ public class MdibHistorianTest {
 
         final long timestamp = System.nanoTime();
 
-        // when
-        try (var result = historianUnderTest.uniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, timestamp)) {
-            // then
-            RemoteMdibAccess lastMdib = null;
-            RemoteMdibAccess mdib = result.next();
-            while (mdib != null) {
-                if (lastMdib != null) {
-                    assertEquals(lastMdib, mdib); // nothing changed
+        // when & then
+        assertDoesNotThrow(() -> {
+            try (var result =
+                    historianUnderTest.uniqueEpisodicReportBasedHistoryUntilTimestamp(sequenceId, timestamp)) {
+                // then
+                RemoteMdibAccess lastMdib = null;
+                RemoteMdibAccess mdib = result.next();
+                while (mdib != null) {
+                    if (lastMdib != null) {
+                        assertEquals(lastMdib, mdib); // nothing changed
+                    }
+                    lastMdib = mdib;
+                    mdib = result.next();
                 }
-                lastMdib = mdib;
-                mdib = result.next();
             }
-        }
+        });
     }
 
     /**
@@ -1140,20 +1143,22 @@ public class MdibHistorianTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceId, BigInteger.ZERO));
         messageStorageUtil.addInboundSecureHttpMessage(storage, report);
 
-        // when
-        try (MdibHistorian.HistorianResult historianResult =
-                historianUnderTest.episodicReportBasedHistory(sequenceId)) {
-            // then
-            RemoteMdibAccess lastMdib = null;
-            RemoteMdibAccess mdib = historianResult.next();
-            while (mdib != null) {
-                if (lastMdib != null) {
-                    assertEquals(lastMdib, mdib); // nothing changed
+        // when & then
+        assertDoesNotThrow(() -> {
+            try (MdibHistorian.HistorianResult historianResult =
+                    historianUnderTest.episodicReportBasedHistory(sequenceId)) {
+                // then
+                RemoteMdibAccess lastMdib = null;
+                RemoteMdibAccess mdib = historianResult.next();
+                while (mdib != null) {
+                    if (lastMdib != null) {
+                        assertEquals(lastMdib, mdib); // nothing changed
+                    }
+                    lastMdib = mdib;
+                    mdib = historianResult.next();
                 }
-                lastMdib = mdib;
-                mdib = historianResult.next();
             }
-        }
+        });
     }
 
     private static LocalizedText createLocalizedText(
@@ -1190,8 +1195,8 @@ public class MdibHistorianTest {
 
         when(mdibAccess.getMdibVersion()).thenReturn(mdibVersion);
 
-        // when
-        historianUnderTest.applyReportOnStorage(mdibAccess, report);
+        // when & then
+        assertDoesNotThrow(() -> historianUnderTest.applyReportOnStorage(mdibAccess, report));
     }
 
     Envelope buildMdibEnvelope(final String sequenceId, @Nullable final BigInteger mdibVersion) {
