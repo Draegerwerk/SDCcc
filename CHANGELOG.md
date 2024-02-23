@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - a command line parameter to change the log level threshold of the log file
 
+### Changed
+
+- t2iapi version to 4.1.0
+
 ### Fixed
 
 - a performance issue with xml unmarshalling due to finding an interface implementation for TransformerFactory
