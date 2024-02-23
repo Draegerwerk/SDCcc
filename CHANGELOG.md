@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - a command line parameter to change the log level threshold of the log file
+- a parameter in a config file to specify the ciphers being used in the TLS protocol
 
 ### Changed
 
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - potential NullPointerException in DescriptionModificationUptPrecondition
 - the test case for Glue:R0036_0 not accepting a SOAPFault as a valid answer for Subscribe messages
 - ReportWriter.write() could be called with ReportTypes it did not support.
+- the SDCcc.TLS.EnabledProtocols parameter being ignored for the internal TLS configuration
 
 ## [8.0.1] - 2023-09-13
 
