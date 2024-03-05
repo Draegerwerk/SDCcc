@@ -16,6 +16,13 @@ import org.somda.sdc.common.guice.AbstractConfigurationModule;
  */
 public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
+    public static final String[] DEFAULT_DIRECTORIES = {
+        "com.draeger.medical.sdccc.tests.biceps",
+        "com.draeger.medical.sdccc.tests.mdpws",
+        "com.draeger.medical.sdccc.tests.dpws",
+        "com.draeger.medical.sdccc.tests.glue",
+    };
+
     private static final int BUFFER_SIZE = 100;
 
     @Override
@@ -80,12 +87,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
     }
 
     void configureInternalSettings() {
-        bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, new String[] {
-            "com.draeger.medical.sdccc.tests.biceps",
-            "com.draeger.medical.sdccc.tests.mdpws",
-            "com.draeger.medical.sdccc.tests.dpws",
-            "com.draeger.medical.sdccc.tests.glue",
-        });
+        bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, DEFAULT_DIRECTORIES);
     }
 
     protected void configureCommlogSettings() {

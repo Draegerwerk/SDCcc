@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +11,7 @@ package com.draeger.medical.sdccc.configuration;
  * Constants used to map the content of the configuration for enabled
  * test cases.
  */
-public final class EnabledTestConfig {
+public class EnabledTestConfig {
 
     // BICEPS
     private static final String BICEPS = "BICEPS.";
@@ -124,5 +124,8 @@ public final class EnabledTestConfig {
     public static final String GLUE_R0080 = GLUE + "R0080";
     public static final String GLUE_813 = GLUE + "8-1-3";
 
-    private EnabledTestConfig() {}
+    /**
+     * Default constructor for extending the constants list.
+     */
+    public EnabledTestConfig() {}
 }
