@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.configuration;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
@@ -16,6 +17,10 @@ import org.somda.sdc.common.guice.AbstractConfigurationModule;
  */
 public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
+    @SuppressFBWarnings(
+            value = {"MS_MUTABLE_ARRAY"},
+            justification = "In case this is wrong there will be an error (for test cases that couldn't be found)"
+                    + " and thus this being wrong due to modification will always be noticed.")
     public static final String[] DEFAULT_DIRECTORIES = {
         "com.draeger.medical.sdccc.tests.biceps",
         "com.draeger.medical.sdccc.tests.mdpws",
