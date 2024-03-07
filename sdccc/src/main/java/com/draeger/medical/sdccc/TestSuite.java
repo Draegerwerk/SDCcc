@@ -576,17 +576,21 @@ public class TestSuite {
         }
 
         if (numberOfTestFailures == 0) {
-            LOG.info(
-                    "Test run with {} Tests was completed successfully. No problems were found.",
-                    testRunObserver.getTotalNumberOfTestsRun());
+            if (testRunObserver.isInvalid()) {
+                LOG.info(
+                        "Test run with {} Tests was completed successfully but other problems were found. Please consult the logfiles in {} for further information.",
+                        testRunObserver.getTotalNumberOfTestsRun(),
+                        testRunDir);
+                LOG.info("Test run was invalid.");
+            } else {
+                LOG.info(
+                        "Test run with {} Tests was completed successfully. No problems were found.",
+                        testRunObserver.getTotalNumberOfTestsRun());
+                LOG.info("Test run was valid.");
+            }
         } else {
             LOG.info("Test run found problems. Please consult the logfiles in {} for further information.", testRunDir);
-        }
-
-        if (testRunObserver.isInvalid()) {
             LOG.info("Test run was invalid.");
-        } else {
-            LOG.info("Test run was valid.");
         }
     }
 
