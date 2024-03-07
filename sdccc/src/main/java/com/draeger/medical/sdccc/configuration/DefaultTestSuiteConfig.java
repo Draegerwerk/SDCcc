@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.configuration;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
 /**
@@ -15,6 +16,17 @@ import org.somda.sdc.common.guice.AbstractConfigurationModule;
  * @see TestSuiteConfig
  */
 public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
+
+    @SuppressFBWarnings(
+            value = {"MS_MUTABLE_ARRAY"},
+            justification = "In case this is wrong there will be an error (for test cases that couldn't be found)"
+                    + " and thus this being wrong due to modification will always be noticed.")
+    public static final String[] DEFAULT_DIRECTORIES = {
+        "com.draeger.medical.sdccc.tests.biceps",
+        "com.draeger.medical.sdccc.tests.mdpws",
+        "com.draeger.medical.sdccc.tests.dpws",
+        "com.draeger.medical.sdccc.tests.glue",
+    };
 
     private static final int BUFFER_SIZE = 100;
 
@@ -80,12 +92,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
     }
 
     void configureInternalSettings() {
-        bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, new String[] {
-            "com.draeger.medical.sdccc.tests.biceps",
-            "com.draeger.medical.sdccc.tests.mdpws",
-            "com.draeger.medical.sdccc.tests.dpws",
-            "com.draeger.medical.sdccc.tests.glue",
-        });
+        bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, DEFAULT_DIRECTORIES);
     }
 
     protected void configureCommlogSettings() {

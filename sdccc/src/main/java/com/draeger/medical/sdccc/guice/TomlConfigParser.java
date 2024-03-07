@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -38,13 +38,12 @@ public class TomlConfigParser {
      * This parser only allows known keys and will throw an exception otherwise.
      *
      * @param constantsClass to verify toml keys against
-     * @throws IOException in case an error occurred during parsing.
      */
     public TomlConfigParser(final Class constantsClass) {
         // track allowed keys
         this.allowedKeys = new HashSet<>();
 
-        Arrays.stream(constantsClass.getDeclaredFields()).forEach(field -> {
+        Arrays.stream(constantsClass.getFields()).forEach(field -> {
             if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
                 try {
                     allowedKeys.add((String) field.get(null));
