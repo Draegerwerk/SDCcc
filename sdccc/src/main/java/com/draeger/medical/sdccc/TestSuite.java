@@ -105,8 +105,21 @@ public class TestSuite {
     private final TestClient client;
     private final boolean testExecutionLogging;
 
+    /**
+     * Used by the main injector to create a TestSuite instance.
+     * It is also useful for extending the TestSuite class.
+     *
+     * @param injector a reference to the injector injecting here
+     * @param testRunObserver observer for invalidating test runs
+     * @param sdcTestDirectories directories to search for test cases
+     * @param testRunDir directory to run the tests in and store artifacts
+     * @param testExecutionLogging whether logging of test case starts etc. shall be done
+     * @param messageGenerator utility for generating messages to send
+     * @param testRunInformation utility where information of the test run is stored
+     * @param client client to use for direct tests
+     */
     @Inject
-    TestSuite(
+    public TestSuite(
             final Injector injector,
             final TestRunObserver testRunObserver,
             @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
@@ -428,7 +441,11 @@ public class TestSuite {
                 .with(override));
     }
 
-    private static Injector createTestRunInjector(final CommandLineOptions cmdLine, final File testRunDir)
+    private static Injector createTestRunInjector(
+            final CommandLineOptions cmdLine,
+            final File testRunDir,
+            final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final String[] sdcTestDirectories)
             throws IOException {
 
         final AbstractConfigurationModule baseConfigModule = new AbstractConfigurationModule() {
@@ -509,12 +526,13 @@ public class TestSuite {
             baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FLOOR, String.class, null);
             baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, null);
             baseConfigModule.bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, null);
+            baseConfigModule.bind(TestSuiteConfig.SDC_TEST_DIRECTORIES, String[].class, sdcTestDirectories);
 
             configModuleParser.parseToml(configFileStream, configModule);
         }
         try (final var testConfigFileStream =
                 new FileInputStream(cmdLine.getTestConfigPath().toFile())) {
-            final var testConfigModuleParser = new TomlConfigParser(EnabledTestConfig.class);
+            final var testConfigModuleParser = new TomlConfigParser(enabledTestConfigClass);
             testConfigModuleParser.parseToml(testConfigFileStream, testConfigModule);
         }
 
@@ -620,12 +638,38 @@ public class TestSuite {
      * @param args array of command line arguments
      */
     public static void main(final String[] args) throws IOException {
+        final var cmdLine = initialize(args);
+
+        runWithArgs(cmdLine, EnabledTestConfig.class, DefaultTestSuiteConfig.DEFAULT_DIRECTORIES);
+    }
+
+    /**
+     * Set required system properties and parse the command line arguments.
+     *
+     * @param args array of command line arguments
+     * @return parsed command line arguments
+     */
+    public static CommandLineOptions initialize(final String[] args) {
         // improve xml interaction performance
         setSystemProperties();
 
         // parse command line options
-        final var cmdLine = new CommandLineOptions(args);
+        return new CommandLineOptions(args);
+    }
 
+    /**
+     * Run the test suite with the given already parsed command line arguments and the
+     * specified enabled test config constants.
+     *
+     * @param cmdLine parsed command line arguments
+     * @param enabledTestConfigClass class containing test identifier constants
+     * @param sdcTestDirectories directories to search for test cases
+     */
+    public static void runWithArgs(
+            final CommandLineOptions cmdLine,
+            final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final String[] sdcTestDirectories)
+            throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
                 cmdLine.getTestRunDirectory().orElse(null));
@@ -648,7 +692,8 @@ public class TestSuite {
                 LOG.warn("Error while setting swing look and feel options.", e);
             }
 
-            final Injector injector = createTestRunInjector(cmdLine, testRunDir);
+            final Injector injector =
+                    createTestRunInjector(cmdLine, testRunDir, enabledTestConfigClass, sdcTestDirectories);
 
             final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
                     findTriggerOnErrorOrWorseLogAppender(logConfig);
