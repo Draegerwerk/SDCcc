@@ -593,22 +593,22 @@ public class TestSuite {
             }
         }
 
-        if (numberOfTestFailures == 0) {
-            if (testRunObserver.isInvalid()) {
+        if (testRunObserver.isInvalid()) {
+            LOG.info(
+                    "Test run with {} tests was invalid. Please consult the logfiles in {} for further information.",
+                    testRunObserver.getTotalNumberOfTestsRun(),
+                    testRunDir);
+        } else {
+            if (numberOfTestFailures == 0) {
                 LOG.info(
-                        "Test run with {} Tests was completed successfully but other problems were found. Please consult the logfiles in {} for further information.",
-                        testRunObserver.getTotalNumberOfTestsRun(),
-                        testRunDir);
-                LOG.info("Test run was invalid.");
+                        "Test run with {} tests was valid. No problems were found.",
+                        testRunObserver.getTotalNumberOfTestsRun());
             } else {
                 LOG.info(
-                        "Test run with {} Tests was completed successfully. No problems were found.",
-                        testRunObserver.getTotalNumberOfTestsRun());
-                LOG.info("Test run was valid.");
+                        "Test run with {} tests was valid, but problems were found. Please consult the logfiles in {} for further information.",
+                        testRunObserver.getTotalNumberOfTestsRun(),
+                        testRunDir);
             }
-        } else {
-            LOG.info("Test run found problems. Please consult the logfiles in {} for further information.", testRunDir);
-            LOG.info("Test run was invalid.");
         }
     }
 
