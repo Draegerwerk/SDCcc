@@ -90,7 +90,6 @@
         <module name="MissingOverride"/>
         <module name="PackageAnnotation"/>
 
-        <module name="HideUtilityClassConstructor"/>
         <module name="InnerTypeLast"/>
         <module name="InterfaceIsType"/>
         <module name="MutableException"/>

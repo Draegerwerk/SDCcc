@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <revision>9.0.0</revision>
+        <revision>9.1.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <execPluginVersion>3.1.0</execPluginVersion>
@@ -32,25 +32,6 @@
                 <version>3.10.1</version>
                 <configuration>
                     <release>17</release>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>${execPluginVersion}</version>
-                <configuration>
-                    <skip>true</skip>
-                    <executable>${java.home}/bin/java</executable>
-                    <arguments>
-                        <argument>-classpath</argument>
-                        <classpath/>
-                        <argument>com.draeger.medical.sdccc.TestSuite</argument>
-                        <argument>-c</argument>
-                        <argument>${project.basedir}/../configuration/config.toml</argument>
-                        <argument>-t</argument>
-                        <argument>${project.basedir}/../configuration/test_configuration.toml</argument>
-                    </arguments>
                 </configuration>
             </plugin>
 
@@ -92,6 +73,58 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${execPluginVersion}</version>
+                <configuration>
+                    <skip>true</skip>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>com.draeger.medical.sdccc.TestSuite</argument>
+                        <argument>-c</argument>
+                        <argument>${project.basedir}/../configuration/config.toml</argument>
+                        <argument>-t</argument>
+                        <argument>${project.basedir}/../configuration/test_configuration.toml</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>exec-sdccc</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${execPluginVersion}</version>
+                        <executions>
+                            <execution>
+                                <id>951d1725-bb0b-40db-9d4e-d1947a8318ed</id>
+                                <configuration>
+                                    <skip>false</skip>
+                                    <executable>${java.home}/bin/java</executable>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath/>
+                                        <argument>com.draeger.medical.sdccc.TestSuite</argument>
+                                        <argument>-c</argument>
+                                        <argument>${project.basedir}/../configuration/config.toml</argument>
+                                        <argument>-t</argument>
+                                        <argument>${project.basedir}/../configuration/test_configuration.toml</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
