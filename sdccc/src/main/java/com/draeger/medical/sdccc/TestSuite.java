@@ -595,17 +595,17 @@ public class TestSuite {
 
         if (testRunObserver.isInvalid()) {
             LOG.info(
-                    "Test run with {} tests was invalid. Please consult the logfiles in {} for further information.",
+                    "Test run with {} test(s) was invalid. Please consult the logfiles in {} for further information.",
                     testRunObserver.getTotalNumberOfTestsRun(),
                     testRunDir);
         } else {
             if (numberOfTestFailures == 0) {
                 LOG.info(
-                        "Test run with {} tests was valid. No problems were found.",
+                        "Test run with {} test(s) was valid. No problems were found.",
                         testRunObserver.getTotalNumberOfTestsRun());
             } else {
                 LOG.info(
-                        "Test run with {} tests was valid, but problems were found. Please consult the logfiles in {} for further information.",
+                        "Test run with {} test(s) was valid, but problems were found. Please consult the logfiles in {} for further information.",
                         testRunObserver.getTotalNumberOfTestsRun(),
                         testRunDir);
             }
