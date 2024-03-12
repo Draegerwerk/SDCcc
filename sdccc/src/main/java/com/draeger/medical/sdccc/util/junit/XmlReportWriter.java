@@ -49,12 +49,14 @@ public class XmlReportWriter {
     private final TestRunObserver testRunObserver;
     private final ClassUtil classUtil;
     private final MessageStorage messageStorage;
+
     /**
      * Initializes an XmlReportWriter.
      *
      * @param reportData      list of results representing test cases
      * @param classUtil       utility
      * @param testRunObserver observer which contains information on validity of test run
+     * @param messageStorage  storage to retrieve error counts from
      */
     @AssistedInject
     XmlReportWriter(
@@ -217,7 +219,7 @@ public class XmlReportWriter {
      * @throws XMLStreamException on xml writing errors
      */
     private void writeInvalidTestRunTestCase(final XMLStreamWriter xmlWriter) throws XMLStreamException {
-        List<String> listOfReasons = new ArrayList<>();
+        final List<String> listOfReasons = new ArrayList<>();
         final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
         final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
         if (messageEncodingErrorCount > 0) {
