@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
+import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.XPathExtractor;
@@ -252,11 +253,12 @@ public class XmlReportWriterTest {
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final var observer = mock(TestRunObserver.class);
+        final var messageStorage = mock(MessageStorage.class);
         try (final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
             final var factory = XMLOutputFactory.newInstance();
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-            final var writer = new XmlReportWriter(data, classUtil, observer);
+            final var writer = new XmlReportWriter(data, classUtil, observer, messageStorage);
             writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1));
         }
 
@@ -345,11 +347,12 @@ public class XmlReportWriterTest {
     public void testAdditionalTags() throws Exception {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final var observer = mock(TestRunObserver.class);
+        final var messageStorage = mock(MessageStorage.class);
         try (final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
             final var factory = XMLOutputFactory.newInstance();
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-            final var writer = new XmlReportWriter(data, classUtil, observer);
+            final var writer = new XmlReportWriter(data, classUtil, observer, messageStorage);
             writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1));
         }
 
@@ -466,7 +469,8 @@ public class XmlReportWriterTest {
             final var factory = XMLOutputFactory.newInstance();
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-            final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
+            final var writer =
+                    new XmlReportWriter(data, classUtil, mock(TestRunObserver.class), mock(MessageStorage.class));
             final var error = assertThrows(
                     XMLStreamException.class,
                     () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
@@ -517,7 +521,8 @@ public class XmlReportWriterTest {
             final var factory = XMLOutputFactory.newInstance();
             final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-            final var writer = new XmlReportWriter(data, classUtil, mock(TestRunObserver.class));
+            final var writer =
+                    new XmlReportWriter(data, classUtil, mock(TestRunObserver.class), mock(MessageStorage.class));
             final var error = assertThrows(
                     XMLStreamException.class,
                     () -> writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1)),
@@ -543,7 +548,7 @@ public class XmlReportWriterTest {
         final var factory = XMLOutputFactory.newInstance();
         final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-        final var writer = new XmlReportWriter(data, classUtil, observer);
+        final var writer = new XmlReportWriter(data, classUtil, observer, mock(MessageStorage.class));
         writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1));
 
         outputStreamWriter.close();
@@ -593,7 +598,7 @@ public class XmlReportWriterTest {
         final var factory = XMLOutputFactory.newInstance();
         final var xmlWriter = factory.createXMLStreamWriter(outputStreamWriter);
 
-        final var writer = new XmlReportWriter(data, classUtil, observer);
+        final var writer = new XmlReportWriter(data, classUtil, observer, mock(MessageStorage.class));
         writer.writeXmlReport(xmlWriter, Duration.ofSeconds(1));
 
         outputStreamWriter.close();
