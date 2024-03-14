@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-package com.draeger.medical.sdccc.sdcri.testprovider;
+package it.com.draeger.medical.sdccc.test_util.testprovider;
 
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.messages.MessageStorage;
