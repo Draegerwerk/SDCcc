@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-package com.draeger.medical.sdccc.sdcri.testprovider;
+package it.com.draeger.medical.sdccc.test_util.testprovider;
 
 import com.google.inject.Injector;
 import java.time.Duration;

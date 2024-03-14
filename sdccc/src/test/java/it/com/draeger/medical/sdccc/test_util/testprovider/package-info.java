@@ -9,6 +9,6 @@
  * SDCcc test provider.
  */
 @ParametersAreNonnullByDefault
-package com.draeger.medical.sdccc.sdcri.testprovider;
+package it.com.draeger.medical.sdccc.test_util.testprovider;
 
 import javax.annotation.ParametersAreNonnullByDefault;

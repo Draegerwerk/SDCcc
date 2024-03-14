@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- consumer test related implementations
+
 ## [9.0.0] - 2024-02-23
 
 ### Added
