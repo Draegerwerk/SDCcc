@@ -228,7 +228,6 @@ public class TestSuite {
         } catch (final TimeoutException e) {
             testRunObserver.invalidateTestRun("Could not stop the test client", e);
         }
-        // TODO: Stop provider (https://github.com/Draegerwerk/SDCcc/issues/1)
 
         // flush all data so invariant tests run on most current data
         injector.getInstance(MessageStorage.class).flush();
@@ -368,8 +367,6 @@ public class TestSuite {
     private Boolean setupDeviceAndProvider() {
         final var isConsumerEnabled =
                 injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE)));
-        final var isProviderEnabled =
-                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.PROVIDER_ENABLE)));
 
         if (isConsumerEnabled) {
             LOG.info("Starting TestSuite Client");
@@ -387,10 +384,6 @@ public class TestSuite {
                     client.getHostingServiceProxy().getHostedServices().values().stream()
                             .anyMatch(service ->
                                     service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
-        }
-        if (isProviderEnabled) {
-            LOG.info("Starting TestSuite Provider");
-            // TODO: Start provider (https://github.com/Draegerwerk/SDCcc/issues/1)
         }
         return isConsumerEnabled;
     }

@@ -19,7 +19,7 @@ public final class TestSuiteConfig {
     /*
      * General configuration
      */
-    private static final String SDCCC = "SDCcc.";
+    public static final String SDCCC = "SDCcc.";
     public static final String CI_MODE = SDCCC + "CIMode";
     public static final String GRAPHICAL_POPUPS = SDCCC + "GraphicalPopups";
     public static final String TEST_EXECUTION_LOGGING = SDCCC + "TestExecutionLogging";
@@ -57,13 +57,6 @@ public final class TestSuiteConfig {
     public static final String CONSUMER_DEVICE_LOCATION_FLOOR = SDCCC + CONSUMER + "DeviceLocationFloor";
     public static final String CONSUMER_DEVICE_LOCATION_ROOM = SDCCC + CONSUMER + "DeviceLocationRoom";
     public static final String CONSUMER_DEVICE_LOCATION_BED = SDCCC + CONSUMER + "DeviceLocationBed";
-
-    /*
-     * Provider configuration
-     */
-    private static final String PROVIDER = "Provider.";
-    public static final String PROVIDER_ENABLE = SDCCC + PROVIDER + Constants.ENABLE_SETTING_POSTFIX;
-    public static final String PROVIDER_DEVICE_EPR = SDCCC + PROVIDER + Constants.DEVICE_EPR_POSTFIX;
 
     /*
      * GRPC configuration

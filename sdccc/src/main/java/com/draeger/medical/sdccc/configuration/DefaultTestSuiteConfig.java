@@ -35,7 +35,6 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
         configureTestSuite();
         configureTLS();
         configureNetwork();
-        configureProvider();
         configureGRpc();
         configureTestParameter();
         configureInternalSettings();
@@ -77,10 +76,6 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
         bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
         bind(TestSuiteConfig.NETWORK_MAX_WAIT, long.class, 10L);
         bind(TestSuiteConfig.NETWORK_MULTICAST_TTL, long.class, 128L);
-    }
-
-    void configureProvider() {
-        bind(TestSuiteConfig.PROVIDER_ENABLE, Boolean.class, false);
     }
 
     void configureGRpc() {
