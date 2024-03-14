@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SDCcc.SummarizeMessageEncodingErrors.
 - checking for message encoding errors can be disabled using the configuration option SDCcc.EnableMessageEncodingCheck.
   - when enabled, SDCcc also checks if message bodies can be decoded using the encoding specified.
-- configuration option SDCcc.Network.dMulticastTTL to configure the Time To Live of the Multicast Packets used for Discovery.
+- configuration option SDCcc.Network.MulticastTTL to configure the Time To Live of the Multicast Packets used for Discovery.
 - precondition for biceps:R5024 to trigger description modification reports for test data
 
 ### Changed
