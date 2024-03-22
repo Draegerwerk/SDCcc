@@ -95,7 +95,7 @@ public class HttpClientUtil {
                                     new HttpException(response.getStatusLine().getStatusCode())));
                 }
             }
-        } catch (final javax.xml.bind.JAXBException e) {
+        } catch (final jakarta.xml.bind.JAXBException e) {
             LOG.debug(
                     "Unmarshalling of a message failed: {}. Response payload:\n{}",
                     e.getMessage(),
