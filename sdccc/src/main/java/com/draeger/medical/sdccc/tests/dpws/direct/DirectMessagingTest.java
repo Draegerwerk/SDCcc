@@ -175,7 +175,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.DPWS_R0031)
     @TestDescription("Provokes an wsa:InvalidAddressingHeader SOAP Fault and verifies, that with an anonymous"
             + " reply endpoint the wsa:InvalidAddressingHeader SOAP Fault is not thrown.")
-    void testRequirement0031() throws javax.xml.bind.JAXBException {
+    void testRequirement0031() throws jakarta.xml.bind.JAXBException {
         final var msgUUID = soapUtil.createRandomUuidUri();
         try {
             sendMessageWithReplyToHeader(msgUUID, SOME_REPLY_ENDPOINT);
@@ -198,7 +198,7 @@ public class DirectMessagingTest extends InjectorTestBase {
     }
 
     private void sendMessageWithReplyToHeader(final String msgId, final String replyUri)
-            throws javax.xml.bind.JAXBException, SoapFaultException {
+            throws jakarta.xml.bind.JAXBException, SoapFaultException {
         final var message =
                 soapUtil.createMessage(ActionConstants.ACTION_GET_MDIB, messageModelFactory.createGetMdib());
 

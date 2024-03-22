@@ -9,10 +9,10 @@ package com.draeger.medical.sdccc.messages;
 
 import com.draeger.medical.sdccc.tests.util.ManipulationParameterUtil;
 import com.draeger.medical.t2iapi.ResponseTypes;
+import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import java.util.List;
 import java.util.UUID;
-import javax.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**

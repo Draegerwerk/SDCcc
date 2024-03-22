@@ -112,10 +112,10 @@ public class WsdlParserTest {
 
     /**
      * Tests using the method parsePortTypes to parse request-response operations.
-     * @throws javax.xml.bind.JAXBException when this exception is thrown.
+     * @throws jakarta.xml.bind.JAXBException when this exception is thrown.
      */
     @Test
-    public void testParsePortTypesGood() throws javax.xml.bind.JAXBException {
+    public void testParsePortTypesGood() throws jakarta.xml.bind.JAXBException {
         final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
                 + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
                 + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "
@@ -160,10 +160,10 @@ public class WsdlParserTest {
 
     /**
      * Tests using the method parsePortTypes to parse solicit-response operations.
-     * @throws javax.xml.bind.JAXBException when this exception is thrown.
+     * @throws jakarta.xml.bind.JAXBException when this exception is thrown.
      */
     @Test
-    public void testParsePortTypesGoodInputAndOutputSwitched() throws javax.xml.bind.JAXBException {
+    public void testParsePortTypesGoodInputAndOutputSwitched() throws jakarta.xml.bind.JAXBException {
         final String wsdl = "<wsdl:definitions xmlns:dpws=\"http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01\" "
                 + "xmlns:mdpws=\"http://standards.ieee.org/downloads/11073/11073-20702-2016\" "
                 + "xmlns:msg=\"http://standards.ieee.org/downloads/11073/11073-10207-2017/message\" "

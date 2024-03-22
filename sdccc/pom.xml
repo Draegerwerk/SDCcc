@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junitVersion>5.6.0</junitVersion>
         <junitPlatformVersion>1.6.0</junitPlatformVersion>
-        <sdcriVersion>5.0.0</sdcriVersion>
+        <sdcriVersion>6.0.0-SNAPSHOT</sdcriVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <spotbugsVersion>4.7.3</spotbugsVersion>
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
@@ -34,11 +34,6 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/Draegerwerk/t2iapi</url>
-        </repository>
         <repository>
             <id>sonatype</id>
             <name>OSS Sonatype Snapshots</name>
@@ -195,28 +190,18 @@
             <version>${jakartaXmlBindApiVersion}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-core -->
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>${comSunXmlBindVersion}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
+            <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-core</artifactId>
-            <version>${comSunXmlBindVersion}</version>
-            <scope>compile</scope>
+            <version>${jaxbCoreVersion}</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-        <!-- use older version for sdc-ri -->
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime -->
         <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.3.1</version>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxbRuntimeVersion}</version>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
         <dependency>
@@ -251,6 +236,13 @@
             <artifactId>junit-jupiter-params</artifactId>
             <version>${junitVersion}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/jakarta.inject/jakarta.inject-api -->
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+            <version>2.0.1</version>
         </dependency>
 
     </dependencies>

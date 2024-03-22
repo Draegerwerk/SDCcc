@@ -163,8 +163,8 @@ public class DirectSecurityConsiderationsTestTest {
         when(testClient.getTargetXAddrs()).thenReturn(xAddresses);
 
         final var mockFaultMessage = mock(SoapMessage.class, Mockito.RETURNS_DEEP_STUBS);
-        final javax.xml.bind.JAXBElement<Fault> mockJaxbFault =
-                mock(javax.xml.bind.JAXBElement.class, Mockito.RETURNS_DEEP_STUBS);
+        final jakarta.xml.bind.JAXBElement<Fault> mockJaxbFault =
+                mock(jakarta.xml.bind.JAXBElement.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockFaultMessage.getOriginalEnvelope().getBody().getAny().get(0)).thenReturn(mockJaxbFault);
 
         final var mockFault = mock(Fault.class, Mockito.RETURNS_DEEP_STUBS);

@@ -44,8 +44,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
+import org.somda.sdc.biceps.common.PairException;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
-import org.somda.sdc.biceps.provider.preprocessing.HandleDuplicatedException;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
@@ -68,7 +68,7 @@ public class InvariantParticipantModelHandleTestTest {
     private static final int LOWER_BOUND = 0x21;
     private static final int UPPER_BOUND = 0x7E;
     private static final String ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE =
-            "contextState handle '%s' is " + "not unique in Mdib version MdibVersion";
+            "Context change included handles colliding with descriptors: %s";
     private static MessageStorageUtil messageStorageUtil;
     private static MdibBuilder mdibBuilder;
     private static MessageBuilder messageBuilder;
@@ -277,7 +277,10 @@ public class InvariantParticipantModelHandleTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, firstReport);
 
         final AssertionFailedError afe = assertThrows(AssertionFailedError.class, testClass::testRequirementR0007);
-        assertTrue(afe.getMessage().startsWith(String.format(ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE, "someVmd")));
+        final var expectedMessage = String.format(ERROR_MESSAGE_HANDLE_IS_NOT_UNIQUE, "someVmd");
+        assertTrue(
+                afe.getCause().getCause().getMessage().startsWith(expectedMessage),
+                "Unexpected message, was " + afe.getMessage() + " - expected: " + expectedMessage);
     }
 
     /**
@@ -298,10 +301,9 @@ public class InvariantParticipantModelHandleTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
 
         final RuntimeException exception = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
-        assertTrue(exception.getMessage().contains(NON_UNIQUE_HANDLE));
-        assertTrue(
-                exception.getCause() instanceof HandleDuplicatedException,
-                "Wrong kind of Exception: " + exception.getCause());
+        // creating the mdib fails when matching descriptor and state types due to duplicate handles,
+        // causing a PairException
+        assertTrue(exception.getCause() instanceof PairException, "Wrong kind of Exception: " + exception.getCause());
     }
 
     /**
@@ -316,9 +318,8 @@ public class InvariantParticipantModelHandleTestTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, mdib);
 
-        final RuntimeException rte = assertThrows(RuntimeException.class, testClass::testRequirementR0007);
+        final RuntimeException rte = assertThrows(IllegalArgumentException.class, testClass::testRequirementR0007);
         assertTrue(rte.getMessage().contains(NON_UNIQUE_HANDLE));
-        assertTrue(rte.getCause() instanceof HandleDuplicatedException, "Wrong kind of Exception: " + rte.getCause());
     }
 
     /**

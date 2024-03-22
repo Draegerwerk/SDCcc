@@ -694,10 +694,10 @@ public class DirectWSDLTest extends InjectorTestBase {
         getService.sendRequestResponse(getMdibRequest);
     }
 
-    private javax.xml.bind.JAXBElement<AttributedURIType> createMustUnderstandNode() {
+    private jakarta.xml.bind.JAXBElement<AttributedURIType> createMustUnderstandNode() {
         final var entry = new AttributedURIType();
         entry.setValue(MUST_UNDERSTAND_TEXT);
         entry.getOtherAttributes().put(Constants.MUST_UNDERSTAND_ATTRIBUTE, "true");
-        return new javax.xml.bind.JAXBElement<>(CUSTOM_NAMESPACE, AttributedURIType.class, entry);
+        return new jakarta.xml.bind.JAXBElement<>(CUSTOM_NAMESPACE, AttributedURIType.class, entry);
     }
 }

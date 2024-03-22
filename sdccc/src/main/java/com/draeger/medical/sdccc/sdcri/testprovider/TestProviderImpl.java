@@ -19,7 +19,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -37,6 +36,7 @@ import org.somda.sdc.glue.common.MdibXmlIo;
 import org.somda.sdc.glue.common.factory.ModificationsBuilderFactory;
 import org.somda.sdc.glue.provider.SdcDevice;
 import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
+import org.somda.sdc.glue.provider.sco.OperationInvocationReceiver;
 
 /**
  * SDCri provider used to test SDC consumers.
@@ -62,7 +62,7 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
 
         try {
             this.mdib = mdibXmlIo.readMdib(mdibAsStream);
-        } catch (final javax.xml.bind.JAXBException e) {
+        } catch (final jakarta.xml.bind.JAXBException e) {
             throw new RuntimeException(e);
         }
 
@@ -98,7 +98,7 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
                             }
                         },
                         this.mdibAccess,
-                        Collections.emptyList(),
+                        new OperationInvocationReceiver() {},
                         List.of(injector.getInstance(TestProviderHostingServicePlugin.class)));
     }
 
