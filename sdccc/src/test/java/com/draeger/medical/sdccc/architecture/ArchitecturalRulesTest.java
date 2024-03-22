@@ -8,7 +8,7 @@
 package com.draeger.medical.sdccc.architecture;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
-import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
+import static com.tngtech.archunit.core.domain.JavaAccess.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
@@ -19,7 +19,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.draeger.medical.sdccc.tests.util.InitialImpliedValue;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -63,11 +62,11 @@ import org.somda.sdc.biceps.model.participant.MdsState;
         importOptions = {ImportOption.DoNotIncludeTests.class})
 public class ArchitecturalRulesTest {
 
-    private static DescribedPredicate<JavaAnnotation> theTestIdentifierOfAStandardRequirement =
+    private static final DescribedPredicate<JavaAnnotation<?>> TEST_IDENTIFIER_OF_A_STANDARD_REQUIREMENT =
             new DescribedPredicate<>("is annotated with the @TestIdentifier of a Standard "
                     + "Requirement (not a Replacement Requirement)") {
                 @Override
-                public boolean apply(final JavaAnnotation input) {
+                public boolean test(final JavaAnnotation input) {
                     if (((JavaClass) input.getType()).isAssignableTo(TestIdentifier.class)) {
                         final String displayName =
                                 (String) input.getProperties().get("value");
@@ -79,214 +78,218 @@ public class ArchitecturalRulesTest {
             };
 
     @ArchTest
-    private static ArchRule doNotGiveRequirementsTextForStandardRequirements = noMethods()
+    private static final ArchRule DO_NOT_GIVE_REQUIREMENTS_TEXT_FOR_STANDARD_REQUIREMENTS = noMethods()
             .that()
             .areAnnotatedWith(TestIdentifier.class)
             .should()
-            .beAnnotatedWith(theTestIdentifierOfAStandardRequirement)
+            .beAnnotatedWith(TEST_IDENTIFIER_OF_A_STANDARD_REQUIREMENT)
             .andShould()
             .beAnnotatedWith(DisplayName.class)
             .because(
                     "Standard Requirements are copyrighted and should not be published as part of the SDCcc source code.");
 
     @ArchTest
-    private static ArchRule doNotUseOptionalGet = noClasses()
+    private static final ArchRule DO_NOT_USE_OPTIONAL_GET = noClasses()
             .should()
-            .callMethodWhere(target(nameMatching("get")).and(target(owner(assignableTo(Optional.class)))))
+            .accessTargetWhere(target(owner(assignableTo(Optional.class))).and(nameMatching("get")))
             .because("We want to use Optional.orElseThrow() instead of Optional.get().");
 
     // Implied value rules
     private static final String REASON = "Use ImpliedValueUtil to retrieve %s from %s.";
 
     @ArchTest
-    private static ArchRule checkAbstractContextStateGetContextAssociation = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_CONTEXT_STATE_GET_CONTEXT_ASSOCIATION = checkImpliedValue(
             "getContextAssociation",
             AbstractContextState.class,
             String.format(REASON, "context association", "AbstractContextState"));
 
     @ArchTest
-    private static ArchRule checkAbstractDescriptorGetDescriptorVersion = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_DESCRIPTOR_GET_DESCRIPTOR_VERSION = checkImpliedValue(
             "getDescriptorVersion",
             AbstractDescriptor.class,
             String.format(REASON, "descriptor version", "AbstractDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAbstractDescriptorGetSafetyClassification = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_DESCRIPTOR_GET_SAFETY_CLASSIFICATION = checkImpliedValue(
             "getSafetyClassification",
             AbstractDescriptor.class,
             String.format(REASON, "safety classification", "AbstractDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAbstractDeviceComponentStateGetActivationState = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_DEVICE_COMPONENT_STATE_GET_ACTIVATION_STATE = checkImpliedValue(
             "getActivationState",
             AbstractDeviceComponentState.class,
             String.format(REASON, "activation state", "AbstractDeviceComponentState"));
 
     @ArchTest
-    private static ArchRule checkAbstractMetricStateGetActivationState = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_METRIC_STATE_GET_ACTIVATION_STATE = checkImpliedValue(
             "getActivationState",
             AbstractMetricState.class,
             String.format(REASON, "activation state", "AbstractMetricState"));
 
     @ArchTest
-    private static ArchRule checkMetricQualityGetGenerationMode = checkImpliedValue(
+    private static final ArchRule CHECK_METRIC_QUALITY_GET_GENERATION_MODE = checkImpliedValue(
             "getMode",
             AbstractMetricValue.MetricQuality.class,
             String.format(REASON, "generation mode", "AbstractMetricValue.MetricQuality"));
 
     @ArchTest
-    private static ArchRule checkMetricQualityGetQi = checkImpliedValue(
+    private static final ArchRule CHECK_METRIC_QUALITY_GET_QI = checkImpliedValue(
             "getQi",
             AbstractMetricValue.MetricQuality.class,
             String.format(REASON, "quality indicator", "AbstractMetricValue.MetricQuality"));
 
     @ArchTest
-    private static ArchRule checkAbstractOperationDescriptorIsRetriggerable = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_OPERATION_DESCRIPTOR_IS_RETRIGGERABLE = checkImpliedValue(
             "isRetriggerable",
             AbstractOperationDescriptor.class,
             String.format(REASON, "retriggerable", "AbstractOperationDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAbstractOperationDescriptorGetAccessLevel = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_OPERATION_DESCRIPTOR_GET_ACCESS_LEVEL = checkImpliedValue(
             "getAccessLevel",
             AbstractOperationDescriptor.class,
             String.format(REASON, "access level", "AbstractOperationDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAbstractStateGetStateVersion = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_STATE_GET_STATE_VERSION = checkImpliedValue(
             "getStateVersion", AbstractState.class, String.format(REASON, "state version", "AbstractState"));
 
     @ArchTest
-    private static ArchRule checkAbstractStateGetDescriptorVersion = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_STATE_GET_DESCRIPTOR_VERSION = checkImpliedValue(
             "getDescriptorVersion", AbstractState.class, String.format(REASON, "descriptor version", "AbstractState"));
 
     @ArchTest
-    private static ArchRule checkAlertConditionDescriptorGetDefaultConditionGenerationDelay = checkImpliedValue(
-            "getDefaultConditionGenerationDelay",
-            AlertConditionDescriptor.class,
-            String.format(REASON, "default condition generation delay", "AlertConditionDescriptor"));
+    private static final ArchRule CHECK_ALERT_CONDITION_DESCRIPTOR_GET_DEFAULT_CONDITION_GENERATION_DELAY =
+            checkImpliedValue(
+                    "getDefaultConditionGenerationDelay",
+                    AlertConditionDescriptor.class,
+                    String.format(REASON, "default condition generation delay", "AlertConditionDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAlertConditionStateIsPresence = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_CONDITION_STATE_IS_PRESENCE = checkImpliedValue(
             "isPresence", AlertConditionState.class, String.format(REASON, "presence", "AlertConditionState"));
 
     @ArchTest
-    private static ArchRule checkAlertSignalDescriptorGetDefaultSignalGenerationDelay = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_SIGNAL_DESCRIPTOR_GET_DEFAULT_SIGNAL_GENERATION_DELAY = checkImpliedValue(
             "getDefaultSignalGenerationDelay",
             AlertSignalDescriptor.class,
             String.format(REASON, "default signal generation delay", "AlertSignalDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAlertSignalDescriptorIsSignalDelegationSupported = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_SIGNAL_DESCRIPTOR_IS_SIGNAL_DELEGATION_SUPPORTED = checkImpliedValue(
             "isSignalDelegationSupported",
             AlertSignalDescriptor.class,
             String.format(REASON, "signal delegation supported", "AlertSignalDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAlertSignalDescriptorIsAcknowledgementSupported = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_SIGNAL_DESCRIPTOR_IS_ACKNOWLEDGEMENT_SUPPORTED = checkImpliedValue(
             "isAcknowledgementSupported",
             AlertSignalDescriptor.class,
             String.format(REASON, "acknowledgement supported", "AlertSignalDescriptor"));
 
     @ArchTest
-    private static ArchRule checkAlertSignalStateGetPresence = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_SIGNAL_STATE_GET_PRESENCE = checkImpliedValue(
             "getPresence", AlertSignalState.class, String.format(REASON, "presence", "AlertSignalState"));
 
     @ArchTest
-    private static ArchRule checkAlertSignalStateGetLocation = checkImpliedValue(
+    private static final ArchRule CHECK_ALERT_SIGNAL_STATE_GET_LOCATION = checkImpliedValue(
             "getLocation", AlertSignalState.class, String.format(REASON, "location", "AlertSignalState"));
 
     @ArchTest
-    private static ArchRule checkCalibrationInfoGetType =
+    private static final ArchRule CHECK_CALIBRATION_INFO_GET_TYPE =
             checkImpliedValue("getType", CalibrationInfo.class, String.format(REASON, "type", "CalibrationInfo"));
 
     @ArchTest
-    private static ArchRule checkClinicalInfoGetCriticality = checkImpliedValue(
+    private static final ArchRule CHECK_CLINICAL_INFO_GET_CRITICALITY = checkImpliedValue(
             "getCriticality", ClinicalInfo.class, String.format(REASON, "criticality", "ClinicalInfo"));
 
     @ArchTest
-    private static ArchRule checkClockStateIsCriticalUse =
+    private static final ArchRule CHECK_CLOCK_STATE_IS_CRITICAL_USE =
             checkImpliedValue("isCriticalUse", ClockState.class, String.format(REASON, "critical use", "ClockState"));
 
     @ArchTest
-    private static ArchRule checkCodedValueGetCodingSystem = checkImpliedValue(
+    private static final ArchRule CHECK_CODED_VALUE_GET_CODING_SYSTEM = checkImpliedValue(
             "getCodingSystem", CodedValue.class, String.format(REASON, "coding system", "CodedValue"));
 
     @ArchTest
-    private static ArchRule checkLimitAlertConditionDescriptorIsAutoLimitSupported = checkImpliedValue(
+    private static final ArchRule CHECK_LIMIT_ALERT_CONDITION_DESCRIPTOR_IS_AUTO_LIMIT_SUPPORTED = checkImpliedValue(
             "isAutoLimitSupported",
             LimitAlertConditionDescriptor.class,
             String.format(REASON, "auto limit supported", "LimitAlertConditionDescriptor"));
 
     @ArchTest
-    private static ArchRule checkMdDescriptionGetDescriptionVersion = checkImpliedValue(
+    private static final ArchRule CHECK_MD_DESCRIPTION_GET_DESCRIPTION_VERSION = checkImpliedValue(
             "getDescriptionVersion",
             MdDescription.class,
             String.format(REASON, "description version", "MdDescription"));
 
     @ArchTest
-    private static ArchRule checkMdsStateGetLang =
+    private static final ArchRule CHECK_MDS_STATE_GET_LANG =
             checkImpliedValue("getLang", MdsState.class, String.format(REASON, "language", "MdsState"));
 
     @ArchTest
-    private static ArchRule checkMdsStateGetOperatingMode =
+    private static final ArchRule CHECK_MDS_STATE_GET_OPERATING_MODE =
             checkImpliedValue("getOperatingMode", MdsState.class, String.format(REASON, "operating mode", "MdsState"));
 
     @ArchTest
-    private static ArchRule checkMdStateGetStateVersion =
+    private static final ArchRule CHECK_MD_STATE_GET_STATE_VERSION =
             checkImpliedValue("getStateVersion", MdState.class, String.format(REASON, "state version", "MdState"));
 
     @ArchTest
-    private static ArchRule checkMdibVersionGetVersion =
+    private static final ArchRule CHECK_MDIB_VERSION_GET_VERSION =
             checkImpliedValue("getVersion", MdibVersion.class, String.format(REASON, "version", "MdibVersion"));
 
     @ArchTest
-    private static ArchRule checkDescriptionModificationReportReportPartGetModificationType = checkImpliedValue(
-            "getModificationType",
-            DescriptionModificationReport.ReportPart.class,
-            String.format(REASON, "modification type", "DescriptionModificationReport.ReportPart"));
+    private static final ArchRule CHECK_DESCRIPTION_MODIFICATION_REPORT_REPORT_PART_GET_MODIFICATION_TYPE =
+            checkImpliedValue(
+                    "getModificationType",
+                    DescriptionModificationReport.ReportPart.class,
+                    String.format(REASON, "modification type", "DescriptionModificationReport.ReportPart"));
 
     @ArchTest
-    private static ArchRule checkObservedValueStreamValueGetStateVersion = checkImpliedValue(
+    private static final ArchRule CHECK_OBSERVED_VALUE_STREAM_VALUE_GET_STATE_VERSION = checkImpliedValue(
             "getStateVersion",
             ObservedValueStream.Value.class,
             String.format(REASON, "state version", "ObservedValueStream.Value"));
 
     @ArchTest
-    private static ArchRule checkRetrievabilityInfoGetUpdatePeriod = checkImpliedValue(
+    private static final ArchRule CHECK_RETRIEVABILITY_INFO_GET_UPDATE_PERIOD = checkImpliedValue(
             "getUpdatePeriod", RetrievabilityInfo.class, String.format(REASON, "update period", "RetrievabilityInfo"));
 
     @ArchTest
-    private static ArchRule checkAbstractReportMdibVersion = checkImpliedValue(
+    private static final ArchRule CHECK_ABSTRACT_REPORT_MDIB_VERSION = checkImpliedValue(
             "getMdibVersion", AbstractReport.class, String.format(REASON, "mdib version", "AbstractReport"));
 
     @ArchTest
-    private static ArchRule checkMdibMdibVersion =
+    private static final ArchRule CHECK_MDIB_GET_MDIB_VERSION =
             checkImpliedValue("getMdibVersion", Mdib.class, String.format(REASON, "mdib verison", "Mdib"));
 
     @ArchTest
-    private static ArchRule checkMdibInstanceId =
+    private static final ArchRule CHECK_MDIB_GET_INSTANCE_ID =
             checkImpliedValue("getInstanceId", Mdib.class, String.format(REASON, "instance id", "Mdib"));
 
     @ArchTest
-    private static ArchRule checkDirectTestsInitialImpliedVersions = noClasses()
+    private static final ArchRule CHECK_DIRECT_TESTS_INITIAL_IMPLIED_VERSIONS = noClasses()
             .that()
             .resideInAPackage("..direct..")
             .should()
-            .callMethod(
-                    ImpliedValueUtil.class, "getDescriptorVersion", AbstractDescriptor.class, InitialImpliedValue.class)
+            .accessTargetWhere(
+                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getDescriptorVersion")))
             .orShould()
-            .callMethod(ImpliedValueUtil.class, "getStateVersion", AbstractState.class, InitialImpliedValue.class)
+            .accessTargetWhere(
+                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getStateVersion")))
             .orShould()
-            .callMethod(
-                    ImpliedValueUtil.class, "getStateDescriptorVersion", AbstractState.class, InitialImpliedValue.class)
+            .accessTargetWhere(
+                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getStateDescriptorVersion")))
             .because("Initial implied value can not be reliable checked in direct tests");
 
-    private static ArchRule checkImpliedValue(final String methodName, final Class targetClass, final String reason) {
+    private static ArchRule checkImpliedValue(
+            final String methodName, final Class<?> targetClass, final String reason) {
         return noClasses()
                 .that(are(not(equivalentTo(ImpliedValueUtil.class))))
                 .should()
-                .callMethodWhere(target(nameMatching(methodName)).and(target(owner(assignableTo(targetClass)))))
+                .accessTargetWhere(target(owner(assignableTo(targetClass))).and(nameMatching(methodName)))
                 .because(reason);
     }
 }
