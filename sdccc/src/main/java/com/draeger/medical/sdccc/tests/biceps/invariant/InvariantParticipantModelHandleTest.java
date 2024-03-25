@@ -85,7 +85,6 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
             + " all contained handles are unique.")
     @RequirePrecondition(
             manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
-
     void testRequirementR0007() throws NoTestData, IOException {
         // NOTE: MdibHistorian checks the uniqueness of Handles in all MdibVersions.
         //       However, its checks are missing duplicate handles introduced by ContextReports.
