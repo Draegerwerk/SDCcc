@@ -12,9 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
@@ -66,6 +69,8 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies that the OperationTarget of every AbstractOperationDescriptor is at any point set to the"
             + " descriptor of the parent of the sco or any child descriptor of that parent.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirementB6() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
@@ -128,6 +133,8 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Based on the initially retrieved mdib, applies each episodic report to the mdib and verifies that"
             + " no OperatingJurisdiction is set for an MdsState at any time if the corresponding MdsDescriptor does not"
             + " maintain an ApprovedJurisdiction list.")
+    @RequirePrecondition(
+            simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
     void testRequirementB284() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
@@ -173,6 +180,8 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
     @TestDescription("Based on the initially retrieved mdib, applies each episodic report to the mdib and verifies that"
             + " no OperatingJurisdiction is set for an VmdState at any time if the corresponding VmdDescriptor does not"
             + " maintain an ApprovedJurisdiction list.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirementB402() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
