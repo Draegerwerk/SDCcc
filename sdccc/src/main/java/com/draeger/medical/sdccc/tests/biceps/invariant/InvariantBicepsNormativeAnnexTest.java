@@ -7,25 +7,28 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
-import static com.draeger.medical.sdccc.util.Constants.REF_ELEMENT_QUERY;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.util.XPathExtractor;
 import com.google.inject.Injector;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import javax.xml.xpath.XPathExpressionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import javax.xml.xpath.XPathExpressionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static com.draeger.medical.sdccc.util.Constants.REF_ELEMENT_QUERY;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for the normative Annex of BICEPS.
@@ -46,6 +49,8 @@ public class InvariantBicepsNormativeAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_R5006)
     @TestDescription(
             "Verifies that for all incoming messages, Localized text with the @Ref attribute always has a version")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.class})
     void testRequirement5006() throws Exception {
 
         final var refExtractor = new XPathExtractor(REF_ELEMENT_QUERY);

@@ -11,9 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
@@ -54,6 +56,8 @@ public class InvariantParticipantModelMappingTest extends InjectorTestBase {
             + " The relationship between a state and its descriptor is further verified by checking the naming scheme."
             + " The existence of a descriptor for a state is implicitly tested in MdibHistorian"
             + " and is covered by a unittest.")
+    @RequirePrecondition(
+            simplePreconditions = {ConditionalPreconditions.AllKindsOfContextStatesAssociatedPrecondition.class})
     void testRequirementR0023() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));

@@ -349,6 +349,8 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             + "by comparing their value before and after applying each"
             + " report. This also applies to the deletion and re-insertion of descriptors or states."
             + "MdibVersion is excluded from this, because it is used for ordering the reports that have been received.")
+    @RequirePrecondition(
+            simplePreconditions = {ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.class})
     void testRequirementR5003() throws IOException, NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
