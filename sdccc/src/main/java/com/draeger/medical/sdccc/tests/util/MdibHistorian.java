@@ -14,6 +14,7 @@ import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.Guice;
+import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
@@ -28,19 +29,15 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import javax.inject.Provider;
 import javax.xml.namespace.QName;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.somda.sdc.biceps.common.CommonConfig;
-import org.somda.sdc.biceps.common.MdibEntity;
-import org.somda.sdc.biceps.common.MdibEntityImpl;
 import org.somda.sdc.biceps.common.access.ReadTransaction;
 import org.somda.sdc.biceps.common.access.ReadTransactionImpl;
 import org.somda.sdc.biceps.common.access.factory.ReadTransactionFactory;
-import org.somda.sdc.biceps.common.factory.MdibEntityGuiceAssistedFactory;
 import org.somda.sdc.biceps.common.preprocessing.DescriptorChildRemover;
 import org.somda.sdc.biceps.common.storage.MdibStorage;
 import org.somda.sdc.biceps.common.storage.MdibStorageImpl;
@@ -53,18 +50,13 @@ import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccessImpl;
 import org.somda.sdc.biceps.consumer.access.factory.RemoteMdibAccessFactory;
 import org.somda.sdc.biceps.consumer.preprocessing.DuplicateContextStateHandleHandler;
-import org.somda.sdc.biceps.model.message.AbstractAlertReport;
-import org.somda.sdc.biceps.model.message.AbstractComponentReport;
-import org.somda.sdc.biceps.model.message.AbstractContextReport;
-import org.somda.sdc.biceps.model.message.AbstractMetricReport;
-import org.somda.sdc.biceps.model.message.AbstractOperationalStateReport;
 import org.somda.sdc.biceps.model.message.AbstractReport;
-import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.GetMdibResponse;
-import org.somda.sdc.biceps.model.message.WaveformStream;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdibVersion;
+import org.somda.sdc.biceps.provider.preprocessing.ContextHandleDuplicateChecker;
 import org.somda.sdc.biceps.provider.preprocessing.DuplicateChecker;
+import org.somda.sdc.biceps.provider.preprocessing.DuplicateDescriptorChecker;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.common.guice.DefaultCommonModule;
 import org.somda.sdc.dpws.soap.MarshallingService;
@@ -73,6 +65,7 @@ import org.somda.sdc.dpws.soap.exception.MarshallingException;
 import org.somda.sdc.glue.common.factory.ModificationsBuilderFactory;
 import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 import org.somda.sdc.glue.consumer.report.ReportProcessor;
+import org.somda.sdc.glue.consumer.report.helper.EpisodicReport;
 
 /**
  * The {@linkplain MdibHistorian} provides methods to generate histories of the Mdib during a test run. It currently
@@ -111,9 +104,6 @@ public class MdibHistorian {
             @Override
             protected void defaultConfigure() {
                 install(new FactoryModuleBuilder()
-                        .implement(MdibEntity.class, MdibEntityImpl.class)
-                        .build(MdibEntityGuiceAssistedFactory.class));
-                install(new FactoryModuleBuilder()
                         .implement(MdibStoragePreprocessingChain.class, MdibStoragePreprocessingChain.class)
                         .build(MdibStoragePreprocessingChainFactory.class));
                 install(new FactoryModuleBuilder()
@@ -138,11 +128,13 @@ public class MdibHistorian {
                 bind(
                         CommonConfig.CONSUMER_STATE_PREPROCESSING_SEGMENTS,
                         new TypeLiteral<List<Class<? extends StatePreprocessingSegment>>>() {},
-                        List.of(DuplicateContextStateHandleHandler.class));
+                        List.of(DuplicateContextStateHandleHandler.class, ContextHandleDuplicateChecker.class));
                 bind(
                         CommonConfig.CONSUMER_DESCRIPTION_PREPROCESSING_SEGMENTS,
                         new TypeLiteral<>() {},
-                        List.of(DescriptorChildRemover.class, DuplicateChecker.class));
+                        List.of(
+                                DescriptorChildRemover.class, DuplicateChecker.class,
+                                DuplicateDescriptorChecker.class, ContextHandleDuplicateChecker.class));
             }
         }
 
@@ -256,21 +248,15 @@ public class MdibHistorian {
                                 + " same version has already been applied, and is expected behavior when e.g."
                                 + " descriptors update, as both a report for description and state will arrive.");
                     }
-                    if (report instanceof WaveformStream
-                            || report instanceof AbstractMetricReport
-                            || report instanceof AbstractAlertReport
-                            || report instanceof AbstractOperationalStateReport
-                            || report instanceof AbstractComponentReport
-                            || report instanceof AbstractContextReport
-                            || report instanceof DescriptionModificationReport) {
+                    final var episodic = EpisodicReport.tryFrom(report);
+                    if (episodic != null) {
                         LOG.debug(
                                 "Applying report with mdib version {}, type {}",
                                 ImpliedValueUtil.getReportMdibVersion(report),
                                 report.getClass().getSimpleName());
-                        reportProcessor.processReport(report);
+                        reportProcessor.processEpisodicReport(episodic);
                     } else {
-                        // other reports do not modify the Mdib and hence cannot be passed into
-                        //   reportProcessor.processReport().
+                        // other reports do not modify the Mdib and hence cannot be passed into report processor,
                         // simply ignore them.
                         LOG.debug(
                                 "Ignoring report of type {} with MdibVersion {} as it is not expected to "
@@ -347,21 +333,15 @@ public class MdibHistorian {
                             "Applying report with mdib version {}, type {}",
                             ImpliedValueUtil.getReportMdibVersion(report),
                             report.getClass().getSimpleName());
-                    if (report instanceof WaveformStream
-                            || report instanceof AbstractMetricReport
-                            || report instanceof AbstractAlertReport
-                            || report instanceof AbstractOperationalStateReport
-                            || report instanceof AbstractComponentReport
-                            || report instanceof AbstractContextReport
-                            || report instanceof DescriptionModificationReport) {
+                    final var episodic = EpisodicReport.tryFrom(report);
+                    if (episodic != null) {
                         LOG.debug(
                                 "Applying report with mdib version {}, type {}",
                                 ImpliedValueUtil.getReportMdibVersion(report),
                                 report.getClass().getSimpleName());
-                        reportProcessor.processReport(report);
+                        reportProcessor.processEpisodicReport(episodic);
                     } else {
-                        // other reports do not modify the Mdib and hence cannot be passed into
-                        //   reportProcessor.processReport().
+                        // other reports do not modify the Mdib and hence cannot be passed into report processor,
                         // simply ignore them.
                         LOG.debug(
                                 "Ignoring report of type {} with MdibVersion {} as it is not expected to "
@@ -552,18 +532,13 @@ public class MdibHistorian {
                     + " descriptors update, as both a report for description and state will arrive.");
         }
 
-        if (report instanceof WaveformStream
-                || report instanceof AbstractMetricReport
-                || report instanceof AbstractAlertReport
-                || report instanceof AbstractOperationalStateReport
-                || report instanceof AbstractComponentReport
-                || report instanceof AbstractContextReport
-                || report instanceof DescriptionModificationReport) {
+        final var episodic = EpisodicReport.tryFrom(report);
+        if (episodic != null) {
             LOG.debug(
                     "Applying report with mdib version {}, type {}",
                     ImpliedValueUtil.getReportMdibVersion(report),
                     report.getClass().getSimpleName());
-            reportProcessor.processReport(report);
+            reportProcessor.processEpisodicReport(episodic);
         } else {
             // other reports do not modify the Mdib and hence cannot be passed into
             //   reportProcessor.processReport().

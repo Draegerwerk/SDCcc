@@ -51,7 +51,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.somda.sdc.biceps.provider.preprocessing.HandleDuplicatedException;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.SoapMarshalling;
 import org.somda.sdc.glue.common.ActionConstants;
@@ -390,8 +389,10 @@ public class InvariantMultiStateTestTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final var error = assertThrows(RuntimeException.class, () -> testClass.testRequirement0097());
-        assertTrue(error.getCause() instanceof HandleDuplicatedException);
+        final var error = assertThrows(IllegalArgumentException.class, () -> testClass.testRequirement0097());
+        assertTrue(
+                error.getMessage().contains(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                "Error does not contain handle " + PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
     }
 
     /**
