@@ -101,7 +101,7 @@ public class HostedServiceVerifier {
                         parsedWsdls.containsKey(portTypeName),
                         DUPLICATE_PORT_TYPE_TEMPLATE + " portType " + portTypeName + " service " + serviceId));
                 parsedWsdls.putAll(wsdlPortTypes);
-            } catch (final javax.xml.bind.JAXBException e) {
+            } catch (final jakarta.xml.bind.JAXBException e) {
                 LOG.debug("Could not parse WSDL for service {}", serviceId, e);
                 fail("Could not parse WSDL for service " + serviceId + ". Message: " + e.getMessage());
                 // unreachable, silence warnings
