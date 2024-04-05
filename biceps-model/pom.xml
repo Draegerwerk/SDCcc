@@ -29,10 +29,11 @@
             <version>${jakartaXmlBindApiVersion}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime -->
         <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>${comSunXmlBindVersion}</version>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxbRuntimeVersion}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -64,7 +65,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${jaxbBuildHelperMavenPluginVersion}</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
