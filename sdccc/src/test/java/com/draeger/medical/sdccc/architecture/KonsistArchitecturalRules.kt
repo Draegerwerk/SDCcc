@@ -13,21 +13,31 @@ import org.junit.Test
 class KonsistArchitecturalRules {
 
     @Test
-    fun `the names of requirement test classes should end with 'Test'`() {
-        Konsist.scopeFromModule("sdccc").classes()
-            .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
-            .assertTrue {
-                it.name.endsWith("Test")
-            }
+    fun `requirement test classes in module 'sdccc' should end with 'Test'`() {
+        `the names of requirement test classes in module should end with 'Test'`(moduleName = "sdccc")
     }
 
     @Test
-    fun `all requirement tests should have annotations 'TestIdentifier' and 'TestDescription'`() {
-        Konsist.scopeFromModule("sdccc").functions()
-            .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
-            .withAnnotationOf(org.junit.jupiter.api.Test::class)
-            .assertTrue {
-                it.hasAnnotationOf(TestIdentifier::class) && it.hasAnnotationOf(TestDescription::class)
-            }
+    fun `all requirement tests in module 'sdccc' should have annotations 'TestIdentifier' and 'TestDescription'`() {
+        `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(moduleName = "sdccc")
+    }
+
+    companion object {
+        fun `the names of requirement test classes in module should end with 'Test'`(moduleName: String) {
+            Konsist.scopeFromModule(moduleName).classes()
+                .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
+                .assertTrue {
+                    it.name.endsWith("Test")
+                }
+        }
+
+        fun `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(moduleName: String) {
+            Konsist.scopeFromModule(moduleName).functions()
+                .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
+                .withAnnotationOf(org.junit.jupiter.api.Test::class)
+                .assertTrue {
+                    it.hasAnnotationOf(TestIdentifier::class) && it.hasAnnotationOf(TestDescription::class)
+                }
+        }
     }
 }
