@@ -20,7 +20,8 @@
         <spotbugsVersion>4.7.3</spotbugsVersion>
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
         <bouncyCastleVersion>1.67</bouncyCastleVersion>
-
+        <kotlin.version>1.9.23</kotlin.version>
+        <detektVersion>1.23.5</detektVersion>
         <!-- name of the directory inside the archive -->
         <jreDirectoryName>jdk-17.0.5+8-jre</jreDirectoryName>
         <jreBasePath>./jre</jreBasePath>
@@ -135,6 +136,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.mockito.kotlin/mockito-kotlin -->
+        <dependency>
+            <groupId>org.mockito.kotlin</groupId>
+            <artifactId>mockito-kotlin</artifactId>
+            <version>5.2.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
@@ -245,6 +254,32 @@
             <version>2.0.1</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-test-junit5 -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.gitlab.arturbosch.detekt/detekt-formatting -->
+        <dependency>
+            <groupId>io.gitlab.arturbosch.detekt</groupId>
+            <artifactId>detekt-formatting</artifactId>
+            <version>${detektVersion}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.lemonappdev/konsist -->
+        <dependency>
+            <groupId>com.lemonappdev</groupId>
+            <artifactId>konsist</artifactId>
+            <version>0.15.1</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -365,7 +400,7 @@
                 </executions>
                 <configuration>
                     <includeTests>true</includeTests>
-                    <excludeFilterFile>../spotbugs/filter.xml</excludeFilterFile>
+                    <excludeFilterFile>../dev_config/filter.xml</excludeFilterFile>
                 </configuration>
             </plugin>
 
@@ -414,6 +449,66 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/test/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jvmTarget>17</jvmTarget>
+                </configuration>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <version>${kotlin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>com.github.ozsie</groupId>
+                <artifactId>detekt-maven-plugin</artifactId>
+                <version>${detektVersion}</version>
+                <configuration>
+                    <buildUponDefaultConfig>true</buildUponDefaultConfig>
+                    <config>dev_config/detekt.yml</config>
+                    <autoCorrect>true</autoCorrect>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>io.gitlab.arturbosch.detekt</groupId>
+                        <artifactId>detekt-formatting</artifactId>
+                        <version>${detektVersion}</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

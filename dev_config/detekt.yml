@@ -1,0 +1,64 @@
+comments:
+  DeprecatedBlockTag:
+    active: true
+  EndOfSentenceFormat:
+    active: true
+  KDocReferencesNonPublicProperty:
+    active: true
+  OutdatedDocumentation:
+    active: true
+complexity:
+  NamedArguments:
+    active: true
+  ReplaceSafeCallChainWithRun:
+    active: true
+exceptions:
+  ObjectExtendsThrowable:
+    active: true
+  ThrowingExceptionInMain:
+    active: true
+performance:
+  CouldBeSequence:
+    active: true
+potential-bugs:
+  CastToNullableType:
+    active: true
+  DontDowncastCollectionTypes:
+    active: true
+  ElseCaseInsteadOfExhaustiveWhen:
+    active: true
+  ExitOutsideMain:
+    active: true
+  MissingPackageDeclaration:
+    active: true
+  UnconditionalJumpStatementInLoop:
+    active: true
+style:
+  CascadingCallWrapping:
+    active: true
+  ClassOrdering:
+    active: true
+  EqualsOnSignatureLine:
+    active: true
+  BracesOnIfStatements:
+    active: true
+  MandatoryBracesLoops:
+    active: true
+  NoTabs:
+    active: true
+  NullableBooleanCheck:
+    active: true
+  SpacingBetweenPackageAndImports:
+    active: true
+  TrailingWhitespace:
+    active: true
+  UnderscoresInNumericLiterals:
+    active: true
+  UnnecessaryBackticks:
+    active: true
+  UntilInsteadOfRangeTo:
+    active: true
+  UnusedImports:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true

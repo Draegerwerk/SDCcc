@@ -6,4 +6,7 @@
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Source name="~.*\.kt"/>
+    </Match>
 </FindBugsFilter>
