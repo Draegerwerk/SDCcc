@@ -440,8 +440,8 @@
                 <version>${detektVersion}</version>
                 <configuration>
                     <buildUponDefaultConfig>true</buildUponDefaultConfig>
-                    <config>dev_config/detekt.yml</config>
-                    <report>html:sdccc/target/detekt.html</report>
+                    <config>${project.basedir}/../dev_config/detekt.yml</config>
+                    <report>html:${project.build.directory}/detekt.html</report>
                 </configuration>
                 <executions>
                     <execution>
