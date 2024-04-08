@@ -24,8 +24,8 @@ class KonsistArchitecturalRules {
 
     companion object {
 
-        fun checkNameOfRequirementTestClasses(moduleName: String) {
-            Konsist.scopeFromModule(moduleName).classes()
+        fun checkNameOfRequirementTestClasses(moduleName: String, sourceSet: String = "main") {
+            Konsist.scopeFromProject(moduleName = moduleName, sourceSetName = sourceSet).classes()
                 .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
                 .assertTrue {
                     it.name.endsWith("Test")
@@ -33,9 +33,10 @@ class KonsistArchitecturalRules {
         }
 
         fun checkAnnotationsOfRequirementTests(
-            moduleName: String
+            moduleName: String,
+            sourceSet: String = "main"
         ) {
-            Konsist.scopeFromModule(moduleName).functions()
+            Konsist.scopeFromProject(moduleName = moduleName, sourceSetName = sourceSet).functions()
                 .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
                 .withAnnotationOf(org.junit.jupiter.api.Test::class)
                 .assertTrue {
