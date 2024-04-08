@@ -259,13 +259,6 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.gitlab.arturbosch.detekt/detekt-formatting -->
-        <dependency>
-            <groupId>io.gitlab.arturbosch.detekt</groupId>
-            <artifactId>detekt-formatting</artifactId>
-            <version>${detektVersion}</version>
-            <scope>runtime</scope>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.lemonappdev/konsist -->
         <dependency>
             <groupId>com.lemonappdev</groupId>
@@ -497,7 +490,6 @@
                         <groupId>io.gitlab.arturbosch.detekt</groupId>
                         <artifactId>detekt-formatting</artifactId>
                         <version>${detektVersion}</version>
-                        <scope>runtime</scope>
                     </dependency>
                 </dependencies>
             </plugin>
