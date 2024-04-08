@@ -23,10 +23,22 @@
         <jaxbRuntimeVersion>4.0.4</jaxbRuntimeVersion>
         <jaxbCoreVersion>4.0.4</jaxbCoreVersion>
         <jaxbBuildHelperMavenPluginVersion>3.5.0</jaxbBuildHelperMavenPluginVersion>
+        <kotlin.version>1.9.23</kotlin.version>
     </properties>
 
     <build>
         <plugins>
+
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <!-- You can set this option to automatically take information about lifecycles -->
+                <extensions>true</extensions>
+                <configuration>
+                    <jvmTarget>17</jvmTarget>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
