@@ -165,7 +165,7 @@ public class TestSuite {
         final SummaryGeneratingListener directSummary = new SummaryGeneratingListener();
         directTestLauncher.registerTestExecutionListeners(directSummary);
 
-        final Boolean isConsumerEnabled = setupDeviceAndProvider();
+        final Boolean isConsumerEnabled = setupDevice();
 
         long totalTestFailures = 0L;
         /*
@@ -186,7 +186,7 @@ public class TestSuite {
         /*
          * Phase 4, invariant tests
          */
-        // stop client and provider now
+        // stop client now
         totalTestFailures =
                 phase4(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
 
@@ -364,7 +364,7 @@ public class TestSuite {
         LOG.info("SDC Basic Messaging Check completed" + statusline + ".");
     }
 
-    private Boolean setupDeviceAndProvider() {
+    private Boolean setupDevice() {
         final var isConsumerEnabled =
                 injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE)));
 
