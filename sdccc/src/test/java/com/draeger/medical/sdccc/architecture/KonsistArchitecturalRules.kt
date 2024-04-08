@@ -14,12 +14,12 @@ class KonsistArchitecturalRules {
 
     @Test
     fun `requirement test classes in module 'sdccc' should end with 'Test'`() {
-        `the names of requirement test classes in module should end with 'Test'`(moduleName = "sdccc")
+        `the names of requirement test classes in module should end with 'Test'`("sdccc")
     }
 
     @Test
     fun `all requirement tests in module 'sdccc' should have annotations 'TestIdentifier' and 'TestDescription'`() {
-        `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(moduleName = "sdccc")
+        `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`("sdccc")
     }
 
     companion object {
@@ -31,7 +31,9 @@ class KonsistArchitecturalRules {
                 }
         }
 
-        fun `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(moduleName: String) {
+        fun `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(
+            moduleName: String
+        ) {
             Konsist.scopeFromModule(moduleName).functions()
                 .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
                 .withAnnotationOf(org.junit.jupiter.api.Test::class)

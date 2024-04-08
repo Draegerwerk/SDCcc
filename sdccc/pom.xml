@@ -491,7 +491,6 @@
                 <configuration>
                     <buildUponDefaultConfig>true</buildUponDefaultConfig>
                     <config>dev_config/detekt.yml</config>
-                    <autoCorrect>true</autoCorrect>
                 </configuration>
                 <executions>
                     <execution>
