@@ -14,16 +14,17 @@ class KonsistArchitecturalRules {
 
     @Test
     fun `requirement test classes in module 'sdccc' should end with 'Test'`() {
-        `the names of requirement test classes in module should end with 'Test'`("sdccc")
+        checkNameOfRequirementTestClasses("sdccc")
     }
 
     @Test
     fun `all requirement tests in module 'sdccc' should have annotations 'TestIdentifier' and 'TestDescription'`() {
-        `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`("sdccc")
+        checkAnnotationsOfRequirementTests("sdccc")
     }
 
     companion object {
-        fun `the names of requirement test classes in module should end with 'Test'`(moduleName: String) {
+
+        fun checkNameOfRequirementTestClasses(moduleName: String) {
             Konsist.scopeFromModule(moduleName).classes()
                 .filter { it.resideInPackage("..direct..") || it.resideInPackage("..invariant..") }
                 .assertTrue {
@@ -31,7 +32,7 @@ class KonsistArchitecturalRules {
                 }
         }
 
-        fun `all requirement tests in module should have annotations 'TestIdentifier' and 'TestDescription'`(
+        fun checkAnnotationsOfRequirementTests(
             moduleName: String
         ) {
             Konsist.scopeFromModule(moduleName).functions()
