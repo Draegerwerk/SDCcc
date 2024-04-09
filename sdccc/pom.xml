@@ -384,7 +384,7 @@
                 </executions>
                 <configuration>
                     <includeTests>true</includeTests>
-                    <excludeFilterFile>../dev_config/filter.xml</excludeFilterFile>
+                    <excludeFilterFile>${project.basedir}/../dev_config/filter.xml</excludeFilterFile>
                 </configuration>
             </plugin>
 
