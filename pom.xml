@@ -21,10 +21,22 @@
         <execPluginVersion>3.1.0</execPluginVersion>
         <jakartaXmlBindApiVersion>4.0.0</jakartaXmlBindApiVersion>
         <comSunXmlBindVersion>4.0.1</comSunXmlBindVersion>
+        <kotlin.version>1.9.23</kotlin.version>
     </properties>
 
     <build>
         <plugins>
+
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <!-- You can set this option to automatically take information about lifecycles -->
+                <extensions>true</extensions>
+                <configuration>
+                    <jvmTarget>17</jvmTarget>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
