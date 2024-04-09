@@ -92,7 +92,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         working-directory: sdccc/target/
         run: |
-          zip -qq -r test-results.zip failsafe-reports surefire-reports checkstyle-result.xml spotbugsXml.xml
+          zip -qq -r test-results.zip failsafe-reports surefire-reports checkstyle-result.xml spotbugsXml.xml detekt.html
 
       - name: Attach artifacts to snapshot
         uses: softprops/action-gh-release@v1
