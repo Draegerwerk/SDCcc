@@ -1,13 +1,15 @@
 # SDCcc
-This test tool aims to evaluate the conformity of medical devices with the ISO/IEEE 11073 SDC standard family.
 
-[More information on SDC.](https://en.wikipedia.org/wiki/IEEE_11073_service-oriented_device_connectivity)
+This test tool aims to evaluate the conformity of medical devices with selected parts of "ISO/IEEE 11073-20702", 
+"ISO/IEEE 11073-10207", "OASIS DPWS 1.1" and "ISO/IEEE 11073-20701".
 
 ## Introduction of the Project and Test approach
 The test tool assumes the Role of an SDC Service Consumer to connect to the device under test (DUT) and interacts with
 the device during the test run. To use the test tool, a one-to-one connection between the test tool and the DUT is
 required, i.e. via an isolated network where only the DUT and the test tool are connected.
 All offered reports and streams are subscribed to, and all inbound and outbound messages exchanged are stored in a database.
+
+[More information on SDC.](https://en.wikipedia.org/wiki/IEEE_11073_service-oriented_device_connectivity)
 
 The requirement tests are divided into two categories. *Direct* tests and *invariant* tests.
 
