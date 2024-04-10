@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.util.junit;
 
+import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtil;
@@ -18,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,6 +48,7 @@ public class XmlReportWriter {
     private final List<ReportData> reportData;
     private final TestRunObserver testRunObserver;
     private final ClassUtil classUtil;
+    private final MessageStorage messageStorage;
 
     /**
      * Initializes an XmlReportWriter.
@@ -53,15 +56,18 @@ public class XmlReportWriter {
      * @param reportData      list of results representing test cases
      * @param classUtil       utility
      * @param testRunObserver observer which contains information on validity of test run
+     * @param messageStorage  storage to retrieve error counts from
      */
     @AssistedInject
     XmlReportWriter(
             @Assisted final List<ReportData> reportData,
             final ClassUtil classUtil,
-            final TestRunObserver testRunObserver) {
+            final TestRunObserver testRunObserver,
+            final MessageStorage messageStorage) {
         this.reportData = reportData;
         this.testRunObserver = testRunObserver;
         this.classUtil = classUtil;
+        this.messageStorage = messageStorage;
     }
 
     protected void writeXmlReport(final Path reportsDir, final String xmlReportName, final Duration duration)
@@ -213,7 +219,17 @@ public class XmlReportWriter {
      * @throws XMLStreamException on xml writing errors
      */
     private void writeInvalidTestRunTestCase(final XMLStreamWriter xmlWriter) throws XMLStreamException {
-        if (testRunObserver.isInvalid()) {
+        final List<String> listOfReasons = new ArrayList<>();
+        final long messageEncodingErrorCount = messageStorage.getMessageEncodingErrorCount();
+        final long invalidMimeTypeErrorCount = messageStorage.getInvalidMimeTypeErrorCount();
+        if (messageEncodingErrorCount > 0) {
+            listOfReasons.add(String.format("%s MessageEncodingError(s) were observed.", messageEncodingErrorCount));
+        }
+        if (invalidMimeTypeErrorCount > 0) {
+            listOfReasons.add(String.format("%s InvalidMimeTypeError(s) were observed.", invalidMimeTypeErrorCount));
+        }
+        if (testRunObserver.isInvalid() || messageEncodingErrorCount > 0 || invalidMimeTypeErrorCount > 0) {
+            listOfReasons.addAll(testRunObserver.getReasons());
             xmlWriter.writeStartElement("testcase");
             xmlWriter.writeAttribute("name", INVALID_TEST_RUN_TEST_NAME);
             xmlWriter.writeAttribute("classname", INVALID_TEST_RUN_CLASS_NAME);
@@ -223,11 +239,12 @@ public class XmlReportWriter {
             xmlWriter.writeStartElement("error");
             xmlWriter.writeAttribute("message", "SDCcc test run was marked as invalid");
             xmlWriter.writeAttribute("type", "InvalidTestRun");
+
             handleCDataSection(
                     xmlWriter,
                     String.format(
                             "SDCcc test run was marked as invalid for the following reasons:%s",
-                            String.join("\n- ", testRunObserver.getReasons())));
+                            String.join("\n- ", listOfReasons)));
             xmlWriter.writeEndElement();
             writeNewLine(xmlWriter);
 
