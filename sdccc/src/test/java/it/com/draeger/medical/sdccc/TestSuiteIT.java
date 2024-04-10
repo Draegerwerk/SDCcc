@@ -586,7 +586,6 @@ public class TestSuiteIT {
             bind(CryptoSettings.class).toInstance(cryptoSettings);
 
             bind(TestSuiteConfig.CI_MODE, Boolean.class, true);
-            bind(TestSuiteConfig.CONSUMER_ENABLE, Boolean.class, true);
             bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, DUT_EPR);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, this.locationConfig.facility);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, this.locationConfig.building);

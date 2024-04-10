@@ -109,14 +109,14 @@ public class TestSuite {
      * Used by the main injector to create a TestSuite instance.
      * It is also useful for extending the TestSuite class.
      *
-     * @param injector a reference to the injector injecting here
-     * @param testRunObserver observer for invalidating test runs
-     * @param sdcTestDirectories directories to search for test cases
-     * @param testRunDir directory to run the tests in and store artifacts
+     * @param injector             a reference to the injector injecting here
+     * @param testRunObserver      observer for invalidating test runs
+     * @param sdcTestDirectories   directories to search for test cases
+     * @param testRunDir           directory to run the tests in and store artifacts
      * @param testExecutionLogging whether logging of test case starts etc. shall be done
-     * @param messageGenerator utility for generating messages to send
-     * @param testRunInformation utility where information of the test run is stored
-     * @param client client to use for direct tests
+     * @param messageGenerator     utility for generating messages to send
+     * @param testRunInformation   utility where information of the test run is stored
+     * @param client               client to use for direct tests
      */
     @Inject
     public TestSuite(
@@ -365,27 +365,22 @@ public class TestSuite {
     }
 
     private Boolean setupDevice() {
-        final var isConsumerEnabled =
-                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE)));
-
-        if (isConsumerEnabled) {
-            LOG.info("Starting TestSuite Client");
-            try {
-                client.startService(MAX_WAIT);
-                client.connect();
-            } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
-                LOG.error("Could not connect to target device {}", client.getTargetEpr());
-                testRunObserver.invalidateTestRun("Could not connect to target device", e);
-                throw new RuntimeException(e);
-            }
-
-            // check the DUT for an archive service, currently needed for MDPWS:R0006
-            this.testRunInformation.setArchiveServicePresent(
-                    client.getHostingServiceProxy().getHostedServices().values().stream()
-                            .anyMatch(service ->
-                                    service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
+        LOG.info("Starting TestSuite Client");
+        try {
+            client.startService(MAX_WAIT);
+            client.connect();
+        } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
+            LOG.error("Could not connect to target device {}", client.getTargetEpr());
+            testRunObserver.invalidateTestRun("Could not connect to target device", e);
+            throw new RuntimeException(e);
         }
-        return isConsumerEnabled;
+
+        // check the DUT for an archive service, currently needed for MDPWS:R0006
+        this.testRunInformation.setArchiveServicePresent(
+                client.getHostingServiceProxy().getHostedServices().values().stream()
+                        .anyMatch(service ->
+                                service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
+        return true;
     }
 
     /**
@@ -658,9 +653,9 @@ public class TestSuite {
      * Run the test suite with the given already parsed command line arguments and the
      * specified enabled test config constants.
      *
-     * @param cmdLine parsed command line arguments
+     * @param cmdLine                parsed command line arguments
      * @param enabledTestConfigClass class containing test identifier constants
-     * @param sdcTestDirectories directories to search for test cases
+     * @param sdcTestDirectories     directories to search for test cases
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
