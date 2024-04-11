@@ -232,7 +232,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                                         assertTrue(
                                                 descriptorAfterReportOpt.isEmpty(),
                                                 String.format(
-                                                        "The descriptor with handle %s is missing after applying the report"
+                                                        "The descriptor with handle %s is present after applying the report"
                                                                 + " for modification type delete",
                                                         modifiedDescriptor.getHandle()));
                                     }
