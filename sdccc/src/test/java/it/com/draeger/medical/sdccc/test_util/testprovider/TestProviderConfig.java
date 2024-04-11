@@ -22,7 +22,6 @@ public final class TestProviderConfig {
      * Provider configuration
      */
     private static final String PROVIDER = "Provider.";
-    public static final String PROVIDER_ENABLE = TestSuiteConfig.SDCCC + PROVIDER + Constants.ENABLE_SETTING_POSTFIX;
     public static final String PROVIDER_DEVICE_EPR = TestSuiteConfig.SDCCC + PROVIDER + Constants.DEVICE_EPR_POSTFIX;
 
     private TestProviderConfig() {}

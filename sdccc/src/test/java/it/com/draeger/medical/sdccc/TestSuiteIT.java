@@ -594,7 +594,6 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, this.locationConfig.room);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, this.locationConfig.bed);
 
-            bind(TestProviderConfig.PROVIDER_ENABLE, Boolean.class, true);
             bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
 
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
