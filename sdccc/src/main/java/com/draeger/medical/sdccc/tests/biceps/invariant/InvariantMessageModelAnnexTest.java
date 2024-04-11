@@ -211,26 +211,30 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
                                     } else if (modificationType.equals(DescriptionModificationType.CRT)) {
                                         assertTrue(
-                                                descriptorBeforeReportOpt.isEmpty()
-                                                        && descriptorAfterReportOpt.isPresent(),
+                                                descriptorBeforeReportOpt.isEmpty(),
                                                 String.format(
-                                                        "The descriptor with handle %s is missing before applying the report:"
-                                                                + " %s and is present after applying the report: %s,"
+                                                        "The descriptor with handle %s is present before applying the report"
                                                                 + " for modification type create",
-                                                        modifiedDescriptor.getHandle(),
-                                                        descriptorBeforeReportOpt.isEmpty(),
-                                                        descriptorAfterReportOpt.isPresent()));
+                                                        modifiedDescriptor.getHandle()));
+                                        assertTrue(
+                                                descriptorAfterReportOpt.isPresent(),
+                                                String.format(
+                                                        "The descriptor with handle %s is missing after applying the report"
+                                                                + " for modification type create",
+                                                        modifiedDescriptor.getHandle()));
                                     } else {
                                         assertTrue(
-                                                descriptorBeforeReportOpt.isPresent()
-                                                        && descriptorAfterReportOpt.isEmpty(),
+                                                descriptorBeforeReportOpt.isPresent(),
                                                 String.format(
-                                                        "The descriptor with handle %s is present before applying the report:"
-                                                                + " %s and is missing after applying the report: %s,"
+                                                        "The descriptor with handle %s is missing before applying the report"
                                                                 + " for modification type delete",
-                                                        modifiedDescriptor.getHandle(),
-                                                        descriptorBeforeReportOpt.isPresent(),
-                                                        descriptorAfterReportOpt.isEmpty()));
+                                                        modifiedDescriptor.getHandle()));
+                                        assertTrue(
+                                                descriptorAfterReportOpt.isEmpty(),
+                                                String.format(
+                                                        "The descriptor with handle %s is missing after applying the report"
+                                                                + " for modification type delete",
+                                                        modifiedDescriptor.getHandle()));
                                     }
                                 }
                             }
