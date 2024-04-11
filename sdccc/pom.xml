@@ -13,8 +13,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junitVersion>5.6.0</junitVersion>
-        <junitPlatformVersion>1.6.0</junitPlatformVersion>
+        <junitVersion>5.10.2</junitVersion>
+        <junitPlatformVersion>1.10.2</junitPlatformVersion>
         <sdcriVersion>6.0.0-SNAPSHOT</sdcriVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <spotbugsVersion>4.7.3</spotbugsVersion>
@@ -276,7 +276,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.0.0</version>
                 <configuration>
                     <reportsDirectories>
                         <directory>${project.build.directory}/surefire-reports/</directory>
@@ -291,7 +291,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.0.0</version>
                 <configuration>
                     <outputName>unitAndIntegrationTestReport</outputName>
                     <title>Unit- and Integration Test Report</title>
@@ -326,7 +326,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.2.5</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
@@ -344,6 +344,9 @@
                     <!-- workaround for bug in the attach api required for certain JDK builds -->
                     <!-- see also: https://stackoverflow.com/a/25439003 -->
                     <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
+                    <parallel>all</parallel>
+                    <forkCount>1C</forkCount>
+                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
 
@@ -351,7 +354,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M4</version>
+                <version>3.2.5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junitVersion}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <goals>

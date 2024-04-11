@@ -55,6 +55,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.helper.JaxbMarshalling;
 import org.somda.sdc.dpws.soap.CommunicationContext;
@@ -115,12 +116,19 @@ public class InvariantParticipantModelStatePartTestTest {
         final TestClient mockClient = mock(TestClient.class);
         when(mockClient.isClientRunning()).thenReturn(true);
 
-        final Injector injector = InjectorUtil.setupInjector(new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(TestClient.class).toInstance(mockClient);
-            }
-        });
+        final Injector injector = InjectorUtil.setupInjector(
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(TestClient.class).toInstance(mockClient);
+                    }
+                },
+                new AbstractConfigurationModule() {
+                    @Override
+                    protected void defaultConfigure() {
+                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 2L);
+                    }
+                });
         InjectorTestBase.setInjector(injector);
 
         final var riInjector = TestClientUtil.createClientInjector();
