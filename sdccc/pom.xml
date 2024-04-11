@@ -345,8 +345,7 @@
                     <!-- see also: https://stackoverflow.com/a/25439003 -->
                     <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
                     <parallel>all</parallel>
-                    <threadCount>8</threadCount>
-                    <forkCount>8</forkCount>
+                    <forkCount>1C</forkCount>
                     <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
