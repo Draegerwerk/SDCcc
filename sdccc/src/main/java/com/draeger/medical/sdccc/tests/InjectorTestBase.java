@@ -83,4 +83,18 @@ public class InjectorTestBase {
             throw new NoTestData(message);
         }
     }
+
+    /**
+     * Asserts whether the provided value is not null.
+     *
+     * @param data    an object representing the value to check for null
+     * @param message the message to display on failure
+     * @throws NoTestData thrown if the provided value is null
+     */
+    public void assertTestDataNotNull(final Object data, final String message) throws NoTestData {
+        if (data == null) {
+            LOG.error(message);
+            throw new NoTestData(message);
+        }
+    }
 }
