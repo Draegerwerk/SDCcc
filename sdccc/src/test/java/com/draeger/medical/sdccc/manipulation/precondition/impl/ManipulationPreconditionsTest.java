@@ -23,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -83,6 +84,7 @@ import org.somda.sdc.biceps.model.participant.PatientContextState;
 import org.somda.sdc.biceps.model.participant.ScoState;
 import org.somda.sdc.biceps.model.participant.SystemSignalActivation;
 import org.somda.sdc.biceps.model.participant.VmdState;
+import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 
 /**
@@ -198,14 +200,21 @@ public class ManipulationPreconditionsTest {
         when(mockTestClient.getSdcRemoteDevice()).thenReturn(mockDevice);
         when(mockTestClient.getInjector()).thenReturn(clientInjector);
 
-        injector = InjectorUtil.setupInjector(new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(TestClient.class).toInstance(mockTestClient);
-                bind(SdcRemoteDevice.class).toInstance(mockDevice);
-                bind(Manipulations.class).toInstance(mockManipulations);
-            }
-        });
+        injector = InjectorUtil.setupInjector(
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(TestClient.class).toInstance(mockTestClient);
+                        bind(SdcRemoteDevice.class).toInstance(mockDevice);
+                        bind(Manipulations.class).toInstance(mockManipulations);
+                    }
+                },
+                new AbstractConfigurationModule() {
+                    @Override
+                    protected void defaultConfigure() {
+                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 1L);
+                    }
+                });
 
         InjectorTestBase.setInjector(injector);
         testRunObserver = injector.getInstance(TestRunObserver.class);
