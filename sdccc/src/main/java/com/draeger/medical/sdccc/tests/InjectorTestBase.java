@@ -10,6 +10,7 @@ package com.draeger.medical.sdccc.tests;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.google.inject.Injector;
 import java.util.Collection;
+import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -91,7 +92,7 @@ public class InjectorTestBase {
      * @param message the message to display on failure
      * @throws NoTestData thrown if the provided value is null
      */
-    public void assertTestDataNotNull(final Object data, final String message) throws NoTestData {
+    public void assertTestDataNotNull(@Nullable final Object data, final String message) throws NoTestData {
         if (data == null) {
             LOG.error(message);
             throw new NoTestData(message);
