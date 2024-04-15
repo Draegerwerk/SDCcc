@@ -241,10 +241,12 @@ public class DirectParticipantModelServiceOperationsTestTest {
     }
 
     /**
-     * Assert fail for too many Mds.
+     * Assert that returning all states passes the test for multiple Mds.
+     *
+     * @throws NoTestData on too few state handles
      */
     @Test
-    public void testRequirementR5042TooManyMds() {
+    public void testRequirementR5042MultipleMdsPassed() throws NoTestData {
         final MdsDescriptor mdsDescriptor0 = new MdsDescriptor();
         mdsDescriptor0.setHandle("mds0");
         final MdsDescriptor mdsDescriptor1 = new MdsDescriptor();
@@ -254,7 +256,13 @@ public class DirectParticipantModelServiceOperationsTestTest {
                         .collect(any()))
                 .thenReturn(List.of(mdsDescriptor0, mdsDescriptor1));
 
-        assertThrows(AssertionError.class, testClass::testRequirementR5042);
+        // create different context states
+
+        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
+
+        when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
+
+        testClass.testRequirementR5042();
     }
 
     /**

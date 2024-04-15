@@ -7,7 +7,6 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
@@ -160,6 +159,9 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
     @TestDescription("Verifies that only one Mds descriptor is present and then does a "
             + "GetContextStates request with only the Mds descriptor's handle and "
             + "verifies that all known states are returned.")
+
+    // R5042: If a HANDLE reference from the msg:GetContextStates/msg:HandleRef list does match an MDS descriptor,
+    // then all context states that are part of this MDS SHALL be included in the result list.
     void testRequirementR5042() throws NoTestData {
 
         final List<MdsDescriptor> mdsDescriptors =
@@ -168,23 +170,25 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
                         .collect(Collectors.toList());
 
         assertTestData(mdsDescriptors, "No Mds descriptor present.");
-        assertEquals(1, mdsDescriptors.size(), "Too many Mds descriptors.");
 
-        final Set<String> allExpectedContextStateHandles =
-                testClient.getSdcRemoteDevice().getMdibAccess().getContextStates().stream()
-                        .map(AbstractMultiState::getHandle)
-                        .collect(Collectors.toSet());
+        for (var mds : mdsDescriptors) {
 
-        assertTestData(allExpectedContextStateHandles.size(), "No context states.");
+            final Set<String> allExpectedContextStateHandles =
+                    testClient.getSdcRemoteDevice().getMdibAccess().getContextStates().stream()
+                            .map(AbstractMultiState::getHandle)
+                            .collect(Collectors.toSet());
 
-        final GetContextStatesResponse getContextStatesResponse = (GetContextStatesResponse) messageGeneratingUtil
-                .getContextStates(List.of(mdsDescriptors.get(0).getHandle()))
-                .getOriginalEnvelope()
-                .getBody()
-                .getAny()
-                .get(0);
+            assertTestData(allExpectedContextStateHandles.size(), "No context states.");
 
-        verifyStatesInResponse(allExpectedContextStateHandles, getContextStatesResponse);
+            final GetContextStatesResponse getContextStatesResponse = (GetContextStatesResponse) messageGeneratingUtil
+                    .getContextStates(List.of(mds.getHandle()))
+                    .getOriginalEnvelope()
+                    .getBody()
+                    .getAny()
+                    .get(0);
+
+            verifyStatesInResponse(allExpectedContextStateHandles, getContextStatesResponse);
+        }
     }
 
     @Test
