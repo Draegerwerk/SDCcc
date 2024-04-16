@@ -165,13 +165,11 @@ public class TestSuite {
         final SummaryGeneratingListener directSummary = new SummaryGeneratingListener();
         directTestLauncher.registerTestExecutionListeners(directSummary);
 
-        final Boolean isConsumerEnabled = setupDevice();
-
         long totalTestFailures = 0L;
         /*
          * Phase 1, generate messages
          */
-        phase1(isConsumerEnabled);
+        phase1();
 
         /*
          * Phase 2, execute direct tests
@@ -272,10 +270,9 @@ public class TestSuite {
         return totalTestFailures + directSummary.getSummary().getTotalFailureCount();
     }
 
-    private void phase1(final Boolean isConsumerEnabled) {
-        if (isConsumerEnabled) {
-            performBasicMessagingCheck();
-        }
+    private void phase1() {
+        setupDevice();
+        performBasicMessagingCheck();
 
         try {
             Thread.sleep(TIME_BETWEEN_PHASES);
@@ -364,7 +361,7 @@ public class TestSuite {
         LOG.info("SDC Basic Messaging Check completed" + statusline + ".");
     }
 
-    private Boolean setupDevice() {
+    private void setupDevice() {
         LOG.info("Starting TestSuite Client");
         try {
             client.startService(MAX_WAIT);
@@ -380,7 +377,6 @@ public class TestSuite {
                 client.getHostingServiceProxy().getHostedServices().values().stream()
                         .anyMatch(service ->
                                 service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
-        return true;
     }
 
     /**
