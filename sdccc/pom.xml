@@ -345,7 +345,7 @@
                     <!-- see also: https://stackoverflow.com/a/25439003 -->
                     <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
                     <parallel>all</parallel>
-                    <forkCount>1C</forkCount>
+                    <forkCount>0.8C</forkCount>
                     <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
