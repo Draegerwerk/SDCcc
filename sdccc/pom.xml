@@ -344,8 +344,7 @@
                     <!-- workaround for bug in the attach api required for certain JDK builds -->
                     <!-- see also: https://stackoverflow.com/a/25439003 -->
                     <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
-                    <parallel>all</parallel>
-                    <forkCount>0.8C</forkCount>
+                    <forkCount>0.25C</forkCount>
                     <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
