@@ -167,6 +167,11 @@ public class TestSuite {
 
         long totalTestFailures = 0L;
         /*
+         * Starting TestSuite Client and connect, check for an archive service of the DUT
+         */
+        startClient();
+
+        /*
          * Phase 1, generate messages
          */
         phase1();
@@ -271,7 +276,6 @@ public class TestSuite {
     }
 
     private void phase1() {
-        setupDevice();
         performBasicMessagingCheck();
 
         try {
@@ -361,7 +365,7 @@ public class TestSuite {
         LOG.info("SDC Basic Messaging Check completed" + statusline + ".");
     }
 
-    private void setupDevice() {
+    private void startClient() {
         LOG.info("Starting TestSuite Client");
         try {
             client.startService(MAX_WAIT);
