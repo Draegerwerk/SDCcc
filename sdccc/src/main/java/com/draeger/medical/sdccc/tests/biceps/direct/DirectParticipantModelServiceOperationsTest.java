@@ -15,6 +15,7 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
@@ -275,24 +277,6 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
         }
     }
 
-    private void verifyStatesInResponseMultiMds(
-            final Set<String> expectedContextStateHandles, final GetContextStatesResponse response) {
-        final Set<String> contextStateHandles = response.getContextState().stream()
-                .map(AbstractContextState::getHandle)
-                .collect(Collectors.toSet());
-
-        assertEquals(
-                expectedContextStateHandles.size(),
-                contextStateHandles.size(),
-                "Both list should have the same length.");
-
-        for (var expectedContextStateHandle : expectedContextStateHandles) {
-            assertTrue(
-                    contextStateHandles.contains(expectedContextStateHandle),
-                    String.format("State handle %s has not been seen in response.", expectedContextStateHandle));
-        }
-    }
-
     private void verifyStatesInResponse(
             final Set<String> expectedDescriptorHandles, final GetMdStateResponse response) {
         final Set<String> descriptorHandles = response.getMdState().getState().stream()
@@ -303,6 +287,24 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
             assertTrue(
                     descriptorHandles.contains(expectedDescriptorHandle),
                     String.format("Descriptor handle %s has not been seen in response.", expectedDescriptorHandle));
+        }
+    }
+
+    private void verifyStatesInResponseMultiMds(
+            final Set<String> expectedContextStateHandles, final GetContextStatesResponse response) {
+        final Set<String> contextStateHandles = response.getContextState().stream()
+                .map(AbstractContextState::getHandle)
+                .collect(Collectors.toSet());
+
+        assertEquals(
+                expectedContextStateHandles.size(),
+                contextStateHandles.size(),
+                "Both lists should have the same length.");
+
+        for (var expectedContextStateHandle : expectedContextStateHandles) {
+            assertTrue(
+                    contextStateHandles.contains(expectedContextStateHandle),
+                    String.format("State handle %s has not been seen in response.", expectedContextStateHandle));
         }
     }
 }
