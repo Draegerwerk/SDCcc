@@ -7,8 +7,6 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -18,6 +16,7 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +31,12 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
+import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * BICEPS participant model Service Operations test.
@@ -156,12 +161,11 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5042)
-    @TestDescription("Verifies that only one Mds descriptor is present and then does a "
-            + "GetContextStates request with only the Mds descriptor's handle and "
-            + "verifies that all known states are returned.")
-
-    // R5042: If a HANDLE reference from the msg:GetContextStates/msg:HandleRef list does match an MDS descriptor,
-    // then all context states that are part of this MDS SHALL be included in the result list.
+    @TestDescription("Verify that for each present Mds descriptor #mds# the following applies:\n"
+            + "   - request msg:GetContextStates for the #mds# and get all returning handle "
+            + "references #all_handle_refs#\n"
+            + "   - get all context states from the mdib #all_mds_context_states# for the given #mds#\n"
+            + "   - verify that the lists #all_handle_refs# and #all_mds_context_states# are equal")
     void testRequirementR5042() throws NoTestData {
 
         final List<MdsDescriptor> mdsDescriptors =
@@ -169,16 +173,29 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
                         .map(mdibEntity -> (MdsDescriptor) mdibEntity.getDescriptor())
                         .collect(Collectors.toList());
 
-        assertTestData(mdsDescriptors, "No Mds descriptor present.");
+        assertTestData(mdsDescriptors, "No Mds descriptor is present.");
+
+        final var contextStateSeen = new AtomicBoolean(false);
 
         for (var mds : mdsDescriptors) {
-
-            final Set<String> allExpectedContextStateHandles =
-                    testClient.getSdcRemoteDevice().getMdibAccess().getContextStates().stream()
-                            .map(AbstractMultiState::getHandle)
+            final var allMdsContextStateEntities =
+                    testClient
+                            .getSdcRemoteDevice()
+                            .getMdibAccess()
+                            .findEntitiesByType(AbstractContextDescriptor.class)
+                            .stream()
+                            .filter(it -> it.getParentMds().equals(mds.getHandle()))
                             .collect(Collectors.toSet());
 
-            assertTestData(allExpectedContextStateHandles.size(), "No context states.");
+            if (!allMdsContextStateEntities.isEmpty()) {
+                contextStateSeen.set(true);
+            }
+
+            final var allExpectedMdsContextStateHandles = allMdsContextStateEntities.stream()
+                    .map(it -> it.getStates(AbstractContextState.class))
+                    .flatMap(Collection::stream)
+                    .map(AbstractContextState::getHandle)
+                    .collect(Collectors.toSet());
 
             final GetContextStatesResponse getContextStatesResponse = (GetContextStatesResponse) messageGeneratingUtil
                     .getContextStates(List.of(mds.getHandle()))
@@ -187,8 +204,9 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
                     .getAny()
                     .get(0);
 
-            verifyStatesInResponse(allExpectedContextStateHandles, getContextStatesResponse);
+            verifyStatesInResponseMultiMds(allExpectedMdsContextStateHandles, getContextStatesResponse);
         }
+        assertTestData(contextStateSeen.get(), "No context states found for all present mds descriptors.");
     }
 
     @Test
@@ -249,6 +267,24 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
         final Set<String> contextStateHandles = response.getContextState().stream()
                 .map(AbstractContextState::getHandle)
                 .collect(Collectors.toSet());
+
+        for (var expectedContextStateHandle : expectedContextStateHandles) {
+            assertTrue(
+                    contextStateHandles.contains(expectedContextStateHandle),
+                    String.format("State handle %s has not been seen in response.", expectedContextStateHandle));
+        }
+    }
+
+    private void verifyStatesInResponseMultiMds(
+            final Set<String> expectedContextStateHandles, final GetContextStatesResponse response) {
+        final Set<String> contextStateHandles = response.getContextState().stream()
+                .map(AbstractContextState::getHandle)
+                .collect(Collectors.toSet());
+
+        assertEquals(
+                expectedContextStateHandles.size(),
+                contextStateHandles.size(),
+                "Both list should have the same length.");
 
         for (var expectedContextStateHandle : expectedContextStateHandles) {
             assertTrue(

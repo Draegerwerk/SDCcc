@@ -28,11 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdStateResponse;
+import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
@@ -241,12 +244,11 @@ public class DirectParticipantModelServiceOperationsTestTest {
     }
 
     /**
-     * Assert that returning all states passes the test for multiple Mds.
-     *
-     * @throws NoTestData on too few state handles
+     * Assert that for multiple Mds the test results are correctly evaluated for each mds.
      */
     @Test
-    public void testRequirementR5042MultipleMdsPassed() throws NoTestData {
+    public void testRequirementR5042MultipleMds() {
+        final var remoteMdibAccess = testClient.getSdcRemoteDevice().getMdibAccess();
         final MdsDescriptor mdsDescriptor0 = new MdsDescriptor();
         mdsDescriptor0.setHandle("mds0");
         final MdsDescriptor mdsDescriptor1 = new MdsDescriptor();
@@ -256,13 +258,17 @@ public class DirectParticipantModelServiceOperationsTestTest {
                         .collect(any()))
                 .thenReturn(List.of(mdsDescriptor0, mdsDescriptor1));
 
-        // create different context states
+        final var mdibEntity0 = createMdsContextStateEntity(mdsDescriptor0, "cH0");
+        final var mdibEntity1 = createMdsContextStateEntity(mdsDescriptor1, "cH1");
+        final var mdibEntity2 = createMdsContextStateEntity(mdsDescriptor1, "cH2");
+        final var mdibEntity3 = createMdsContextStateEntity(mdsDescriptor1, "cH3");
 
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
+        when(remoteMdibAccess.findEntitiesByType(AbstractContextDescriptor.class))
+                .thenReturn(List.of(mdibEntity0, mdibEntity1, mdibEntity2, mdibEntity3));
 
-        when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
+        when(getContextStatesResponse.getContextState()).thenReturn(allContextStates.subList(0, 1));
 
-        testClass.testRequirementR5042();
+        assertThrows(AssertionError.class, testClass::testRequirementR5042);
     }
 
     /**
@@ -272,13 +278,21 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5042Good() throws NoTestData {
+
+        final var remoteMdibAccess = testClient.getSdcRemoteDevice().getMdibAccess();
+
         final MdsDescriptor mdsDescriptor = new MdsDescriptor();
         mdsDescriptor.setHandle("mds");
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream()
-                        .map(any())
-                        .collect(any()))
+
+        when(remoteMdibAccess.findEntitiesByType(any()).stream().map(any()).collect(any()))
                 .thenReturn(List.of(mdsDescriptor));
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
+
+        final var mdibEntity0 = createMdsContextStateEntity(mdsDescriptor, "cH0");
+        final var mdibEntity1 = createMdsContextStateEntity(mdsDescriptor, "cH1");
+        final var mdibEntity2 = createMdsContextStateEntity(mdsDescriptor, "cH2");
+
+        when(remoteMdibAccess.findEntitiesByType(AbstractContextDescriptor.class))
+                .thenReturn(List.of(mdibEntity0, mdibEntity1, mdibEntity2));
 
         when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
 
@@ -290,17 +304,43 @@ public class DirectParticipantModelServiceOperationsTestTest {
      */
     @Test
     public void testRequirementR5042Bad() {
+
+        final var remoteMdibAccess = testClient.getSdcRemoteDevice().getMdibAccess();
         final MdsDescriptor mdsDescriptor = new MdsDescriptor();
         mdsDescriptor.setHandle("mds");
-        when(testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(any()).stream()
-                        .map(any())
-                        .collect(any()))
-                .thenReturn(List.of(mdsDescriptor));
-        when(testClient.getSdcRemoteDevice().getMdibAccess().getContextStates()).thenReturn(allContextStates);
 
-        when(getContextStatesResponse.getContextState()).thenReturn(List.of(allContextStates.get(1)));
+        when(remoteMdibAccess.findEntitiesByType(any()).stream().map(any()).collect(any()))
+                .thenReturn(List.of(mdsDescriptor));
+
+        final var mdibEntity = createMdsContextStateEntity(mdsDescriptor, "cH0");
+
+        when(remoteMdibAccess.findEntitiesByType(AbstractContextDescriptor.class))
+                .thenReturn(List.of(mdibEntity));
+
+        when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
 
         assertThrows(AssertionError.class, testClass::testRequirementR5042);
+    }
+
+    /**
+     * Create a MdibEntity for a newly created context state with a given handleName.
+     *
+     * @param mdsDescriptor related mds descriptor for which the context state shall be created
+     * @param handleName    handle name to be set
+     * @return MdibEntity object
+     */
+    private @NotNull MdibEntity createMdsContextStateEntity(MdsDescriptor mdsDescriptor, String handleName) {
+
+        final var contextState = mdibBuilder.createLocationContextState();
+        contextState.setHandle(handleName);
+        final var contextDescriptor = mdibBuilder.createLocationContextDescriptor();
+        final var mdibEntity = mock(MdibEntity.class);
+
+        when(mdibEntity.getDescriptor()).thenReturn(contextDescriptor);
+        when(mdibEntity.getStates(any())).thenReturn(List.of(contextState));
+        when(mdibEntity.getParentMds()).thenReturn(mdsDescriptor.getHandle());
+
+        return mdibEntity;
     }
 
     /**
