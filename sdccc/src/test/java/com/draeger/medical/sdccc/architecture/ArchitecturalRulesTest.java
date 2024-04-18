@@ -19,6 +19,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
+import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -76,6 +77,14 @@ public class ArchitecturalRulesTest {
                     }
                 }
             };
+
+    @ArchTest
+    private static final ArchRule DO_NOT_THROW_NO_TEST_DATA_DIRECTLY = noClasses()
+            .that()
+            .haveNameMatching(".*Test")
+            .should()
+            .accessTargetWhere(target(owner(assignableTo(NoTestData.class))))
+            .because("Do not throw NoTestData directly, please use assertTestData(), instead.");
 
     @ArchTest
     private static final ArchRule DO_NOT_GIVE_REQUIREMENTS_TEXT_FOR_STANDARD_REQUIREMENTS = noMethods()
