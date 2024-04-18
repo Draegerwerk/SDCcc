@@ -7,6 +7,9 @@
 
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -15,7 +18,6 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,22 +25,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdStateResponse;
+import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
-import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * BICEPS participant model Service Operations test.

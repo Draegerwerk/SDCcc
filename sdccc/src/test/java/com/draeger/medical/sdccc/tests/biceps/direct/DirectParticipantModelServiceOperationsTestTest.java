@@ -329,7 +329,8 @@ public class DirectParticipantModelServiceOperationsTestTest {
      * @param handleName    handle name to be set
      * @return MdibEntity object
      */
-    private @NotNull MdibEntity createMdsContextStateEntity(final MdsDescriptor mdsDescriptor, final String handleName) {
+    private @NotNull MdibEntity createMdsContextStateEntity(
+            final MdsDescriptor mdsDescriptor, final String handleName) {
 
         final var contextState = mdibBuilder.createLocationContextState();
         contextState.setHandle(handleName);
