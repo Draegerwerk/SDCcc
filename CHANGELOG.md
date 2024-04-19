@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - inconsistent messaging in SDCcc logs ("No problems were found" and "Test run was invalid" one after another.)
 - incorrect behavior of the configuration option SDCcc.SummarizeMessageEncodingErrors
 
+### Removed
+
+- consumer test related implementations
+
 ## [9.0.0] - 2024-02-23
 
 ### Added

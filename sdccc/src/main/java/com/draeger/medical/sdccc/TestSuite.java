@@ -109,14 +109,14 @@ public class TestSuite {
      * Used by the main injector to create a TestSuite instance.
      * It is also useful for extending the TestSuite class.
      *
-     * @param injector a reference to the injector injecting here
-     * @param testRunObserver observer for invalidating test runs
-     * @param sdcTestDirectories directories to search for test cases
-     * @param testRunDir directory to run the tests in and store artifacts
+     * @param injector             a reference to the injector injecting here
+     * @param testRunObserver      observer for invalidating test runs
+     * @param sdcTestDirectories   directories to search for test cases
+     * @param testRunDir           directory to run the tests in and store artifacts
      * @param testExecutionLogging whether logging of test case starts etc. shall be done
-     * @param messageGenerator utility for generating messages to send
-     * @param testRunInformation utility where information of the test run is stored
-     * @param client client to use for direct tests
+     * @param messageGenerator     utility for generating messages to send
+     * @param testRunInformation   utility where information of the test run is stored
+     * @param client               client to use for direct tests
      */
     @Inject
     public TestSuite(
@@ -165,13 +165,16 @@ public class TestSuite {
         final SummaryGeneratingListener directSummary = new SummaryGeneratingListener();
         directTestLauncher.registerTestExecutionListeners(directSummary);
 
-        final Boolean isConsumerEnabled = setupDeviceAndProvider();
-
         long totalTestFailures = 0L;
+        /*
+         * Starting TestSuite Client and connect, check for an archive service of the DUT
+         */
+        startClient();
+
         /*
          * Phase 1, generate messages
          */
-        phase1(isConsumerEnabled);
+        phase1();
 
         /*
          * Phase 2, execute direct tests
@@ -186,7 +189,7 @@ public class TestSuite {
         /*
          * Phase 4, invariant tests
          */
-        // stop client and provider now
+        // stop client now
         totalTestFailures =
                 phase4(totalTestFailures, outWriter, invariantTestLauncher, invariantTestPlan, invariantSummary);
 
@@ -228,7 +231,6 @@ public class TestSuite {
         } catch (final TimeoutException e) {
             testRunObserver.invalidateTestRun("Could not stop the test client", e);
         }
-        // TODO: Stop provider (https://github.com/Draegerwerk/SDCcc/issues/1)
 
         // flush all data so invariant tests run on most current data
         injector.getInstance(MessageStorage.class).flush();
@@ -273,10 +275,8 @@ public class TestSuite {
         return totalTestFailures + directSummary.getSummary().getTotalFailureCount();
     }
 
-    private void phase1(final Boolean isConsumerEnabled) {
-        if (isConsumerEnabled) {
-            performBasicMessagingCheck();
-        }
+    private void phase1() {
+        performBasicMessagingCheck();
 
         try {
             Thread.sleep(TIME_BETWEEN_PHASES);
@@ -365,34 +365,22 @@ public class TestSuite {
         LOG.info("SDC Basic Messaging Check completed" + statusline + ".");
     }
 
-    private Boolean setupDeviceAndProvider() {
-        final var isConsumerEnabled =
-                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.CONSUMER_ENABLE)));
-        final var isProviderEnabled =
-                injector.getInstance(Key.get(Boolean.class, Names.named(TestSuiteConfig.PROVIDER_ENABLE)));
-
-        if (isConsumerEnabled) {
-            LOG.info("Starting TestSuite Client");
-            try {
-                client.startService(MAX_WAIT);
-                client.connect();
-            } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
-                LOG.error("Could not connect to target device {}", client.getTargetEpr());
-                testRunObserver.invalidateTestRun("Could not connect to target device", e);
-                throw new RuntimeException(e);
-            }
-
-            // check the DUT for an archive service, currently needed for MDPWS:R0006
-            this.testRunInformation.setArchiveServicePresent(
-                    client.getHostingServiceProxy().getHostedServices().values().stream()
-                            .anyMatch(service ->
-                                    service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
+    private void startClient() {
+        LOG.info("Starting TestSuite Client");
+        try {
+            client.startService(MAX_WAIT);
+            client.connect();
+        } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
+            LOG.error("Could not connect to target device {}", client.getTargetEpr());
+            testRunObserver.invalidateTestRun("Could not connect to target device", e);
+            throw new RuntimeException(e);
         }
-        if (isProviderEnabled) {
-            LOG.info("Starting TestSuite Provider");
-            // TODO: Start provider (https://github.com/Draegerwerk/SDCcc/issues/1)
-        }
-        return isConsumerEnabled;
+
+        // check the DUT for an archive service, currently needed for MDPWS:R0006
+        this.testRunInformation.setArchiveServicePresent(
+                client.getHostingServiceProxy().getHostedServices().values().stream()
+                        .anyMatch(service ->
+                                service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
     }
 
     /**
@@ -665,9 +653,9 @@ public class TestSuite {
      * Run the test suite with the given already parsed command line arguments and the
      * specified enabled test config constants.
      *
-     * @param cmdLine parsed command line arguments
+     * @param cmdLine                parsed command line arguments
      * @param enabledTestConfigClass class containing test identifier constants
-     * @param sdcTestDirectories directories to search for test cases
+     * @param sdcTestDirectories     directories to search for test cases
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
