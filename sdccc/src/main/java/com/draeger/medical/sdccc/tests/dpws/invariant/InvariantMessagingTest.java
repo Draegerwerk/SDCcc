@@ -40,6 +40,8 @@ public class InvariantMessagingTest extends InjectorTestBase {
     private static final String RELATIONSHIP_ATTRIBUTE = "RelationshipType";
     private static final String BROKEN_R0019_IRI = "wsa:Reply";
 
+    // NOTE: No PreCondition is necessary for this test case as the Basic Messaging Check should be
+    //       sufficient to ensure that there is suitable test data available.
     @Test
     @TestIdentifier(EnabledTestConfig.DPWS_R0019)
     @TestDescription("Verifies the relationship property is set in all response messages from the DUT.")

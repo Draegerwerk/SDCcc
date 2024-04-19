@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Test;
  */
 public class InvariantSOAPOverHTTPTest extends InjectorTestBase {
 
+    // NOTE: No PreCondition is necessary for this test case as the Basic Messaging Check should be
+    //       sufficient to ensure that there is suitable test data available.
     @Test
     @TestIdentifier(EnabledTestConfig.MDPWS_R0006)
     @TestDescription("Verifies for all incoming http messages that the transmitted"

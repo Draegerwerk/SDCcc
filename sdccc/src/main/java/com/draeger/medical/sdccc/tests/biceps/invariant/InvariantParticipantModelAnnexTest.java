@@ -121,6 +121,9 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
                 acceptableSequenceSeen.get(), "No AbstractOperationDescriptors seen during test run, test failed.");
     }
 
+    // NOTE: No PreCondition can ensure that an ApprovedJurisdictions list is present or absent as this
+    //       list is supposed to be static for a Mds. When all Mds in a Device's Mdib have an ApprovedJurisdictions
+    //       list, then this test case should not be applied to it.
     @Test
     @DisplayName("OperatingJurisdiction SHALL NOT be present if there is no pm:MdsDescriptor/pm:ApprovedJurisdictions"
             + " list present.")
@@ -166,6 +169,9 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
         assertTestData(acceptableSequenceSeen.get(), "No acceptable sequence seen, test failed.");
     }
 
+    // NOTE: No PreCondition can ensure that an ApprovedJurisdictions list is present or absent as this
+    //       list is supposed to be static for a Vmd. When all Vmds in a Device's Mdib have an ApprovedJurisdictions
+    //       list, then this test case should not be applied to it.
     @Test
     @DisplayName("OperatingJurisdiction SHALL NOT be present if there is no pm:VmdDescriptor/pm:ApprovedJurisdictions"
             + " list present.")

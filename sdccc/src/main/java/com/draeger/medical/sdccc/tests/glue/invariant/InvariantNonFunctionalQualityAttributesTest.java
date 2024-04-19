@@ -298,6 +298,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
         assertTestData(acceptableSequenceSeen.get(), "No AlertConditionState seen during the test run, test failed.");
     }
 
+    // TODO: Add a Precondition (as part of SDCCC-1348)
     @Test
     @TestIdentifier(EnabledTestConfig.GLUE_R0013)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
@@ -341,6 +342,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
         assertTestData(acceptableSequenceSeen.get(), "No suitable context states seen, test failed.");
     }
 
+    // TODO: Add a Precondition (as part of SDCCC-1348)
     @Test
     @TestIdentifier(EnabledTestConfig.GLUE_R0072)
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
