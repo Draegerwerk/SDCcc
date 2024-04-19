@@ -30,14 +30,10 @@ MaxWait=10
 MulticastTTL=128
 
 [SDCcc.Consumer]
-Enable=true
 DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 # DeviceLocationBed="bed32"
 # DeviceLocationPointOfCare="poc32"
 # etc.
-
-[SDCcc.Provider]
-Enable=false
 
 [SDCcc.gRPC]
 ServerAddress="localhost:50051"
