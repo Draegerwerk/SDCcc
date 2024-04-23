@@ -42,10 +42,9 @@ public class InvariantBicepsNormativeAnnexTest extends InjectorTestBase {
         this.messageStorage = injector.getInstance(MessageStorage.class);
     }
 
-    // NOTE: No PreCondition can ensure that there are Localized texts with a @Ref attribute. This is because
-    //       a device either provides a LocalizationService, in which case all Localized texts will have a @Ref attribute,
-    //       or it doesn't, in which case no Localized text will have a @Ref attribute.
-    //       When a device does not provide a LocalizationService, then this test should not be applied to it.
+    // NOTE: The way that a Device uses LocalizedTexts is usually static. It does hence not make sense to implement
+    //       a manipulation that causes LocalizedTests that have no @Ref attribute to get one.
+    //       When a device does not use @Ref attributes in its LocalizedTexts, then this test is not applicable to it.
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5006)
     @TestDescription(
