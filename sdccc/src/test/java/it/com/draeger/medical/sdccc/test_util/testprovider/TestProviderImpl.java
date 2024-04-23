@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-package com.draeger.medical.sdccc.sdcri.testprovider;
+package it.com.draeger.medical.sdccc.test_util.testprovider;
 
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -39,7 +39,7 @@ import org.somda.sdc.glue.provider.factory.SdcDeviceFactory;
 import org.somda.sdc.glue.provider.sco.OperationInvocationReceiver;
 
 /**
- * SDCri provider used to test SDC consumers.
+ * SDCri provider used integration tests.
  */
 public class TestProviderImpl extends AbstractIdleService implements TestProvider {
     private static final Logger LOG = LogManager.getLogger();
@@ -54,7 +54,7 @@ public class TestProviderImpl extends AbstractIdleService implements TestProvide
     @Inject
     TestProviderImpl(
             @Assisted final InputStream mdibAsStream,
-            @Named(TestSuiteConfig.PROVIDER_DEVICE_EPR) final String providerEpr,
+            @Named(TestProviderConfig.PROVIDER_DEVICE_EPR) final String providerEpr,
             @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
             final TestProviderUtil testProviderUtil) {
         this.injector = testProviderUtil.getInjector();

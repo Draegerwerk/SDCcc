@@ -108,14 +108,12 @@ all the given filter criteria have to be fulfilled for initiating a connection.
 For example the configuration
 ```
 [SDCcc.Consumer] 
-Enable=true
 DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 ```
 will make only those devices match during discovery that have the EPR "urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11",
 the configuration
 ```
 [SDCcc.Consumer] 
-Enable=true
 DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 DeviceLocationBed="bed32"
 ```
@@ -123,14 +121,12 @@ only those that have the EPR "urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11" and
 the configuration
 ```
 [SDCcc.Consumer] 
-Enable=true
 DeviceLocationBed="bed32"
 ```
 only those that have the bed "bed32" in the location query,
 and the configuration
 ```
 [SDCcc.Consumer]
-Enable=true
 ```
 will make all devices match during discovery.
 

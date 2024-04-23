@@ -29,9 +29,6 @@ import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.HibernateConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
-import com.draeger.medical.sdccc.sdcri.testprovider.TestProvider;
-import com.draeger.medical.sdccc.sdcri.testprovider.TestProviderImpl;
-import com.draeger.medical.sdccc.sdcri.testprovider.guice.ProviderFactory;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -43,6 +40,10 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import it.com.draeger.medical.sdccc.test_util.SslMetadata;
+import it.com.draeger.medical.sdccc.test_util.testprovider.TestProvider;
+import it.com.draeger.medical.sdccc.test_util.testprovider.TestProviderConfig;
+import it.com.draeger.medical.sdccc.test_util.testprovider.TestProviderImpl;
+import it.com.draeger.medical.sdccc.test_util.testprovider.guice.ProviderFactory;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.Identifiers;
 import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
 import java.io.File;
@@ -585,7 +586,6 @@ public class TestSuiteIT {
             bind(CryptoSettings.class).toInstance(cryptoSettings);
 
             bind(TestSuiteConfig.CI_MODE, Boolean.class, true);
-            bind(TestSuiteConfig.CONSUMER_ENABLE, Boolean.class, true);
             bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, DUT_EPR);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, this.locationConfig.facility);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, this.locationConfig.building);
@@ -594,8 +594,7 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, this.locationConfig.room);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, this.locationConfig.bed);
 
-            bind(TestSuiteConfig.PROVIDER_ENABLE, Boolean.class, true);
-            bind(TestSuiteConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
 
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
             bind(DpwsConfig.MULTICAST_TTL, Integer.class, 128);
