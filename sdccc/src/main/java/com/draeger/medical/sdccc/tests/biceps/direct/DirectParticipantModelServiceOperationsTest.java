@@ -31,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdStateResponse;
 import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
@@ -174,7 +173,7 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
             + "list #handle_refs_response#")
     void testRequirementR5042() throws NoTestData {
 
-        final List<String> mdsHandleList =
+        final var mdsHandleList =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(MdsDescriptor.class).stream()
                         .map(mdibEntity -> (MdsDescriptor) mdibEntity.getDescriptor())
                         .map(AbstractDescriptor::getHandle)
@@ -190,18 +189,15 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
         for (var mdsCombination : allMdsCombinations) {
             LOG.debug("Start verification for the mds descriptor combination {}.", mdsCombination);
 
-            final var allMdsContextStateEntities = new ArrayList<MdibEntity>();
-
-            for (var mdsHandle : mdsCombination) {
-                final var mdsContextStateEntities = testClient
-                        .getSdcRemoteDevice()
-                        .getMdibAccess()
-                        .findEntitiesByType(AbstractContextDescriptor.class)
-                        .stream()
-                        .filter(it -> it.getParentMds().equals(mdsHandle))
-                        .collect(Collectors.toSet());
-                allMdsContextStateEntities.addAll(mdsContextStateEntities);
-            }
+            final var allMdsContextStateEntities =
+                    testClient
+                            .getSdcRemoteDevice()
+                            .getMdibAccess()
+                            .findEntitiesByType(AbstractContextDescriptor.class)
+                            .stream()
+                            .filter(it ->
+                                    mdsCombination.stream().anyMatch(mdsHandle -> mdsHandle.equals(it.getParentMds())))
+                            .collect(Collectors.toSet());
 
             if (!allMdsContextStateEntities.isEmpty()) {
                 contextStateSeen.set(true);
@@ -284,16 +280,12 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
                 .map(AbstractContextState::getHandle)
                 .collect(Collectors.toSet());
 
-        LOG.debug(
-                "Start verification that the expected context state handles {} are contained in the "
-                        + "GetContextStatesResponse {}.",
-                expectedContextStateHandles,
-                contextStateHandles);
-
         for (var expectedContextStateHandle : expectedContextStateHandles) {
             assertTrue(
                     contextStateHandles.contains(expectedContextStateHandle),
-                    String.format("State handle %s has not been seen in response.", expectedContextStateHandle));
+                    String.format(
+                            "State handle '%s' has not been seen in response %s.%n",
+                            expectedContextStateHandle, contextStateHandles));
         }
     }
 
@@ -306,7 +298,9 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
         for (var expectedDescriptorHandle : expectedDescriptorHandles) {
             assertTrue(
                     descriptorHandles.contains(expectedDescriptorHandle),
-                    String.format("Descriptor handle %s has not been seen in response.", expectedDescriptorHandle));
+                    String.format(
+                            "Descriptor handle %s has not been seen in response %s.",
+                            expectedDescriptorHandle, descriptorHandles));
         }
     }
 }
