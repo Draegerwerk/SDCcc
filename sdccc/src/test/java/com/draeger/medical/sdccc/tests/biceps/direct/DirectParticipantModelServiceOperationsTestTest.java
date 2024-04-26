@@ -250,7 +250,7 @@ public class DirectParticipantModelServiceOperationsTestTest {
     /**
      * Assert that for multiple Mds the test results are correctly evaluated for each mds.
      *
-     * @throws NoTestData if no state handle
+     * @throws Exception on any exception
      */
     @Test
     public void testRequirementR5042MultipleMdsPassed() throws NoTestData {
@@ -259,7 +259,6 @@ public class DirectParticipantModelServiceOperationsTestTest {
         when(mdibEntity4.getParentMds()).thenReturn(MDS_HANDLE3);
 
         when(remoteMdibAccess.findEntitiesByType(MdsDescriptor.class).stream()
-                        .map(any())
                         .map(any())
                         .toList())
                 .thenReturn(List.of(MDS_HANDLE, MDS_HANDLE1, MDS_HANDLE2, MDS_HANDLE3));
@@ -293,7 +292,6 @@ public class DirectParticipantModelServiceOperationsTestTest {
 
         when(remoteMdibAccess.findEntitiesByType(MdsDescriptor.class).stream()
                         .map(any())
-                        .map(any())
                         .toList())
                 .thenReturn(List.of(MDS_HANDLE));
 
@@ -313,6 +311,27 @@ public class DirectParticipantModelServiceOperationsTestTest {
     }
 
     /**
+     * Assert that returning no context state fails the test.
+     **/
+    @Test
+    public void testRequirementR5042NoContextStateFailed() {
+
+        final var remoteMdibAccess = testClient.getSdcRemoteDevice().getMdibAccess();
+        final var mdibEntity4 = mock(MdibEntity.class); // mdibEntity without context states
+
+        when(mdibEntity4.getParentMds()).thenReturn(MDS_HANDLE);
+        when(remoteMdibAccess.findEntitiesByType(MdsDescriptor.class).stream()
+                        .map(any())
+                        .toList())
+                .thenReturn(List.of(MDS_HANDLE));
+        when(remoteMdibAccess.findEntitiesByType(AbstractContextDescriptor.class))
+                .thenReturn(List.of());
+        when(getContextStatesResponse.getContextState()).thenReturn(allContextStates);
+
+        assertThrows(NoTestData.class, testClass::testRequirementR5042);
+    }
+
+    /**
      * Assert that returning not all the states fails the test.
      */
     @Test
@@ -321,7 +340,6 @@ public class DirectParticipantModelServiceOperationsTestTest {
         final var remoteMdibAccess = testClient.getSdcRemoteDevice().getMdibAccess();
 
         when(remoteMdibAccess.findEntitiesByType(MdsDescriptor.class).stream()
-                        .map(any())
                         .map(any())
                         .toList())
                 .thenReturn(List.of(MDS_HANDLE));

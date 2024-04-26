@@ -31,11 +31,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.model.message.GetContextStatesResponse;
 import org.somda.sdc.biceps.model.message.GetMdStateResponse;
 import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
-import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
@@ -175,8 +175,7 @@ public class DirectParticipantModelServiceOperationsTest extends InjectorTestBas
 
         final var mdsHandleList =
                 testClient.getSdcRemoteDevice().getMdibAccess().findEntitiesByType(MdsDescriptor.class).stream()
-                        .map(mdibEntity -> (MdsDescriptor) mdibEntity.getDescriptor())
-                        .map(AbstractDescriptor::getHandle)
+                        .map(MdibEntity::getHandle)
                         .toList();
         assertTestData(mdsHandleList, "No Mds descriptor is present.");
 
