@@ -28,6 +28,7 @@ import com.draeger.medical.biceps.model.participant.ChannelState;
 import com.draeger.medical.biceps.model.participant.ClockDescriptor;
 import com.draeger.medical.biceps.model.participant.ClockState;
 import com.draeger.medical.biceps.model.participant.CodedValue;
+import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
@@ -37,7 +38,6 @@ import com.draeger.medical.biceps.model.participant.MdState;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.biceps.model.participant.MdsDescriptor;
 import com.draeger.medical.biceps.model.participant.MdsState;
-import com.draeger.medical.biceps.model.participant.Measurement;
 import com.draeger.medical.biceps.model.participant.MeasurementValidity;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
@@ -829,21 +829,6 @@ public class MdibBuilder {
         return participantModelFactory.createCalibrationInfoCalibrationDocumentation();
     }
 
-    /**
-     * @param code  for new result
-     * @param value of result
-     * @return new calibration info calibration documentation calibration result
-     */
-    public CalibrationInfo.CalibrationDocumentation.CalibrationResult
-            buildCalibrationInfoCalibrationDocumentationCalibrationResult(
-                    final CodedValue code, final Measurement value) {
-        final var calibrationResult =
-                participantModelFactory.createCalibrationInfoCalibrationDocumentationCalibrationResult();
-        calibrationResult.setCode(code);
-        calibrationResult.setValue(value);
-        return calibrationResult;
-    }
-
     /*
     Contexts
     */
@@ -950,6 +935,16 @@ public class MdibBuilder {
         final var descriptor = buildLocationContextDescriptor(descriptorHandle);
         final var state = buildLocationContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
+    }
+
+    /**
+     * @param handle for new descriptor
+     * @return new ensemble context descriptor
+     */
+    public EnsembleContextDescriptor buildEnsembleContextDescriptor(final String handle) {
+        final var descriptor = participantModelFactory.createEnsembleContextDescriptor();
+        descriptor.setHandle(handle);
+        return descriptor;
     }
 
     /**
