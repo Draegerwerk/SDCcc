@@ -29,7 +29,6 @@ import com.draeger.medical.biceps.model.participant.ClockDescriptor;
 import com.draeger.medical.biceps.model.participant.ClockState;
 import com.draeger.medical.biceps.model.participant.CodedValue;
 import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
-import com.draeger.medical.biceps.model.participant.EnsembleContextState;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
@@ -39,7 +38,6 @@ import com.draeger.medical.biceps.model.participant.MdState;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.biceps.model.participant.MdsDescriptor;
 import com.draeger.medical.biceps.model.participant.MdsState;
-import com.draeger.medical.biceps.model.participant.Measurement;
 import com.draeger.medical.biceps.model.participant.MeasurementValidity;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
@@ -831,21 +829,6 @@ public class MdibBuilder {
         return participantModelFactory.createCalibrationInfoCalibrationDocumentation();
     }
 
-    /**
-     * @param code  for new result
-     * @param value of result
-     * @return new calibration info calibration documentation calibration result
-     */
-    public CalibrationInfo.CalibrationDocumentation.CalibrationResult
-    buildCalibrationInfoCalibrationDocumentationCalibrationResult(
-            final CodedValue code, final Measurement value) {
-        final var calibrationResult =
-                participantModelFactory.createCalibrationInfoCalibrationDocumentationCalibrationResult();
-        calibrationResult.setCode(code);
-        calibrationResult.setValue(value);
-        return calibrationResult;
-    }
-
     /*
     Contexts
     */
@@ -962,32 +945,6 @@ public class MdibBuilder {
         final var descriptor = participantModelFactory.createEnsembleContextDescriptor();
         descriptor.setHandle(handle);
         return descriptor;
-    }
-
-    /**
-     * @param descriptorHandle of descriptor for new state
-     * @param stateHandle      of new state
-     * @return new ensemble context state
-     */
-    public EnsembleContextState buildEnsembleContextState(final String descriptorHandle, final String stateHandle) {
-        final var state = participantModelFactory.createEnsembleContextState();
-        state.setDescriptorHandle(descriptorHandle);
-        state.setHandle(stateHandle);
-        return state;
-    }
-
-    /**
-     * Builds a new pair of ensemble context descriptor and state.
-     *
-     * @param descriptorHandle for new descriptor and state
-     * @param stateHandle      for new state
-     * @return new ensemble descriptor and state
-     */
-    public Pair<EnsembleContextDescriptor, EnsembleContextState> buildEnsembleContext(
-            final String descriptorHandle, final String stateHandle) {
-        final var descriptor = buildEnsembleContextDescriptor(descriptorHandle);
-        final var state = buildEnsembleContextState(descriptorHandle, stateHandle);
-        return new ImmutablePair<>(descriptor, state);
     }
 
     /**
