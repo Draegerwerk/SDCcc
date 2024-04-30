@@ -28,6 +28,8 @@ import com.draeger.medical.biceps.model.participant.ChannelState;
 import com.draeger.medical.biceps.model.participant.ClockDescriptor;
 import com.draeger.medical.biceps.model.participant.ClockState;
 import com.draeger.medical.biceps.model.participant.CodedValue;
+import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
+import com.draeger.medical.biceps.model.participant.EnsembleContextState;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
@@ -835,8 +837,8 @@ public class MdibBuilder {
      * @return new calibration info calibration documentation calibration result
      */
     public CalibrationInfo.CalibrationDocumentation.CalibrationResult
-            buildCalibrationInfoCalibrationDocumentationCalibrationResult(
-                    final CodedValue code, final Measurement value) {
+    buildCalibrationInfoCalibrationDocumentationCalibrationResult(
+            final CodedValue code, final Measurement value) {
         final var calibrationResult =
                 participantModelFactory.createCalibrationInfoCalibrationDocumentationCalibrationResult();
         calibrationResult.setCode(code);
@@ -949,6 +951,42 @@ public class MdibBuilder {
             final String descriptorHandle, final String stateHandle) {
         final var descriptor = buildLocationContextDescriptor(descriptorHandle);
         final var state = buildLocationContextState(descriptorHandle, stateHandle);
+        return new ImmutablePair<>(descriptor, state);
+    }
+
+    /**
+     * @param handle for new descriptor
+     * @return new ensemble context descriptor
+     */
+    public EnsembleContextDescriptor buildEnsembleContextDescriptor(final String handle) {
+        final var descriptor = participantModelFactory.createEnsembleContextDescriptor();
+        descriptor.setHandle(handle);
+        return descriptor;
+    }
+
+    /**
+     * @param descriptorHandle of descriptor for new state
+     * @param stateHandle      of new state
+     * @return new ensemble context state
+     */
+    public EnsembleContextState buildEnsembleContextState(final String descriptorHandle, final String stateHandle) {
+        final var state = participantModelFactory.createEnsembleContextState();
+        state.setDescriptorHandle(descriptorHandle);
+        state.setHandle(stateHandle);
+        return state;
+    }
+
+    /**
+     * Builds a new pair of ensemble context descriptor and state.
+     *
+     * @param descriptorHandle for new descriptor and state
+     * @param stateHandle      for new state
+     * @return new ensemble descriptor and state
+     */
+    public Pair<EnsembleContextDescriptor, EnsembleContextState> buildEnsembleContext(
+            final String descriptorHandle, final String stateHandle) {
+        final var descriptor = buildEnsembleContextDescriptor(descriptorHandle);
+        final var state = buildEnsembleContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
     }
 
