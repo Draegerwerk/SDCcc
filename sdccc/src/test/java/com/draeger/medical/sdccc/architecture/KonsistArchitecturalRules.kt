@@ -5,7 +5,7 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.ext.list.withAnnotationOf
 import com.lemonappdev.konsist.api.verify.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Checks the listed architectural rules for Kotlin.
