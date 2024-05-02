@@ -42,6 +42,9 @@ public class InvariantBicepsNormativeAnnexTest extends InjectorTestBase {
         this.messageStorage = injector.getInstance(MessageStorage.class);
     }
 
+    // NOTE: The way that a Device uses LocalizedTexts is usually static. It does hence not make sense to implement
+    //       a manipulation that causes LocalizedTests that have no @Ref attribute to get one.
+    //       When a device does not use @Ref attributes in its LocalizedTexts, then this test is not applicable to it.
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5006)
     @TestDescription(
