@@ -439,13 +439,6 @@ public class MdibBuilder {
     }
 
     /**
-     * @return a new range instance.
-     */
-    public Range buildRange() {
-        return participantModelFactory.createRange();
-    }
-
-    /**
      * Builds a sample array value.
      *
      * @param samples of the sample array value
