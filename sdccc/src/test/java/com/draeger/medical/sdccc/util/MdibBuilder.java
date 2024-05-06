@@ -28,6 +28,8 @@ import com.draeger.medical.biceps.model.participant.ChannelState;
 import com.draeger.medical.biceps.model.participant.ClockDescriptor;
 import com.draeger.medical.biceps.model.participant.ClockState;
 import com.draeger.medical.biceps.model.participant.CodedValue;
+import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricDescriptor;
+import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricState;
 import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
@@ -51,6 +53,7 @@ import com.draeger.medical.biceps.model.participant.OperatorContextState;
 import com.draeger.medical.biceps.model.participant.PatientContextDescriptor;
 import com.draeger.medical.biceps.model.participant.PatientContextState;
 import com.draeger.medical.biceps.model.participant.PhysicalConnectorInfo;
+import com.draeger.medical.biceps.model.participant.Range;
 import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.RealTimeSampleArrayMetricState;
 import com.draeger.medical.biceps.model.participant.SampleArrayValue;
@@ -456,7 +459,7 @@ public class MdibBuilder {
      * @param unit         of new descriptor
      * @param resolution   of new descriptor
      * @param samplePeriod of new descriptor
-     * @return a new string metric descriptor
+     * @return a new real time sample array metric descriptor
      */
     public RealTimeSampleArrayMetricDescriptor buildRealTimeSampleArrayMetricDescriptor(
             final String handle,
@@ -478,7 +481,7 @@ public class MdibBuilder {
 
     /**
      * @param handle of descriptor for new state
-     * @return new numeric metric state
+     * @return new real time sample array metric state
      */
     public RealTimeSampleArrayMetricState buildRealTimeSampleArrayMetricState(final String handle) {
         final var realTimeSampleArrayMetricState = participantModelFactory.createRealTimeSampleArrayMetricState();
@@ -495,7 +498,7 @@ public class MdibBuilder {
      * @param unit         of descriptor
      * @param resolution   of descriptor
      * @param samplePeriod of descriptor
-     * @return new string metric descriptor and state
+     * @return new real time sample array metric descriptor and state
      */
     public Pair<RealTimeSampleArrayMetricDescriptor, RealTimeSampleArrayMetricState> buildRealTimeSampleArrayMetric(
             final String handle,
@@ -508,6 +511,75 @@ public class MdibBuilder {
                 handle, category, availability, unit, resolution, samplePeriod);
         final var realTimeSampleArrayMetricState = buildRealTimeSampleArrayMetricState(handle);
         return new ImmutablePair<>(realTimeSampleArrayMetricDescriptor, realTimeSampleArrayMetricState);
+    }
+
+    /**
+     * @param handle            for new descriptor
+     * @param category          of new descriptor
+     * @param availability      of new descriptor
+     * @param unit              of new descriptor
+     * @param resolution        of new descriptor
+     * @param domainUnit        of new descriptor
+     * @param distributionRange of new descriptor
+     * @return a new distribution sample array metric descriptor
+     */
+    public DistributionSampleArrayMetricDescriptor buildDistributionSampleArrayMetricDescriptor(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution,
+            final CodedValue domainUnit,
+            final Range distributionRange) {
+        final var distributionSampleArrayMetricDescriptor =
+                participantModelFactory.createDistributionSampleArrayMetricDescriptor();
+        distributionSampleArrayMetricDescriptor.setHandle(handle);
+        distributionSampleArrayMetricDescriptor.setMetricCategory(category);
+        distributionSampleArrayMetricDescriptor.setMetricAvailability(availability);
+        distributionSampleArrayMetricDescriptor.setUnit(unit);
+        distributionSampleArrayMetricDescriptor.setResolution(resolution);
+        distributionSampleArrayMetricDescriptor.setDomainUnit(domainUnit);
+        distributionSampleArrayMetricDescriptor.setDistributionRange(distributionRange);
+
+        return distributionSampleArrayMetricDescriptor;
+    }
+
+    /**
+     * @param handle of descriptor for new state
+     * @return new distribution sample array metric state
+     */
+    public DistributionSampleArrayMetricState buildDistributionSampleArrayMetricState(final String handle) {
+        final var distributionSampleArrayMetricState =
+                participantModelFactory.createDistributionSampleArrayMetricState();
+        distributionSampleArrayMetricState.setDescriptorHandle(handle);
+        return distributionSampleArrayMetricState;
+    }
+
+    /**
+     * Builds a new pair of distribution sample array metric descriptor and state.
+     *
+     * @param handle            for new descriptor and state
+     * @param category          of descriptor
+     * @param availability      of descriptor
+     * @param unit              of descriptor
+     * @param resolution        of descriptor
+     * @param domainUnit        of new descriptor
+     * @param distributionRange of new descriptor
+     * @return new distribution sample array metric descriptor and state
+     */
+    public Pair<DistributionSampleArrayMetricDescriptor, DistributionSampleArrayMetricState>
+            buildDistributionSampleArrayMetric(
+                    final String handle,
+                    final MetricCategory category,
+                    final MetricAvailability availability,
+                    final CodedValue unit,
+                    final BigDecimal resolution,
+                    final CodedValue domainUnit,
+                    final Range distributionRange) {
+        final var distributionSampleArrayMetricDescriptor = buildDistributionSampleArrayMetricDescriptor(
+                handle, category, availability, unit, resolution, domainUnit, distributionRange);
+        final var distributionSampleArrayMetricState = buildDistributionSampleArrayMetricState(handle);
+        return new ImmutablePair<>(distributionSampleArrayMetricDescriptor, distributionSampleArrayMetricState);
     }
 
     /*
