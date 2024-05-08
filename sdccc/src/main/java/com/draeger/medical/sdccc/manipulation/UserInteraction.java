@@ -89,7 +89,7 @@ public class UserInteraction {
      * @param interaction text to display
      * @return user provided text input
      */
-    String displayStringInputUserInteraction(final String interaction) {
+    public String displayStringInputUserInteraction(final String interaction) {
         final String result;
 
         LOG.debug("displayStringInputUserInteraction called for interaction: {}", interaction);

@@ -427,6 +427,26 @@ public class GRpcManipulations implements Manipulations {
         return response;
     }
 
+    public ActivationStateServiceGrpc.ActivationStateServiceBlockingStub getActivationStateStub() {
+        return activationStateStub;
+    }
+
+    public AlertServiceGrpc.AlertServiceBlockingStub getAlertStub() {
+        return alertStub;
+    }
+
+    public ContextServiceGrpc.ContextServiceBlockingStub getContextStub() {
+        return contextStub;
+    }
+
+    public DeviceServiceGrpc.DeviceServiceBlockingStub getDeviceStub() {
+        return deviceStub;
+    }
+
+    public MetricServiceGrpc.MetricServiceBlockingStub getMetricStub() {
+        return metricStub;
+    }
+
     ContextTypes.ContextAssociation toApiContextType(final ContextAssociation contextAssociation) {
         return switch (contextAssociation) {
             case NO -> ContextTypes.ContextAssociation.CONTEXT_ASSOCIATION_NOT_ASSOCIATED;
