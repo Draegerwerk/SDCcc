@@ -34,6 +34,7 @@ import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender;
 import com.draeger.medical.sdccc.util.junit.XmlReportListener;
 import com.draeger.medical.sdccc.util.junit.guice.XmlReportFactory;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.apache.commons.lang3.SystemUtils;
@@ -433,7 +435,8 @@ public class TestSuite {
             final CommandLineOptions cmdLine,
             final File testRunDir,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
-            final String[] sdcTestDirectories)
+            final String[] sdcTestDirectories,
+            @Nullable final AbstractModule overrides)
             throws IOException {
 
         final AbstractConfigurationModule baseConfigModule = new AbstractConfigurationModule() {
@@ -528,7 +531,11 @@ public class TestSuite {
         final var configurationModule = Modules.override(baseConfigModule)
                 .with(Modules.override(configModule, testConfigModule).with(cliOverrideModule));
 
-        return createInjector(configurationModule, new TestRunConfig(testRunDir));
+        if (overrides != null) {
+            return createInjector(configurationModule, new TestRunConfig(testRunDir), overrides);
+        } else {
+            return createInjector(configurationModule, new TestRunConfig(testRunDir));
+        }
     }
 
     private static void exit(
@@ -632,7 +639,7 @@ public class TestSuite {
     public static void main(final String[] args) throws IOException {
         final var cmdLine = initialize(args);
 
-        runWithArgs(cmdLine, EnabledTestConfig.class, DefaultTestSuiteConfig.DEFAULT_DIRECTORIES);
+        runWithArgs(cmdLine, EnabledTestConfig.class, DefaultTestSuiteConfig.DEFAULT_DIRECTORIES, null);
     }
 
     /**
@@ -656,11 +663,13 @@ public class TestSuite {
      * @param cmdLine                parsed command line arguments
      * @param enabledTestConfigClass class containing test identifier constants
      * @param sdcTestDirectories     directories to search for test cases
+     * @param overrides              abstract module to override test run injector
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
-            final String[] sdcTestDirectories)
+            final String[] sdcTestDirectories,
+            @Nullable final AbstractModule overrides)
             throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
@@ -685,7 +694,7 @@ public class TestSuite {
             }
 
             final Injector injector =
-                    createTestRunInjector(cmdLine, testRunDir, enabledTestConfigClass, sdcTestDirectories);
+                    createTestRunInjector(cmdLine, testRunDir, enabledTestConfigClass, sdcTestDirectories, overrides);
 
             final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
                     findTriggerOnErrorOrWorseLogAppender(logConfig);
