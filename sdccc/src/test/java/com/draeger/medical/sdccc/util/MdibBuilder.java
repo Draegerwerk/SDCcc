@@ -71,11 +71,9 @@ import com.draeger.medical.biceps.model.participant.SystemContextState;
 import com.draeger.medical.biceps.model.participant.VmdDescriptor;
 import com.draeger.medical.biceps.model.participant.VmdState;
 import com.google.inject.Inject;
-
 import java.math.BigDecimal;
 import java.util.List;
 import javax.xml.datatype.Duration;
-
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -419,7 +417,8 @@ public class MdibBuilder {
             final MetricAvailability availability,
             final List<EnumStringMetricDescriptor.AllowedValue> allowedValue,
             final CodedValue unit) {
-        final var stringMetricDescriptor = buildEnumStringMetricDescriptor(handle, category, availability, allowedValue, unit);
+        final var stringMetricDescriptor =
+                buildEnumStringMetricDescriptor(handle, category, availability, allowedValue, unit);
         final var stringMetricState = buildEnumStringMetricState(handle);
         return new ImmutablePair<>(stringMetricDescriptor, stringMetricState);
     }
@@ -627,14 +626,14 @@ public class MdibBuilder {
      * @return new distribution sample array metric descriptor and state
      */
     public Pair<DistributionSampleArrayMetricDescriptor, DistributionSampleArrayMetricState>
-    buildDistributionSampleArrayMetric(
-            final String handle,
-            final MetricCategory category,
-            final MetricAvailability availability,
-            final CodedValue unit,
-            final BigDecimal resolution,
-            final CodedValue domainUnit,
-            final Range distributionRange) {
+            buildDistributionSampleArrayMetric(
+                    final String handle,
+                    final MetricCategory category,
+                    final MetricAvailability availability,
+                    final CodedValue unit,
+                    final BigDecimal resolution,
+                    final CodedValue domainUnit,
+                    final Range distributionRange) {
         final var distributionSampleArrayMetricDescriptor = buildDistributionSampleArrayMetricDescriptor(
                 handle, category, availability, unit, resolution, domainUnit, distributionRange);
         final var distributionSampleArrayMetricState = buildDistributionSampleArrayMetricState(handle);
