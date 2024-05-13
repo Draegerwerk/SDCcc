@@ -388,8 +388,8 @@ public class MdibBuilder {
         enumStringMetricDescriptor.setMetricCategory(category);
         enumStringMetricDescriptor.setMetricAvailability(availability);
         enumStringMetricDescriptor.setUnit(unit);
-        var temp = enumStringMetricDescriptor.getAllowedValue();
-        temp.addAll(allowedValue);
+        final var allowedValueExisting = enumStringMetricDescriptor.getAllowedValue();
+        allowedValueExisting.addAll(allowedValue);
         return enumStringMetricDescriptor;
     }
 
