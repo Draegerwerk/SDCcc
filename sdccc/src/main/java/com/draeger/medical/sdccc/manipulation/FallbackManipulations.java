@@ -34,8 +34,13 @@ public class FallbackManipulations implements Manipulations {
 
     private final InteractionFactory interactionFactory;
 
+    /**
+     * Create FallbackManipulations.
+     *
+     * @param interactionFactory to create user interactions
+     */
     @Inject
-    FallbackManipulations(final InteractionFactory interactionFactory) {
+    public FallbackManipulations(final InteractionFactory interactionFactory) {
         this.interactionFactory = interactionFactory;
     }
 
@@ -270,6 +275,10 @@ public class FallbackManipulations implements Manipulations {
                 })
                 .displayYesNoUserInteraction(interactionMessage);
         return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+    }
+
+    public InteractionFactory getInteractionFactory() {
+        return interactionFactory;
     }
 
     private String getMetricStatus(final ComponentActivation activation) {
