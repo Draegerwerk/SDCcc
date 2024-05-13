@@ -31,6 +31,8 @@ import com.draeger.medical.biceps.model.participant.CodedValue;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricState;
 import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
+import com.draeger.medical.biceps.model.participant.EnumStringMetricDescriptor;
+import com.draeger.medical.biceps.model.participant.EnumStringMetricState;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
@@ -69,9 +71,11 @@ import com.draeger.medical.biceps.model.participant.SystemContextState;
 import com.draeger.medical.biceps.model.participant.VmdDescriptor;
 import com.draeger.medical.biceps.model.participant.VmdState;
 import com.google.inject.Inject;
+
 import java.math.BigDecimal;
 import java.util.List;
 import javax.xml.datatype.Duration;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -365,6 +369,61 @@ public class MdibBuilder {
         return new ImmutablePair<>(stringMetricDescriptor, stringMetricState);
     }
 
+    /**
+     * @param handle       for new descriptor
+     * @param category     of new descriptor
+     * @param availability of new descriptor
+     * @param unit         of new descriptor
+     * @param allowedValue of new descriptor
+     * @return a new string metric descriptor
+     */
+    public EnumStringMetricDescriptor buildEnumStringMetricDescriptor(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final List<EnumStringMetricDescriptor.AllowedValue> allowedValue,
+            final CodedValue unit) {
+        final var enumStringMetricDescriptor = participantModelFactory.createEnumStringMetricDescriptor();
+        enumStringMetricDescriptor.setHandle(handle);
+        enumStringMetricDescriptor.setMetricCategory(category);
+        enumStringMetricDescriptor.setMetricAvailability(availability);
+        enumStringMetricDescriptor.setUnit(unit);
+        var temp = enumStringMetricDescriptor.getAllowedValue();
+        temp.addAll(allowedValue);
+        return enumStringMetricDescriptor;
+    }
+
+    /**
+     * @param handle of descriptor for new state
+     * @return new string metric state
+     */
+    public EnumStringMetricState buildEnumStringMetricState(final String handle) {
+        final var stringMetricState = participantModelFactory.createEnumStringMetricState();
+        stringMetricState.setDescriptorHandle(handle);
+        return stringMetricState;
+    }
+
+    /**
+     * Builds a new pair of string metric descriptor and state.
+     *
+     * @param handle       for new descriptor and state
+     * @param category     of descriptor
+     * @param availability of descriptor
+     * @param allowedValue of new descriptor
+     * @param unit         of descriptor
+     * @return new string metric descriptor and state
+     */
+    public Pair<EnumStringMetricDescriptor, EnumStringMetricState> buildEnumStringMetric(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final List<EnumStringMetricDescriptor.AllowedValue> allowedValue,
+            final CodedValue unit) {
+        final var stringMetricDescriptor = buildEnumStringMetricDescriptor(handle, category, availability, allowedValue, unit);
+        final var stringMetricState = buildEnumStringMetricState(handle);
+        return new ImmutablePair<>(stringMetricDescriptor, stringMetricState);
+    }
+
     /*
     Numeric Metric
     */
@@ -568,14 +627,14 @@ public class MdibBuilder {
      * @return new distribution sample array metric descriptor and state
      */
     public Pair<DistributionSampleArrayMetricDescriptor, DistributionSampleArrayMetricState>
-            buildDistributionSampleArrayMetric(
-                    final String handle,
-                    final MetricCategory category,
-                    final MetricAvailability availability,
-                    final CodedValue unit,
-                    final BigDecimal resolution,
-                    final CodedValue domainUnit,
-                    final Range distributionRange) {
+    buildDistributionSampleArrayMetric(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final BigDecimal resolution,
+            final CodedValue domainUnit,
+            final Range distributionRange) {
         final var distributionSampleArrayMetricDescriptor = buildDistributionSampleArrayMetricDescriptor(
                 handle, category, availability, unit, resolution, domainUnit, distributionRange);
         final var distributionSampleArrayMetricState = buildDistributionSampleArrayMetricState(handle);
