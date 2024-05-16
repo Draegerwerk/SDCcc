@@ -12,6 +12,8 @@ complexity:
     active: true
   ReplaceSafeCallChainWithRun:
     active: true
+  NestedBlockDepth:
+    threshold: 6
 exceptions:
   ObjectExtendsThrowable:
     active: true
