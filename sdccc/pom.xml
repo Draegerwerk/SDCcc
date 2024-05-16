@@ -20,7 +20,7 @@
         <spotbugsVersion>4.7.3</spotbugsVersion>
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
         <bouncyCastleVersion>1.67</bouncyCastleVersion>
-        <detektVersion>1.23.6</detektVersion>
+        <detektVersion>1.23.5</detektVersion>
         <!-- name of the directory inside the archive -->
         <jreDirectoryName>jdk-17.0.5+8-jre</jreDirectoryName>
         <jreBasePath>./jre</jreBasePath>
