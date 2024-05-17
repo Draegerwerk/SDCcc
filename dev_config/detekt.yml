@@ -7,6 +7,13 @@ comments:
     active: true
   OutdatedDocumentation:
     active: true
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: true
+
 complexity:
   NamedArguments:
     active: true
