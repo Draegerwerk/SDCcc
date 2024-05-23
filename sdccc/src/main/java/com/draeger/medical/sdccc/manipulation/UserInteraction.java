@@ -63,7 +63,7 @@ public class UserInteraction {
      * @param interaction text to display
      * @return true if performed successfully, false otherwise
      */
-    boolean displayYesNoUserInteraction(final String interaction) {
+    public boolean displayYesNoUserInteraction(final String interaction) {
         final boolean result;
 
         LOG.debug("displayUserInteraction called for interaction: {}", interaction);
