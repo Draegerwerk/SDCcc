@@ -15,12 +15,21 @@ comments:
     active: true
 
 complexity:
-  NamedArguments:
+  ComplexCondition:
+    threshold: 6
+  ComplexInterface:
     active: true
-  ReplaceSafeCallChainWithRun:
+  MethodOverloading:
+    active: true
+  NamedArguments:
     active: true
   NestedBlockDepth:
     threshold: 6
+  ReplaceSafeCallChainWithRun:
+    active: true
+  StringLiteralDuplication:
+    active: true
+
 exceptions:
   ObjectExtendsThrowable:
     active: true
