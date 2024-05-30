@@ -219,7 +219,14 @@ public final class ManipulationParameterUtil {
     public static class ManipulationParameterData {
         private final List<Pair<String, String>> data;
 
-        ManipulationParameterData(final List<Pair<String, String>> data) {
+        /**
+         * Create a ManipulationParameterData object for storage purposes. It is just a wrapper for a list of Pairs
+         * consisting of the type of parameter and the
+         * value in string format. E.g.: ["Handle", "mds0"] or ["AlertActivation", "ON"].
+         *
+         * @param data of the manipulation parameters.
+         */
+        public ManipulationParameterData(final List<Pair<String, String>> data) {
             this.data = data;
         }
 
