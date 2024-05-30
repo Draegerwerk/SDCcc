@@ -19,6 +19,7 @@ import com.draeger.medical.t2iapi.activation_state.ActivationStateServiceGrpc;
 import com.draeger.medical.t2iapi.activation_state.ActivationStateTypes;
 import com.draeger.medical.t2iapi.alert.AlertRequests;
 import com.draeger.medical.t2iapi.alert.AlertServiceGrpc;
+import com.draeger.medical.t2iapi.combined.CombinedServiceGrpc;
 import com.draeger.medical.t2iapi.context.ContextRequests;
 import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
 import com.draeger.medical.t2iapi.context.ContextTypes;
@@ -29,6 +30,7 @@ import com.draeger.medical.t2iapi.device.DeviceTypes;
 import com.draeger.medical.t2iapi.metric.MetricRequests;
 import com.draeger.medical.t2iapi.metric.MetricServiceGrpc;
 import com.draeger.medical.t2iapi.metric.MetricTypes;
+import com.draeger.medical.t2iapi.operation.OperationServiceGrpc;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -83,9 +85,11 @@ public class GRpcManipulations implements Manipulations {
 
     private final ActivationStateServiceGrpc.ActivationStateServiceBlockingStub activationStateStub;
     private final AlertServiceGrpc.AlertServiceBlockingStub alertStub;
+    private final CombinedServiceGrpc.CombinedServiceBlockingStub combinedStub;
     private final ContextServiceGrpc.ContextServiceBlockingStub contextStub;
     private final DeviceServiceGrpc.DeviceServiceBlockingStub deviceStub;
     private final MetricServiceGrpc.MetricServiceBlockingStub metricStub;
+    private final OperationServiceGrpc.OperationServiceBlockingStub operationStub;
     private final Manipulations fallback;
     private final ManipulationInfoFactory manipulationInfoFactory;
     private final StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
@@ -111,9 +115,11 @@ public class GRpcManipulations implements Manipulations {
 
         activationStateStub = ActivationStateServiceGrpc.newBlockingStub(channel);
         alertStub = AlertServiceGrpc.newBlockingStub(channel);
+        combinedStub = CombinedServiceGrpc.newBlockingStub(channel);
         contextStub = ContextServiceGrpc.newBlockingStub(channel);
         deviceStub = DeviceServiceGrpc.newBlockingStub(channel);
         metricStub = MetricServiceGrpc.newBlockingStub(channel);
+        operationStub = OperationServiceGrpc.newBlockingStub(channel);
     }
 
     @Override
@@ -435,6 +441,10 @@ public class GRpcManipulations implements Manipulations {
         return alertStub;
     }
 
+    public CombinedServiceGrpc.CombinedServiceBlockingStub getCombinedStub() {
+        return combinedStub;
+    }
+
     public ContextServiceGrpc.ContextServiceBlockingStub getContextStub() {
         return contextStub;
     }
@@ -445,6 +455,10 @@ public class GRpcManipulations implements Manipulations {
 
     public MetricServiceGrpc.MetricServiceBlockingStub getMetricStub() {
         return metricStub;
+    }
+
+    public OperationServiceGrpc.OperationServiceBlockingStub getOperationStub() {
+        return operationStub;
     }
 
     ContextTypes.ContextAssociation toApiContextType(final ContextAssociation contextAssociation) {
