@@ -31,6 +31,8 @@ import com.draeger.medical.biceps.model.participant.CodedValue;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricState;
 import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
+import com.draeger.medical.biceps.model.participant.EnumStringMetricDescriptor;
+import com.draeger.medical.biceps.model.participant.EnumStringMetricState;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
 import com.draeger.medical.biceps.model.participant.LocalizedText;
 import com.draeger.medical.biceps.model.participant.LocationContextDescriptor;
@@ -363,6 +365,65 @@ public class MdibBuilder {
         final var stringMetricDescriptor = buildStringMetricDescriptor(handle, category, availability, unit);
         final var stringMetricState = buildStringMetricState(handle);
         return new ImmutablePair<>(stringMetricDescriptor, stringMetricState);
+    }
+
+    /*
+    Enum String Metric
+     */
+
+    /**
+     * @param handle        for new descriptor
+     * @param category      of new descriptor
+     * @param availability  of new descriptor
+     * @param unit          of new descriptor
+     * @param allowedValues List of AllowedValue of new descriptor
+     * @return a new enum string metric descriptor
+     */
+    public EnumStringMetricDescriptor buildEnumStringMetricDescriptor(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final List<EnumStringMetricDescriptor.AllowedValue> allowedValues) {
+        final var enumStringMetricDescriptor = participantModelFactory.createEnumStringMetricDescriptor();
+        enumStringMetricDescriptor.setHandle(handle);
+        enumStringMetricDescriptor.setMetricCategory(category);
+        enumStringMetricDescriptor.setMetricAvailability(availability);
+        enumStringMetricDescriptor.setUnit(unit);
+        enumStringMetricDescriptor.getAllowedValue().addAll(allowedValues);
+        return enumStringMetricDescriptor;
+    }
+
+    /**
+     * @param handle of descriptor for new state
+     * @return new enum string metric state
+     */
+    public EnumStringMetricState buildEnumStringMetricState(final String handle) {
+        final var enumStringMetricState = participantModelFactory.createEnumStringMetricState();
+        enumStringMetricState.setDescriptorHandle(handle);
+        return enumStringMetricState;
+    }
+
+    /**
+     * Builds a new pair of enum string metric descriptor and state.
+     *
+     * @param handle       for new descriptor and state
+     * @param category     of descriptor
+     * @param availability of descriptor
+     * @param unit         of descriptor
+     * @param allowedValues List of AllowedValue of new descriptor
+     * @return new enum string metric descriptor and state
+     */
+    public Pair<EnumStringMetricDescriptor, EnumStringMetricState> buildEnumStringMetric(
+            final String handle,
+            final MetricCategory category,
+            final MetricAvailability availability,
+            final CodedValue unit,
+            final List<EnumStringMetricDescriptor.AllowedValue> allowedValues) {
+        final var enumStringMetricDescriptor =
+                buildEnumStringMetricDescriptor(handle, category, availability, unit, allowedValues);
+        final var enumStringMetricState = buildEnumStringMetricState(handle);
+        return new ImmutablePair<>(enumStringMetricDescriptor, enumStringMetricState);
     }
 
     /*
