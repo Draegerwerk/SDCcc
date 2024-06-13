@@ -31,14 +31,26 @@ complexity:
     active: true
 
 exceptions:
+  NotImplementedDeclaration:
+    active: true
   ObjectExtendsThrowable:
     active: true
   ThrowingExceptionInMain:
     active: true
+naming:
+  FunctionMinLength:
+    active: true
+    minimumFunctionNameLength: 3
+  LambdaParameterNaming:
+    active: true
 performance:
   CouldBeSequence:
     active: true
+  UnnecessaryPartOfBinaryExpression:
+    active: true
 potential-bugs:
+  CastNullableToNonNullableType:
+    active: true
   CastToNullableType:
     active: true
   DontDowncastCollectionTypes:
@@ -47,10 +59,21 @@ potential-bugs:
     active: true
   ExitOutsideMain:
     active: true
+  ImplicitUnitReturnType:
+    active: true
   MissingPackageDeclaration:
+    active: true
+  NullCheckOnMutableProperty:
+    active: true
+  NullableToStringCall:
+    active: true
+  PropertyUsedBeforeDeclaration:
     active: true
   UnconditionalJumpStatementInLoop:
     active: true
+  UnnecessaryNotNullCheck:
+    active: true
+
 style:
   CascadingCallWrapping:
     active: true
