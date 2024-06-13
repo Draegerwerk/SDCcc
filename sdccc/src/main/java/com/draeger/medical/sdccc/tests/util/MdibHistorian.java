@@ -218,7 +218,7 @@ public class MdibHistorian {
         // create new storage
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
-        reportProcessor.startApplyingReportsOnMdib(storage, null);
+        reportProcessor.startApplyingReportsOnMdib(storage);
         final var mdibVersionPredicate =
                 new InitialMdibVersionPredicateWithUUID(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
 
@@ -299,7 +299,7 @@ public class MdibHistorian {
             throws PreprocessingException, ReportProcessingException {
         final var storage = createNewStorage(sequenceId);
         final var reportProcessor = reportProcessorProvider.get();
-        reportProcessor.startApplyingReportsOnMdib(storage, null);
+        reportProcessor.startApplyingReportsOnMdib(storage);
         final var mdibVersionPredicate =
                 new InitialMdibVersionPredicateWithUUID(ImpliedValueUtil.getMdibVersion(storage.getMdibVersion()));
 
@@ -517,7 +517,7 @@ public class MdibHistorian {
     public RemoteMdibAccess applyReportOnStorage(final RemoteMdibAccess storage, final AbstractReport report)
             throws PreprocessingException, ReportProcessingException {
         final var reportProcessor = reportProcessorProvider.get();
-        reportProcessor.startApplyingReportsOnMdib(storage, null);
+        reportProcessor.startApplyingReportsOnMdib(storage);
 
         final var cmp = ImpliedValueUtil.getMdibVersion(storage.getMdibVersion())
                 .compareTo(ImpliedValueUtil.getReportMdibVersion(report));
