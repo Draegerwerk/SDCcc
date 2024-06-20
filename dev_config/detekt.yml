@@ -75,19 +75,55 @@ potential-bugs:
     active: true
 
 style:
+  BracesOnIfStatements:
+    active: true
+  BracesOnWhenStatements:
+    active: true
   CascadingCallWrapping:
     active: true
   ClassOrdering:
     active: true
+  CollapsibleIfStatements:
+    active: true
+  DataClassContainsFunctions:
+    active: true
+  DataClassShouldBeImmutable:
+    active: true
+  DoubleNegativeLambda:
+    active: true
   EqualsOnSignatureLine:
     active: true
-  BracesOnIfStatements:
+  ExplicitCollectionElementAccessMethod:
     active: true
+  ExpressionBodySyntax:
+    active: true
+  ForbiddenAnnotation:
+    active: true
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
+        value: 'FIXME:'
+      - reason: 'Forbidden STOPSHIP todo marker in comment, please address the problem before shipping the code.'
+        value: 'STOPSHIP:'
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - reason: 'print does not allow you to configure the output stream. Use a logger instead.'
+        value: 'kotlin.io.print'
+      - reason: 'println does not allow you to configure the output stream. Use a logger instead.'
+        value: 'kotlin.io.println'
   MandatoryBracesLoops:
+    active: true
+  MaxChainedCallsOnSameLine:
+    active: true
+  MultilineRawStringIndentation:
     active: true
   NoTabs:
     active: true
   NullableBooleanCheck:
+    active: true
+  OptionalUnit:
     active: true
   SpacingBetweenPackageAndImports:
     active: true
