@@ -21,6 +21,7 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -615,6 +616,9 @@ public class DirectParticipantModelServiceOperationsTestTest {
         assertThrows(AssertionError.class, testClass::testRequirementR5039);
     }
 
+    @SuppressFBWarnings(
+            value = {"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"},
+            justification = "everything is mocked")
     private void testSetupR5039(
             final @Nullable PatientContextDescriptor patientContextDescriptor,
             final @Nullable LocationContextDescriptor locationContextDescriptor,

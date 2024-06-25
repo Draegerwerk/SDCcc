@@ -8,6 +8,7 @@
 package com.draeger.medical.sdccc.tests.biceps.direct;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,7 +59,10 @@ public class DirectParticipantModelContextStateTest extends InjectorTestBase {
         final var getMdibResponse = messageGeneratingUtil.getMdib();
         final var mdib = (GetMdibResponse)
                 getMdibResponse.getOriginalEnvelope().getBody().getAny().get(0);
-        final var systemContexts = mdib.getMdib().getMdDescription().getMds().stream()
+        final var mdDescription = mdib.getMdib().getMdDescription();
+        assertTestData(mdDescription != null, "Mdib without MdDescription present, no data");
+        assertNotNull(mdDescription); // make spotbugs happy, should never happen
+        final var systemContexts = mdDescription.getMds().stream()
                 .map(MdsDescriptor::getSystemContext)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

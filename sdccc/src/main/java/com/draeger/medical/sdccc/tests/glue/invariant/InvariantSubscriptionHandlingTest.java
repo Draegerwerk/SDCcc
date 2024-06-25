@@ -242,9 +242,13 @@ public class InvariantSubscriptionHandlingTest extends InjectorTestBase {
             if (state.getDescriptorHandle().equals(handle)
                     && ImpliedValueUtil.getStateVersion(state, impliedValueMap).equals(stateVersion)
                     && ((state instanceof RealTimeSampleArrayMetricState rtsaMetric
-                                    && (rtsaMetric.getMetricValue().equals(sampleArrayValue)))
+                                    && Optional.ofNullable(rtsaMetric.getMetricValue())
+                                            .map(it -> it.equals(sampleArrayValue))
+                                            .orElse(false))
                             || (state instanceof DistributionSampleArrayMetricState dsaMetric
-                                    && (dsaMetric.getMetricValue().equals(sampleArrayValue))))) {
+                                    && Optional.ofNullable(dsaMetric.getMetricValue())
+                                            .map(it -> it.equals(sampleArrayValue))
+                                            .orElse(false)))) {
                 foundState = true;
             }
         }

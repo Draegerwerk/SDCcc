@@ -42,6 +42,7 @@ import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -492,6 +493,9 @@ public class MdibHistorianTest {
      *
      * @throws Exception on any exception
      */
+    @SuppressFBWarnings(
+            value = {"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"},
+            justification = "everything is mocked")
     @Test
     void testModificationsWithSameStateVersion() throws Exception {
         final var contextReportMdibVersion = BigInteger.ONE;

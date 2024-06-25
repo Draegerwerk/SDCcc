@@ -365,9 +365,12 @@ public final class ImpliedValueUtil {
      * @param mdDescription to retrieve the description version from
      * @return the description version
      */
-    public static BigInteger getDescriptionVersion(final MdDescription mdDescription) {
-        final var descriptionVersion = mdDescription.getDescriptionVersion();
-        return descriptionVersion != null ? descriptionVersion : BigInteger.ZERO;
+    public static BigInteger getDescriptionVersion(final @Nullable MdDescription mdDescription) {
+        if (mdDescription != null) {
+            final var descriptionVersion = mdDescription.getDescriptionVersion();
+            return descriptionVersion != null ? descriptionVersion : BigInteger.ZERO;
+        }
+        return BigInteger.ZERO;
     }
 
     /**
@@ -409,9 +412,12 @@ public final class ImpliedValueUtil {
      * @param mdState to retrieve the state version from
      * @return the state version
      */
-    public static BigInteger getMdStateStateVersion(final MdState mdState) {
-        final var stateVersion = mdState.getStateVersion();
-        return stateVersion != null ? stateVersion : BigInteger.ZERO;
+    public static BigInteger getMdStateStateVersion(final @Nullable MdState mdState) {
+        if (mdState != null) {
+            final var stateVersion = mdState.getStateVersion();
+            return stateVersion != null ? stateVersion : BigInteger.ZERO;
+        }
+        return BigInteger.ZERO;
     }
 
     /**
