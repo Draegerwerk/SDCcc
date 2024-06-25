@@ -23,6 +23,7 @@ import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
 import com.draeger.medical.sdccc.util.MessagingException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +59,10 @@ public class DirectParticipantModelContextStateTest extends InjectorTestBase {
         final var getMdibResponse = messageGeneratingUtil.getMdib();
         final var mdib = (GetMdibResponse)
                 getMdibResponse.getOriginalEnvelope().getBody().getAny().get(0);
-        final var systemContexts = mdib.getMdib().getMdDescription().getMds().stream()
+        final var systemContexts = Optional.ofNullable(mdib.getMdib().getMdDescription())
+                .orElseThrow(() -> new NoTestData("No MdDescription present"))
+                .getMds()
+                .stream()
                 .map(MdsDescriptor::getSystemContext)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

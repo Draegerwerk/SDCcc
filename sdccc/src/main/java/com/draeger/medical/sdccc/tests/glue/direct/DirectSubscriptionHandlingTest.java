@@ -57,6 +57,7 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
+import org.somda.sdc.biceps.model.participant.MdDescription;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.dpws.DpwsConstants;
@@ -474,13 +475,18 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                         .getAny()
                         .get(0);
                 final Mdib mdib = mdibResponse.getMdib();
-                final List<MdsDescriptor> mds = mdib.getMdDescription().getMds();
+                final List<MdsDescriptor> mds = Optional.ofNullable(mdib.getMdDescription())
+                        .map(MdDescription::getMds)
+                        .orElse(Collections.emptyList());
                 LocationContextDescriptor locationContextDescriptor = null;
                 for (MdsDescriptor md : mds) {
-                    final LocationContextDescriptor lcDesc =
-                            md.getSystemContext().getLocationContext();
-                    if (lcDesc != null) {
-                        locationContextDescriptor = lcDesc;
+                    final var systemContext = md.getSystemContext();
+
+                    if (systemContext != null) {
+                        final LocationContextDescriptor lcDesc = systemContext.getLocationContext();
+                        if (lcDesc != null) {
+                            locationContextDescriptor = lcDesc;
+                        }
                     }
                 }
                 if (locationContextDescriptor == null) {

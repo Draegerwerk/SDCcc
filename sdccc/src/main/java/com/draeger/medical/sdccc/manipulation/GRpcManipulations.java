@@ -36,6 +36,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.Empty;
 import com.google.protobuf.StringValue;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.grpc.Channel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
@@ -520,6 +521,9 @@ public class GRpcManipulations implements Manipulations {
         }
     }
 
+    @SuppressFBWarnings(
+            value = {"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"},
+            justification = "There is a null check before access.")
     private static ContextTypes.LocationDetail locationDetailToProto(final LocationDetail locationDetail) {
         final var builder = ContextTypes.LocationDetail.newBuilder();
 
