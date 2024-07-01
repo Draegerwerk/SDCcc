@@ -7,7 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
+import com.draeger.medical.sdccc.configuration.TestParameterConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
@@ -76,7 +76,7 @@ public class ManipulationPreconditions {
             final ComponentActivation activationState) {
 
         final var timeBufferInSeconds =
-                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+                injector.getInstance(Key.get(long.class, Names.named(TestParameterConfig.BICEPS_547_TIME_INTERVAL)));
         final var timeBuffer = TimeUnit.MILLISECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         final var manipulations = injector.getInstance(Manipulations.class);
         final var testClient = injector.getInstance(TestClient.class);

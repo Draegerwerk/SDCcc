@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
+import static com.draeger.medical.sdccc.configuration.TestParameterConfig.BICEPS_547_TIME_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,7 +24,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
@@ -212,7 +212,7 @@ public class ManipulationPreconditionsTest {
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 1L);
+                        bind(BICEPS_547_TIME_INTERVAL, long.class, 1L);
                     }
                 });
 

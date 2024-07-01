@@ -64,12 +64,6 @@ public final class TestSuiteConfig {
     public static final String GRPC_SERVER_ADDRESS = SDCCC + GRPC + "ServerAddress";
 
     /*
-     * Test parameter configuration
-     */
-    private static final String TEST_PARAMETER = "TestParameter.";
-    public static final String TEST_BICEPS_547_TIME_INTERVAL = SDCCC + TEST_PARAMETER + "Biceps547TimeInterval";
-
-    /*
      * Commlog configuration
      */
     private static final String COMMLOG = "Commlog.";

@@ -7,12 +7,12 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static com.draeger.medical.sdccc.configuration.TestParameterConfig.BICEPS_547_TIME_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.ManipulationData;
@@ -65,8 +65,9 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
     void setUp() {
         this.messageStorage = getInjector().getInstance(MessageStorage.class);
         final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
-        final var timeBufferInSeconds = getInjector()
-                .getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL)));
+        final var timeBufferInSeconds =
+                getInjector().getInstance(Key.get(long.class, Names.named(BICEPS_547_TIME_INTERVAL)));
+        System.out.println("TESTPARAM is " + timeBufferInSeconds);
         buffer = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         this.mdibHistorianFactory = riInjector.getInstance(MdibHistorianFactory.class);
     }

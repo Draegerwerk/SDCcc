@@ -36,7 +36,6 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
         configureTLS();
         configureNetwork();
         configureGRpc();
-        configureTestParameter();
         configureInternalSettings();
         configureCommlogSettings();
     }
@@ -80,10 +79,6 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
     void configureGRpc() {
         bind(TestSuiteConfig.GRPC_SERVER_ADDRESS, String.class, "localhost:50051");
-    }
-
-    void configureTestParameter() {
-        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 5L);
     }
 
     void configureInternalSettings() {
