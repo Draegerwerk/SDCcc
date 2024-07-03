@@ -4,20 +4,18 @@
  *
  * SPDX-License-Identifier: MIT
  */
+package com.draeger.medical.sdccc.configuration
 
-package com.draeger.medical.sdccc.configuration;
-
-import org.somda.sdc.common.guice.AbstractConfigurationModule;
+import org.somda.sdc.common.guice.AbstractConfigurationModule
 
 /**
  * Provides default test parameter configuration for SDCcc.
  *
  * @see TestParameterConfig
  */
-public class DefaultTestParameterConfig extends AbstractConfigurationModule {
-
-    @Override
-    protected void defaultConfigure() {
-        bind(TestParameterConfig.BICEPS_547_TIME_INTERVAL, long.class, 5L);
+@Suppress("MagicNumber")
+class DefaultTestParameterConfig : AbstractConfigurationModule() {
+    override fun defaultConfigure() {
+        bind(TestParameterConfig.BICEPS_547_TIME_INTERVAL, Long::class.javaPrimitiveType, 5L)
     }
 }
