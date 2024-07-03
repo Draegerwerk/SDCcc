@@ -184,8 +184,12 @@ in high numbers. When this option is set to true, then the errors will not be di
 at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
 these problems.
 
+### Test parameter configuration
+
+Some test cases require individual parameters that can be overwritten in the *test_parameter.toml* file.
+
 ```
-[SDCcc.TestParameter]
+[TestParameter]
 Biceps547TimeInterval=5
 ```
 When running biceps:5-4-7 tests the Biceps547TimeInterval parameter is used to pause between the SetMetricStatus 
@@ -199,6 +203,7 @@ The following command line options are supported by the test tool, the first two
 |----------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
 | config               | c         | path to the *config.toml*                                                                            | yes          |
 | testconfig           | t         | path to the *test_configuration.toml*                                                                | yes          |
+| testparam            | p         | path to the *test_parameter.toml*                                                                    | yes          |
 | device_epr           | de        | the epr of the target provider, overrides setting from configuration if provided                     | no           |
 | device_facility      | fac       | the facility of the target provider, overrides setting from configuration if provided                | no           |
 | device_building      | bldng     | the building of the target provider, overrides setting from configuration if provided                | no           |
