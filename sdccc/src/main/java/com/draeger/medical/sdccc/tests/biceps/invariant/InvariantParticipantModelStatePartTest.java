@@ -67,7 +67,6 @@ public class InvariantParticipantModelStatePartTest extends InjectorTestBase {
         final var riInjector = getInjector().getInstance(TestClient.class).getInjector();
         final var timeBufferInSeconds =
                 getInjector().getInstance(Key.get(long.class, Names.named(BICEPS_547_TIME_INTERVAL)));
-        System.out.println("TESTPARAM is " + timeBufferInSeconds);
         buffer = TimeUnit.NANOSECONDS.convert(timeBufferInSeconds, TimeUnit.SECONDS);
         this.mdibHistorianFactory = riInjector.getInstance(MdibHistorianFactory.class);
     }
