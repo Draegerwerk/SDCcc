@@ -530,7 +530,6 @@ public final class ImpliedValueUtil {
         return version != null ? version : BigInteger.ZERO;
     }
 
-
     /**
      * Retrieves the instance id of an mdib or the implied value.
      *
