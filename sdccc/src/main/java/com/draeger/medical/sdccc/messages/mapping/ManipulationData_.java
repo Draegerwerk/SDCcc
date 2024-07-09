@@ -25,6 +25,7 @@ public final class ManipulationData_ {
     public static volatile SingularAttribute<ManipulationData, Long> startTimestamp;
     public static volatile SingularAttribute<ManipulationData, Long> finishTimestamp;
     public static volatile SingularAttribute<ManipulationData, ResponseTypes.Result> result;
+    public static volatile SingularAttribute<ManipulationData, Byte[]> response;
     public static volatile SingularAttribute<ManipulationData, String> methodName;
     public static volatile ListAttribute<ManipulationData, ManipulationParameter> parameters;
     public static volatile SingularAttribute<ManipulationData, String> uuid;

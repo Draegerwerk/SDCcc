@@ -30,6 +30,7 @@ import com.draeger.medical.t2iapi.metric.MetricRequests;
 import com.draeger.medical.t2iapi.metric.MetricServiceGrpc;
 import com.draeger.medical.t2iapi.metric.MetricTypes;
 import com.draeger.medical.t2iapi.operation.OperationServiceGrpc;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -93,6 +94,7 @@ public class GRpcManipulations implements Manipulations {
     private final Manipulations fallback;
     private final ManipulationInfoFactory manipulationInfoFactory;
     private final StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+    private final Gson gson;
 
     /**
      * Creates an instance of gRPC-based manipulations.
@@ -120,6 +122,8 @@ public class GRpcManipulations implements Manipulations {
         deviceStub = DeviceServiceGrpc.newBlockingStub(channel);
         metricStub = MetricServiceGrpc.newBlockingStub(channel);
         operationStub = OperationServiceGrpc.newBlockingStub(channel);
+
+        gson = new Gson();
     }
 
     @Override
@@ -380,8 +384,9 @@ public class GRpcManipulations implements Manipulations {
         final var endTime = System.nanoTime();
         final var methodName = walker.walk(
                 s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
+
         final var manipulation = manipulationInfoFactory.create(
-                startTime, endTime, result.getResult(), methodName.orElseThrow(), parameter);
+                startTime, endTime, result.getResult(), gson.toJson(result), methodName.orElseThrow(), parameter);
         manipulation.addToStorage();
         return result;
     }

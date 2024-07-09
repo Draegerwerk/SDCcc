@@ -351,6 +351,7 @@ public class MessageStorage implements AutoCloseable {
                 manipulationInfo.getStartTimestamp(),
                 manipulationInfo.getFinishTimestamp(),
                 manipulationInfo.getResult(),
+                manipulationInfo.getResponse(),
                 manipulationInfo.getMethodName(),
                 manipulationInfo.getParameter(),
                 manipulationInfo.getID());
@@ -875,6 +876,7 @@ public class MessageStorage implements AutoCloseable {
      * @param startTime  of the manipulation
      * @param finishTime of the manipulation
      * @param result     of the manipulation
+     * @param response   of the manipulation
      * @param name       of the manipulation
      * @param parameters of the manipulation
      */
@@ -882,9 +884,10 @@ public class MessageStorage implements AutoCloseable {
             final long startTime,
             final long finishTime,
             final ResponseTypes.Result result,
+            final String response,
             final String name,
             final ManipulationParameterUtil.ManipulationParameterData parameters) {
-        final var manipulation = new ManipulationInfo(startTime, finishTime, result, name, parameters, this);
+        final var manipulation = new ManipulationInfo(startTime, finishTime, result, response, name, parameters, this);
         manipulation.addToStorage();
     }
 

@@ -22,6 +22,7 @@ public class ManipulationInfo implements DatabaseEntry {
     private final long startTimestamp;
     private final long finishTimestamp;
     private final ResponseTypes.Result result;
+    private final String response;
     private final String methodName;
     private final List<Pair<String, String>> parameters;
     private final MessageStorage storage;
@@ -32,6 +33,7 @@ public class ManipulationInfo implements DatabaseEntry {
             @Assisted(value = "startTime") final long startTimestamp,
             @Assisted(value = "stopTime") final long finishTimestamp,
             @Assisted final ResponseTypes.Result result,
+            @Assisted final String response,
             @Assisted(value = "methodName") final String methodName,
             @Assisted final ManipulationParameterUtil.ManipulationParameterData parameters,
             final MessageStorage messageStorage) {
@@ -39,6 +41,7 @@ public class ManipulationInfo implements DatabaseEntry {
         this.startTimestamp = startTimestamp;
         this.finishTimestamp = finishTimestamp;
         this.result = result;
+        this.response = response;
         this.methodName = methodName;
         this.parameters = parameters.getParameterData();
         storage = messageStorage;
@@ -77,5 +80,9 @@ public class ManipulationInfo implements DatabaseEntry {
 
     public List<Pair<String, String>> getParameter() {
         return parameters;
+    }
+
+    public String getResponse() {
+        return response;
     }
 }

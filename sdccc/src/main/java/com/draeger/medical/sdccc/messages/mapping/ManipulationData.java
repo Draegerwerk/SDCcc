@@ -33,6 +33,7 @@ public class ManipulationData {
 
     private long startTimestamp;
     private long finishTimestamp;
+    private String response;
     private ResponseTypes.Result result;
     private String methodName;
 
@@ -52,6 +53,7 @@ public class ManipulationData {
      * @param startTimestamp  of the manipulation
      * @param finishTimestamp of the manipulation
      * @param result          of the manipulation
+     * @param response        of the manipulation, serialized
      * @param methodName      of the manipulation
      * @param parameters      of the manipulation
      * @param uuid            of the manipulation
@@ -60,11 +62,13 @@ public class ManipulationData {
             final long startTimestamp,
             final long finishTimestamp,
             final ResponseTypes.Result result,
+            final String response,
             final String methodName,
             final List<Pair<String, String>> parameters,
             final String uuid) {
         this.startTimestamp = startTimestamp;
         this.finishTimestamp = finishTimestamp;
+        this.response = response;
         this.result = result;
         this.methodName = methodName;
         final List<ManipulationParameter> manipulationParameters = new ArrayList<>();
@@ -97,5 +101,9 @@ public class ManipulationData {
 
     public List<ManipulationParameter> getParameters() {
         return parameters;
+    }
+
+    public String getResponse() {
+        return response;
     }
 }

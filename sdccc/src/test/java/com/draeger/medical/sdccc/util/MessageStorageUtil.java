@@ -179,6 +179,7 @@ public class MessageStorageUtil {
      * @param startTime     of the manipulation
      * @param finishTime    of the manipulation
      * @param result        of the manipulation
+     * @param response      of the manipulation
      * @param name          of the manipulation
      * @param parameters    of the manipulation
      * @throws IOException if the message could not be closed after writing
@@ -188,6 +189,7 @@ public class MessageStorageUtil {
             final long startTime,
             final long finishTime,
             final ResponseTypes.Result result,
+            final String response,
             final String name,
             final ManipulationParameterUtil.ManipulationParameterData parameters)
             throws IOException {
@@ -195,7 +197,7 @@ public class MessageStorageUtil {
         try (final var manipulations = storage.getManipulationDataByManipulation(name)) {
             previous_count = manipulations.getStream().count();
         }
-        storage.createManipulationInfo(startTime, finishTime, result, name, parameters);
+        storage.createManipulationInfo(startTime, finishTime, result, response, name, parameters);
         waitForManipulation(storage, previous_count + 1, name);
     }
 

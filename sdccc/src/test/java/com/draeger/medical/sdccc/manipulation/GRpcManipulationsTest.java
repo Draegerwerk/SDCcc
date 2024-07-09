@@ -85,7 +85,7 @@ public class GRpcManipulationsTest {
 
         final ManipulationInfoFactory manipulationInfoFactory = mock(ManipulationInfoFactory.class);
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
-        when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), any()))
+        when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
         manipulations = new GRpcManipulations(serverAddress, fallback, manipulationInfoFactory);
     }
