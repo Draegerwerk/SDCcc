@@ -23,7 +23,9 @@ import com.draeger.medical.biceps.model.message.DescriptionModificationType;
 import com.draeger.medical.biceps.model.participant.AbstractContextState;
 import com.draeger.medical.biceps.model.participant.AbstractDescriptor;
 import com.draeger.medical.biceps.model.participant.ObjectFactory;
+import com.draeger.medical.sdccc.manipulation.ManipulationResponse;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.manipulation.ResultResponse;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -36,7 +38,6 @@ import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
-import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -255,9 +256,7 @@ public class ConditionalPreconditionsTest {
     @DisplayName("HelloMessagePrecondition correctly calls manipulation")
     public void testHelloMessageManipulation() {
         final var manipulations = mock(Manipulations.class);
-        when(manipulations.sendHello())
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(manipulations.sendHello()).thenReturn(ResultResponse.success()).thenReturn(ResultResponse.fail());
 
         final var injector = Guice.createInjector(new AbstractModule() {
             @Override
@@ -317,15 +316,15 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(anyString()))
                 .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
@@ -422,15 +421,15 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(anyString()))
                 .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
@@ -561,7 +560,7 @@ public class ConditionalPreconditionsTest {
     @Test
     @DisplayName("DescriptionModificationUptPrecondition correctly calls manipulation")
     public void testDescriptionModificationUptManipulation() {
-        when(mockManipulations.triggerAnyDescriptorUpdate()).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.triggerAnyDescriptorUpdate()).thenReturn(ResultResponse.success());
 
         new ConditionalPreconditions.DescriptionModificationUptPrecondition();
 
@@ -624,15 +623,15 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getEntity(anyString()))
                 .thenAnswer((Answer<Optional<MdibEntity>>) invocation -> {
@@ -682,6 +681,8 @@ public class ConditionalPreconditionsTest {
     @DisplayName("DescriptionModificationPrecondition throws exception if no removable descriptors are present")
     void testDescriptionModificationModificationNoDescriptors() {
         // must fail without any removable descriptors
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(ManipulationResponse.fail(Collections.emptyList()));
         assertFalse(ConditionalPreconditions.DescriptionModificationCrtOrDelPrecondition.manipulation(testInjector));
         reset(mockManipulations);
     }
@@ -701,18 +702,18 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -756,18 +757,18 @@ public class ConditionalPreconditionsTest {
         final var presenceMap = new HashMap<>(Map.of(descriptor1Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -814,23 +815,23 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, false));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             final String handle = invocation.getArgument(0);
             if (descriptor1Handle.equals(handle)) {
-                return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
+                return ResultResponse.notSupported();
             } else {
                 presenceMap.put(handle, true);
-                return ResponseTypes.Result.RESULT_SUCCESS;
+                return ResultResponse.success();
             }
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -880,23 +881,23 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             final String handle = invocation.getArgument(0);
             if (descriptor1Handle.equals(handle)) {
-                return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
+                return ResultResponse.notSupported();
             } else {
                 presenceMap.put(handle, false);
-                return ResponseTypes.Result.RESULT_SUCCESS;
+                return ResultResponse.success();
             }
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -946,25 +947,24 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
-                    final String handle = invocation.getArgument(0);
-                    if (descriptor1Handle.equals(handle)) {
-                        return ResponseTypes.Result.RESULT_NOT_SUPPORTED;
-                    } else {
-                        return ResponseTypes.Result.RESULT_SUCCESS;
-                    }
-                });
+        when(mockManipulations.triggerDescriptorUpdate(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
+            final String handle = invocation.getArgument(0);
+            if (descriptor1Handle.equals(handle)) {
+                return ResultResponse.notSupported();
+            } else {
+                return ResultResponse.success();
+            }
+        });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1013,16 +1013,16 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
         when(mockManipulations.insertDescriptor(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.notSupported());
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1069,16 +1069,16 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.removeDescriptor(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.notSupported());
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1126,18 +1126,18 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.notSupported());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1187,22 +1187,22 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
             if (invocation.getArgument(0).equals(descriptor1Handle)) {
-                return ResponseTypes.Result.RESULT_FAIL;
+                return ResultResponse.fail();
             } else {
-                return ResponseTypes.Result.RESULT_SUCCESS;
+                return ResultResponse.success();
             }
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1246,24 +1246,23 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
-                    if (invocation.getArgument(0).equals(descriptor1Handle)) {
-                        return ResponseTypes.Result.RESULT_FAIL;
-                    } else {
-                        return ResponseTypes.Result.RESULT_SUCCESS;
-                    }
-                });
+        when(mockManipulations.triggerDescriptorUpdate(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
+            if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                return ResultResponse.fail();
+            } else {
+                return ResultResponse.success();
+            }
+        });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1309,18 +1308,18 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_FAIL;
+            return ResultResponse.fail();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1368,22 +1367,22 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
             if (invocation.getArgument(0).equals(descriptor1Handle)) {
-                return ResponseTypes.Result.RESULT_FAIL;
+                return ResultResponse.fail();
             } else {
-                return ResponseTypes.Result.RESULT_SUCCESS;
+                return ResultResponse.success();
             }
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1426,24 +1425,23 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
-                    if (invocation.getArgument(0).equals(descriptor1Handle)) {
-                        return ResponseTypes.Result.RESULT_FAIL;
-                    } else {
-                        return ResponseTypes.Result.RESULT_SUCCESS;
-                    }
-                });
+        when(mockManipulations.triggerDescriptorUpdate(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
+            if (invocation.getArgument(0).equals(descriptor1Handle)) {
+                return ResultResponse.fail();
+            } else {
+                return ResultResponse.success();
+            }
+        });
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1487,18 +1485,18 @@ public class ConditionalPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class))
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_FAIL;
+            return ResultResponse.fail();
         });
         when(mockManipulations.triggerDescriptorUpdate(anyString()))
-                .thenAnswer((Answer<ResponseTypes.Result>) invocation -> ResponseTypes.Result.RESULT_SUCCESS);
+                .thenAnswer((Answer<ResultResponse>) invocation -> ResultResponse.success());
         when(testClient.getSdcRemoteDevice().getMdibAccess().getDescriptor(anyString()))
                 .thenAnswer((Answer<Optional<AbstractDescriptor>>) invocation -> {
                     final String handle = invocation.getArgument(0);
@@ -1746,7 +1744,7 @@ public class ConditionalPreconditionsTest {
 
         // Manipulation of WorkflowContext is not supported
         when(mockManipulations.createContextStateWithAssociation(eq(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), any()))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         final var expectedContextStateHandleCount = Map.of(
                 MEANS_CONTEXT_DESCRIPTOR_HANDLE, 2L,
@@ -1941,9 +1939,9 @@ public class ConditionalPreconditionsTest {
             // introduce error, manipulation returns same handle twice
             when(mockManipulations.createContextStateWithAssociation(
                             PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1951,9 +1949,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1961,9 +1959,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1971,9 +1969,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             MEANS_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(MEANS_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(MEANS_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1981,9 +1979,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1991,9 +1989,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE))
-                    .thenReturn(Optional.empty());
+                    .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
+                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -2063,44 +2061,44 @@ public class ConditionalPreconditionsTest {
         // make manipulation return our two patient context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // make manipulation return our two location context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // make manipulation return our two ensemble context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // make manipulation return our two means context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         MEANS_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(MEANS_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(MEANS_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // make manipulation return our two operator context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // make manipulation return our two workflow context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(PATIENT_CONTEXT_STATE_HANDLE, PatientContextState.class))
@@ -2344,8 +2342,8 @@ public class ConditionalPreconditionsTest {
         // TriggerEpisodicAlertReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_ALERT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2364,8 +2362,8 @@ public class ConditionalPreconditionsTest {
         // TriggerEpisodicComponentReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_COMPONENT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2384,8 +2382,8 @@ public class ConditionalPreconditionsTest {
         // TriggerEpisodicContextReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_CONTEXT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2404,8 +2402,8 @@ public class ConditionalPreconditionsTest {
         // TriggerEpisodicMetricReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_METRIC_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2424,8 +2422,8 @@ public class ConditionalPreconditionsTest {
         // TriggerEpisodicOperationalStateReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2446,8 +2444,8 @@ public class ConditionalPreconditionsTest {
         // TriggerOperationInvokedReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_OPERATION_INVOKED_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2466,8 +2464,8 @@ public class ConditionalPreconditionsTest {
         // TriggerDescriptionModificationReportPrecondition
         {
             when(manipulations.triggerReport(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2561,20 +2559,20 @@ public class ConditionalPreconditionsTest {
         {
             final var manipulations = mock(Manipulations.class);
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_ALERT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_COMPONENT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_METRIC_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_CONTEXT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -2589,16 +2587,16 @@ public class ConditionalPreconditionsTest {
         {
             final var manipulations = mock(Manipulations.class);
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_ALERT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                    .thenReturn(ResultResponse.notSupported());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_COMPONENT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                    .thenReturn(ResultResponse.notSupported());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_METRIC_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                    .thenReturn(ResultResponse.notSupported());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                    .thenReturn(ResultResponse.notSupported());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_CONTEXT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.success())
+                    .thenReturn(ResultResponse.fail());
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -2613,15 +2611,15 @@ public class ConditionalPreconditionsTest {
         {
             final var manipulations = mock(Manipulations.class);
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_ALERT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_COMPONENT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_METRIC_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                    .thenReturn(ResultResponse.notImplemented());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_CONTEXT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -2635,15 +2633,15 @@ public class ConditionalPreconditionsTest {
         {
             final var manipulations = mock(Manipulations.class);
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_ALERT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_COMPONENT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_METRIC_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_OPERATIONAL_STATE_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                    .thenReturn(ResultResponse.fail());
             when(manipulations.triggerReport(Constants.MSG_EPISODIC_CONTEXT_REPORT))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {

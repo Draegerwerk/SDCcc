@@ -7,7 +7,6 @@
 
 package com.draeger.medical.sdccc.manipulation;
 
-import com.draeger.medical.t2iapi.ResponseTypes;
 import java.util.List;
 import java.util.Optional;
 import javax.xml.namespace.QName;
@@ -30,12 +29,12 @@ public interface Manipulations {
      * @param locationDetail new location
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setLocationDetail(LocationDetail locationDetail);
+    ResultResponse setLocationDetail(LocationDetail locationDetail);
 
     /**
      * @return all descriptors which can be removed from and reinserted into the device MDIB.
      */
-    List<String> getRemovableDescriptorsOfClass();
+    ManipulationResponse<List<String>> getRemovableDescriptorsOfClass();
 
     /**
      * Retrieves a list of descriptor handles for descriptors that can be removed from and reinserted into
@@ -45,7 +44,8 @@ public interface Manipulations {
      * @return all descriptors of the given type which can be removed from and reinserted into the device MDIB
      *          and have a type matching descriptorType.
      */
-    List<String> getRemovableDescriptorsOfClass(Class<? extends AbstractDescriptor> descriptorType);
+    ManipulationResponse<List<String>> getRemovableDescriptorsOfClass(
+            Class<? extends AbstractDescriptor> descriptorType);
 
     /**
      * Removes a descriptor from the device MDIB.
@@ -53,7 +53,7 @@ public interface Manipulations {
      * @param handle to remove from the MDIB
      * @return the result of the manipulation
      */
-    ResponseTypes.Result removeDescriptor(String handle);
+    ResultResponse removeDescriptor(String handle);
 
     /**
      * Inserts a descriptor into the device MDIB.
@@ -61,14 +61,14 @@ public interface Manipulations {
      * @param handle to insert into the MDIB
      * @return the result of the manipulation
      */
-    ResponseTypes.Result insertDescriptor(String handle);
+    ResultResponse insertDescriptor(String handle);
 
     /**
      * Announce the presence of the device in the network via a WS-Discovery Hello message.
      *
      * @return the result of the manipulation
      */
-    ResponseTypes.Result sendHello();
+    ResultResponse sendHello();
 
     /**
      * Associates a <em>new</em> context state for the given descriptor handle and sets the association.
@@ -77,7 +77,8 @@ public interface Manipulations {
      * @param association      to set for new state
      * @return handle of the newly created state, empty if unsuccessful
      */
-    Optional<String> createContextStateWithAssociation(String descriptorHandle, ContextAssociation association);
+    ManipulationResponse<Optional<String>> createContextStateWithAssociation(
+            String descriptorHandle, ContextAssociation association);
 
     /**
      * Set the activation state of an alert system.
@@ -86,7 +87,7 @@ public interface Manipulations {
      * @param activationState new activation state to set
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setAlertActivation(String handle, AlertActivation activationState);
+    ResultResponse setAlertActivation(String handle, AlertActivation activationState);
 
     /**
      * Set the presence attribute of an alert condition state.
@@ -95,7 +96,7 @@ public interface Manipulations {
      * @param presence new presence attribute to set
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setAlertConditionPresence(String handle, boolean presence);
+    ResultResponse setAlertConditionPresence(String handle, boolean presence);
 
     /**
      * Set the system signal activation of an alert system.
@@ -105,7 +106,7 @@ public interface Manipulations {
      * @param activation    the activation state
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setSystemSignalActivation(
+    ResultResponse setSystemSignalActivation(
             String handle, AlertSignalManifestation manifestation, AlertActivation activation);
 
     /**
@@ -115,7 +116,7 @@ public interface Manipulations {
      * @param activationState new activation state to set
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setComponentActivation(String handle, ComponentActivation activationState);
+    ResultResponse setComponentActivation(String handle, ComponentActivation activationState);
 
     /**
      * Set the metric to a specific state to trigger the setting of the ActivationState.
@@ -126,7 +127,7 @@ public interface Manipulations {
      * @param activation the activation state the metric should have, after manipulation
      * @return the result of the manipulation
      */
-    ResponseTypes.Result setMetricStatus(
+    ResultResponse setMetricStatus(
             String sequenceId, String handle, MetricCategory category, ComponentActivation activation);
 
     /**
@@ -135,7 +136,7 @@ public interface Manipulations {
      * @param handle handle of the descriptor to trigger an Update for.
      * @return the result of the manipulation
      */
-    ResponseTypes.Result triggerDescriptorUpdate(String handle);
+    ResultResponse triggerDescriptorUpdate(String handle);
 
     /**
      * Trigger a descriptor update for the provided descriptor handles.
@@ -143,14 +144,14 @@ public interface Manipulations {
      * @param handles list of descriptor handles to trigger an update for.
      * @return the result of the manipulation
      */
-    ResponseTypes.Result triggerDescriptorUpdate(List<String> handles);
+    ResultResponse triggerDescriptorUpdate(List<String> handles);
 
     /**
      * Trigger a descriptor update for some descriptor (chosen by the device).
      *
      * @return the result of the manipulation
      */
-    ResponseTypes.Result triggerAnyDescriptorUpdate();
+    ResultResponse triggerAnyDescriptorUpdate();
 
     /**
      * Trigger a report message of the provided type.
@@ -158,5 +159,5 @@ public interface Manipulations {
      * @param reportType type of report a message should be triggered for.
      * @return the result of the manipulation
      */
-    ResponseTypes.Result triggerReport(QName reportType);
+    ResultResponse triggerReport(QName reportType);
 }
