@@ -82,6 +82,7 @@ public class GRpcManipulationsTest {
         final String serverAddress = "localhost:" + server.getPort();
         LOG.info("Server is up at {}", serverAddress);
         fallback = mock(FallbackManipulations.class);
+
         final ManipulationInfoFactory manipulationInfoFactory = mock(ManipulationInfoFactory.class);
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), any()))
@@ -120,7 +121,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.setLocationDetail(location);
+            final var response = manipulations.setLocationDetail(location).getResult();
             assertSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation failed, but shouldn't have");
             final var actualRequestLocation = requestLocation.get();
             compareLocation(location, actualRequestLocation);
@@ -139,7 +140,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.setLocationDetail(location);
+            final var response = manipulations.setLocationDetail(location).getResult();
             assertNotSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation succeeded but shouldn't have");
             final var actualRequestLocation = requestLocation.get();
             compareLocation(location, actualRequestLocation);
@@ -154,6 +155,7 @@ public class GRpcManipulationsTest {
     @Timeout(TEST_TIMEOUT)
     @TestDescription("Verifies whether an exception on the server triggers the fallback interaction")
     public void testSetLocationDetailExceptionFallback() {
+        when(fallback.setLocationDetail(any())).thenReturn(ResultResponse.success());
         final var location = new LocationDetail();
         location.setFacility("UnitTestFacility");
 
@@ -161,6 +163,7 @@ public class GRpcManipulationsTest {
         contextHandler.setSetLocationDetailCall((request, responseObserver) -> {
             throw new RuntimeException("This is an expected exception, don't worry.");
         });
+
         manipulations.setLocationDetail(location);
         verify(fallback, times(1)).setLocationDetail(location);
     }
@@ -172,6 +175,8 @@ public class GRpcManipulationsTest {
     @Timeout(TEST_TIMEOUT)
     @TestDescription("Verifies whether an unimplemented response on the server triggers the fallback interaction")
     public void testSetLocationDetailUnimplementedFallback() {
+        when(fallback.setLocationDetail(any())).thenReturn(ResultResponse.notImplemented());
+
         final var location = new LocationDetail();
         location.setFacility("UnitTestFacility");
 
@@ -212,7 +217,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.getRemovableDescriptorsOfClass();
+            final var response = manipulations.getRemovableDescriptorsOfClass().getResponse();
             assertNotNull(response, "manipulation failed, but shouldn't have");
             assertEquals(removableHandles, response);
             verifyNoInteractions(fallback);
@@ -230,7 +235,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.getRemovableDescriptorsOfClass();
+            final var response = manipulations.getRemovableDescriptorsOfClass().getResponse();
             // fallback should not have been called here
             verifyNoInteractions(fallback);
             assertTrue(response.isEmpty(), "manipulation succeeded but shouldn't have");
@@ -262,7 +267,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.insertDescriptor(requestHandle);
+            final var response = manipulations.insertDescriptor(requestHandle).getResult();
             assertSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation failed, but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verifyNoInteractions(fallback);
@@ -281,13 +286,15 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.insertDescriptor(requestHandle);
+            final var response = manipulations.insertDescriptor(requestHandle).getResult();
             assertNotSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation succeeded but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verifyNoInteractions(fallback);
         }
         // not_implemented
         {
+            when(fallback.insertDescriptor(any())).thenReturn(ResultResponse.notImplemented());
+
             final SettableFuture<String> receivedHandle = SettableFuture.create();
             deviceHandler.setInsertDescriptorCall((request, responseObserver) -> {
                 assertEquals(requestHandle, request.getHandle());
@@ -300,7 +307,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.insertDescriptor(requestHandle);
+            final var response = manipulations.insertDescriptor(requestHandle).getResult();
             assertNotSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation succeeded but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verify(fallback, times(1)).insertDescriptor(requestHandle);
@@ -332,7 +339,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.removeDescriptor(requestHandle);
+            final var response = manipulations.removeDescriptor(requestHandle).getResult();
             assertSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation failed, but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verifyNoInteractions(fallback);
@@ -351,13 +358,15 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.removeDescriptor(requestHandle);
+            final var response = manipulations.removeDescriptor(requestHandle).getResult();
             assertNotSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation succeeded but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verifyNoInteractions(fallback);
         }
         // not implemented
         {
+            when(fallback.removeDescriptor(any())).thenReturn(ResultResponse.notImplemented());
+
             final SettableFuture<String> receivedHandle = SettableFuture.create();
             deviceHandler.setRemoveDescriptorCall((request, responseObserver) -> {
                 assertEquals(requestHandle, request.getHandle());
@@ -370,7 +379,7 @@ public class GRpcManipulationsTest {
                 return null;
             });
 
-            final var response = manipulations.removeDescriptor(requestHandle);
+            final var response = manipulations.removeDescriptor(requestHandle).getResult();
             assertNotSame(response, ResponseTypes.Result.RESULT_SUCCESS, "manipulation succeeded but shouldn't have");
             assertEquals(requestHandle, receivedHandle.get());
             verify(fallback, times(1)).removeDescriptor(requestHandle);
