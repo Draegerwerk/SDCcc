@@ -509,6 +509,29 @@ public final class ImpliedValueUtil {
     }
 
     /**
+     * Retrieves the version of an mdib or the implied value.
+     *
+     * @param mdib to retrieve the version from
+     * @return the version
+     */
+    public static BigInteger getMdibMdibVersion(final MdibAccess mdib) {
+        final var version = mdib.getMdibVersion().getVersion();
+        return version != null ? version : BigInteger.ZERO;
+    }
+
+    /**
+     * Retrieves the version of an mdib or the implied value.
+     *
+     * @param mdibVersion to retrieve the version from
+     * @return the version
+     */
+    public static BigInteger getMdibMdibVersion(final MdibVersion mdibVersion) {
+        final var version = mdibVersion.getVersion();
+        return version != null ? version : BigInteger.ZERO;
+    }
+
+
+    /**
      * Retrieves the instance id of an mdib or the implied value.
      *
      * @param mdib to retrieve the instance id from
