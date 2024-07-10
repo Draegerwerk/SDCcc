@@ -11,16 +11,20 @@ package com.draeger.medical.sdccc.configuration
  *
  * @see DefaultTestParameterConfig
  */
-object TestParameterConfig {
-    /*
-     * Test parameter configuration
-     */
-    private const val TEST_PARAMETER = "TestParameter."
+@Suppress("UtilityClassWithPublicConstructor")
+open class TestParameterConfig {
 
-    /**
-     * Test parameter for biceps:5-4-7 tests. Time interval in seconds to pause between the SetMetricStatus
-     * manipulation calls. The report that follows a SetMetricStatus manipulation is expected
-     * within the time interval.
-     */
-    const val BICEPS_547_TIME_INTERVAL: String = TEST_PARAMETER + "Biceps547TimeInterval"
+    companion object {
+        /**
+         * Test parameter configuration.
+         */
+        private const val TEST_PARAMETER = "TestParameter."
+
+        /**
+         * Test parameter for biceps:5-4-7 tests. Time interval in seconds to pause between the SetMetricStatus
+         * manipulation calls. The report that follows a SetMetricStatus manipulation is expected
+         * within the time interval.
+         */
+        const val BICEPS_547_TIME_INTERVAL: String = TEST_PARAMETER + "Biceps547TimeInterval"
+    }
 }

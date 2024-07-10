@@ -203,7 +203,7 @@ The following command line options are supported by the test tool, the first two
 |----------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
 | config               | c         | path to the *config.toml*                                                                            | yes          |
 | testconfig           | t         | path to the *test_configuration.toml*                                                                | yes          |
-| testparam            | p         | path to the *test_parameter.toml*                                                                    | yes          |
+| testparam            | p         | path to the *test_parameter.toml*                                                                    | no           |
 | device_epr           | de        | the epr of the target provider, overrides setting from configuration if provided                     | no           |
 | device_facility      | fac       | the facility of the target provider, overrides setting from configuration if provided                | no           |
 | device_building      | bldng     | the building of the target provider, overrides setting from configuration if provided                | no           |
