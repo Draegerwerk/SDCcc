@@ -38,6 +38,7 @@ import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.MessageBuilder;
 import com.draeger.medical.sdccc.util.MessageStorageUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -1744,7 +1745,7 @@ public class ConditionalPreconditionsTest {
 
         // Manipulation of WorkflowContext is not supported
         when(mockManipulations.createContextStateWithAssociation(eq(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), any()))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED, Optional.empty()));
 
         final var expectedContextStateHandleCount = Map.of(
                 MEANS_CONTEXT_DESCRIPTOR_HANDLE, 2L,
