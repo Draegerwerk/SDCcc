@@ -24,7 +24,6 @@ import com.draeger.medical.t2iapi.context.ContextRequests;
 import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
 import com.draeger.medical.t2iapi.context.ContextTypes;
 import com.draeger.medical.t2iapi.device.DeviceRequests;
-import com.draeger.medical.t2iapi.device.DeviceResponses;
 import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
 import com.draeger.medical.t2iapi.device.DeviceTypes;
 import com.draeger.medical.t2iapi.metric.MetricRequests;
@@ -124,7 +123,7 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
-    public ResponseTypes.Result setLocationDetail(final LocationDetail locationDetail) {
+    public ResultResponse setLocationDetail(final LocationDetail locationDetail) {
         final var protoLocation = locationDetailToProto(locationDetail);
 
         final var message = ContextRequests.SetLocationDetailRequest.newBuilder()
@@ -135,17 +134,18 @@ public class GRpcManipulations implements Manipulations {
                 v -> contextStub.setLocationDetail(message),
                 v -> fallback.setLocationDetail(locationDetail),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildLocationDetailManipulationParameterData(locationDetail));
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfClass() {
+    public ManipulationResponse<List<String>> getRemovableDescriptorsOfClass() {
         return getRemovableDescriptorsOfClass(AbstractDescriptor.class);
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorClass) {
+    public ManipulationResponse<List<String>> getRemovableDescriptorsOfClass(
+            final Class<? extends AbstractDescriptor> descriptorClass) {
         final DeviceRequests.GetRemovableDescriptorsOfClassRequest request =
                 DeviceRequests.GetRemovableDescriptorsOfClassRequest.newBuilder()
                         .setDescriptorClass(toApiDescriptorClass(descriptorClass))
@@ -154,46 +154,46 @@ public class GRpcManipulations implements Manipulations {
                 v -> deviceStub.getRemovableDescriptorsOfClass(request),
                 v -> fallback.getRemovableDescriptorsOfClass(descriptorClass),
                 res -> res.getStatus().getResult(),
-                DeviceResponses.GetRemovableDescriptorsResponse::getHandleList,
+                gres -> ManipulationResponse.from(gres.getStatus().getResult(), gres.getHandleList()),
                 ManipulationParameterUtil.buildEmptyManipulationParameterData());
     }
 
     @Override
-    public ResponseTypes.Result removeDescriptor(final String handle) {
+    public ResultResponse removeDescriptor(final String handle) {
         final var request =
                 BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
         return performCallWrapper(
                 v -> deviceStub.removeDescriptor(request),
                 v -> fallback.removeDescriptor(handle),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
     }
 
     @Override
-    public ResponseTypes.Result insertDescriptor(final String handle) {
+    public ResultResponse insertDescriptor(final String handle) {
         final var request =
                 BasicRequests.BasicHandleRequest.newBuilder().setHandle(handle).build();
         return performCallWrapper(
                 v -> deviceStub.insertDescriptor(request),
                 v -> fallback.insertDescriptor(handle),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildHandleManipulationParameterData(handle));
     }
 
     @Override
-    public ResponseTypes.Result sendHello() {
+    public ResultResponse sendHello() {
         return performCallWrapper(
                 v -> deviceStub.sendHello(Empty.getDefaultInstance()),
                 v -> fallback.sendHello(),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildEmptyManipulationParameterData());
     }
 
     @Override
-    public Optional<String> createContextStateWithAssociation(
+    public ManipulationResponse<Optional<String>> createContextStateWithAssociation(
             final String descriptorHandle, final ContextAssociation association) {
         final var request = ContextRequests.CreateContextStateWithAssociationRequest.newBuilder()
                 .setDescriptorHandle(descriptorHandle)
@@ -206,16 +206,16 @@ public class GRpcManipulations implements Manipulations {
                 response -> response.getStatus().getResult(),
                 msg -> {
                     if (msg.getContextStateHandle().isBlank()) {
-                        return Optional.empty();
+                        return ManipulationResponse.from(msg.getStatus(), Optional.empty());
                     }
-                    return Optional.of(msg.getContextStateHandle());
+                    return ManipulationResponse.from(msg.getStatus(), Optional.of(msg.getContextStateHandle()));
                 },
                 ManipulationParameterUtil.buildContextAssociationManipulationParameterData(
                         descriptorHandle, association));
     }
 
     @Override
-    public ResponseTypes.Result setAlertActivation(final String handle, final AlertActivation activationState) {
+    public ResultResponse setAlertActivation(final String handle, final AlertActivation activationState) {
         final var message = ActivationStateRequests.SetAlertActivationRequest.newBuilder()
                 .setHandle(handle)
                 .setActivation(toApiActivationStateType(activationState))
@@ -225,12 +225,12 @@ public class GRpcManipulations implements Manipulations {
                 v -> activationStateStub.setAlertActivation(message),
                 v -> fallback.setAlertActivation(handle, activationState),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildAlertActivationManipulationParameterData(handle, activationState));
     }
 
     @Override
-    public ResponseTypes.Result setAlertConditionPresence(final String handle, final boolean presence) {
+    public ResultResponse setAlertConditionPresence(final String handle, final boolean presence) {
         final var message = AlertRequests.SetAlertConditionPresenceRequest.newBuilder()
                 .setHandle(handle)
                 .setPresence(presence)
@@ -240,12 +240,12 @@ public class GRpcManipulations implements Manipulations {
                 v -> alertStub.setAlertConditionPresence(message),
                 v -> fallback.setAlertConditionPresence(handle, presence),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildAlertConditionPresenceManipulationParameterData(handle, presence));
     }
 
     @Override
-    public ResponseTypes.Result setSystemSignalActivation(
+    public ResultResponse setSystemSignalActivation(
             final String handle, final AlertSignalManifestation manifestation, final AlertActivation activation) {
         final var message = ActivationStateRequests.SetSystemSignalActivationRequest.newBuilder()
                 .setHandle(handle)
@@ -257,13 +257,13 @@ public class GRpcManipulations implements Manipulations {
                 v -> activationStateStub.setSystemSignalActivation(message),
                 v -> fallback.setSystemSignalActivation(handle, manifestation, activation),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildSystemSignalActivationManipulationParameterData(
                         handle, manifestation, activation));
     }
 
     @Override
-    public ResponseTypes.Result setComponentActivation(final String handle, final ComponentActivation activationState) {
+    public ResultResponse setComponentActivation(final String handle, final ComponentActivation activationState) {
         final var message = ActivationStateRequests.SetComponentActivationRequest.newBuilder()
                 .setHandle(handle)
                 .setActivation(toApiComponentActivationStateType(activationState))
@@ -273,18 +273,18 @@ public class GRpcManipulations implements Manipulations {
                 v -> activationStateStub.setComponentActivation(message),
                 v -> fallback.setComponentActivation(handle, activationState),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildComponentActivationManipulationParameterData(handle, activationState));
     }
 
     @Override
-    public ResponseTypes.Result setMetricStatus(
+    public ResultResponse setMetricStatus(
             final String sequenceId,
             final String handle,
             final MetricCategory category,
             final ComponentActivation activation) {
         final var metricStatus = getMetricStatus(activation);
-        if (metricStatus.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;
+        if (metricStatus.isEmpty()) return ResultResponse.from(ResponseTypes.Result.RESULT_FAIL);
         final var message = MetricRequests.SetMetricStatusRequest.newBuilder()
                 .setHandle(handle)
                 .setStatus(metricStatus.orElseThrow())
@@ -294,18 +294,18 @@ public class GRpcManipulations implements Manipulations {
                 v -> metricStub.setMetricStatus(message),
                 v -> fallback.setMetricStatus(sequenceId, handle, category, activation),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                         sequenceId, handle, category, activation));
     }
 
     @Override
-    public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
+    public ResultResponse triggerDescriptorUpdate(final String handle) {
         return triggerDescriptorUpdate(List.of(handle));
     }
 
     @Override
-    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+    public ResultResponse triggerDescriptorUpdate(final List<String> handles) {
         final var message = DeviceRequests.TriggerDescriptorUpdateRequest.newBuilder()
                 .addAllHandle(handles)
                 .build();
@@ -314,24 +314,24 @@ public class GRpcManipulations implements Manipulations {
                 v -> deviceStub.triggerDescriptorUpdate(message),
                 v -> fallback.triggerDescriptorUpdate(handles),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildTriggerDescriptorUpdateParameterData(handles));
     }
 
     @Override
-    public ResponseTypes.Result triggerAnyDescriptorUpdate() {
+    public ResultResponse triggerAnyDescriptorUpdate() {
         return performCallWrapper(
                 v -> deviceStub.triggerAnyDescriptorUpdate(Empty.getDefaultInstance()),
                 v -> fallback.triggerAnyDescriptorUpdate(),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildEmptyManipulationParameterData());
     }
 
     @Override
-    public ResponseTypes.Result triggerReport(final QName report) {
+    public ResultResponse triggerReport(final QName report) {
         final var reportType = REPORT_TYPE_MAP.get(report);
-        if (reportType == null) return ResponseTypes.Result.RESULT_FAIL;
+        if (reportType == null) return ResultResponse.from(ResponseTypes.Result.RESULT_FAIL);
         final var message = DeviceRequests.TriggerReportRequest.newBuilder()
                 .setReport(reportType)
                 .build();
@@ -340,7 +340,7 @@ public class GRpcManipulations implements Manipulations {
                 v -> deviceStub.triggerReport(message),
                 v -> fallback.triggerReport(report),
                 BasicResponses.BasicResponse::getResult,
-                BasicResponses.BasicResponse::getResult,
+                ResultResponse::from,
                 ManipulationParameterUtil.buildTriggerReportManipulationParameterData(report));
     }
 
@@ -369,7 +369,7 @@ public class GRpcManipulations implements Manipulations {
      * @param parameter         for the manipulation, can be empty
      * @return response
      */
-    public <GRES, RES> RES performCallWrapper(
+    public <GRES, RES extends Response> RES performCallWrapper(
             final Function<Void, GRES> func,
             final Function<Void, RES> fallbackFunc,
             final Function<GRES, ResponseTypes.Result> statusExtractor,
@@ -381,7 +381,7 @@ public class GRpcManipulations implements Manipulations {
         final var methodName = walker.walk(
                 s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
         final var manipulation = manipulationInfoFactory.create(
-                startTime, endTime, getResultForPersisting(result), methodName.orElseThrow(), parameter);
+                startTime, endTime, result.getResult(), methodName.orElseThrow(), parameter);
         manipulation.addToStorage();
         return result;
     }
@@ -401,7 +401,8 @@ public class GRpcManipulations implements Manipulations {
             return fallbackFunc.apply(null);
         }
 
-        return switch (statusExtractor.apply(response)) {
+        final var extractedStatus = statusExtractor.apply(response);
+        return switch (extractedStatus) {
             case RESULT_NOT_IMPLEMENTED -> {
                 LOG.warn("Server has not implemented method");
                 yield fallbackFunc.apply(null);
@@ -412,26 +413,6 @@ public class GRpcManipulations implements Manipulations {
                 yield fallbackFunc.apply(null);
             }
         };
-    }
-
-    private <RES> ResponseTypes.Result getResultForPersisting(final RES result) {
-        ResponseTypes.Result response = ResponseTypes.Result.UNRECOGNIZED;
-        if (result instanceof final List resultList) {
-            if (resultList.isEmpty()) {
-                response = ResponseTypes.Result.RESULT_FAIL;
-            } else {
-                response = ResponseTypes.Result.RESULT_SUCCESS;
-            }
-        } else if (result instanceof final Optional<?> resultOptional) {
-            if (resultOptional.isEmpty()) {
-                response = ResponseTypes.Result.RESULT_FAIL;
-            } else {
-                response = ResponseTypes.Result.RESULT_SUCCESS;
-            }
-        } else if (result instanceof ResponseTypes.Result castedResult) {
-            response = castedResult;
-        }
-        return response;
     }
 
     public ActivationStateServiceGrpc.ActivationStateServiceBlockingStub getActivationStateStub() {

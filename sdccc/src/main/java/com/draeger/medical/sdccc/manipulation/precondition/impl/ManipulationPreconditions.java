@@ -10,7 +10,6 @@ package com.draeger.medical.sdccc.manipulation.precondition.impl;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
-import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -95,8 +94,9 @@ public class ManipulationPreconditions {
                         .getMdibAccess()
                         .getMdibVersion()
                         .getSequenceId();
-                final var manipulationResult =
-                        manipulations.setMetricStatus(sequenceId, handle, category, activationState);
+                final var manipulationResult = manipulations
+                        .setMetricStatus(sequenceId, handle, category, activationState)
+                        .getResult();
                 log.debug(
                         "Manipulation setMetricStatus was {} for metric state with handle {}",
                         manipulationResult,
@@ -134,7 +134,8 @@ public class ManipulationPreconditions {
 
         mdibAccess = remoteDevice.getMdibAccess();
 
-        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
+        final var modifiableDescriptors =
+                manipulations.getRemovableDescriptorsOfClass().getResponse();
         if (modifiableDescriptors.isEmpty()) {
             log.info("No modifiable descriptors available for manipulation");
             return false;
@@ -148,7 +149,7 @@ public class ManipulationPreconditions {
 
             // if the descriptor is not present, insert it first
             if (descriptorEntity.isEmpty()) {
-                manipulationResults.add(manipulations.insertDescriptor(handle));
+                manipulationResults.add(manipulations.insertDescriptor(handle).getResult());
                 descriptorEntity = mdibAccess.getEntity(handle);
                 if (descriptorEntity.isEmpty()) {
                     manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -157,7 +158,7 @@ public class ManipulationPreconditions {
             }
 
             // remove descriptor
-            manipulationResults.add(manipulations.removeDescriptor(handle));
+            manipulationResults.add(manipulations.removeDescriptor(handle).getResult());
             descriptorEntity = mdibAccess.getEntity(handle);
             if (descriptorEntity.isPresent()) {
                 manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -165,7 +166,7 @@ public class ManipulationPreconditions {
             log.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
 
             // reinsert descriptor
-            manipulationResults.add(manipulations.insertDescriptor(handle));
+            manipulationResults.add(manipulations.insertDescriptor(handle).getResult());
             descriptorEntity = mdibAccess.getEntity(handle);
             if (descriptorEntity.isEmpty()) {
                 manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -196,8 +197,9 @@ public class ManipulationPreconditions {
         final String childDescriptorHandle = descriptorHandles.getRight();
         final var manipulations = injector.getInstance(Manipulations.class);
 
-        final ResponseTypes.Result manipulationResult =
-                manipulations.triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle));
+        final ResponseTypes.Result manipulationResult = manipulations
+                .triggerDescriptorUpdate(List.of(childDescriptorHandle, parentDescriptorHandle))
+                .getResult();
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
@@ -311,7 +313,9 @@ public class ManipulationPreconditions {
                 final String handle,
                 final Collection<String> previousStateHandles) {
             LOG.debug("Associating new patient for handle {}", handle);
-            var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
+            var stateHandle = manipulations
+                    .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
+                    .getResponse();
             if (stateHandle.isEmpty()) {
                 LOG.error("Associating new patient failed for handle {}", handle);
                 return Optional.empty();
@@ -405,8 +409,9 @@ public class ManipulationPreconditions {
                         .getFirstState(AbstractDeviceComponentState.class)
                         .orElseThrow();
 
-                final ResponseTypes.Result result =
-                        manipulations.setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF);
+                final ResponseTypes.Result result = manipulations
+                        .setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF)
+                        .getResult();
 
                 switch (result) {
                     case RESULT_NOT_SUPPORTED:
@@ -511,7 +516,9 @@ public class ManipulationPreconditions {
                 final String handle,
                 final Collection<String> previousStateHandles) {
             LOG.debug("Associating new location for handle {}", handle);
-            var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
+            var stateHandle = manipulations
+                    .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
+                    .getResponse();
             if (stateHandle.isEmpty()) {
                 LOG.error("Associating new location failed for handle {}", handle);
                 return Optional.empty();
@@ -735,7 +742,8 @@ public class ManipulationPreconditions {
                 final String handle,
                 final AlertActivation activationState) {
             LOG.debug("Setting the activation state {} for handle {}", activationState, handle);
-            var manipulationResult = manipulations.setAlertActivation(handle, activationState);
+            var manipulationResult =
+                    manipulations.setAlertActivation(handle, activationState).getResult();
             switch (manipulationResult) {
                 case RESULT_SUCCESS -> {
                     LOG.debug("Setting the activation state {} for handle {} was successful", activationState, handle);
@@ -864,7 +872,8 @@ public class ManipulationPreconditions {
                 final String handle,
                 final boolean presence) {
             LOG.debug("Setting the presence attribute {} for handle {}", presence, handle);
-            var manipulationResult = manipulations.setAlertConditionPresence(handle, presence);
+            var manipulationResult =
+                    manipulations.setAlertConditionPresence(handle, presence).getResult();
             switch (manipulationResult) {
                 case RESULT_SUCCESS -> {
                     LOG.debug("Setting the presence {} for handle {} was successful", presence, handle);
@@ -903,7 +912,8 @@ public class ManipulationPreconditions {
                 final String handle,
                 final AlertActivation activation) {
             LOG.debug("Setting the activation state {} for handle {}", activation, handle);
-            var manipulationResult = manipulations.setAlertActivation(handle, activation);
+            var manipulationResult =
+                    manipulations.setAlertActivation(handle, activation).getResult();
             switch (manipulationResult) {
                 case RESULT_SUCCESS -> {
                     LOG.debug("Setting the activation state {} for handle {} was successful", activation, handle);
@@ -1010,7 +1020,7 @@ public class ManipulationPreconditions {
                     alertSystemEntities.size());
             for (MdibEntity alertSystemEntity : alertSystemEntities) {
 
-                final var manipulationResults = new HashSet<ResponseTypes.Result>(setSystemSignalActivation(
+                final var manipulationResults = new HashSet<>(setSystemSignalActivation(
                         testClient.getSdcRemoteDevice(),
                         manipulations,
                         alertSystemEntity.getHandle(),
@@ -1103,7 +1113,7 @@ public class ManipulationPreconditions {
          * @param manifestation     the manifestation of the system signal activation
          * @param childAlertSignals the alert signals of the alert system
          * @param testRunObserver   to register unexpected failures during test run
-         * @return true if successful, false otherwise
+         * @return a set of results of the manipulations
          */
         static Set<ResponseTypes.Result> setSystemSignalActivation(
                 final SdcRemoteDevice sdcRemoteDevice,
@@ -1156,7 +1166,9 @@ public class ManipulationPreconditions {
 
             LOG.debug("Setting the system signal activation attribute {} for handle {}", activation, handle);
 
-            var manipulationResult = manipulations.setSystemSignalActivation(handle, manifestation, activation);
+            var manipulationResult = manipulations
+                    .setSystemSignalActivation(handle, manifestation, activation)
+                    .getResult();
             if (manipulationResult != ResponseTypes.Result.RESULT_SUCCESS
                     && manipulationResult != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
                 LOG.error("Setting the system signal activation attribute {} for handle {} failed", activation, handle);
@@ -1169,7 +1181,9 @@ public class ManipulationPreconditions {
             }
 
             for (var child : childAlertSignals) {
-                final var childActivation = manipulations.setAlertActivation(child.getDescriptorHandle(), activation);
+                final var childActivation = manipulations
+                        .setAlertActivation(child.getDescriptorHandle(), activation)
+                        .getResult();
                 if (childActivation != ResponseTypes.Result.RESULT_SUCCESS
                         && childActivation != ResponseTypes.Result.RESULT_NOT_SUPPORTED) {
                     LOG.error(
@@ -1744,7 +1758,6 @@ public class ManipulationPreconditions {
          *
          * @param injector to analyze mdib on
          * @return true if successful, false otherwise
-         * @throws PreconditionException on errors
          */
         static boolean manipulation(final Injector injector) {
             final boolean result1 = removeAndReinsertDescriptors(injector, LOG);

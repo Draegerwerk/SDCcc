@@ -45,7 +45,7 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
-    public ResponseTypes.Result setLocationDetail(final LocationDetail locationDetail) {
+    public ResultResponse setLocationDetail(final LocationDetail locationDetail) {
         final var interactionMessage = String.format(
                 "Set location for currently associated location context to %s",
                 // better formatting
@@ -56,11 +56,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfClass() {
+    public ManipulationResponse<List<String>> getRemovableDescriptorsOfClass() {
         final var interactionMessage = "Provide a whitespace-separated list of removable descriptors."
                 + " Includes handles which have been removed already and can be reinserted."
                 + " Handles must stay the same once reinserted into the MDIB."
@@ -73,13 +74,14 @@ public class FallbackManipulations implements Manipulations {
                 })
                 .displayStringInputUserInteraction(interactionMessage);
         if (data == null || data.isBlank()) {
-            return Collections.emptyList();
+            return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Collections.emptyList());
         }
-        return List.of(data.split(" "));
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, List.of(data.split(" ")));
     }
 
     @Override
-    public List<String> getRemovableDescriptorsOfClass(final Class<? extends AbstractDescriptor> descriptorType) {
+    public ManipulationResponse<List<String>> getRemovableDescriptorsOfClass(
+            final Class<? extends AbstractDescriptor> descriptorType) {
         final var interactionMessage = "Provide a whitespace-separated list of those removable descriptors"
                 + " that are of type " + descriptorType.getName() + " (at least one of every possible kind)."
                 + " Includes handles which have been removed already and can be reinserted."
@@ -91,13 +93,13 @@ public class FallbackManipulations implements Manipulations {
                 })
                 .displayStringInputUserInteraction(interactionMessage);
         if (data == null || data.isBlank()) {
-            return Collections.emptyList();
+            return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Collections.emptyList());
         }
-        return List.of(data.split(" "));
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, List.of(data.split(" ")));
     }
 
     @Override
-    public ResponseTypes.Result removeDescriptor(final String handle) {
+    public ResultResponse removeDescriptor(final String handle) {
         final var interactionMessage = String.format("Remove the descriptor %s from the MDIB.", handle);
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
@@ -105,11 +107,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result insertDescriptor(final String handle) {
+    public ResultResponse insertDescriptor(final String handle) {
         final var interactionMessage = String.format("Insert the descriptor %s into the MDIB.", handle);
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
@@ -117,11 +120,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result sendHello() {
+    public ResultResponse sendHello() {
         final var interactionMessage =
                 "Announce the presence of the device in the network via a WS-Discovery Hello message.";
         final var interactionResult = interactionFactory
@@ -130,11 +134,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public Optional<String> createContextStateWithAssociation(
+    public ManipulationResponse<Optional<String>> createContextStateWithAssociation(
             final String descriptorHandle, final ContextAssociation association) {
         final var interactionMessage = String.format(
                 "Create a NEW context state for the descriptor %s and set the context association to %s."
@@ -147,13 +152,13 @@ public class FallbackManipulations implements Manipulations {
                 })
                 .displayStringInputUserInteraction(interactionMessage);
         if (data == null || data.isBlank()) {
-            return Optional.empty();
+            return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Optional.empty());
         }
-        return Optional.of(data);
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.of(data));
     }
 
     @Override
-    public ResponseTypes.Result setAlertActivation(final String handle, final AlertActivation activationState) {
+    public ResultResponse setAlertActivation(final String handle, final AlertActivation activationState) {
         final var interactionMessage =
                 String.format("Set activation state for handle %s to %s", handle, activationState.name());
         final var interactionResult = interactionFactory
@@ -162,11 +167,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result setAlertConditionPresence(final String handle, final boolean presence) {
+    public ResultResponse setAlertConditionPresence(final String handle, final boolean presence) {
         final var interactionMessage =
                 String.format("Set the presence attribute for handle %s to %s", handle, presence);
         final var interactionResult = interactionFactory
@@ -175,11 +181,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result setSystemSignalActivation(
+    public ResultResponse setSystemSignalActivation(
             final String handle, final AlertSignalManifestation manifestation, final AlertActivation activation) {
         final var interactionMessage = String.format(
                 "Set the system signal activation for handle %s and manifestation %s to %s",
@@ -190,11 +197,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result setComponentActivation(final String handle, final ComponentActivation activationState) {
+    public ResultResponse setComponentActivation(final String handle, final ComponentActivation activationState) {
         final var interactionMessage =
                 String.format("Set activation state for handle %s to %s", handle, activationState.name());
         final var interactionResult = interactionFactory
@@ -203,18 +211,19 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result setMetricStatus(
+    public ResultResponse setMetricStatus(
             final String sequenceId,
             final String handle,
             final MetricCategory category,
             final ComponentActivation activation) {
 
         final var metricStatusString = getMetricStatus(activation);
-        if (metricStatusString.isEmpty()) return ResponseTypes.Result.RESULT_FAIL;
+        if (metricStatusString.isEmpty()) return ResultResponse.from(ResponseTypes.Result.RESULT_FAIL);
 
         final var interactionMessage = String.format(metricStatusString, handle, category);
         final var interactionResult = interactionFactory
@@ -223,11 +232,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result triggerDescriptorUpdate(final String handle) {
+    public ResultResponse triggerDescriptorUpdate(final String handle) {
         final var triggerReportString = "Trigger a descriptor update for handle %s";
         final var interactionMessage = String.format(triggerReportString, handle);
         final var interactionResult = interactionFactory
@@ -236,11 +246,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result triggerDescriptorUpdate(final List<String> handles) {
+    public ResultResponse triggerDescriptorUpdate(final List<String> handles) {
         final var triggerReportString = "Trigger a descriptor update for handles %s";
         final var interactionMessage = String.format(triggerReportString, String.join(", ", handles));
         final var interactionResult = interactionFactory
@@ -249,11 +260,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result triggerAnyDescriptorUpdate() {
+    public ResultResponse triggerAnyDescriptorUpdate() {
         final var interactionMessage = "Trigger a descriptor update for some descriptor";
         final var interactionResult = interactionFactory
                 .createUserInteraction(new FilterInputStream(System.in) {
@@ -261,11 +273,12 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     @Override
-    public ResponseTypes.Result triggerReport(final QName reportType) {
+    public ResultResponse triggerReport(final QName reportType) {
         final var triggerReportString = "Trigger a report for type %s";
         final var interactionMessage = String.format(triggerReportString, reportType);
         final var interactionResult = interactionFactory
@@ -274,7 +287,8 @@ public class FallbackManipulations implements Manipulations {
                     public void close() {}
                 })
                 .displayYesNoUserInteraction(interactionMessage);
-        return interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL;
+        return ResultResponse.from(
+                interactionResult ? ResponseTypes.Result.RESULT_SUCCESS : ResponseTypes.Result.RESULT_FAIL);
     }
 
     public InteractionFactory getInteractionFactory() {
