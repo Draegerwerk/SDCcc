@@ -125,17 +125,46 @@ style:
     active: true
   OptionalUnit:
     active: true
+  RedundantVisibilityModifierRule:
+    active: true
+  ReturnCount:
+    active: true
+    max: 3
   SpacingBetweenPackageAndImports:
+    active: true
+  StringShouldBeRawString:
     active: true
   TrailingWhitespace:
     active: true
+  TrimMultilineRawString:
+    active: true
   UnderscoresInNumericLiterals:
+    active: true
+  UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryBackticks:
     active: true
+  UnnecessaryBracesAroundTrailingLambda:
+    active: true
+  UnnecessaryInnerClass:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnnecessaryParentheses:
+    active: true
+    allowForUnclearPrecedence: true
   UntilInsteadOfRangeTo:
     active: true
   UnusedImports:
     active: true
+  UseDataClass:
+    active: true
+  UseEmptyCounterpart:
+    active: true
   UseIfEmptyOrIfBlank:
     active: true
+  UseLet:
+    active: true
+  WildcardImport:
+    active: true
+    excludeImports: []
