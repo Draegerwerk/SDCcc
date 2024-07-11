@@ -8,8 +8,10 @@
 package com.draeger.medical.sdccc.tests.util;
 
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
+import com.draeger.medical.sdccc.manipulation.precondition.Observing;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
+import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -64,6 +66,11 @@ public class PreconditionFilter implements PostDiscoveryFilter {
                 for (final Class<? extends ManipulationPrecondition> manipulationPrecondition :
                         requiredInteraction.manipulationPreconditions()) {
                     preconditionRegistry.registerManipulationPrecondition(manipulationPrecondition);
+                }
+
+                for (final Class<? extends Observing> observingPrecondition :
+                        requiredInteraction.observingPreconditions()) {
+                    preconditionRegistry.registerObservingPrecondition(observingPrecondition);
                 }
 
                 result = FilterResult.included("Filter only used for metadata collection");

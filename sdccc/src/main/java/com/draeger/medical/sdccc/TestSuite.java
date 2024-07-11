@@ -17,6 +17,7 @@ import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.guice.TomlConfigParser;
+import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionMdibObserver;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -383,6 +384,19 @@ public class TestSuite {
                 client.getHostingServiceProxy().getHostedServices().values().stream()
                         .anyMatch(service ->
                                 service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
+
+        // register observing preconditions in test client
+        final var preconditions = injector.getInstance(PreconditionRegistry.class);
+        final var observingPreconditions = preconditions.getObservingPreconditions();
+
+        for (final var precondition : observingPreconditions) {
+            LOG.info(
+                    "Registering observing precondition in test client {}",
+                    precondition.getClass().getSimpleName());
+            client.getSdcRemoteDevice()
+                    .getMdibAccessObservable()
+                    .registerObserver(new ObservingPreconditionMdibObserver(precondition));
+        }
     }
 
     /**

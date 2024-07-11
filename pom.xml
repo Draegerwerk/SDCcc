@@ -24,6 +24,7 @@
         <jaxbCoreVersion>4.0.4</jaxbCoreVersion>
         <jaxbBuildHelperMavenPluginVersion>3.5.0</jaxbBuildHelperMavenPluginVersion>
         <kotlin.version>1.9.23</kotlin.version>
+        <kotlin.compiler.apiVersion>1.9</kotlin.compiler.apiVersion>
     </properties>
 
     <build>

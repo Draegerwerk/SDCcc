@@ -9,6 +9,7 @@ package com.draeger.medical.sdccc.tests.annotations;
 
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
+import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -38,4 +39,11 @@ public @interface RequirePrecondition {
      * @return array of manipulation classes to trigger for the test
      */
     Class<? extends ManipulationPrecondition>[] manipulationPreconditions() default {};
+
+    /**
+     * Manipulations to trigger.
+     *
+     * @return array of manipulation classes to trigger for the test
+     */
+    Class<? extends SynchronizedObservingPrecondition>[] observingPreconditions() default {};
 }

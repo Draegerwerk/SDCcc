@@ -12,9 +12,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.precondition.impl.DummyObservingPrecondition;
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.messages.mapping.MessageContent;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.util.XPathExtractor;
@@ -49,6 +51,7 @@ public class InvariantBicepsNormativeAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_R5006)
     @TestDescription(
             "Verifies that for all incoming messages, Localized text with the @Ref attribute always has a version")
+    @RequirePrecondition(observingPreconditions = {DummyObservingPrecondition.class})
     void testRequirement5006() throws Exception {
 
         final var refExtractor = new XPathExtractor(REF_ELEMENT_QUERY);
