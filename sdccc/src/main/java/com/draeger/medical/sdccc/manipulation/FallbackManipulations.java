@@ -154,7 +154,7 @@ public class FallbackManipulations implements Manipulations {
         if (data == null || data.isBlank()) {
             return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Optional.empty());
         }
-        return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Optional.of(data));
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.of(data));
     }
 
     @Override

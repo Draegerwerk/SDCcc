@@ -32,7 +32,7 @@ public interface Manipulations {
     ResultResponse setLocationDetail(LocationDetail locationDetail);
 
     /**
-     * @return all descriptors which can be removed from and reinserted into the device MDIB.
+     * @return result and all descriptors which can be removed from and reinserted into the device MDIB.
      */
     ManipulationResponse<List<String>> getRemovableDescriptorsOfClass();
 
@@ -41,7 +41,7 @@ public interface Manipulations {
      * the MDIB.
      * @param descriptorType type of descriptor to filter for. Currently, only AbstractDescriptor
      *                       and MdsDescriptor are supported.
-     * @return all descriptors of the given type which can be removed from and reinserted into the device MDIB
+     * @return result and all descriptors of the given type which can be removed from and reinserted into the device MDIB
      *          and have a type matching descriptorType.
      */
     ManipulationResponse<List<String>> getRemovableDescriptorsOfClass(
@@ -75,7 +75,7 @@ public interface Manipulations {
      *
      * @param descriptorHandle to associate a new context for
      * @param association      to set for new state
-     * @return handle of the newly created state, empty if unsuccessful
+     * @return result and handle of the newly created state, empty if unsuccessful
      */
     ManipulationResponse<Optional<String>> createContextStateWithAssociation(
             String descriptorHandle, ContextAssociation association);

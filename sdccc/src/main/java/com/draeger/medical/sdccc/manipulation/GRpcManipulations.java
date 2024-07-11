@@ -384,7 +384,6 @@ public class GRpcManipulations implements Manipulations {
         final var endTime = System.nanoTime();
         final var methodName = walker.walk(
                 s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
-
         final var manipulation = manipulationInfoFactory.create(
                 startTime, endTime, result.getResult(), gson.toJson(result), methodName.orElseThrow(), parameter);
         manipulation.addToStorage();
