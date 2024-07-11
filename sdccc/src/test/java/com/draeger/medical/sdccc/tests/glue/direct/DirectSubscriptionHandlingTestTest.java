@@ -23,6 +23,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.manipulation.ResultResponse;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -30,7 +31,6 @@ import com.draeger.medical.sdccc.tests.test_util.InjectorUtil;
 import com.draeger.medical.sdccc.tests.util.HostedServiceVerifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.util.MessageGeneratingUtil;
-import com.draeger.medical.t2iapi.ResponseTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -929,7 +929,7 @@ public class DirectSubscriptionHandlingTestTest {
                 }
             }
             thread.start();
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
 
         when(eventSink.getStatus(anyString())).thenAnswer(call -> {

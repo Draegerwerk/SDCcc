@@ -24,7 +24,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
+import com.draeger.medical.sdccc.manipulation.ManipulationResponse;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.manipulation.ResultResponse;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -234,9 +237,9 @@ public class ManipulationPreconditionsTest {
         // make manipulation return our two patient context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(PATIENT_CONTEXT_STATE_HANDLE, PatientContextState.class))
@@ -265,9 +268,9 @@ public class ManipulationPreconditionsTest {
         // make manipulation return our two location context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(LOCATION_CONTEXT_STATE_HANDLE, LocationContextState.class))
@@ -354,9 +357,9 @@ public class ManipulationPreconditionsTest {
         // introduce error, manipulation returns same handle twice
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(PATIENT_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         assertFalse(
                 ManipulationPreconditions.AssociatePatientsManipulation.manipulation(injector),
@@ -803,9 +806,9 @@ public class ManipulationPreconditionsTest {
         // introduce error, manipulation returns same handle twice
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.of(LOCATION_CONTEXT_STATE_HANDLE))
-                .thenReturn(Optional.empty());
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
+                .thenReturn(ManipulationResponse.fail(Optional.empty()));
 
         final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
         when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
@@ -926,9 +929,8 @@ public class ManipulationPreconditionsTest {
     void testSetPresenceForAlertConditionSuccessful() {
         alertConditionPresenceManipulationSetup();
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true))).thenReturn(ResultResponse.success());
 
         assertTrue(
                 ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
@@ -949,12 +951,12 @@ public class ManipulationPreconditionsTest {
     void testSetPresenceForAlertConditionAllowNotSupported1() {
         alertConditionPresenceManipulationSetup();
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
         // setAlertConditionPresence is not supported for first alert condition
         when(mockManipulations.setAlertConditionPresence(ALERT_CONDITION_HANDLE, true))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
         when(mockManipulations.setAlertConditionPresence(ALERT_CONDITION_HANDLE2, true))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
 
         assertTrue(
                 ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
@@ -978,9 +980,8 @@ public class ManipulationPreconditionsTest {
         alertConditionPresenceManipulationSetup();
         // manipulation of alert activation is not supported from DUT
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
-        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true))).thenReturn(ResultResponse.success());
 
         assertTrue(
                 ManipulationPreconditions.AlertConditionPresenceManipulation.manipulation(injector),
@@ -1001,9 +1002,8 @@ public class ManipulationPreconditionsTest {
         alertConditionPresenceManipulationSetup();
         // manipulation of alert activation fails
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
-        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.fail());
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true))).thenReturn(ResultResponse.success());
 
         // precondition should return false, since RESULT_FAIL was seen
         assertFalse(
@@ -1028,9 +1028,8 @@ public class ManipulationPreconditionsTest {
         alertConditionPresenceManipulationSetup();
         // manipulation of alert activation fails
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
-        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true))).thenReturn(ResultResponse.success());
 
         // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
         assertFalse(
@@ -1055,9 +1054,8 @@ public class ManipulationPreconditionsTest {
         alertConditionPresenceManipulationSetup();
         // manipulation of alert activation fails
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
-        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success());
+        when(mockManipulations.setAlertConditionPresence(anyString(), eq(true))).thenReturn(ResultResponse.fail());
 
         // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
         assertFalse(
@@ -1082,9 +1080,9 @@ public class ManipulationPreconditionsTest {
         alertConditionPresenceManipulationSetup();
         // manipulation of alert activation fails
         when(mockManipulations.setAlertActivation(anyString(), eq(AlertActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
         when(mockManipulations.setAlertConditionPresence(anyString(), eq(true)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
 
         // precondition should return false, since RESULT_NOT_IMPLEMENTED was seen
         assertFalse(
@@ -1138,13 +1136,13 @@ public class ManipulationPreconditionsTest {
 
         // make manipulation return true for the manipulations and false afterwards
         when(mockManipulations.setAlertActivation(any(String.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         final var expectedManipulationCalls = 6;
         final var expectedActivationStates = List.of(
@@ -1185,16 +1183,16 @@ public class ManipulationPreconditionsTest {
         setActivationStateSetup();
         // let one alert system not support manipulations
         when(mockManipulations.setAlertActivation(eq(ALERT_SYSTEM_CONTEXT_HANDLE), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
         // make manipulation for the other alert system return true for the manipulations and false afterwards
         when(mockManipulations.setAlertActivation(eq(ALERT_SYSTEM_CONTEXT_HANDLE2), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         final var expectedManipulationCalls = 6;
         final var expectedActivationStates = List.of(
@@ -1234,13 +1232,13 @@ public class ManipulationPreconditionsTest {
         setActivationStateSetup();
         // make manipulation return true for the manipulations and false afterwards
         when(mockManipulations.setAlertActivation(any(String.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         when(mockAlertSystemState.getActivationState()).thenReturn(AlertActivation.OFF);
 
@@ -1282,11 +1280,11 @@ public class ManipulationPreconditionsTest {
         // let setMetricStatus manipulation for first handle be successful
         when(mockManipulations.setMetricStatus(
                         eq(MdibBuilder.DEFAULT_SEQUENCE_ID), eq(metricHandle), eq(category), eq(endState)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
         // let setMetricStatus manipulation for second handle be successful
         when(mockManipulations.setMetricStatus(
                         eq(MdibBuilder.DEFAULT_SEQUENCE_ID), eq(otherMetricHandle), eq(category), eq(endState)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
     }
 
     // the argument source for the setMetricStatus preconditions
@@ -1430,7 +1428,7 @@ public class ManipulationPreconditionsTest {
         // let one metric not support setMetricStatus manipulation
         when(mockManipulations.setMetricStatus(
                         any(String.class), eq(SOME_HANDLE), any(MetricCategory.class), any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertTrue(manipulation.apply(injector));
 
@@ -1455,7 +1453,7 @@ public class ManipulationPreconditionsTest {
                         any(String.class),
                         any(MetricCategory.class),
                         any(ComponentActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.fail());
 
         assertFalse(manipulation.apply(injector));
 
@@ -1484,9 +1482,9 @@ public class ManipulationPreconditionsTest {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
 
         when(mockManipulations.insertDescriptor(any(String.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         when(mockDevice.getMdibAccess().getEntity(anyString()))
                 .thenReturn(Optional.empty())
@@ -1524,7 +1522,7 @@ public class ManipulationPreconditionsTest {
     void testRemoveAndReinsertDescriptorManipulationBad2() {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.insertDescriptor(anyString())).thenReturn(ResultResponse.fail());
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
 
@@ -1538,7 +1536,7 @@ public class ManipulationPreconditionsTest {
     void testRemoveAndReinsertDescriptorManipulationBad3() {
         setupRemoveAndReinsertDescriptor(SOME_HANDLE, List.of(SOME_HANDLE));
 
-        when(mockManipulations.removeDescriptor(anyString())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.removeDescriptor(anyString())).thenReturn(ResultResponse.fail());
         assertFalse(ManipulationPreconditions.RemoveAndReinsertDescriptorManipulation.manipulation(injector));
         assertTrue(testRunObserver.isInvalid(), "Test run should have been invalidated.");
 
@@ -1549,15 +1547,16 @@ public class ManipulationPreconditionsTest {
 
     private void setupRemoveAndReinsertDescriptor(
             final String descriptorHandle, final List<String> removableDescriptors) {
-        when(mockManipulations.getRemovableDescriptorsOfClass()).thenReturn(removableDescriptors);
+        when(mockManipulations.getRemovableDescriptorsOfClass())
+                .thenReturn(ManipulationResponse.success(removableDescriptors));
 
         when(mockManipulations.removeDescriptor(any(String.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         when(mockManipulations.insertDescriptor(any(String.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS)
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.success())
+                .thenReturn(ResultResponse.fail());
 
         when(mockEntity.getHandle()).thenReturn(descriptorHandle);
         when(mockDevice.getMdibAccess().getEntity(anyString()))
@@ -1570,7 +1569,7 @@ public class ManipulationPreconditionsTest {
         final var entities = new ArrayList<MdibEntity>();
         for (var state : states) {
             when(mockManipulations.setComponentActivation(state.getDescriptorHandle(), ComponentActivation.OFF))
-                    .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                    .thenReturn(ResultResponse.success());
             final var mock = mock(MdibEntity.class);
             when(mock.getFirstState(AbstractDeviceComponentState.class)).thenReturn(Optional.of(state));
             entities.add(mock);
@@ -1622,7 +1621,7 @@ public class ManipulationPreconditionsTest {
         setUpAbstractDeviceComponentStateOFFManipulation(mockVmdState);
         // let all manipulations return not supported
         when(mockManipulations.setComponentActivation(anyString(), eq(ComponentActivation.OFF)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
 
@@ -1638,7 +1637,7 @@ public class ManipulationPreconditionsTest {
         setUpAbstractDeviceComponentStateOFFManipulation(mockVmdState, mockVmdState2);
         // let manipulation for first vmd return not supported
         when(mockManipulations.setComponentActivation(VMD_HANDLE, ComponentActivation.OFF))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertTrue(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
 
@@ -1655,7 +1654,7 @@ public class ManipulationPreconditionsTest {
         setUpAbstractDeviceComponentStateOFFManipulation(mockScoState, mockClockState);
         // let one manipulation fail
         when(mockManipulations.setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.fail());
 
         assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
 
@@ -1673,7 +1672,7 @@ public class ManipulationPreconditionsTest {
         setUpAbstractDeviceComponentStateOFFManipulation(mockScoState, mockClockState);
         // let one manipulation return not implemented
         when(mockManipulations.setComponentActivation(CLOCK_HANDLE, ComponentActivation.OFF))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
 
         assertFalse(ManipulationPreconditions.AbstractDeviceComponentStateOFFManipulation.manipulation(injector));
 
@@ -1730,9 +1729,9 @@ public class ManipulationPreconditionsTest {
                 .thenReturn(Optional.of(mockAlertSystemState));
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
         when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+                .thenReturn(ResultResponse.success());
     }
 
     private void buildSystemSignalActivation(
@@ -1816,7 +1815,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1828,7 +1827,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), eq(AlertSignalManifestation.OTH), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertTrue(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1839,7 +1838,7 @@ public class ManipulationPreconditionsTest {
     void testSystemSignalActivationChildNotSupported() {
         setUpSystemSignalActivation();
         when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_SUPPORTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED));
 
         assertTrue(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1850,7 +1849,7 @@ public class ManipulationPreconditionsTest {
     void testSystemSignalActivationChildNotImplemented() {
         setUpSystemSignalActivation();
         when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1860,7 +1859,7 @@ public class ManipulationPreconditionsTest {
     void testSystemSignalActivationChildFailed() {
         setUpSystemSignalActivation();
         when(mockManipulations.setAlertActivation(anyString(), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.fail());
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1872,7 +1871,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1884,7 +1883,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), eq(AlertSignalManifestation.AUD), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED);
+                .thenReturn(ResultResponse.from(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED));
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1896,7 +1895,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), any(AlertSignalManifestation.class), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.fail());
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
         verify(mockManipulations, times(3))
@@ -1911,7 +1910,7 @@ public class ManipulationPreconditionsTest {
         setUpSystemSignalActivation();
         when(mockManipulations.setSystemSignalActivation(
                         anyString(), eq(AlertSignalManifestation.TAN), any(AlertActivation.class)))
-                .thenReturn(ResponseTypes.Result.RESULT_FAIL);
+                .thenReturn(ResultResponse.fail());
 
         assertFalse(ManipulationPreconditions.SystemSignalActivationManipulation.manipulation(injector));
     }
@@ -1930,17 +1929,17 @@ public class ManipulationPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.success());
         final MdibEntity mockEntityB2 = mock(MdibEntity.class);
         when(mockEntityB2.getHandle()).thenReturn(parentDescriptorHandle);
         when(mockEntityB2.getChildren()).thenReturn(List.of(childDescriptorHandle));
@@ -2011,7 +2010,9 @@ public class ManipulationPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of()); // When the manipulation is NOT_SUPPORTED, an empty list is returned.
+                .thenReturn(ManipulationResponse.from(
+                        ResponseTypes.Result.RESULT_NOT_SUPPORTED,
+                        List.of())); // When the manipulation is NOT_SUPPORTED, an empty list is returned.
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
@@ -2021,7 +2022,7 @@ public class ManipulationPreconditionsTest {
             presenceMap.put(invocation.getArgument(0), false);
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_SUCCESS);
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.success());
         final MdibEntity mockEntityB = mock(MdibEntity.class);
         when(mockEntityB.getHandle()).thenReturn(parentDescriptorHandle);
         when(mockEntityB.getChildren()).thenReturn(List.of(childDescriptorHandle));
@@ -2067,17 +2068,17 @@ public class ManipulationPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of(descriptor1Handle, descriptor2Handle));
+                .thenReturn(ManipulationResponse.success(List.of(descriptor1Handle, descriptor2Handle)));
 
-        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), true);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
+        when(mockManipulations.removeDescriptor(anyString())).thenAnswer((Answer<ResultResponse>) invocation -> {
             presenceMap.put(invocation.getArgument(0), false);
-            return ResponseTypes.Result.RESULT_SUCCESS;
+            return ResultResponse.success();
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.fail());
         final MdibEntity mockEntityB = mock(MdibEntity.class);
         when(mockEntityB.getHandle()).thenReturn(parentDescriptorHandle);
         when(mockEntityB.getChildren()).thenReturn(List.of(childDescriptorHandle));
@@ -2147,7 +2148,9 @@ public class ManipulationPreconditionsTest {
                 descriptor2Handle, true));
 
         when(mockManipulations.getRemovableDescriptorsOfClass())
-                .thenReturn(List.of()); // When the manipulation returns RESULT_NOT_SUPPORTED, then an empty list
+                .thenReturn(ManipulationResponse.from(
+                        ResponseTypes.Result.RESULT_NOT_SUPPORTED,
+                        List.of())); // When the manipulation returns RESULT_NOT_SUPPORTED, then an empty list
         // is returned
 
         when(mockManipulations.insertDescriptor(anyString())).thenAnswer((Answer<ResponseTypes.Result>) invocation -> {
@@ -2158,7 +2161,7 @@ public class ManipulationPreconditionsTest {
             presenceMap.put(invocation.getArgument(0), false);
             return ResponseTypes.Result.RESULT_SUCCESS;
         });
-        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResponseTypes.Result.RESULT_FAIL);
+        when(mockManipulations.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.fail());
         final MdibEntity mockEntityB = mock(MdibEntity.class);
         when(mockEntityB.getHandle()).thenReturn(parentDescriptorHandle);
         when(mockEntityB.getChildren()).thenReturn(List.of(childDescriptorHandle));

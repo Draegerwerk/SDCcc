@@ -124,7 +124,8 @@ public class ConditionalPreconditions {
         }
         mdibAccess = remoteDevice.getMdibAccess();
 
-        final var modifiableDescriptors = manipulations.getRemovableDescriptorsOfClass();
+        final var modifiableDescriptors =
+                manipulations.getRemovableDescriptorsOfClass().getResponse();
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
         if (modifiableDescriptors.isEmpty()) {
@@ -140,7 +141,7 @@ public class ConditionalPreconditions {
 
             // if the descriptor is not present, insert it first
             if (descriptorEntity.isEmpty()) {
-                manipulationResults.add(manipulations.insertDescriptor(handle));
+                manipulationResults.add(manipulations.insertDescriptor(handle).getResult());
                 descriptorEntity = mdibAccess.getEntity(handle);
                 if (descriptorEntity.isEmpty()) {
                     manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -150,7 +151,7 @@ public class ConditionalPreconditions {
             }
 
             // remove descriptor
-            manipulationResults.add(manipulations.removeDescriptor(handle));
+            manipulationResults.add(manipulations.removeDescriptor(handle).getResult());
             descriptorEntity = mdibAccess.getEntity(handle);
             if (descriptorEntity.isPresent()) {
                 manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -159,7 +160,7 @@ public class ConditionalPreconditions {
             logger.debug("Descriptor {} presence: {}", handle, descriptorEntity.isPresent());
 
             // reinsert descriptor
-            manipulationResults.add(manipulations.insertDescriptor(handle));
+            manipulationResults.add(manipulations.insertDescriptor(handle).getResult());
             descriptorEntity = mdibAccess.getEntity(handle);
             if (descriptorEntity.isEmpty()) {
                 manipulationResults.add(ResponseTypes.Result.RESULT_FAIL);
@@ -181,7 +182,8 @@ public class ConditionalPreconditions {
     private static boolean descriptionUpdateManipulation(final Injector injector) {
         final var manipulations = injector.getInstance(Manipulations.class);
 
-        final ResponseTypes.Result manipulationResult = manipulations.triggerAnyDescriptorUpdate();
+        final ResponseTypes.Result manipulationResult =
+                manipulations.triggerAnyDescriptorUpdate().getResult();
 
         return ResponseTypes.Result.RESULT_SUCCESS.equals(manipulationResult);
     }
@@ -207,7 +209,7 @@ public class ConditionalPreconditions {
             final Injector injector, final Logger log, final QName reportType) {
         final var manipulations = injector.getInstance(Manipulations.class);
         log.info("Executing triggerReport manipulation for {}", reportType);
-        final var result = manipulations.triggerReport(reportType);
+        final var result = manipulations.triggerReport(reportType).getResult();
         return result == ResponseTypes.Result.RESULT_SUCCESS;
     }
 
@@ -237,7 +239,7 @@ public class ConditionalPreconditions {
 
         static boolean manipulation(final Injector injector) {
             final var manipulations = injector.getInstance(Manipulations.class);
-            final var result = manipulations.sendHello();
+            final var result = manipulations.sendHello().getResult();
             LOG.info("Manipulation to send Hello message was {}", result);
             return result == ResponseTypes.Result.RESULT_SUCCESS;
         }
@@ -280,8 +282,6 @@ public class ConditionalPreconditions {
      * received, triggering description modifications otherwise.
      */
     public static class DescriptionModificationUptPrecondition extends SimplePrecondition {
-
-        private static final Logger LOG = LogManager.getLogger(DescriptionModificationUptPrecondition.class);
 
         /**
          * Creates a description modification upt precondition check.
@@ -419,8 +419,9 @@ public class ConditionalPreconditions {
             }
             mdibAccess = remoteDevice.getMdibAccess();
 
-            final List<String> removableMdsDescriptors =
-                    manipulations.getRemovableDescriptorsOfClass(MdsDescriptor.class);
+            final List<String> removableMdsDescriptors = manipulations
+                    .getRemovableDescriptorsOfClass(MdsDescriptor.class)
+                    .getResponse();
             if (removableMdsDescriptors.isEmpty()) {
                 LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
                         + "manipulation. Please check if the test case applying this precondition is applicable to "
@@ -486,7 +487,8 @@ public class ConditionalPreconditions {
                 throws UnexpectedManipulationResultException {
 
             // 1. insert
-            ResponseTypes.Result result = manipulations.insertDescriptor(initiallyAbsentMdsDescriptor);
+            ResponseTypes.Result result =
+                    manipulations.insertDescriptor(initiallyAbsentMdsDescriptor).getResult();
             LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
@@ -500,7 +502,9 @@ public class ConditionalPreconditions {
             }
 
             // 2. update
-            result = manipulations.triggerDescriptorUpdate(initiallyAbsentMdsDescriptor);
+            result = manipulations
+                    .triggerDescriptorUpdate(initiallyAbsentMdsDescriptor)
+                    .getResult();
             LOG.info(
                     "Manipulation triggerDescriptorUpdate({}) returned result {}",
                     initiallyAbsentMdsDescriptor,
@@ -517,7 +521,8 @@ public class ConditionalPreconditions {
             }
 
             // 3. remove
-            result = manipulations.removeDescriptor(initiallyAbsentMdsDescriptor);
+            result =
+                    manipulations.removeDescriptor(initiallyAbsentMdsDescriptor).getResult();
             LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyAbsentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
@@ -539,7 +544,9 @@ public class ConditionalPreconditions {
                 throws UnexpectedManipulationResultException {
 
             // 1. update
-            ResponseTypes.Result result = manipulations.triggerDescriptorUpdate(initiallyPresentMdsDescriptor);
+            ResponseTypes.Result result = manipulations
+                    .triggerDescriptorUpdate(initiallyPresentMdsDescriptor)
+                    .getResult();
             LOG.info(
                     "Manipulation triggerDescriptorUpdate({}) returned result {}",
                     initiallyPresentMdsDescriptor,
@@ -556,7 +563,9 @@ public class ConditionalPreconditions {
             }
 
             // 2. remove
-            result = manipulations.removeDescriptor(initiallyPresentMdsDescriptor);
+            result = manipulations
+                    .removeDescriptor(initiallyPresentMdsDescriptor)
+                    .getResult();
             LOG.info("Manipulation removeDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
@@ -570,7 +579,9 @@ public class ConditionalPreconditions {
             }
 
             // 3. re-insert
-            result = manipulations.insertDescriptor(initiallyPresentMdsDescriptor);
+            result = manipulations
+                    .insertDescriptor(initiallyPresentMdsDescriptor)
+                    .getResult();
             LOG.info("Manipulation insertDescriptor({}) returned result {}", initiallyPresentMdsDescriptor, result);
             switch (result) {
                 case RESULT_SUCCESS:
@@ -648,7 +659,7 @@ public class ConditionalPreconditions {
             LOG.info("Executing triggerReport manipulation for {}", reportTypes);
             final var results = new HashSet<ResponseTypes.Result>();
             for (var reportType : reportTypes) {
-                results.add(manipulations.triggerReport(reportType));
+                results.add(manipulations.triggerReport(reportType).getResult());
             }
             return results.contains(ResponseTypes.Result.RESULT_SUCCESS)
                     && !results.contains(ResponseTypes.Result.RESULT_NOT_IMPLEMENTED)
@@ -886,7 +897,9 @@ public class ConditionalPreconditions {
                 final Collection<String> previousStateHandles,
                 final Class<? extends AbstractContextState> contextStateClass) {
             LOG.debug("Associating new context state for handle {}", handle);
-            var stateHandle = manipulations.createContextStateWithAssociation(handle, ContextAssociation.ASSOC);
+            var stateHandle = manipulations
+                    .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
+                    .getResponse();
             if (stateHandle.isEmpty()) {
                 LOG.error("Associating new context state failed for handle {}", handle);
                 return Optional.empty();
