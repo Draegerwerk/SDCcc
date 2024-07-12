@@ -1452,8 +1452,8 @@ public class TestMessageStorage {
                     1000,
                     2000,
                     ResponseTypes.Result.RESULT_SUCCESS,
+                    "expectedResponse",
                     "setMetricStatus",
-                    "expectedMethod",
                     ManipulationParameterUtil.buildEmptyManipulationParameterData(),
                     messageStorage);
             manipulation.addToStorage();
@@ -1682,14 +1682,14 @@ public class TestMessageStorage {
             final var finishTime1 = 1500;
             final var result = ResponseTypes.Result.RESULT_SUCCESS;
             final var expectedMethodName = "setMetricStatus";
-            final var expectedResult = "{\"result\":\"RESULT_SUCCESS\"}";
+            final var expectedResponse = "{\"result\":\"RESULT_SUCCESS\"}";
             final var expectedParameters = ManipulationParameterUtil.buildComponentActivationManipulationParameterData(
                     "someHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
             final var expectedManipulationInfo = new ManipulationInfo(
                     startTime1,
                     finishTime1,
                     result,
-                    expectedResult,
+                    expectedResponse,
                     expectedMethodName,
                     expectedParameters,
                     messageStorage);
@@ -1700,7 +1700,7 @@ public class TestMessageStorage {
                     startTime1,
                     finishTime1,
                     result,
-                    expectedResult,
+                    expectedResponse,
                     expectedMethodName,
                     ManipulationParameterUtil.buildEmptyManipulationParameterData(),
                     messageStorage);
@@ -1711,7 +1711,7 @@ public class TestMessageStorage {
                     "someOtherHandle", org.somda.sdc.biceps.model.participant.ComponentActivation.ON);
 
             final var manipulationDifferentHandle = new ManipulationInfo(
-                    startTime1, finishTime1, result, expectedResult, expectedMethodName, parameters2, messageStorage);
+                    startTime1, finishTime1, result, expectedResponse, expectedMethodName, parameters2, messageStorage);
             manipulationDifferentHandle.addToStorage();
 
             // different manipulation with same parameter
@@ -1719,7 +1719,7 @@ public class TestMessageStorage {
                     startTime1,
                     finishTime1,
                     result,
-                    expectedResult,
+                    expectedResponse,
                     "setComponentActivation",
                     expectedParameters,
                     messageStorage);
@@ -1729,7 +1729,7 @@ public class TestMessageStorage {
                     1200,
                     1300,
                     result,
-                    expectedResult,
+                    expectedResponse,
                     "sendHello",
                     ManipulationParameterUtil.buildEmptyManipulationParameterData(),
                     messageStorage);
@@ -1764,7 +1764,7 @@ public class TestMessageStorage {
                     startTime1,
                     finishTime1,
                     result,
-                    expectedResult,
+                    expectedResponse,
                     expectedMethodName,
                     expectedParameters,
                     messageStorage);
