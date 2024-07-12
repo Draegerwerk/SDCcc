@@ -115,6 +115,7 @@ public class GRpcManipulations implements Manipulations {
                 // Channels are secure by default (via SSL/TLS), which we don't really need
                 .usePlaintext()
                 .build();
+        this.manipulationSerializer = manipulationSerializer;
 
         activationStateStub = ActivationStateServiceGrpc.newBlockingStub(channel);
         alertStub = AlertServiceGrpc.newBlockingStub(channel);
@@ -123,8 +124,6 @@ public class GRpcManipulations implements Manipulations {
         deviceStub = DeviceServiceGrpc.newBlockingStub(channel);
         metricStub = MetricServiceGrpc.newBlockingStub(channel);
         operationStub = OperationServiceGrpc.newBlockingStub(channel);
-
-        this.manipulationSerializer = manipulationSerializer;
     }
 
     @Override
