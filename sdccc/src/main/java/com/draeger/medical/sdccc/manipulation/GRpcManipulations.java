@@ -111,11 +111,11 @@ public class GRpcManipulations implements Manipulations {
             final ManipulationSerializer manipulationSerializer) {
         this.fallback = fallbackManipulations;
         this.manipulationInfoFactory = manipulationInfoFactory;
+        this.manipulationSerializer = manipulationSerializer;
         final Channel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 // Channels are secure by default (via SSL/TLS), which we don't really need
                 .usePlaintext()
                 .build();
-        this.manipulationSerializer = manipulationSerializer;
 
         activationStateStub = ActivationStateServiceGrpc.newBlockingStub(channel);
         alertStub = AlertServiceGrpc.newBlockingStub(channel);
