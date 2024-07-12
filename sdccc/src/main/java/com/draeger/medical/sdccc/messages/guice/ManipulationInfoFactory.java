@@ -22,7 +22,7 @@ public interface ManipulationInfoFactory {
      * @param startTimestamp of the manipulation
      * @param stopTimestamp  of the manipulation
      * @param result         of the manipulation
-     * @param response       of the manipulation, serialized
+     * @param response       of the manipulation
      * @param methodName     of the manipulation
      * @param parameters     of the manipulation
      * @return a new {@linkplain ManipulationInfo} instance

@@ -53,7 +53,7 @@ public class ManipulationData {
      * @param startTimestamp  of the manipulation
      * @param finishTimestamp of the manipulation
      * @param result          of the manipulation
-     * @param response        of the manipulation, serialized
+     * @param response        of the manipulation
      * @param methodName      of the manipulation
      * @param parameters      of the manipulation
      * @param uuid            of the manipulation
