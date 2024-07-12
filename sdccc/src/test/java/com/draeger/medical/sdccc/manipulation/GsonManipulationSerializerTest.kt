@@ -20,7 +20,8 @@ class GsonManipulationSerializerTest {
             assertEquals(
                 expectedString,
                 gsonManipulationSerializer.deserialize(
-                    gsonManipulationSerializer.serialize(expectedString), String::class.java
+                    gsonManipulationSerializer.serialize(expectedString),
+                    String::class.java
                 )
             )
         }
@@ -29,7 +30,8 @@ class GsonManipulationSerializerTest {
         assertEquals(
             expectedObject,
             gsonManipulationSerializer.deserialize(
-                gsonManipulationSerializer.serialize(expectedObject), ExampleObject::class.java
+                gsonManipulationSerializer.serialize(expectedObject),
+                ExampleObject::class.java
             )
         )
 
@@ -48,7 +50,8 @@ class GsonManipulationSerializerTest {
         val manipulationResponse = ManipulationResponse(ResponseTypes.Result.RESULT_SUCCESS, expectedObject)
         run {
             val result = ManipulationResponse.deserialize<ExampleObject>(
-                gsonManipulationSerializer.serialize(manipulationResponse), gsonManipulationSerializer
+                gsonManipulationSerializer.serialize(manipulationResponse),
+                gsonManipulationSerializer
             )
             assertEquals(
                 manipulationResponse,
@@ -56,6 +59,4 @@ class GsonManipulationSerializerTest {
             )
         }
     }
-
-
 }

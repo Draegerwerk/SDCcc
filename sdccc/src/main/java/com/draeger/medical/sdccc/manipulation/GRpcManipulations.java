@@ -30,7 +30,6 @@ import com.draeger.medical.t2iapi.metric.MetricRequests;
 import com.draeger.medical.t2iapi.metric.MetricServiceGrpc;
 import com.draeger.medical.t2iapi.metric.MetricTypes;
 import com.draeger.medical.t2iapi.operation.OperationServiceGrpc;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -109,8 +108,7 @@ public class GRpcManipulations implements Manipulations {
             @Named(TestSuiteConfig.GRPC_SERVER_ADDRESS) final String serverAddress,
             final FallbackManipulations fallbackManipulations,
             final ManipulationInfoFactory manipulationInfoFactory,
-            final ManipulationSerializer manipulationSerializer
-            ) {
+            final ManipulationSerializer manipulationSerializer) {
         this.fallback = fallbackManipulations;
         this.manipulationInfoFactory = manipulationInfoFactory;
         final Channel channel = ManagedChannelBuilder.forTarget(serverAddress)
@@ -388,7 +386,12 @@ public class GRpcManipulations implements Manipulations {
         final var methodName = walker.walk(
                 s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
         final var manipulation = manipulationInfoFactory.create(
-                startTime, endTime, result.getResult(), manipulationSerializer.serialize(result), methodName.orElseThrow(), parameter);
+                startTime,
+                endTime,
+                result.getResult(),
+                manipulationSerializer.serialize(result),
+                methodName.orElseThrow(),
+                parameter);
         manipulation.addToStorage();
         return result;
     }

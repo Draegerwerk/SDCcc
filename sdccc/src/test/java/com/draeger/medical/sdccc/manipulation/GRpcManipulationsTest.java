@@ -89,11 +89,7 @@ public class GRpcManipulationsTest {
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
         manipulations = new GRpcManipulations(
-            serverAddress,
-            fallback,
-            manipulationInfoFactory,
-            new GsonManipulationSerializer(new Gson())
-        );
+                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(new Gson()));
     }
 
     @AfterEach

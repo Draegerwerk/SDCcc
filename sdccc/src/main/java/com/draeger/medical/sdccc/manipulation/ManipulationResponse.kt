@@ -94,11 +94,18 @@ data class ManipulationResponse<T>(
         /**
          * Deserializes a [ManipulationResponse] from a string.
          *
+         * @param T the type of the manipulation response.
          * @param data to deserialize from
          * @param deserializer to deserialize with
          */
-        inline fun <reified T> deserialize(data: String, deserializer: ManipulationSerializer): ManipulationResponse<T> {
-            return deserializer.deserialize(data, getParameterizedGenericType(ManipulationResponse::class.java, T::class.java))
+        inline fun <reified T> deserialize(
+            data: String,
+            deserializer: ManipulationSerializer
+        ): ManipulationResponse<T> {
+            return deserializer.deserialize(
+                data,
+                getParameterizedGenericType(ManipulationResponse::class.java, T::class.java)
+            )
         }
     }
 }
