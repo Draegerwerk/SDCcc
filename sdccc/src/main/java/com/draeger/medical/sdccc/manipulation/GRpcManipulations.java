@@ -94,7 +94,7 @@ public class GRpcManipulations implements Manipulations {
     private final Manipulations fallback;
     private final ManipulationInfoFactory manipulationInfoFactory;
     private final StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
-    private final Gson gson;
+    private final ManipulationSerializer manipulationSerializer;
 
     /**
      * Creates an instance of gRPC-based manipulations.
@@ -102,12 +102,15 @@ public class GRpcManipulations implements Manipulations {
      * @param serverAddress           to connect to
      * @param fallbackManipulations   fallback manipulations should the server fail
      * @param manipulationInfoFactory factory to create manipulation info
+     * @param manipulationSerializer  serializer instance to serialize the manipulation response
      */
     @Inject
     public GRpcManipulations(
             @Named(TestSuiteConfig.GRPC_SERVER_ADDRESS) final String serverAddress,
             final FallbackManipulations fallbackManipulations,
-            final ManipulationInfoFactory manipulationInfoFactory) {
+            final ManipulationInfoFactory manipulationInfoFactory,
+            final ManipulationSerializer manipulationSerializer
+            ) {
         this.fallback = fallbackManipulations;
         this.manipulationInfoFactory = manipulationInfoFactory;
         final Channel channel = ManagedChannelBuilder.forTarget(serverAddress)
@@ -123,7 +126,7 @@ public class GRpcManipulations implements Manipulations {
         metricStub = MetricServiceGrpc.newBlockingStub(channel);
         operationStub = OperationServiceGrpc.newBlockingStub(channel);
 
-        gson = new Gson();
+        this.manipulationSerializer = manipulationSerializer;
     }
 
     @Override
@@ -385,7 +388,7 @@ public class GRpcManipulations implements Manipulations {
         final var methodName = walker.walk(
                 s -> s.map(StackWalker.StackFrame::getMethodName).skip(1).findFirst());
         final var manipulation = manipulationInfoFactory.create(
-                startTime, endTime, result.getResult(), gson.toJson(result), methodName.orElseThrow(), parameter);
+                startTime, endTime, result.getResult(), manipulationSerializer.serialize(result), methodName.orElseThrow(), parameter);
         manipulation.addToStorage();
         return result;
     }

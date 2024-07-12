@@ -40,6 +40,7 @@ import com.draeger.medical.t2iapi.device.DeviceRequests;
 import com.draeger.medical.t2iapi.device.DeviceResponses;
 import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -87,7 +88,12 @@ public class GRpcManipulationsTest {
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
-        manipulations = new GRpcManipulations(serverAddress, fallback, manipulationInfoFactory);
+        manipulations = new GRpcManipulations(
+            serverAddress,
+            fallback,
+            manipulationInfoFactory,
+            new GsonManipulationSerializer(new Gson())
+        );
     }
 
     @AfterEach
