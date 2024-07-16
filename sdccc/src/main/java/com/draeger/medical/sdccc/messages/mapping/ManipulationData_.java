@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -25,6 +25,7 @@ public final class ManipulationData_ {
     public static volatile SingularAttribute<ManipulationData, Long> startTimestamp;
     public static volatile SingularAttribute<ManipulationData, Long> finishTimestamp;
     public static volatile SingularAttribute<ManipulationData, ResponseTypes.Result> result;
+    public static volatile SingularAttribute<ManipulationData, String> response;
     public static volatile SingularAttribute<ManipulationData, String> methodName;
     public static volatile ListAttribute<ManipulationData, ManipulationParameter> parameters;
     public static volatile SingularAttribute<ManipulationData, String> uuid;
