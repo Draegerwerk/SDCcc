@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -22,6 +22,7 @@ public interface ManipulationInfoFactory {
      * @param startTimestamp of the manipulation
      * @param stopTimestamp  of the manipulation
      * @param result         of the manipulation
+     * @param response       of the manipulation
      * @param methodName     of the manipulation
      * @param parameters     of the manipulation
      * @return a new {@linkplain ManipulationInfo} instance
@@ -30,6 +31,7 @@ public interface ManipulationInfoFactory {
             @Assisted(value = "startTime") long startTimestamp,
             @Assisted(value = "stopTime") long stopTimestamp,
             @Assisted ResponseTypes.Result result,
+            @Assisted String response,
             @Assisted(value = "methodName") String methodName,
             @Assisted ManipulationParameterUtil.ManipulationParameterData parameters);
 }
