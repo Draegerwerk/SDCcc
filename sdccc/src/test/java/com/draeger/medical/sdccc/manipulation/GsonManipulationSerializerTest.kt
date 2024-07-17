@@ -12,10 +12,24 @@ import com.google.gson.Gson
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+/**
+ * Test class for de-/serialization testing.
+ * @property value to test strings
+ * @property number to test numbers
+ * @property list to test lists
+ */
 data class ExampleObject(val value: String, val number: Int, val list: List<String>)
 
+/**
+ * Test class for de-/serialization testing.
+ * @param T type of something
+ * @property something to test objects
+ */
 data class GenericObject<T>(val something: T)
 
+/**
+ * Unit tests for [GsonManipulationSerializer].
+ */
 class GsonManipulationSerializerTest {
 
     private val gsonManipulationSerializer = GsonManipulationSerializer(Gson())
