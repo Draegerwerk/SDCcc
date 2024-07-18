@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static com.draeger.medical.sdccc.configuration.TestParameterConfig.BICEPS_547_TIME_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,6 @@ import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
 import com.draeger.medical.dpws.soap.model.Envelope;
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.Message;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -126,7 +126,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 2L);
+                        bind(BICEPS_547_TIME_INTERVAL, long.class, 2L);
                     }
                 });
         InjectorTestBase.setInjector(injector);
@@ -145,8 +145,7 @@ public class InvariantParticipantModelStatePartTestTest {
         datatypeFactory = DatatypeFactory.newInstance();
 
         buffer = TimeUnit.NANOSECONDS.convert(
-                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL))),
-                TimeUnit.SECONDS);
+                injector.getInstance(Key.get(long.class, Names.named(BICEPS_547_TIME_INTERVAL))), TimeUnit.SECONDS);
         testClass = new InvariantParticipantModelStatePartTest();
         testClass.setUp();
     }

@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023, 2024 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -11,9 +11,11 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 
 import com.draeger.medical.sdccc.configuration.CommandLineOptions;
 import com.draeger.medical.sdccc.configuration.DefaultEnabledTestConfig;
+import com.draeger.medical.sdccc.configuration.DefaultTestParameterConfig;
 import com.draeger.medical.sdccc.configuration.DefaultTestSuiteConfig;
 import com.draeger.medical.sdccc.configuration.DefaultTestSuiteModule;
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.configuration.TestParameterConfig;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.guice.TomlConfigParser;
@@ -427,7 +429,10 @@ public class TestSuite {
 
     private static Injector createInjector(final Module... override) {
         return Guice.createInjector(Modules.override(
-                        new DefaultTestSuiteModule(), new DefaultTestSuiteConfig(), new DefaultEnabledTestConfig())
+                        new DefaultTestSuiteModule(),
+                        new DefaultTestSuiteConfig(),
+                        new DefaultEnabledTestConfig(),
+                        new DefaultTestParameterConfig())
                 .with(override));
     }
 
@@ -435,6 +440,7 @@ public class TestSuite {
             final CommandLineOptions cmdLine,
             final File testRunDir,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final Class<? extends TestParameterConfig> testParameterClass,
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
@@ -450,6 +456,11 @@ public class TestSuite {
         };
 
         final AbstractConfigurationModule testConfigModule = new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {}
+        };
+
+        final AbstractConfigurationModule testParameterModule = new AbstractConfigurationModule() {
             @Override
             protected void defaultConfigure() {}
         };
@@ -526,10 +537,17 @@ public class TestSuite {
             final var testConfigModuleParser = new TomlConfigParser(enabledTestConfigClass);
             testConfigModuleParser.parseToml(testConfigFileStream, testConfigModule);
         }
-
+        if (cmdLine.getTestParameterPath() != null) {
+            try (final var testParameterFileStream =
+                    new FileInputStream(cmdLine.getTestParameterPath().toFile())) {
+                final var testParameterModuleParser = new TomlConfigParser(testParameterClass);
+                testParameterModuleParser.parseToml(testParameterFileStream, testParameterModule);
+            }
+        }
         // cli overrides
         final var configurationModule = Modules.override(baseConfigModule)
-                .with(Modules.override(configModule, testConfigModule).with(cliOverrideModule));
+                .with(Modules.override(configModule, testConfigModule, testParameterModule)
+                        .with(cliOverrideModule));
 
         if (overrides != null) {
             return createInjector(configurationModule, new TestRunConfig(testRunDir), overrides);
@@ -639,7 +657,12 @@ public class TestSuite {
     public static void main(final String[] args) throws IOException {
         final var cmdLine = initialize(args);
 
-        runWithArgs(cmdLine, EnabledTestConfig.class, DefaultTestSuiteConfig.DEFAULT_DIRECTORIES, null);
+        runWithArgs(
+                cmdLine,
+                EnabledTestConfig.class,
+                TestParameterConfig.class,
+                DefaultTestSuiteConfig.DEFAULT_DIRECTORIES,
+                null);
     }
 
     /**
@@ -662,12 +685,14 @@ public class TestSuite {
      *
      * @param cmdLine                parsed command line arguments
      * @param enabledTestConfigClass class containing test identifier constants
+     * @param testParameterClass     class containing test parameter
      * @param sdcTestDirectories     directories to search for test cases
      * @param overrides              abstract module to override test run injector
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final Class<? extends TestParameterConfig> testParameterClass,
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
@@ -693,8 +718,8 @@ public class TestSuite {
                 LOG.warn("Error while setting swing look and feel options.", e);
             }
 
-            final Injector injector =
-                    createTestRunInjector(cmdLine, testRunDir, enabledTestConfigClass, sdcTestDirectories, overrides);
+            final Injector injector = createTestRunInjector(
+                    cmdLine, testRunDir, enabledTestConfigClass, testParameterClass, sdcTestDirectories, overrides);
 
             final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
                     findTriggerOnErrorOrWorseLogAppender(logConfig);
