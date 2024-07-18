@@ -33,6 +33,7 @@ public class CommandLineOptions {
 
     private static final String CONFIG_OPT = "config";
     private static final String TEST_CONFIG_OPT = "testconfig";
+    private static final String TEST_PARAMETER_OPT = "testparam";
     private static final String DEVICE_EPR = "device_epr";
     private static final String DEVICE_LOCATION_FACILITY = "device_facility";
     private static final String DEVICE_LOCATION_BUILDING = "device_building";
@@ -45,6 +46,7 @@ public class CommandLineOptions {
     private static final String FILE_LOG_LEVEL = "file_log_level";
     private final Path configPath;
     private final Path testConfigPath;
+    private final Path testParameterPath;
     private final String deviceEpr;
     private final String deviceFacility;
     private final String deviceBuilding;
@@ -88,8 +90,10 @@ public class CommandLineOptions {
         }
 
         assert cmd != null;
+        final var testParameter = cmd.getOptionValue(TEST_PARAMETER_OPT);
         this.configPath = Path.of(cmd.getOptionValue(CONFIG_OPT));
         this.testConfigPath = Path.of(cmd.getOptionValue(TEST_CONFIG_OPT));
+        this.testParameterPath = testParameter != null ? Path.of(testParameter) : null;
         this.deviceEpr = cmd.getOptionValue(DEVICE_EPR);
         this.deviceFacility = cmd.getOptionValue(DEVICE_LOCATION_FACILITY);
         this.deviceBuilding = cmd.getOptionValue(DEVICE_LOCATION_BUILDING);
@@ -116,6 +120,12 @@ public class CommandLineOptions {
             final var testConfigFilePath = new Option("t", TEST_CONFIG_OPT, true, description);
             testConfigFilePath.setRequired(true);
             options.addOption(testConfigFilePath);
+        }
+        {
+            final String description = "test parameter file path";
+            final var parameterFilePath = new Option("p", TEST_PARAMETER_OPT, true, description);
+            parameterFilePath.setRequired(false);
+            options.addOption(parameterFilePath);
         }
         {
             final String description = "EPR of the target provider, overrides setting from configuration if provided";
@@ -192,6 +202,11 @@ public class CommandLineOptions {
 
     public Path getTestConfigPath() {
         return testConfigPath;
+    }
+
+    @Nullable
+    public Path getTestParameterPath() {
+        return testParameterPath;
     }
 
     @Nullable

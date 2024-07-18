@@ -1,12 +1,13 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
+import static com.draeger.medical.sdccc.configuration.TestParameterConfig.BICEPS_547_TIME_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,7 +24,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.manipulation.ManipulationResponse;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.ResultResponse;
@@ -214,7 +214,7 @@ public class ManipulationPreconditionsTest {
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 1L);
+                        bind(BICEPS_547_TIME_INTERVAL, long.class, 1L);
                     }
                 });
 
