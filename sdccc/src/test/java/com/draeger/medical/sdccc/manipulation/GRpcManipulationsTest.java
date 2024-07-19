@@ -7,6 +7,36 @@
 
 package com.draeger.medical.sdccc.manipulation;
 
+import com.draeger.medical.sdccc.messages.ManipulationInfo;
+import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
+import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import com.draeger.medical.t2iapi.BasicRequests;
+import com.draeger.medical.t2iapi.BasicResponses;
+import com.draeger.medical.t2iapi.ResponseTypes;
+import com.draeger.medical.t2iapi.context.ContextRequests;
+import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
+import com.draeger.medical.t2iapi.context.ContextTypes;
+import com.draeger.medical.t2iapi.device.DeviceRequests;
+import com.draeger.medical.t2iapi.device.DeviceResponses;
+import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.GsonBuilder;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.somda.sdc.biceps.model.participant.LocationDetail;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.List;
+import java.util.function.BiFunction;
+
 import static com.draeger.medical.t2iapi.context.ContextServiceGrpc.getSetLocationDetailMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getGetRemovableDescriptorsOfClassMethod;
 import static com.draeger.medical.t2iapi.device.DeviceServiceGrpc.getInsertDescriptorMethod;
@@ -26,35 +56,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import com.draeger.medical.sdccc.messages.ManipulationInfo;
-import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
-import com.draeger.medical.sdccc.tests.annotations.TestDescription;
-import com.draeger.medical.t2iapi.BasicRequests;
-import com.draeger.medical.t2iapi.BasicResponses;
-import com.draeger.medical.t2iapi.ResponseTypes;
-import com.draeger.medical.t2iapi.context.ContextRequests;
-import com.draeger.medical.t2iapi.context.ContextServiceGrpc;
-import com.draeger.medical.t2iapi.context.ContextTypes;
-import com.draeger.medical.t2iapi.device.DeviceRequests;
-import com.draeger.medical.t2iapi.device.DeviceResponses;
-import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.gson.Gson;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.List;
-import java.util.function.BiFunction;
-import javax.annotation.Nullable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.somda.sdc.biceps.model.participant.LocationDetail;
 
 /**
  * Unit tests for the gRPC {@linkplain Manipulations} implementation.
@@ -89,7 +90,7 @@ public class GRpcManipulationsTest {
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
         manipulations = new GRpcManipulations(
-                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(new Gson()));
+                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(new GsonBuilder()));
     }
 
     @AfterEach

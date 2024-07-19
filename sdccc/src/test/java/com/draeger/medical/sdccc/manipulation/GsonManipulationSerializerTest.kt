@@ -9,7 +9,16 @@ package com.draeger.medical.sdccc.manipulation
 
 import com.draeger.medical.t2iapi.ResponseTypes
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonIOException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.Month
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
 
 /**
@@ -32,7 +41,7 @@ data class GenericObject<T>(val something: T)
  */
 class GsonManipulationSerializerTest {
 
-    private val gsonManipulationSerializer = GsonManipulationSerializer(Gson())
+    private val gsonManipulationSerializer = GsonManipulationSerializer(GsonBuilder())
 
     @Test
     fun roundTrip() {
@@ -79,5 +88,31 @@ class GsonManipulationSerializerTest {
                 result
             )
         }
+
+        val randomLocalDate = LocalDate.of(2021, Month.FEBRUARY, 28)
+        val randomLocalTime = LocalTime.of(12, 1, 0, 0)
+        val myLocalDateTime = LocalDateTime.of(randomLocalDate, randomLocalTime)
+        val randomOffsetDateTime = OffsetDateTime.of(myLocalDateTime, ZoneOffset.UTC)
+        val anotherManipulationResponse = ManipulationResponse(
+            ResponseTypes.Result.RESULT_SUCCESS,
+            randomOffsetDateTime
+        )
+
+        run {
+            val resultSameType = ManipulationResponse.deserialize<OffsetDateTime>(
+                gsonManipulationSerializer.serialize(anotherManipulationResponse),
+                gsonManipulationSerializer
+            )
+            assertEquals(
+                anotherManipulationResponse.result,
+                resultSameType.result
+            )
+        }
+
+        val gsonWithoutTimeClassAdapters = Gson()
+        assertThrows<JsonIOException> { gsonWithoutTimeClassAdapters.toJson(randomLocalDate) }
+        assertThrows<JsonIOException> { gsonWithoutTimeClassAdapters.toJson(randomLocalTime) }
+        assertThrows<JsonIOException> { gsonWithoutTimeClassAdapters.toJson(myLocalDateTime) }
+        assertThrows<JsonIOException> { gsonWithoutTimeClassAdapters.toJson(randomOffsetDateTime) }
     }
 }
