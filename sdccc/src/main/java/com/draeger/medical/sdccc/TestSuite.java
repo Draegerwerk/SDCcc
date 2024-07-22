@@ -427,13 +427,14 @@ public class TestSuite {
         return launcher;
     }
 
-    private static Injector createInjector(final Module... override) {
-        return Guice.createInjector(Modules.override(
-                        new DefaultTestSuiteModule(),
-                        new DefaultTestSuiteConfig(),
-                        new DefaultEnabledTestConfig(),
-                        new DefaultTestParameterConfig())
-                .with(override));
+    private static Injector createInjector(final List<Module> additionalDefaults, final Module... override) {
+        final List<Module> standardDefaults = new ArrayList<>(Arrays.asList(
+                new DefaultTestSuiteModule(),
+                new DefaultTestSuiteConfig(),
+                new DefaultEnabledTestConfig(),
+                new DefaultTestParameterConfig()));
+        standardDefaults.addAll(additionalDefaults);
+        return Guice.createInjector(Modules.override(standardDefaults).with(override));
     }
 
     private static Injector createTestRunInjector(
@@ -441,6 +442,7 @@ public class TestSuite {
             final File testRunDir,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
             final Class<? extends TestParameterConfig> testParameterClass,
+            final List<Module> defaultConfigurationModules,
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
@@ -550,9 +552,10 @@ public class TestSuite {
                         .with(cliOverrideModule));
 
         if (overrides != null) {
-            return createInjector(configurationModule, new TestRunConfig(testRunDir), overrides);
+            return createInjector(
+                    defaultConfigurationModules, configurationModule, new TestRunConfig(testRunDir), overrides);
         } else {
-            return createInjector(configurationModule, new TestRunConfig(testRunDir));
+            return createInjector(defaultConfigurationModules, configurationModule, new TestRunConfig(testRunDir));
         }
     }
 
@@ -661,6 +664,7 @@ public class TestSuite {
                 cmdLine,
                 EnabledTestConfig.class,
                 TestParameterConfig.class,
+                List.of(),
                 DefaultTestSuiteConfig.DEFAULT_DIRECTORIES,
                 null);
     }
@@ -687,12 +691,14 @@ public class TestSuite {
      * @param enabledTestConfigClass class containing test identifier constants
      * @param testParameterClass     class containing test parameter
      * @param sdcTestDirectories     directories to search for test cases
+     * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
      * @param overrides              abstract module to override test run injector
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
             final Class<? extends TestParameterConfig> testParameterClass,
+            final List<Module> defaultConfigModules,
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
@@ -719,7 +725,13 @@ public class TestSuite {
             }
 
             final Injector injector = createTestRunInjector(
-                    cmdLine, testRunDir, enabledTestConfigClass, testParameterClass, sdcTestDirectories, overrides);
+                    cmdLine,
+                    testRunDir,
+                    enabledTestConfigClass,
+                    testParameterClass,
+                    defaultConfigModules,
+                    sdcTestDirectories,
+                    overrides);
 
             final TriggerOnErrorOrWorseLogAppender triggerOnErrorOrWorseLogAppender =
                     findTriggerOnErrorOrWorseLogAppender(logConfig);
