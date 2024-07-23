@@ -1,9 +1,12 @@
 package com.draeger.medical.sdccc.manipulation.precondition.impl
 
-import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionChange
+import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition
 
-class DummyObservingPrecondition: SynchronizedObservingPrecondition(
+/**
+ * An example of an observing precondition.
+ */
+class DummyObservingPrecondition : SynchronizedObservingPrecondition(
     { _ ->
         println("DummyObservingPrecondition called")
         true

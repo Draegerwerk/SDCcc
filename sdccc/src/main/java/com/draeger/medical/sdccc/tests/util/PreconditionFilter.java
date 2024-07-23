@@ -11,7 +11,6 @@ import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondit
 import com.draeger.medical.sdccc.manipulation.precondition.Observing;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
-import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

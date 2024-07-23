@@ -7,11 +7,11 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
-class SynchronizedObservingPreconditionTest {
+internal class SynchronizedObservingPreconditionTest {
 
     /**
      * Creates a blocking manipulation that blocks for [timeToBlock] and calls [callBeforeSleep] before blocking.
@@ -26,9 +26,8 @@ class SynchronizedObservingPreconditionTest {
             true
         }
 
-
     @Test
-    fun `test synchronization is blocking tasks correctly`() {
+    internal fun `test synchronization is blocking tasks correctly`() {
         // Arrange
         val timeToBlock = 5.seconds
 
@@ -71,14 +70,16 @@ class SynchronizedObservingPreconditionTest {
         }
 
         val maxWaitForNonBlockingChange = 1.seconds
-        assertTrue(measuredObserveChange < maxWaitForNonBlockingChange,
-            "Expected to be blocked for at most $maxWaitForNonBlockingChange, but was blocked for $measuredObserveChange"
+        assertTrue(
+            measuredObserveChange < maxWaitForNonBlockingChange,
+            "Expected to be blocked for at most $maxWaitForNonBlockingChange," +
+                " but was blocked for $measuredObserveChange"
         )
 
         val timeTolerance = 1.seconds
-        assertTrue(timeUntilComplete > timeToBlock - timeTolerance,
+        assertTrue(
+            timeUntilComplete > timeToBlock - timeTolerance,
             "Expected to be blocked for at least $timeToBlock, but was blocked for $timeUntilComplete"
         )
     }
-
 }

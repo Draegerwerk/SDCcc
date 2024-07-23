@@ -14,39 +14,62 @@ import org.somda.sdc.biceps.common.event.WaveformStateModificationMessage
 /**
  * Observes changes in the MDIB and notifies the precondition about them.
  */
+@Suppress("MethodOverloading") // the names are irrelevant, the dispatching is based on types
 class ObservingPreconditionMdibObserver(
     private val precondition: Observing
 ) : MdibAccessObserver {
+
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: DescriptionModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: AlertStateModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: ComponentStateModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: ContextStateModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: MetricStateModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: OperationStateModificationMessage) {
         precondition.observeChange(from(report))
     }
 
+    /**
+     * Observes changes in the MDIB and notifies the precondition about them.
+     */
     @Subscribe
     fun onChange(report: WaveformStateModificationMessage) {
         precondition.observeChange(from(report))
