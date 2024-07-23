@@ -37,6 +37,3 @@ DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
 
 [SDCcc.gRPC]
 ServerAddress="localhost:50051"
-
-[SDCcc.TestParameter]
-Biceps547TimeInterval=5

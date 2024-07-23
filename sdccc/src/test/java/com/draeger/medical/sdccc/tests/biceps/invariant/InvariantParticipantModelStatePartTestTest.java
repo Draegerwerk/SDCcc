@@ -1,12 +1,13 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static com.draeger.medical.sdccc.configuration.TestParameterConfig.BICEPS_547_TIME_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,6 @@ import com.draeger.medical.biceps.model.participant.ComponentActivation;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
 import com.draeger.medical.dpws.soap.model.Envelope;
-import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.marshalling.MarshallingUtil;
 import com.draeger.medical.sdccc.messages.Message;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -126,7 +126,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 new AbstractConfigurationModule() {
                     @Override
                     protected void defaultConfigure() {
-                        bind(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL, long.class, 2L);
+                        bind(BICEPS_547_TIME_INTERVAL, long.class, 2L);
                     }
                 });
         InjectorTestBase.setInjector(injector);
@@ -145,8 +145,7 @@ public class InvariantParticipantModelStatePartTestTest {
         datatypeFactory = DatatypeFactory.newInstance();
 
         buffer = TimeUnit.NANOSECONDS.convert(
-                injector.getInstance(Key.get(long.class, Names.named(TestSuiteConfig.TEST_BICEPS_547_TIME_INTERVAL))),
-                TimeUnit.SECONDS);
+                injector.getInstance(Key.get(long.class, Names.named(BICEPS_547_TIME_INTERVAL))), TimeUnit.SECONDS);
         testClass = new InvariantParticipantModelStatePartTest();
         testClass.setUp();
     }
@@ -181,6 +180,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START,
                 TIMESTAMP_FINISH,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters);
 
@@ -379,6 +379,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -625,6 +626,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -867,6 +869,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -1107,6 +1110,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -1347,6 +1351,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -1587,6 +1592,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -1826,6 +1832,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -2065,6 +2072,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -2304,6 +2312,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -2543,6 +2552,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -2782,6 +2792,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -3021,6 +3032,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -3260,6 +3272,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -3499,6 +3512,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -3738,6 +3752,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -3977,6 +3992,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -4216,6 +4232,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -4455,6 +4472,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 TIMESTAMP_START2,
                 TIMESTAMP_FINISH2,
                 ResponseTypes.Result.RESULT_SUCCESS,
+                "", // not used by test
                 Constants.MANIPULATION_NAME_SET_METRIC_STATUS,
                 parameters2);
         final var metricReport2 = buildMetricReport(
@@ -4697,7 +4715,8 @@ public class InvariantParticipantModelStatePartTestTest {
         final var methodName = Constants.MANIPULATION_NAME_SET_METRIC_STATUS;
         final var parameters = ManipulationParameterUtil.buildMetricStatusManipulationParameterData(
                 SEQUENCE_ID, manipulationHandle, wrongMetricCategory, manipulationActivation);
-        messageStorageUtil.addManipulation(storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, methodName, parameters);
+        messageStorageUtil.addManipulation(
+                storage, TIMESTAMP_START, TIMESTAMP_FINISH, result, "", methodName, parameters);
 
         final var metricReport =
                 buildMetricReport(SEQUENCE_ID, BigInteger.ONE, BigInteger.ONE, manipulationHandle, expectedActivation);
@@ -4729,6 +4748,7 @@ public class InvariantParticipantModelStatePartTestTest {
                 manipulationStartTimestamp,
                 manipulationEndTimestamp,
                 manipulationResult,
+                "", // not used by test
                 methodName,
                 parameters);
 

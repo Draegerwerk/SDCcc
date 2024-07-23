@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the MIT License.
+ * Copyright (c) 2024 Draegerwerk AG & Co. KGaA.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.draeger.medical.sdccc.manipulation
 
 import com.draeger.medical.t2iapi.BasicResponses
@@ -90,5 +97,22 @@ data class ManipulationResponse<T>(
          */
         @JvmStatic
         fun <T> fail(response: T): ManipulationResponse<T> = from(ResponseTypes.Result.RESULT_FAIL, response)
+
+        /**
+         * Deserializes a [ManipulationResponse] from a string.
+         *
+         * @param T the type of the manipulation response.
+         * @param data to deserialize from
+         * @param deserializer to deserialize with
+         */
+        inline fun <reified T> deserialize(
+            data: String,
+            deserializer: ManipulationSerializer
+        ): ManipulationResponse<T> {
+            return deserializer.deserialize(
+                data,
+                getParameterizedGenericType(ManipulationResponse::class.java, T::class.java)
+            )
+        }
     }
 }

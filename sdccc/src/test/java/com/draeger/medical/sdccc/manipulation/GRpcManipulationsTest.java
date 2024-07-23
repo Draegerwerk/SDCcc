@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -40,6 +40,7 @@ import com.draeger.medical.t2iapi.device.DeviceRequests;
 import com.draeger.medical.t2iapi.device.DeviceResponses;
 import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -85,9 +86,10 @@ public class GRpcManipulationsTest {
 
         final ManipulationInfoFactory manipulationInfoFactory = mock(ManipulationInfoFactory.class);
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
-        when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), any()))
+        when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
-        manipulations = new GRpcManipulations(serverAddress, fallback, manipulationInfoFactory);
+        manipulations = new GRpcManipulations(
+                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(new Gson()));
     }
 
     @AfterEach

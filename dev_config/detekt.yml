@@ -1,3 +1,6 @@
+config:
+  warningsAsErrors: true
+
 comments:
   DeprecatedBlockTag:
     active: true
@@ -9,10 +12,12 @@ comments:
     active: true
   UndocumentedPublicClass:
     active: true
+    excludes: []
   UndocumentedPublicFunction:
     active: true
   UndocumentedPublicProperty:
     active: true
+    excludes: []
 
 complexity:
   ComplexCondition:
@@ -29,6 +34,7 @@ complexity:
     active: true
   StringLiteralDuplication:
     active: true
+    excludes: []
 
 exceptions:
   NotImplementedDeclaration:
@@ -37,17 +43,26 @@ exceptions:
     active: true
   ThrowingExceptionInMain:
     active: true
+  TooGenericExceptionCaught:
+    excludes: []
+
 naming:
   FunctionMinLength:
     active: true
     minimumFunctionNameLength: 3
   LambdaParameterNaming:
     active: true
+
 performance:
   CouldBeSequence:
     active: true
+  ForEachOnRange:
+    excludes: []
+  SpreadOperator:
+    excludes: []
   UnnecessaryPartOfBinaryExpression:
     active: true
+
 potential-bugs:
   CastNullableToNonNullableType:
     active: true
@@ -73,6 +88,8 @@ potential-bugs:
     active: true
   UnnecessaryNotNullCheck:
     active: true
+  UnsafeCallOnNullableType:
+    excludes: []
 
 style:
   BracesOnIfStatements:
@@ -113,6 +130,9 @@ style:
         value: 'kotlin.io.print'
       - reason: 'println does not allow you to configure the output stream. Use a logger instead.'
         value: 'kotlin.io.println'
+  MagicNumber:
+    excludes: []
+    ignoreLocalVariableDeclaration: true
   MandatoryBracesLoops:
     active: true
   MaxChainedCallsOnSameLine:
@@ -125,17 +145,46 @@ style:
     active: true
   OptionalUnit:
     active: true
+  RedundantVisibilityModifierRule:
+    active: true
+  ReturnCount:
+    active: true
+    max: 3
   SpacingBetweenPackageAndImports:
+    active: true
+  StringShouldBeRawString:
     active: true
   TrailingWhitespace:
     active: true
+  TrimMultilineRawString:
+    active: true
   UnderscoresInNumericLiterals:
+    active: true
+  UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryBackticks:
     active: true
+  UnnecessaryBracesAroundTrailingLambda:
+    active: true
+  UnnecessaryInnerClass:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnnecessaryParentheses:
+    active: true
+    allowForUnclearPrecedence: true
   UntilInsteadOfRangeTo:
     active: true
   UnusedImports:
     active: true
+  UseDataClass:
+    active: true
+  UseEmptyCounterpart:
+    active: true
   UseIfEmptyOrIfBlank:
     active: true
+  UseLet:
+    active: true
+  WildcardImport:
+    active: true
+    excludeImports: []
