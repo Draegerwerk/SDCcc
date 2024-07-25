@@ -50,9 +50,10 @@ internal class SynchronizedObservingPreconditionTest {
         val changesCompleteFuture = CompletableFuture<Unit>()
         val receivedChanges = mutableListOf<PreconditionChange>()
         val exampleObserving = object : SynchronizedObservingPrecondition(
+            injector = mockInjector,
             blockingManipulation(timeToBlock, callBeforeSleep = { _ -> threadRunningFuture.complete(Unit) })
         ) {
-            override fun change(change: PreconditionChange) {
+            override fun change(injector: Injector, change: PreconditionChange) {
                 receivedChanges.add(change)
                 if (receivedChanges.size == expectedChanges.size) {
                     changesCompleteFuture.complete(Unit)
