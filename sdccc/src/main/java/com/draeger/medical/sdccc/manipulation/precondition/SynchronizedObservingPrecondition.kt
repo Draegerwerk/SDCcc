@@ -15,7 +15,17 @@ import kotlin.concurrent.thread
 /**
  * Synchronized precondition which can observe changes.
  *
- * TODO: Improve documentation on this
+ * This class is synchronized, meaning calls to [verifyPrecondition] and [change] are serialized
+ * and cannot occur in parallel. This has certain caveats that must be considered when using this class.
+ *
+ * 1. **Avoid long-running manipulations**. Changes are buffered and can consume a lot of memory, as every single
+ *    change is stored. Memory is finite and can be exhausted. Consider introducing timeouts or other mechanisms
+ *    to prevent users from blocking indefinitely.
+ * 2. After executing the precondition, changes resume processing. This can mean that you have outdated changes
+ *    that do not represent the current configuration of the device under test.
+ *
+ * In case synchronization is not required or an issue, implementing an [Observing]
+ * precondition directly is possible.
  */
 abstract class SynchronizedObservingPrecondition(
     private val manipulationCall: ManipulationFunction<Injector>
