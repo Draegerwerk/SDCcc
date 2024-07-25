@@ -51,7 +51,7 @@ public class InvariantBicepsNormativeAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_R5006)
     @TestDescription(
             "Verifies that for all incoming messages, Localized text with the @Ref attribute always has a version")
-    @RequirePrecondition(observingPreconditions = {DummyObservingPrecondition.class})
+    @RequirePrecondition(observingPreconditions = {DummyObservingPrecondition.Companion.class})
     void testRequirement5006() throws Exception {
 
         final var refExtractor = new XPathExtractor(REF_ELEMENT_QUERY);

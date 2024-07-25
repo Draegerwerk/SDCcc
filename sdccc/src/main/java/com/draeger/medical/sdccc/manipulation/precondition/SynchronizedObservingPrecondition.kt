@@ -28,6 +28,7 @@ import kotlin.concurrent.thread
  * precondition directly is possible.
  */
 abstract class SynchronizedObservingPrecondition(
+    private val injector: Injector,
     private val manipulationCall: ManipulationFunction<Injector>
 ) : Observing {
     // used to synchronize calls to this precondition, it can either run directly or through a trigger,
@@ -46,7 +47,7 @@ abstract class SynchronizedObservingPrecondition(
                 val change = updateQueue.take()
 
                 synchronized(lock) {
-                    change(change)
+                    change(injector, change)
                 }
             }
         }
@@ -62,9 +63,10 @@ abstract class SynchronizedObservingPrecondition(
      *
      * Receives all changes _without_ blocking the mdib thread.
      *
+     * @param injector
      * @param change the change to process.
      */
-    abstract fun change(change: PreconditionChange)
+    abstract fun change(injector: Injector, change: PreconditionChange)
 
     override fun verifyPrecondition(injector: Injector) {
         synchronized(lock) {
@@ -80,4 +82,5 @@ abstract class SynchronizedObservingPrecondition(
     }
 
     override fun hashCode(): Int = Objects.hash(manipulationCall)
+
 }

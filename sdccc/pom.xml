@@ -259,6 +259,14 @@
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-test-junit5 -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

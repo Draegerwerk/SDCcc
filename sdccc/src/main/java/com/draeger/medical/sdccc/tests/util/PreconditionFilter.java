@@ -9,11 +9,13 @@ package com.draeger.medical.sdccc.tests.util;
 
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition;
 import com.draeger.medical.sdccc.manipulation.precondition.Observing;
+import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionFactory;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import kotlin.reflect.KClass;
 import org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
@@ -67,9 +69,10 @@ public class PreconditionFilter implements PostDiscoveryFilter {
                     preconditionRegistry.registerManipulationPrecondition(manipulationPrecondition);
                 }
 
-                for (final Class<? extends Observing> observingPrecondition :
-                        requiredInteraction.observingPreconditions()) {
-                    preconditionRegistry.registerObservingPrecondition(observingPrecondition);
+                for (final var observingPrecondition : requiredInteraction.observingPreconditions()) {
+                    preconditionRegistry.registerObservingPrecondition(
+                        kotlin.jvm.JvmClassMappingKt.getKotlinClass(observingPrecondition)
+                    );
                 }
 
                 result = FilterResult.included("Filter only used for metadata collection");
