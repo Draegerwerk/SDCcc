@@ -67,7 +67,6 @@ public interface TestClient {
 
     SdcRemoteDevicesConnector getConnector();
 
-    @Nullable
     SdcRemoteDevice getSdcRemoteDevice();
 
     HostingServiceProxy getHostingServiceProxy();
