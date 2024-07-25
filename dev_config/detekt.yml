@@ -89,7 +89,8 @@ potential-bugs:
   UnnecessaryNotNullCheck:
     active: true
   UnsafeCallOnNullableType:
-    excludes: []
+    active: true
+    excludes: "**/src/test/**"
 
 style:
   BracesOnIfStatements:

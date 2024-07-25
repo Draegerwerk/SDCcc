@@ -109,10 +109,12 @@ public class SslMetadata extends AbstractIdleService implements Service {
     @Override
     protected void shutDown() {}
 
+    @Nullable
     public KeySet getServerKeySet() {
         return serverKeySet;
     }
 
+    @Nullable
     public KeySet getClientKeySet() {
         return clientKeySet;
     }

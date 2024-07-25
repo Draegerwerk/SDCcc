@@ -19,6 +19,8 @@ import org.somda.sdc.dpws.soap.interception.InterceptorException;
 import org.somda.sdc.glue.consumer.SdcRemoteDevice;
 import org.somda.sdc.glue.consumer.SdcRemoteDevicesConnector;
 
+import javax.annotation.Nullable;
+
 /**
  * An SDC consumer used for testing.
  */
@@ -65,6 +67,7 @@ public interface TestClient {
 
     SdcRemoteDevicesConnector getConnector();
 
+    @Nullable
     SdcRemoteDevice getSdcRemoteDevice();
 
     HostingServiceProxy getHostingServiceProxy();
