@@ -11,7 +11,6 @@ import com.google.inject.Injector
 import com.google.inject.Singleton
 import org.apache.logging.log4j.kotlin.Logging
 import java.lang.reflect.InvocationTargetException
-import java.util.stream.Collectors
 import kotlin.reflect.KClass
 
 /**
@@ -19,8 +18,16 @@ import kotlin.reflect.KClass
  */
 @Singleton
 class PreconditionRegistry @Inject internal constructor(private val injector: Injector) {
+
+    /**
+     * Returns all registered preconditions which are of type [Observing].
+     */
+    val observingPreconditions: Collection<Observing>
+        get() = preconditions.filterIsInstance<Observing>()
+
     private val preconditions: MutableList<Precondition> = ArrayList()
 
+    @Suppress("TooGenericExceptionThrown") // this is an error during startup and cannot be fixed
     private fun handleRegisteringError(error: Throwable, text: String): Nothing {
         logger.error(error) { text }
         throw RuntimeException(text, error)
@@ -96,13 +103,7 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
         }
     }
 
-    val observingPreconditions: Collection<Observing?>
-        get() = preconditions.stream()
-            .filter { it: Precondition? -> it is Observing }
-            .map { it: Precondition? -> it as Observing? }
-            .collect(Collectors.toList())
-
-    companion object: Logging {
+    companion object : Logging {
         private const val BASE_MESSAGE: String = "Error while registering precondition"
     }
 }

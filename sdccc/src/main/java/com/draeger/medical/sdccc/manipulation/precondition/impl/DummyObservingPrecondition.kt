@@ -7,9 +7,9 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl
 
+import com.draeger.medical.sdccc.manipulation.precondition.BufferedObservingPrecondition
 import com.draeger.medical.sdccc.manipulation.precondition.Observing
 import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionFactory
-import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition
 import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient
 import com.google.inject.Injector
@@ -17,12 +17,8 @@ import com.google.inject.Injector
 /**
  * An example of an observing precondition.
  */
-class DummyObservingPrecondition(injector: Injector) : SynchronizedObservingPrecondition(
+class DummyObservingPrecondition(injector: Injector) : BufferedObservingPrecondition(
     injector,
-    { _ ->
-        println("DummyObservingPrecondition called")
-        true
-    }
 ) {
     override fun change(injector: Injector, change: MdibChange) {
         val testClient = injector.getInstance(TestClient::class.java)!!
@@ -35,8 +31,7 @@ class DummyObservingPrecondition(injector: Injector) : SynchronizedObservingPrec
         }
     }
 
-
-    companion object: ObservingPreconditionFactory<DummyObservingPrecondition> {
+    companion object : ObservingPreconditionFactory<DummyObservingPrecondition> {
         /**
          * Factory method to create an [Observing] precondition.
          *
@@ -46,6 +41,5 @@ class DummyObservingPrecondition(injector: Injector) : SynchronizedObservingPrec
         override fun create(
             injector: Injector,
         ): DummyObservingPrecondition = DummyObservingPrecondition(injector)
-
     }
 }

@@ -13,32 +13,19 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
-internal class SynchronizedObservingPreconditionTest {
-
-    /**
-     * Creates a blocking manipulation that blocks for [timeToBlock] and calls [callBeforeSleep] before blocking.
-     */
-    private fun blockingManipulation(
-        timeToBlock: Duration,
-        callBeforeSleep: (Unit) -> Unit = {}
-    ): (Injector) -> Boolean =
-        { _ ->
-            callBeforeSleep(Unit)
-            Thread.sleep(timeToBlock.inWholeMilliseconds)
-            true
-        }
+/**
+ * Unit tests for [BufferedObservingPrecondition].
+ */
+internal class BufferedObservingPreconditionTest {
 
     @Test
     internal fun `test synchronization is blocking tasks correctly`() {
         // Arrange
-        val timeToBlock = 5.seconds
-
         val expectedChanges = listOf(
             mock<MdibChange.Metric>(),
             mock<MdibChange.Alert>(),
@@ -46,15 +33,17 @@ internal class SynchronizedObservingPreconditionTest {
         )
         val mockInjector = mock<Injector>()
 
-        // used to pinpoint when we can start running events
-        val threadRunningFuture = CompletableFuture<Unit>()
+        val timeToBlockPerMessage = 1.seconds
+        val timeToBlock = timeToBlockPerMessage.times(expectedChanges.size)
+        val tolerance = 1.seconds
+
         val changesCompleteFuture = CompletableFuture<Unit>()
         val receivedChanges = mutableListOf<MdibChange>()
-        val exampleObserving = object : SynchronizedObservingPrecondition(
+        val exampleObserving = object : BufferedObservingPrecondition(
             injector = mockInjector,
-            blockingManipulation(timeToBlock, callBeforeSleep = { _ -> threadRunningFuture.complete(Unit) })
         ) {
             override fun change(injector: Injector, change: MdibChange) {
+                Thread.sleep(timeToBlockPerMessage.inWholeMilliseconds)
                 receivedChanges.add(change)
                 if (receivedChanges.size == expectedChanges.size) {
                     changesCompleteFuture.complete(Unit)
@@ -63,11 +52,6 @@ internal class SynchronizedObservingPreconditionTest {
         }
 
         // run verify in background
-        thread(isDaemon = true) {
-            exampleObserving.verifyPrecondition(mockInjector)
-        }
-
-        threadRunningFuture.get(timeToBlock.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         val measuredObserveChange: Duration
         val timeUntilComplete = measureTime {
             // run observeChange and measure the time we are blocked, must be super low
@@ -75,19 +59,17 @@ internal class SynchronizedObservingPreconditionTest {
                 expectedChanges.forEach { exampleObserving.observeChange(it) }
             }
 
-            changesCompleteFuture.get((timeToBlock + 1.seconds).inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            changesCompleteFuture.get((timeToBlock + tolerance).inWholeMilliseconds, TimeUnit.MILLISECONDS)
         }
 
-        val maxWaitForNonBlockingChange = 1.seconds
         assertTrue(
-            measuredObserveChange < maxWaitForNonBlockingChange,
-            "Expected to be blocked for at most $maxWaitForNonBlockingChange," +
+            measuredObserveChange < tolerance,
+            "Expected to be blocked for at most $tolerance," +
                 " but was blocked for $measuredObserveChange"
         )
 
-        val timeTolerance = 1.seconds
         assertTrue(
-            timeUntilComplete > timeToBlock - timeTolerance,
+            timeUntilComplete > timeToBlock - tolerance,
             "Expected to be blocked for at least $timeToBlock, but was blocked for $timeUntilComplete"
         )
     }

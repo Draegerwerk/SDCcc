@@ -10,13 +10,27 @@ import org.somda.sdc.biceps.common.event.MetricStateModificationMessage
 import org.somda.sdc.biceps.common.event.OperationStateModificationMessage
 import org.somda.sdc.biceps.common.event.WaveformStateModificationMessage
 
-class TestClientMdibAccessObserver: MdibAccessObserver {
+/**
+ * Observes changes in the sdc-ri MDIB and makes them available to registered [TestClientMdibObserver]s.
+ */
+@Suppress("MethodOverloading")
+class TestClientMdibAccessObserver : MdibAccessObserver {
     private val registeredObservers = mutableSetOf<TestClientMdibObserver>()
 
+    /**
+     * Registers an observer to be notified about changes in the MDIB.
+     *
+     * @param observer the observer instance to register.
+     */
     fun registerObserver(observer: TestClientMdibObserver) {
         registeredObservers.add(observer)
     }
 
+    /**
+     * Unregisters an observer to stop receiving notifications about changes in the MDIB.
+     *
+     * @param observer the observer instance to unregister.
+     */
     fun unregisterObserver(observer: TestClientMdibObserver) {
         registeredObservers.remove(observer)
     }
@@ -25,7 +39,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: DescriptionModificationMessage) {
+    fun onDescriptionChange(report: DescriptionModificationMessage) {
         registeredObservers.forEach {
             it.onDescriptionChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -35,7 +49,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: AlertStateModificationMessage) {
+    fun onAlertChange(report: AlertStateModificationMessage) {
         registeredObservers.forEach {
             it.onAlertChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -45,7 +59,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: ComponentStateModificationMessage) {
+    fun onComponentChange(report: ComponentStateModificationMessage) {
         registeredObservers.forEach {
             it.onComponentChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -55,7 +69,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: ContextStateModificationMessage) {
+    fun onContextChange(report: ContextStateModificationMessage) {
         registeredObservers.forEach {
             it.onContextChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -65,7 +79,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: MetricStateModificationMessage) {
+    fun onMetricChange(report: MetricStateModificationMessage) {
         registeredObservers.forEach {
             it.onMetricChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -75,7 +89,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: OperationStateModificationMessage) {
+    fun onOperationChange(report: OperationStateModificationMessage) {
         registeredObservers.forEach {
             it.onOperationChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
@@ -85,7 +99,7 @@ class TestClientMdibAccessObserver: MdibAccessObserver {
      * Observes changes in the MDIB and notifies the observer about them.
      */
     @Subscribe
-    fun onChange(report: WaveformStateModificationMessage) {
+    fun onWaveformChange(report: WaveformStateModificationMessage) {
         registeredObservers.forEach {
             it.onWaveformChange(MdibChange.from(report.mdibAccess.mdibVersion, report))
         }
