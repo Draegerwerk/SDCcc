@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition
 
+import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 import com.google.inject.Injector
 import java.util.Objects
 import java.util.concurrent.LinkedBlockingQueue
@@ -39,7 +40,7 @@ abstract class SynchronizedObservingPrecondition(
     // queue is used to decouple the incoming data from the mdib thread doing the change
     // this is going to be a problem when the manipulation is very long-running,
     // as the queue will fill up (quite quickly with waveforms)
-    private val updateQueue = LinkedBlockingQueue<PreconditionChange>()
+    private val updateQueue = LinkedBlockingQueue<MdibChange>()
 
     init {
         thread(start = true, isDaemon = true) {
@@ -53,7 +54,7 @@ abstract class SynchronizedObservingPrecondition(
         }
     }
 
-    override fun observeChange(incomingChange: PreconditionChange) {
+    override fun observeChange(incomingChange: MdibChange) {
         // Do not block here, we need to change the context to avoid blocking the mdib thread
         updateQueue.add(incomingChange)
     }
@@ -66,7 +67,7 @@ abstract class SynchronizedObservingPrecondition(
      * @param injector
      * @param change the change to process.
      */
-    abstract fun change(injector: Injector, change: PreconditionChange)
+    abstract fun change(injector: Injector, change: MdibChange)
 
     override fun verifyPrecondition(injector: Injector) {
         synchronized(lock) {

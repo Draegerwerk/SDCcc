@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition
 
+import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 import com.google.inject.Injector
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -39,21 +40,21 @@ internal class SynchronizedObservingPreconditionTest {
         val timeToBlock = 5.seconds
 
         val expectedChanges = listOf(
-            mock<PreconditionChange.Metric>(),
-            mock<PreconditionChange.Alert>(),
-            mock<PreconditionChange.Metric>(),
+            mock<MdibChange.Metric>(),
+            mock<MdibChange.Alert>(),
+            mock<MdibChange.Metric>(),
         )
         val mockInjector = mock<Injector>()
 
         // used to pinpoint when we can start running events
         val threadRunningFuture = CompletableFuture<Unit>()
         val changesCompleteFuture = CompletableFuture<Unit>()
-        val receivedChanges = mutableListOf<PreconditionChange>()
+        val receivedChanges = mutableListOf<MdibChange>()
         val exampleObserving = object : SynchronizedObservingPrecondition(
             injector = mockInjector,
             blockingManipulation(timeToBlock, callBeforeSleep = { _ -> threadRunningFuture.complete(Unit) })
         ) {
-            override fun change(injector: Injector, change: PreconditionChange) {
+            override fun change(injector: Injector, change: MdibChange) {
                 receivedChanges.add(change)
                 if (receivedChanges.size == expectedChanges.size) {
                     changesCompleteFuture.complete(Unit)

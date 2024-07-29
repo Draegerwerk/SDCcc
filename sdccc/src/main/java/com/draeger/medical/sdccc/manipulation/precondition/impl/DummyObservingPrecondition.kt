@@ -7,11 +7,10 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl
 
-import com.draeger.medical.sdccc.manipulation.precondition.ManipulationFunction
 import com.draeger.medical.sdccc.manipulation.precondition.Observing
 import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionFactory
-import com.draeger.medical.sdccc.manipulation.precondition.PreconditionChange
 import com.draeger.medical.sdccc.manipulation.precondition.SynchronizedObservingPrecondition
+import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient
 import com.google.inject.Injector
 
@@ -25,14 +24,14 @@ class DummyObservingPrecondition(injector: Injector) : SynchronizedObservingPrec
         true
     }
 ) {
-    override fun change(injector: Injector, change: PreconditionChange) {
+    override fun change(injector: Injector, change: MdibChange) {
         val testClient = injector.getInstance(TestClient::class.java)!!
 
         println("Has test client: $testClient")
 
         when (change) {
-            is PreconditionChange.Metric -> println("Saw metric change ${change.change.states}")
-            else -> println("Saw change $change")
+            is MdibChange.Metric -> println("Saw metric change ${change.states} in ${change.mdibVersion}")
+            else -> println("Saw change $change in ${change.mdibVersion}")
         }
     }
 
@@ -46,10 +45,7 @@ class DummyObservingPrecondition(injector: Injector) : SynchronizedObservingPrec
         @JvmStatic
         override fun create(
             injector: Injector,
-        ): DummyObservingPrecondition
-        {
-            return DummyObservingPrecondition(injector)
-        }
+        ): DummyObservingPrecondition = DummyObservingPrecondition(injector)
 
     }
 }

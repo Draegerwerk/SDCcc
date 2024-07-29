@@ -374,8 +374,26 @@ public class TestSuite {
         LOG.info("Starting TestSuite Client");
         try {
             client.startService(MAX_WAIT);
+        } catch (TimeoutException e) {
+            LOG.error("Could not connect to target device {}", client.getTargetEpr());
+            testRunObserver.invalidateTestRun("Could not connect to target device", e);
+            throw new RuntimeException(e);
+        }
+
+        // register observing preconditions in test client before connecting to the target
+        // this allows us to see the initial mdib as a change
+        final var preconditions = injector.getInstance(PreconditionRegistry.class);
+        final var observingPreconditions = preconditions.getObservingPreconditions();
+        for (final var precondition : observingPreconditions) {
+            LOG.info(
+                    "Registering observing precondition in test client {}",
+                    precondition.getClass().getSimpleName());
+            client.registerMdibObserver(new ObservingPreconditionMdibObserver(precondition));
+        }
+
+        try {
             client.connect();
-        } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
+        } catch (final InterceptorException | TransportException | IOException e) {
             LOG.error("Could not connect to target device {}", client.getTargetEpr());
             testRunObserver.invalidateTestRun("Could not connect to target device", e);
             throw new RuntimeException(e);
@@ -386,19 +404,6 @@ public class TestSuite {
                 client.getHostingServiceProxy().getHostedServices().values().stream()
                         .anyMatch(service ->
                                 service.getType().getTypes().contains(WsdlConstants.PORT_TYPE_ARCHIVE_QNAME)));
-
-        // register observing preconditions in test client
-        final var preconditions = injector.getInstance(PreconditionRegistry.class);
-        final var observingPreconditions = preconditions.getObservingPreconditions();
-
-        for (final var precondition : observingPreconditions) {
-            LOG.info(
-                    "Registering observing precondition in test client {}",
-                    precondition.getClass().getSimpleName());
-            client.getSdcRemoteDevice()
-                    .getMdibAccessObservable()
-                    .registerObserver(new ObservingPreconditionMdibObserver(precondition));
-        }
     }
 
     /**

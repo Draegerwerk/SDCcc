@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition
 
+import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 import org.somda.sdc.biceps.common.event.AlertStateModificationMessage
 import org.somda.sdc.biceps.common.event.ComponentStateModificationMessage
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage
@@ -138,5 +139,5 @@ interface Observing : Precondition {
     /**
      * Receives a change from the device to process.
      */
-    fun observeChange(incomingChange: PreconditionChange)
+    fun observeChange(incomingChange: MdibChange)
 }

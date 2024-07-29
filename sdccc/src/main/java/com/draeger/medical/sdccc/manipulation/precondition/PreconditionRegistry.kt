@@ -6,12 +6,10 @@
  */
 package com.draeger.medical.sdccc.manipulation.precondition
 
-import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException
 import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Singleton
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.kotlin.Logging
 import java.lang.reflect.InvocationTargetException
 import java.util.stream.Collectors
 import kotlin.reflect.KClass
@@ -21,9 +19,14 @@ import kotlin.reflect.KClass
  */
 @Singleton
 class PreconditionRegistry @Inject internal constructor(private val injector: Injector) {
-    private val preconditions: MutableList<Precondition?> = ArrayList()
+    private val preconditions: MutableList<Precondition> = ArrayList()
 
-    private fun registerPreconditionInternal(precondition: Class<out Precondition?>) {
+    private fun handleRegisteringError(error: Throwable, text: String): Nothing {
+        logger.error(error) { text }
+        throw RuntimeException(text, error)
+    }
+
+    private fun registerPreconditionInternal(precondition: Class<out Precondition>) {
         try {
             val constructor = precondition.getDeclaredConstructor()
             val instance = constructor.newInstance()
@@ -31,28 +34,18 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
                 preconditions.add(instance)
             }
         } catch (e: NoSuchMethodException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
+            handleRegisteringError(e, BASE_MESSAGE)
         } catch (e: IllegalAccessException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
+            handleRegisteringError(e, BASE_MESSAGE)
         } catch (e: InstantiationException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
+            handleRegisteringError(e, BASE_MESSAGE)
         } catch (e: InvocationTargetException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
+            handleRegisteringError(e, BASE_MESSAGE)
         }
     }
 
     /**
      * Registers a simple precondition for running before disconnecting from the DUT.
-     *
-     *
      *
      * Duplicate preconditions will be ignored.
      *
@@ -65,8 +58,6 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
     /**
      * Registers a manipulation precondition for running before disconnecting from the DUT.
      *
-     *
-     *
      * Duplicate preconditions will be ignored.
      *
      * @param precondition precondition to run
@@ -78,35 +69,17 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
     /**
      * Registers a manipulation precondition for running and observing before disconnecting from the DUT.
      *
-     *
-     *
      * Duplicate preconditions will be ignored.
      *
      * @param precondition precondition to run
      */
     fun registerObservingPrecondition(precondition: KClass<out ObservingPreconditionFactory<*>>) {
-        try {
-            val factoryInstance = precondition.objectInstance!!
-            val instance = factoryInstance.create(injector)
-            if (!preconditions.contains(instance)) {
-                preconditions.add(instance)
-            }
-        } catch (e: NoSuchMethodException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
-        } catch (e: IllegalAccessException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
-        } catch (e: InstantiationException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
-        } catch (e: InvocationTargetException) {
-            val baseMessage = "Error while registering precondition"
-            LOG.error(baseMessage, e)
-            throw RuntimeException(baseMessage, e)
+        val factoryInstance = checkNotNull(precondition.objectInstance) {
+            "Factory class ${precondition.simpleName} does not provide an object instance. Ensure it is a Companion."
+        }
+        val instance = factoryInstance.create(injector)
+        if (!preconditions.contains(instance)) {
+            preconditions.add(instance)
         }
     }
 
@@ -118,7 +91,7 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
     @Throws(PreconditionException::class)
     fun runPreconditions() {
         for (precondition in preconditions) {
-            LOG.info("Running precondition {}", precondition!!.javaClass.simpleName)
+            logger.info { "Running precondition ${precondition.javaClass.simpleName}" }
             precondition.verifyPrecondition(injector)
         }
     }
@@ -129,9 +102,7 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
             .map { it: Precondition? -> it as Observing? }
             .collect(Collectors.toList())
 
-    companion object {
-        private val LOG: Logger = LogManager.getLogger(
-            PreconditionRegistry::class.java
-        )
+    companion object: Logging {
+        private const val BASE_MESSAGE: String = "Error while registering precondition"
     }
 }

@@ -68,8 +68,7 @@ public class PreconditionFilter implements PostDiscoveryFilter {
 
                 for (final var observingPrecondition : requiredInteraction.observingPreconditions()) {
                     preconditionRegistry.registerObservingPrecondition(
-                        kotlin.jvm.JvmClassMappingKt.getKotlinClass(observingPrecondition)
-                    );
+                            kotlin.jvm.JvmClassMappingKt.getKotlinClass(observingPrecondition));
                 }
 
                 result = FilterResult.included("Filter only used for metadata collection");
