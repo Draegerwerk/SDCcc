@@ -49,7 +49,7 @@ class TestClientIT {
     internal fun testConsumerDeliversMdibToObservers() {
         testProvider.startService(DEFAULT_TIMEOUT.toJavaDuration())
 
-        val injector: Injector = TestSuiteIT.getConsumerInjector(true, null)
+        val injector: Injector = TestSuiteIT.getConsumerInjector(true, null, testProvider.sdcDevice.eprAddress)
         InjectorTestBase.setInjector(injector)
 
         val testClient = injector.getInstance(TestClient::class.java)

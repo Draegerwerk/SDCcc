@@ -103,7 +103,7 @@ public class TestSuiteIT {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     }
 
-    private static final String DUT_EPR = "urn:uuid:" + UUID.randomUUID();
+    private static final String DEFAULT_DUT_EPR = "urn:uuid:" + UUID.randomUUID();
     private TestProvider testProvider;
 
     private static Injector createInjector(final AbstractModule... override) {
@@ -118,13 +118,23 @@ public class TestSuiteIT {
             @Nullable final LocationConfig locationConfig,
             final AbstractModule... override)
             throws IOException {
+        return createTestSuiteITInjector(cryptoSettings, failingTests, locationConfig, DEFAULT_DUT_EPR, override);
+    }
+
+    private static Injector createTestSuiteITInjector(
+            final CryptoSettings cryptoSettings,
+            final Boolean failingTests,
+            @Nullable final LocationConfig locationConfig,
+            final String eprAddress,
+            final AbstractModule... override)
+            throws IOException {
         final var tempDir = Files.createTempDirectory("SDCccIT_TestSuiteIT");
         tempDir.toFile().deleteOnExit();
 
-        LOG.info("Creating injector for epr {}", DUT_EPR);
+        LOG.info("Creating injector for epr {}", eprAddress);
 
         return createInjector(ArrayUtils.addAll(
-                override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig)));
+                override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig, eprAddress)));
     }
 
     static TestProvider getProvider() throws IOException {
@@ -145,12 +155,21 @@ public class TestSuiteIT {
     static Injector getConsumerInjector(
             final Boolean failingTests, @Nullable final LocationConfig locationConfig, final AbstractModule... override)
             throws IOException {
+        return getConsumerInjector(failingTests, locationConfig, DEFAULT_DUT_EPR, override);
+    }
+
+    static Injector getConsumerInjector(
+            final Boolean failingTests,
+            @Nullable final LocationConfig locationConfig,
+            final String dutEpr,
+            final AbstractModule... override)
+            throws IOException {
 
         final var consumerCert = SSL_METADATA.getClientKeySet();
         assert consumerCert != null;
         final var consumerCrypto = SslMetadata.getCryptoSettings(consumerCert);
 
-        return createTestSuiteITInjector(consumerCrypto, failingTests, locationConfig, override);
+        return createTestSuiteITInjector(consumerCrypto, failingTests, locationConfig, dutEpr, override);
     }
 
     @BeforeEach
@@ -567,15 +586,18 @@ public class TestSuiteIT {
         private final Path tempDir;
         private final boolean failingTests;
         private final LocationConfig locationConfig;
+        private final String dutEpr;
 
         private MockConfiguration(
                 final CryptoSettings cryptoSettings,
                 final Path tempDir,
                 final boolean failingTests,
-                @Nullable final LocationConfig locationConfig) {
+                @Nullable final LocationConfig locationConfig,
+                final String dutEpr) {
             this.cryptoSettings = cryptoSettings;
             this.tempDir = tempDir;
             this.failingTests = failingTests;
+            this.dutEpr = dutEpr;
 
             this.locationConfig = Objects.requireNonNullElseGet(
                     locationConfig, () -> new LocationConfig(null, null, null, null, null, null));
@@ -586,7 +608,7 @@ public class TestSuiteIT {
             bind(CryptoSettings.class).toInstance(cryptoSettings);
 
             bind(TestSuiteConfig.CI_MODE, Boolean.class, true);
-            bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, this.dutEpr);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, this.locationConfig.facility);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, this.locationConfig.building);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, this.locationConfig.pointOfCare);
@@ -594,7 +616,7 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, this.locationConfig.room);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, this.locationConfig.bed);
 
-            bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, this.dutEpr);
 
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
             bind(DpwsConfig.MULTICAST_TTL, Integer.class, 128);
