@@ -127,7 +127,7 @@ public class TestSuiteIT {
                 override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig)));
     }
 
-    private TestProvider getProvider() throws IOException {
+    static TestProvider getProvider() throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
@@ -142,7 +142,7 @@ public class TestSuiteIT {
         }
     }
 
-    private Injector getConsumerInjector(
+    static Injector getConsumerInjector(
             final Boolean failingTests, @Nullable final LocationConfig locationConfig, final AbstractModule... override)
             throws IOException {
 
