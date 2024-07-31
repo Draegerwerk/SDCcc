@@ -103,22 +103,12 @@ public class TestSuiteIT {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     }
 
-    private static final String DEFAULT_DUT_EPR = "urn:uuid:" + UUID.randomUUID();
     private TestProvider testProvider;
 
     private static Injector createInjector(final AbstractModule... override) {
         return Guice.createInjector(Modules.override(
                         new DefaultTestSuiteModule(), new DefaultTestSuiteConfig(), new DefaultEnabledTestConfig())
                 .with(override));
-    }
-
-    private static Injector createTestSuiteITInjector(
-            final CryptoSettings cryptoSettings,
-            final Boolean failingTests,
-            @Nullable final LocationConfig locationConfig,
-            final AbstractModule... override)
-            throws IOException {
-        return createTestSuiteITInjector(cryptoSettings, failingTests, locationConfig, DEFAULT_DUT_EPR, override);
     }
 
     private static Injector createTestSuiteITInjector(
@@ -137,12 +127,16 @@ public class TestSuiteIT {
                 override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig, eprAddress)));
     }
 
-    static TestProvider getProvider() throws IOException {
+    static String getRandomEpr() {
+        return "urn:uuid:" + UUID.randomUUID();
+    }
+
+    static TestProvider getProvider(final String eprAddress) throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
 
-        final var injector = createTestSuiteITInjector(providerCrypto, false, null);
+        final var injector = createTestSuiteITInjector(providerCrypto, false, null, eprAddress);
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
@@ -150,12 +144,6 @@ public class TestSuiteIT {
             final var providerFac = injector.getInstance(ProviderFactory.class);
             return providerFac.createProvider(mdibAsStream);
         }
-    }
-
-    static Injector getConsumerInjector(
-            final Boolean failingTests, @Nullable final LocationConfig locationConfig, final AbstractModule... override)
-            throws IOException {
-        return getConsumerInjector(failingTests, locationConfig, DEFAULT_DUT_EPR, override);
     }
 
     static Injector getConsumerInjector(
@@ -174,7 +162,7 @@ public class TestSuiteIT {
 
     @BeforeEach
     void setUp() throws IOException {
-        this.testProvider = getProvider();
+        this.testProvider = getProvider(getRandomEpr());
 
         final DiscoveryAccess discoveryAccess =
                 this.testProvider.getSdcDevice().getDevice().getDiscoveryAccess();
@@ -316,7 +304,7 @@ public class TestSuiteIT {
             final String locationScope, final LocationConfig locationConfig, final boolean expectedFailure)
             throws PreprocessingException, TimeoutException, IOException {
 
-        final TestProvider provider = getProvider();
+        final TestProvider provider = getProvider(getRandomEpr());
 
         final DiscoveryAccess discoveryAccess =
                 provider.getSdcDevice().getDevice().getDiscoveryAccess();
@@ -325,7 +313,8 @@ public class TestSuiteIT {
         provider.startService(DEFAULT_TIMEOUT);
 
         try {
-            final var injector = getConsumerInjector(false, locationConfig);
+            final var injector = getConsumerInjector(
+                    false, locationConfig, provider.getSdcDevice().getEprAddress());
 
             final var injectorSpy = spy(injector);
             final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -370,7 +359,8 @@ public class TestSuiteIT {
     public void testConsumer() throws IOException, PreprocessingException, TimeoutException {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
 
         final var injectorSpy = spy(injector);
         final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -411,16 +401,17 @@ public class TestSuiteIT {
                 .when(preconditionRegistryMock)
                 .runPreconditions();
 
-        final var injector = getConsumerInjector(false, null, new AbstractModule() {
-            /**
-             * Configures a {@link Binder} via the exposed methods.
-             */
-            @Override
-            protected void configure() {
-                super.configure();
-                bind(PreconditionRegistry.class).toInstance(preconditionRegistryMock);
-            }
-        });
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress(), new AbstractModule() {
+                    /**
+                     * Configures a {@link Binder} via the exposed methods.
+                     */
+                    @Override
+                    protected void configure() {
+                        super.configure();
+                        bind(PreconditionRegistry.class).toInstance(preconditionRegistryMock);
+                    }
+                });
 
         InjectorTestBase.setInjector(injector);
 
@@ -451,7 +442,8 @@ public class TestSuiteIT {
     public void testConsumerUnexpectedSubscriptionEnd() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -508,7 +500,8 @@ public class TestSuiteIT {
     public void testConsumerExpectedDisconnect() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -550,7 +543,8 @@ public class TestSuiteIT {
     public void testMockConsumerFailures() throws IOException, PreprocessingException, TimeoutException {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(true, null);
+        final var injector =
+                getConsumerInjector(true, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);

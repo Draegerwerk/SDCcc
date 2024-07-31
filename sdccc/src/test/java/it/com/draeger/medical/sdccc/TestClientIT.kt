@@ -33,7 +33,7 @@ class TestClientIT {
 
     @BeforeEach
     internal fun beforeEach() {
-        this.testProvider = TestSuiteIT.getProvider()
+        this.testProvider = TestSuiteIT.getProvider(TestSuiteIT.getRandomEpr())
 
         this.testProvider.sdcDevice.device.discoveryAccess
             .apply {
@@ -49,7 +49,11 @@ class TestClientIT {
     internal fun testConsumerDeliversMdibToObservers() {
         testProvider.startService(DEFAULT_TIMEOUT.toJavaDuration())
 
-        val injector: Injector = TestSuiteIT.getConsumerInjector(true, null, testProvider.sdcDevice.eprAddress)
+        val injector: Injector = TestSuiteIT.getConsumerInjector(
+            true,
+            null,
+            testProvider.sdcDevice.eprAddress
+        )
         InjectorTestBase.setInjector(injector)
 
         val testClient = injector.getInstance(TestClient::class.java)
