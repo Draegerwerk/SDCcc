@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -71,6 +73,36 @@ internal class BufferedObservingPreconditionTest {
         assertTrue(
             timeUntilComplete > timeToBlock - tolerance,
             "Expected to be blocked for at least $timeToBlock, but was blocked for $timeUntilComplete"
+        )
+    }
+
+    @Test
+    internal fun `test equality check`() {
+        val mockInjector = mock<Injector>()
+        val exampleObserving = object : BufferedObservingPrecondition(
+            injector = mockInjector,
+        ) {
+            override fun change(injector: Injector, change: MdibChange) {
+                // do nothing
+            }
+        }
+
+        val exampleObserving2 = object : BufferedObservingPrecondition(
+            injector = mockInjector,
+        ) {
+            override fun change(injector: Injector, change: MdibChange) {
+                // do nothing
+            }
+        }
+
+        // same class == equal
+        assertEquals(exampleObserving, exampleObserving)
+        assertEquals(exampleObserving2, exampleObserving2)
+
+        // different class, in this case anonymous classes, are not equal
+        assertNotEquals(
+            exampleObserving as BufferedObservingPrecondition,
+            exampleObserving2 as BufferedObservingPrecondition
         )
     }
 }
