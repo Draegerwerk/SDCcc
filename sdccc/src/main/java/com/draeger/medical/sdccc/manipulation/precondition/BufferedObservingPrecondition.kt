@@ -30,8 +30,9 @@ abstract class BufferedObservingPrecondition(
         thread(start = true, isDaemon = true) {
             while (true) {
                 if (updateQueue.size > QUEUE_WARNING_THRESHOLD) {
-                    // TODO: Warning or debug just for us?
-                    logger.warn {
+                    // In case the queue size is above the threshold, log a message
+                    // that can be used to debug issues
+                    logger.debug {
                         "${this.javaClass.simpleName} queue size above threshold" +
                             " $QUEUE_WARNING_THRESHOLD: ${updateQueue.size}"
                     }
@@ -61,6 +62,8 @@ abstract class BufferedObservingPrecondition(
         // do nothing
     }
 
+    // equality of preconditions is based on whether they are the same class to avoid
+    // duplicate instances
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
@@ -68,6 +71,8 @@ abstract class BufferedObservingPrecondition(
         return this.javaClass == that.javaClass
     }
 
+    // hasCode of preconditions is based on whether they are the same class to avoid
+    // duplicate instances
     override fun hashCode(): Int = Objects.hash(this.javaClass)
 
     companion object : Logging {
