@@ -24,83 +24,10 @@
         <jaxbCoreVersion>4.0.4</jaxbCoreVersion>
         <jaxbBuildHelperMavenPluginVersion>3.5.0</jaxbBuildHelperMavenPluginVersion>
         <kotlin.version>1.9.23</kotlin.version>
-        <junitVersion>5.10.2</junitVersion>
     </properties>
 
     <build>
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <outputName>unitAndIntegrationTestReport</outputName>
-                    <title>Unit- and Integration Test Report</title>
-                    <description>Unit- and Integration Test Report</description>
-                    <reportsDirectories>
-                        <directory>${project.build.directory}/surefire-reports/</directory>
-                        <directory>${project.build.directory}/failsafe-reports/</directory>
-                    </reportsDirectories>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>phase-verify</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-only</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junitVersion}</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <excludes>
-                        <!-- exclude integration tests -->
-                        <exclude>**/*IT.java</exclude>
-                        <!-- exclude tests used in tests -->
-                        <exclude>it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**</exclude>
-                    </excludes>
-                    <!-- workaround for bug in the attach api required for certain JDK builds -->
-                    <!-- see also: https://stackoverflow.com/a/25439003 -->
-                    <argLine>-Xmx3072m -XX:+StartAttachListener</argLine>
-                    <forkCount>0.25C</forkCount>
-                    <reuseForks>true</reuseForks>
-                </configuration>
-            </plugin>
-            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-failsafe-plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.5</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junitVersion}</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
 
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
