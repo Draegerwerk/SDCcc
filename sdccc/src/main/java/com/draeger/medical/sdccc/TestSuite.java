@@ -375,8 +375,8 @@ public class TestSuite {
         try {
             client.startService(MAX_WAIT);
         } catch (TimeoutException e) {
-            LOG.error("Could not connect to target device {}", client.getTargetEpr());
-            testRunObserver.invalidateTestRun("Could not connect to target device", e);
+            LOG.error("Could not start the test consumer for {}", client.getTargetEpr());
+            testRunObserver.invalidateTestRun("Could not start the test consumer", e);
             throw new RuntimeException(e);
         }
 
