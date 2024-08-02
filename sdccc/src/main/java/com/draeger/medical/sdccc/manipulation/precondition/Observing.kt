@@ -15,7 +15,9 @@ import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
 interface Observing : Precondition {
 
     /**
-     * Receives a change from the device to process.
+     * Receives an mdib change from the device to process.
+     *
+     * @param incomingChange to the device mdib.
      */
     fun observeChange(incomingChange: MdibChange)
 }

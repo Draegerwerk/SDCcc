@@ -106,7 +106,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the alert states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */
@@ -118,7 +118,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the component states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */
@@ -130,7 +130,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the context states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */
@@ -142,7 +142,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the metric states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */
@@ -154,7 +154,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the operation states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */
@@ -166,7 +166,7 @@ sealed interface MdibChange {
     /**
      * Represents a change to the waveform states of the device.
      *
-     * @property mdibVersion      the MDIB version that the change is occurring in.
+     * @property mdibVersion the MDIB version that the change is occurring in.
      * @property states the modification where the key is the source MDS and
      *                  the value is a list of all states for that MDS.
      */

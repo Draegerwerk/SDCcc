@@ -74,7 +74,7 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
     }
 
     /**
-     * Registers a manipulation precondition for running and observing before disconnecting from the DUT.
+     * Registers an observing precondition for running and observing before disconnecting from the DUT.
      *
      * Duplicate preconditions will be ignored.
      *

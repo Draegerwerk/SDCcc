@@ -52,24 +52,24 @@ abstract class BufferedObservingPrecondition(
      *
      * Receives all changes _without_ blocking the mdib thread.
      *
-     * @param change the change to process.
+     * @param change the mdib change to process.
      */
     abstract fun processChange(change: MdibChange)
 
     override fun verifyPrecondition(injector: Injector) {
-        // do nothing
+        // do nothing, default to observations only
     }
 
     // equality of preconditions is based on whether they are the same class to avoid
     // duplicate instances
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
+        if (other == null || this.javaClass != other.javaClass) return false
         val that = other as BufferedObservingPrecondition
         return this.javaClass == that.javaClass
     }
 
-    // hasCode of preconditions is based on whether they are the same class to avoid
+    // hashCode of preconditions is based on whether they are the same class to avoid
     // duplicate instances
     override fun hashCode(): Int = Objects.hash(this.javaClass)
 

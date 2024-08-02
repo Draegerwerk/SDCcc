@@ -40,7 +40,7 @@ annotation class RequirePrecondition(
      */
     val manipulationPreconditions: Array<KClass<out ManipulationPrecondition>> = [],
     /**
-     * Manipulations to trigger.
+     * Observing preconditions to attach.
      *
      * @return array of manipulation classes to trigger for the test
      */
