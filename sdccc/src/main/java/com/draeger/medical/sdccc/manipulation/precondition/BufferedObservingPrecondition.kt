@@ -37,8 +37,7 @@ abstract class BufferedObservingPrecondition(
                             " $QUEUE_WARNING_THRESHOLD: ${updateQueue.size}"
                     }
                 }
-                val change = updateQueue.take()
-                change(injector, change)
+                change(updateQueue.take())
             }
         }
     }
@@ -53,10 +52,9 @@ abstract class BufferedObservingPrecondition(
      *
      * Receives all changes _without_ blocking the mdib thread.
      *
-     * @param injector
      * @param change the change to process.
      */
-    abstract fun change(injector: Injector, change: MdibChange)
+    abstract fun change(change: MdibChange)
 
     override fun verifyPrecondition(injector: Injector) {
         // do nothing
