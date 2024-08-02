@@ -8,26 +8,31 @@
 package com.draeger.medical.sdccc.manipulation.precondition
 
 import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
+import com.draeger.medical.sdccc.util.TestRunObserver
 import com.google.inject.Injector
 import org.apache.logging.log4j.kotlin.Logging
 import java.util.Objects
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
  * Buffered precondition which can only observe changes.
  */
 abstract class BufferedObservingPrecondition(
-    private val injector: Injector
+    injector: Injector
 ) : Observing {
 
     // queue is used to decouple the incoming data from the mdib thread doing the change
     // this is going to be a problem when the manipulation is very long-running,
     // as the queue will fill up (quite quickly with waveforms)
     private val updateQueue = LinkedBlockingQueue<MdibChange>()
+    private val processingThread: Thread
+    private var processDied = AtomicBoolean(false)
+    private val testRunObserver = injector.getInstance(TestRunObserver::class.java)
 
     init {
-        thread(start = true, isDaemon = true) {
+        processingThread = thread(start = true, isDaemon = true) {
             while (true) {
                 if (updateQueue.size > QUEUE_WARNING_THRESHOLD) {
                     // In case the queue size is above the threshold, log a message
@@ -37,13 +42,34 @@ abstract class BufferedObservingPrecondition(
                             " $QUEUE_WARNING_THRESHOLD: ${updateQueue.size}"
                     }
                 }
-                processChange(updateQueue.take())
+                @Suppress("TooGenericExceptionCaught") // we want to catch all exceptions here
+                try {
+                    processChange(updateQueue.take())
+                } catch (e: Exception) {
+                    handleThreadError(e)
+                    return@thread
+                }
             }
         }
     }
 
+    private fun handleThreadError(e: Exception) {
+        testRunObserver.invalidateTestRun(
+            "Processing thread for Precondition ${javaClass.simpleName} has" +
+                " caught an exception and cannot process incoming change",
+            e
+        )
+    }
+
     override fun observeChange(incomingChange: MdibChange) {
         // Do not block here, we need to change the context to avoid blocking the mdib thread
+        if (!processingThread.isAlive) {
+            if (!processDied.getAndSet(true)) {
+                // release the remaining elements, no processing will happen
+                updateQueue.clear()
+            }
+            return
+        }
         updateQueue.add(incomingChange)
     }
 

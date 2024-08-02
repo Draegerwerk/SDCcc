@@ -8,9 +8,15 @@
 package com.draeger.medical.sdccc.manipulation.precondition
 
 import com.draeger.medical.sdccc.sdcri.testclient.MdibChange
+import com.draeger.medical.sdccc.util.TestRunObserver
 import com.google.inject.Injector
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.any
+import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.times
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
@@ -104,5 +110,29 @@ internal class BufferedObservingPreconditionTest {
             exampleObserving as BufferedObservingPrecondition,
             exampleObserving2 as BufferedObservingPrecondition
         )
+    }
+
+    @Test
+    internal fun `test processing thread dying invalidates test`() {
+        val testRunObserver = mock<TestRunObserver>()
+        val mockInjector = mock<Injector>()
+        doReturn(testRunObserver).`when`(mockInjector).getInstance(TestRunObserver::class.java)
+
+        val exampleObserving = object : BufferedObservingPrecondition(
+            injector = mockInjector,
+        ) {
+            override fun processChange(change: MdibChange) {
+                // for the purposes of this test a specific exception makes little sense
+                @Suppress("TooGenericExceptionThrown")
+                throw RuntimeException("Intentionally killing the thread")
+            }
+        }
+
+        exampleObserving.observeChange(mock<MdibChange.Metric>())
+
+        verify(testRunObserver, times(1)).invalidateTestRun(anyString(), any())
+
+        // passing more changes is still possible
+        exampleObserving.observeChange(mock<MdibChange.Metric>())
     }
 }
