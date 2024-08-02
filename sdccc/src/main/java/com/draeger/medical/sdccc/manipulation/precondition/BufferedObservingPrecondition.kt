@@ -37,7 +37,7 @@ abstract class BufferedObservingPrecondition(
                             " $QUEUE_WARNING_THRESHOLD: ${updateQueue.size}"
                     }
                 }
-                change(updateQueue.take())
+                processChange(updateQueue.take())
             }
         }
     }
@@ -54,7 +54,7 @@ abstract class BufferedObservingPrecondition(
      *
      * @param change the change to process.
      */
-    abstract fun change(change: MdibChange)
+    abstract fun processChange(change: MdibChange)
 
     override fun verifyPrecondition(injector: Injector) {
         // do nothing

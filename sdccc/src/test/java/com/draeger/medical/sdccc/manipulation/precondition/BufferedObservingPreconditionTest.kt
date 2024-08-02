@@ -44,7 +44,7 @@ internal class BufferedObservingPreconditionTest {
         val exampleObserving = object : BufferedObservingPrecondition(
             injector = mockInjector,
         ) {
-            override fun change(change: MdibChange) {
+            override fun processChange(change: MdibChange) {
                 Thread.sleep(timeToBlockPerMessage.inWholeMilliseconds)
                 receivedChanges.add(change)
                 if (receivedChanges.size == expectedChanges.size) {
@@ -82,7 +82,7 @@ internal class BufferedObservingPreconditionTest {
         val exampleObserving = object : BufferedObservingPrecondition(
             injector = mockInjector,
         ) {
-            override fun change(change: MdibChange) {
+            override fun processChange(change: MdibChange) {
                 // do nothing
             }
         }
@@ -90,7 +90,7 @@ internal class BufferedObservingPreconditionTest {
         val exampleObserving2 = object : BufferedObservingPrecondition(
             injector = mockInjector,
         ) {
-            override fun change(change: MdibChange) {
+            override fun processChange(change: MdibChange) {
                 // do nothing
             }
         }
