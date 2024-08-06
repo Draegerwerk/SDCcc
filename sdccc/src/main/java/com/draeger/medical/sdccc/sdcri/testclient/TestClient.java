@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -60,6 +60,16 @@ public interface TestClient {
      * @throws TimeoutException in case the disconnect did not finish on time
      */
     void disconnect() throws TimeoutException;
+
+    /**
+     * @param observer to register for all mdib changes the test client receives, including the initial mdib.
+     */
+    void registerMdibObserver(TestClientMdibObserver observer);
+
+    /**
+     * @param observer to unregister from observing changes
+     */
+    void unregisterMdibObserver(TestClientMdibObserver observer);
 
     Client getClient();
 

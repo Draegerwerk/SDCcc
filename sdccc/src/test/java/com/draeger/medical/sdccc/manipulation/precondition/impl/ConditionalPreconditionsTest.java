@@ -234,7 +234,7 @@ public class ConditionalPreconditionsTest {
         when(mockGetter.getStream()).thenReturn(Stream.of(mockMessage)).thenReturn(Stream.empty());
         when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.anyBoolean(), ArgumentMatchers.<QName>any()))
+        when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.anyBoolean(), any(QName[].class)))
                 .thenReturn(mockGetter);
 
         final var injector = Guice.createInjector(new AbstractModule() {
@@ -2197,8 +2197,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2216,8 +2215,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2236,8 +2234,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2255,8 +2252,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2274,8 +2270,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2295,8 +2290,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2314,8 +2308,7 @@ public class ConditionalPreconditionsTest {
         {
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
 
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
 
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
@@ -2487,7 +2480,7 @@ public class ConditionalPreconditionsTest {
     }
 
     /**
-     * Tests whether StateChangedPrecondition correctly check for precondition.
+     * Tests whether StateChangedPrecondition correctly checks for precondition.
      *
      * @throws Exception on any exception
      */
@@ -2496,11 +2489,11 @@ public class ConditionalPreconditionsTest {
     public void testStateChangedPreconditionCheck() throws Exception {
         @SuppressWarnings("resource")
         final var mockStorage = mock(MessageStorage.class);
+        @SuppressWarnings("unchecked")
         final MessageStorage.GetterResult<MessageContent> mockGetter = mock(MessageStorage.GetterResult.class);
         {
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
             when(mockGetter.areObjectsPresent()).thenReturn(true).thenReturn(false);
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -2538,8 +2531,7 @@ public class ConditionalPreconditionsTest {
         // no reports available
         {
             when(mockGetter.areObjectsPresent()).thenReturn(false);
-            when(mockStorage.getInboundMessagesByBodyType(ArgumentMatchers.<QName>any()))
-                    .thenReturn(mockGetter);
+            when(mockStorage.getInboundMessagesByBodyType(any(QName[].class))).thenReturn(mockGetter);
             final var injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {

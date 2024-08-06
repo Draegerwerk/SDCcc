@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -103,7 +103,6 @@ public class TestSuiteIT {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     }
 
-    private static final String DUT_EPR = "urn:uuid:" + UUID.randomUUID();
     private TestProvider testProvider;
 
     private static Injector createInjector(final AbstractModule... override) {
@@ -116,23 +115,28 @@ public class TestSuiteIT {
             final CryptoSettings cryptoSettings,
             final Boolean failingTests,
             @Nullable final LocationConfig locationConfig,
+            final String eprAddress,
             final AbstractModule... override)
             throws IOException {
         final var tempDir = Files.createTempDirectory("SDCccIT_TestSuiteIT");
         tempDir.toFile().deleteOnExit();
 
-        LOG.info("Creating injector for epr {}", DUT_EPR);
+        LOG.info("Creating injector for epr {}", eprAddress);
 
         return createInjector(ArrayUtils.addAll(
-                override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig)));
+                override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig, eprAddress)));
     }
 
-    private TestProvider getProvider() throws IOException {
+    static String getRandomEpr() {
+        return "urn:uuid:" + UUID.randomUUID();
+    }
+
+    static TestProvider getProvider(final String eprAddress) throws IOException {
         final var providerCert = SSL_METADATA.getServerKeySet();
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
 
-        final var injector = createTestSuiteITInjector(providerCrypto, false, null);
+        final var injector = createTestSuiteITInjector(providerCrypto, false, null, eprAddress);
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
@@ -142,20 +146,23 @@ public class TestSuiteIT {
         }
     }
 
-    private Injector getConsumerInjector(
-            final Boolean failingTests, @Nullable final LocationConfig locationConfig, final AbstractModule... override)
+    static Injector getConsumerInjector(
+            final Boolean failingTests,
+            @Nullable final LocationConfig locationConfig,
+            final String dutEpr,
+            final AbstractModule... override)
             throws IOException {
 
         final var consumerCert = SSL_METADATA.getClientKeySet();
         assert consumerCert != null;
         final var consumerCrypto = SslMetadata.getCryptoSettings(consumerCert);
 
-        return createTestSuiteITInjector(consumerCrypto, failingTests, locationConfig, override);
+        return createTestSuiteITInjector(consumerCrypto, failingTests, locationConfig, dutEpr, override);
     }
 
     @BeforeEach
     void setUp() throws IOException {
-        this.testProvider = getProvider();
+        this.testProvider = getProvider(getRandomEpr());
 
         final DiscoveryAccess discoveryAccess =
                 this.testProvider.getSdcDevice().getDevice().getDiscoveryAccess();
@@ -297,7 +304,7 @@ public class TestSuiteIT {
             final String locationScope, final LocationConfig locationConfig, final boolean expectedFailure)
             throws PreprocessingException, TimeoutException, IOException {
 
-        final TestProvider provider = getProvider();
+        final TestProvider provider = getProvider(getRandomEpr());
 
         final DiscoveryAccess discoveryAccess =
                 provider.getSdcDevice().getDevice().getDiscoveryAccess();
@@ -306,7 +313,8 @@ public class TestSuiteIT {
         provider.startService(DEFAULT_TIMEOUT);
 
         try {
-            final var injector = getConsumerInjector(false, locationConfig);
+            final var injector = getConsumerInjector(
+                    false, locationConfig, provider.getSdcDevice().getEprAddress());
 
             final var injectorSpy = spy(injector);
             final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -351,7 +359,8 @@ public class TestSuiteIT {
     public void testConsumer() throws IOException, PreprocessingException, TimeoutException {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
 
         final var injectorSpy = spy(injector);
         final var testClientSpy = spy(injector.getInstance(TestClient.class));
@@ -392,16 +401,17 @@ public class TestSuiteIT {
                 .when(preconditionRegistryMock)
                 .runPreconditions();
 
-        final var injector = getConsumerInjector(false, null, new AbstractModule() {
-            /**
-             * Configures a {@link Binder} via the exposed methods.
-             */
-            @Override
-            protected void configure() {
-                super.configure();
-                bind(PreconditionRegistry.class).toInstance(preconditionRegistryMock);
-            }
-        });
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress(), new AbstractModule() {
+                    /**
+                     * Configures a {@link Binder} via the exposed methods.
+                     */
+                    @Override
+                    protected void configure() {
+                        super.configure();
+                        bind(PreconditionRegistry.class).toInstance(preconditionRegistryMock);
+                    }
+                });
 
         InjectorTestBase.setInjector(injector);
 
@@ -432,7 +442,8 @@ public class TestSuiteIT {
     public void testConsumerUnexpectedSubscriptionEnd() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -489,7 +500,8 @@ public class TestSuiteIT {
     public void testConsumerExpectedDisconnect() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(false, null);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -531,7 +543,8 @@ public class TestSuiteIT {
     public void testMockConsumerFailures() throws IOException, PreprocessingException, TimeoutException {
         testProvider.startService(DEFAULT_TIMEOUT);
 
-        final var injector = getConsumerInjector(true, null);
+        final var injector =
+                getConsumerInjector(true, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
         final var obs = injector.getInstance(WasRunObserver.class);
@@ -567,15 +580,18 @@ public class TestSuiteIT {
         private final Path tempDir;
         private final boolean failingTests;
         private final LocationConfig locationConfig;
+        private final String dutEpr;
 
         private MockConfiguration(
                 final CryptoSettings cryptoSettings,
                 final Path tempDir,
                 final boolean failingTests,
-                @Nullable final LocationConfig locationConfig) {
+                @Nullable final LocationConfig locationConfig,
+                final String dutEpr) {
             this.cryptoSettings = cryptoSettings;
             this.tempDir = tempDir;
             this.failingTests = failingTests;
+            this.dutEpr = dutEpr;
 
             this.locationConfig = Objects.requireNonNullElseGet(
                     locationConfig, () -> new LocationConfig(null, null, null, null, null, null));
@@ -586,7 +602,7 @@ public class TestSuiteIT {
             bind(CryptoSettings.class).toInstance(cryptoSettings);
 
             bind(TestSuiteConfig.CI_MODE, Boolean.class, true);
-            bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestSuiteConfig.CONSUMER_DEVICE_EPR, String.class, this.dutEpr);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_FACILITY, String.class, this.locationConfig.facility);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BUILDING, String.class, this.locationConfig.building);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_POINT_OF_CARE, String.class, this.locationConfig.pointOfCare);
@@ -594,7 +610,7 @@ public class TestSuiteIT {
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_ROOM, String.class, this.locationConfig.room);
             bind(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED, String.class, this.locationConfig.bed);
 
-            bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, DUT_EPR);
+            bind(TestProviderConfig.PROVIDER_DEVICE_EPR, String.class, this.dutEpr);
 
             bind(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS, String.class, "127.0.0.1");
             bind(DpwsConfig.MULTICAST_TTL, Integer.class, 128);

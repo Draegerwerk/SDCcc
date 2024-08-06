@@ -19,6 +19,7 @@ import com.draeger.medical.sdccc.configuration.TestParameterConfig;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.guice.TomlConfigParser;
+import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionMdibObserver;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -373,8 +374,26 @@ public class TestSuite {
         LOG.info("Starting TestSuite Client");
         try {
             client.startService(MAX_WAIT);
+        } catch (TimeoutException e) {
+            LOG.error("Could not start the test consumer for {}", client.getTargetEpr());
+            testRunObserver.invalidateTestRun("Could not start the test consumer", e);
+            throw new RuntimeException(e);
+        }
+
+        // register observing preconditions in test client before connecting to the target
+        // this allows us to see the initial mdib as a change
+        final var preconditions = injector.getInstance(PreconditionRegistry.class);
+        final var observingPreconditions = preconditions.getObservingPreconditions();
+        for (final var precondition : observingPreconditions) {
+            LOG.info(
+                    "Registering observing precondition in test client {}",
+                    precondition.getClass().getSimpleName());
+            client.registerMdibObserver(new ObservingPreconditionMdibObserver(precondition));
+        }
+
+        try {
             client.connect();
-        } catch (final InterceptorException | TransportException | IOException | TimeoutException e) {
+        } catch (final InterceptorException | TransportException | IOException e) {
             LOG.error("Could not connect to target device {}", client.getTargetEpr());
             testRunObserver.invalidateTestRun("Could not connect to target device", e);
             throw new RuntimeException(e);
