@@ -19,13 +19,13 @@ import kotlin.reflect.KClass
 @Singleton
 class PreconditionRegistry @Inject internal constructor(private val injector: Injector) {
 
+    private val preconditions: MutableList<Precondition> = ArrayList()
+
     /**
      * Returns all registered preconditions which are of type [Observing].
      */
     val observingPreconditions: Collection<Observing>
         get() = preconditions.filterIsInstance<Observing>()
-
-    private val preconditions: MutableList<Precondition> = ArrayList()
 
     @Suppress("TooGenericExceptionThrown") // this is an error during startup and cannot be fixed
     private fun handleRegisteringError(error: Throwable, text: String): Nothing {
