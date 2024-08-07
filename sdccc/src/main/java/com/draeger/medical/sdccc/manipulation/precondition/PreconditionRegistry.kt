@@ -82,7 +82,8 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
      */
     fun registerObservingPrecondition(precondition: KClass<out ObservingPreconditionFactory<*>>) {
         val factoryInstance = checkNotNull(precondition.objectInstance) {
-            "Factory class ${precondition.simpleName} does not provide an object instance. Ensure it is a Companion."
+            "Factory class ${precondition.simpleName ?: "null"} does not provide an object instance. " +
+                "Ensure it is a Companion."
         }
         val instance = factoryInstance.create(injector)
         if (!preconditions.contains(instance)) {
