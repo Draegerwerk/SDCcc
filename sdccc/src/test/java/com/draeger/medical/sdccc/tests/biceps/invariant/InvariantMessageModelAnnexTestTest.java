@@ -1650,6 +1650,48 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC11GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        final var secondDescrptionModification = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildAlertConditionDescriptor(
+                                        VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME),
+                                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true))));
+
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondDescrptionModification);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        testClass.testRequirementC11();
+    }
+
+    /**
      * Tests whether duplicated EpisodicAlertReports pass the test.
      *
      * @throws Exception on any exception
@@ -1832,6 +1874,35 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC12();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC12GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithComponentChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildBatteryDescriptor(BATTERY_HANDLE),
+                                buildBatteryState(BATTERY_HANDLE, ComponentActivation.STND_BY, 10L))));
+
+        final var componentReport = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.ONE, buildBatteryState(BATTERY_HANDLE, ComponentActivation.STND_BY, 10L));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithComponentChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
 
         testClass.testRequirementC12();
     }
@@ -2033,6 +2104,45 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC13();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC13GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithContextChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                                buildPatientContextState(
+                                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                                        PATIENT_CONTEXT_STATE_HANDLE,
+                                        ContextAssociation.ASSOC,
+                                        mdibBuilder.buildCodedValue("newCodedValue")))));
+
+        final var contextReport = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithContextChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
 
         testClass.testRequirementC13();
     }
@@ -2285,6 +2395,48 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC14GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithMetricChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildNumericMetricDescriptor(
+                                        NUMERIC_METRIC_HANDLE,
+                                        MetricCategory.RCMM,
+                                        MetricAvailability.CONT,
+                                        mdibBuilder.buildCodedValue("abc"),
+                                        BigDecimal.ONE),
+                                buildNumericMetricState(
+                                        NUMERIC_METRIC_HANDLE,
+                                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                                        ComponentActivation.NOT_RDY))));
+
+        final var metricReport = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithMetricChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
+
+        testClass.testRequirementC14();
+    }
+
+    /**
      * Tests whether duplicated EpisodicMetricReports pass the test.
      *
      * @throws Exception on any exception
@@ -2469,6 +2621,38 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC15();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC15GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithOperationStateChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildSetStringOperationDescriptor(
+                                        SET_STRING_OPERATION_HANDLE, "someTarget"),
+                                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS))));
+
+        final var operationalStateReport = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithOperationStateChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, operationalStateReport);
 
         testClass.testRequirementC15();
     }
