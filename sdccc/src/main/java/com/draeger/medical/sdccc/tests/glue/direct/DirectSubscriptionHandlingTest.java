@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -100,7 +101,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
     private TestClient testClient;
     private HostedServiceVerifier hostedServiceVerifier;
     private MessageGeneratingUtil messageGeneratingUtil;
-    private Manipulations manipulations;
+    private ManipulationLocker manipulationLocker;
     private WsEventingEventSinkFactory eventSinkFactory;
     private String adapterAddress;
     private NotificationSinkFactory notificationSinkFactory;
@@ -114,7 +115,7 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         final Injector riInjector = this.testClient.getInjector();
         this.hostedServiceVerifier = getInjector().getInstance(HostedServiceVerifier.class);
         this.messageGeneratingUtil = getInjector().getInstance(MessageGeneratingUtil.class);
-        this.manipulations = getInjector().getInstance(Manipulations.class);
+        this.manipulationLocker = getInjector().getInstance(ManipulationLocker.class);
         this.eventSinkFactory = riInjector.getInstance(WsEventingEventSinkFactory.class);
         this.adapterAddress = getInjector()
                 .getInstance(Key.get(String.class, Names.named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS)));
@@ -214,7 +215,10 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
                             } else {
                                 locationDetail.setRoom(ROOM1);
                             }
-                            manipulations.setLocationDetail(locationDetail);
+                            manipulationLocker.lockManipulations(
+                                    "testRequirementR00360",
+                                    Manipulations.class,
+                                    manipulations -> manipulations.setLocationDetail(locationDetail));
                         }) {
                     @Override
                     public boolean doesNotificationBodyBelongToThisReport(final Object notificationBody) {

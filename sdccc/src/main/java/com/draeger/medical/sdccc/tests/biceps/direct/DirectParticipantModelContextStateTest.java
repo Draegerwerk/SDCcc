@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
@@ -40,7 +41,7 @@ import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 public class DirectParticipantModelContextStateTest extends InjectorTestBase {
 
     private MessageGeneratingUtil messageGeneratingUtil;
-    private Manipulations manipulations;
+    private ManipulationLocker manipulationLocker;
     private TestClient testClient;
 
     @BeforeEach
@@ -48,7 +49,7 @@ public class DirectParticipantModelContextStateTest extends InjectorTestBase {
         testClient = getInjector().getInstance(TestClient.class);
         assertTrue(testClient.isClientRunning());
         this.messageGeneratingUtil = getInjector().getInstance(MessageGeneratingUtil.class);
-        this.manipulations = getInjector().getInstance(Manipulations.class);
+        this.manipulationLocker = getInjector().getInstance(ManipulationLocker.class);
     }
 
     @Test
@@ -89,9 +90,10 @@ public class DirectParticipantModelContextStateTest extends InjectorTestBase {
         if (contextDescriptor == null) {
             return 0;
         }
-        final var newHandle = manipulations
-                .createContextStateWithAssociation(contextDescriptor.getHandle(), ContextAssociation.ASSOC)
-                .getResponse();
+        final var newHandle = manipulationLocker.lockManipulations(
+                "testRequirement0125", Manipulations.class, manipulations -> manipulations
+                        .createContextStateWithAssociation(contextDescriptor.getHandle(), ContextAssociation.ASSOC)
+                        .getResponse());
         assertTrue(
                 newHandle.isPresent(),
                 String.format("Manipulation was unsuccessful for handle %s", contextDescriptor.getHandle()));
