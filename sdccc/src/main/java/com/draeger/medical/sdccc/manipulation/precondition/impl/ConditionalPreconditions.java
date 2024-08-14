@@ -7,7 +7,9 @@
 
 package com.draeger.medical.sdccc.manipulation.precondition.impl;
 
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
+import com.draeger.medical.sdccc.manipulation.precondition.LockingPrecondition;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -216,7 +218,7 @@ public class ConditionalPreconditions {
     /**
      * Precondition which checks whether any Hello message has been received, triggering a Hello message otherwise.
      */
-    public static class HelloMessagePrecondition extends SimplePrecondition {
+    public static class HelloMessagePrecondition extends SimplePrecondition implements LockingPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(HelloMessagePrecondition.class);
 
@@ -238,8 +240,11 @@ public class ConditionalPreconditions {
         }
 
         static boolean manipulation(final Injector injector) {
-            final var manipulations = injector.getInstance(Manipulations.class);
-            final var result = manipulations.sendHello().getResult();
+            final var manipulationLock = injector.getInstance(ManipulationLocker.class);
+
+            final ResponseTypes.Result result = manipulationLock.lockManipulations(
+                    "HelloMessagePrecondition", Manipulations.class, mani -> mani.sendHello()
+                            .getResult());
             LOG.info("Manipulation to send Hello message was {}", result);
             return result == ResponseTypes.Result.RESULT_SUCCESS;
         }

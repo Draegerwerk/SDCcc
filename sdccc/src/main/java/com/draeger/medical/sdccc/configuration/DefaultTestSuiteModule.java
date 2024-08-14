@@ -9,6 +9,7 @@ package com.draeger.medical.sdccc.configuration;
 
 import com.draeger.medical.sdccc.manipulation.GRpcManipulations;
 import com.draeger.medical.sdccc.manipulation.GsonManipulationSerializer;
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.ManipulationSerializer;
 import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.draeger.medical.sdccc.manipulation.guice.InteractionFactory;
@@ -50,5 +51,6 @@ public class DefaultTestSuiteModule extends AbstractModule {
         bind(Manipulations.class).to(GRpcManipulations.class).in(Singleton.class);
         bind(LocalAddressResolver.class).to(LocalAddressResolverImpl.class).in(Singleton.class);
         bind(ManipulationSerializer.class).to(GsonManipulationSerializer.class).in(Singleton.class);
+        bind(ManipulationLocker.class).asEagerSingleton();
     }
 }

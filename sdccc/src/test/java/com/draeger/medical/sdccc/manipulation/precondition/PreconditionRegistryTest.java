@@ -15,7 +15,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.google.inject.Injector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,10 +31,15 @@ import org.junit.jupiter.api.Test;
  */
 public class PreconditionRegistryTest {
 
+    private Injector mockInjector;
+
     @BeforeEach
     void setUp() {
         PreconditionUtil.MockPrecondition.reset();
         PreconditionUtil.MockManipulation.reset();
+        mockInjector = mock(Injector.class);
+        final ManipulationLocker locker = new ManipulationLocker(mockInjector);
+        when(mockInjector.getInstance(ManipulationLocker.class)).thenReturn(locker);
     }
 
     /**
@@ -43,7 +50,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests registering a complex interaction and whether it's prompted for")
     public void testPreconditionInteractionRegistrationAndPrompt() throws Exception {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var preconditionWasCalled = new AtomicBoolean(false);
@@ -74,7 +80,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether registering the same complex interaction thrice only prompts for it once")
     public void testPreconditionInteractionRegisteredOnlyOnce() throws Exception {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var preconditionWasCalled = new AtomicInteger(0);
@@ -98,7 +103,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether an exception during registration causes a RuntimeException and stops the test run")
     public void testPreconditionInteractionRegistrationException() {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var mockInteractionWasCalled = new AtomicInteger(0);
@@ -121,7 +125,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests registering a manipulation and whether it's prompted for")
     public void testManipulationInteractionRegistrationAndPrompt() throws Exception {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var manipulationWasCalled = new AtomicBoolean(false);
@@ -144,7 +147,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether registering the same manipulation thrice only prompts for it once")
     public void testManipulationInteractionRegisteredOnlyOnce() throws Exception {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var manipulationWasCalled = new AtomicInteger(0);
@@ -167,7 +169,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether an exception during registration causes a RuntimeException and stops the test run")
     public void testManipulationInteractionRegistrationException() {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final var mockInteractionWasCalled = new AtomicInteger(0);
@@ -184,7 +185,6 @@ public class PreconditionRegistryTest {
 
     @Test
     void testRegisteringObservingPreconditions() throws Exception {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
@@ -211,7 +211,6 @@ public class PreconditionRegistryTest {
 
     @Test
     void testRegisteringObservingPreconditionsFailsWhenNoObjectInstanceAvailable() {
-        final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
         final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);

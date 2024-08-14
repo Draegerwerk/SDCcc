@@ -19,6 +19,7 @@ import com.draeger.medical.sdccc.configuration.TestParameterConfig;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.guice.TomlConfigParser;
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionMdibObserver;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
@@ -230,12 +231,17 @@ public class TestSuite {
             final Launcher invariantTestLauncher,
             final TestPlan invariantTestPlan,
             final SummaryGeneratingListener invariantSummary) {
-        LOG.info("Disconnecting TestSuite Client");
-        try {
-            injector.getInstance(TestClient.class).disconnect();
-        } catch (final TimeoutException e) {
-            testRunObserver.invalidateTestRun("Could not stop the test client", e);
-        }
+        // acquire ManipulationLocker lock to ensure we don't lose any calls
+        final var manipulationLocker = injector.getInstance(ManipulationLocker.class);
+        manipulationLocker.lock("TestSuite.phase4", () -> {
+            LOG.info("Disconnecting TestSuite Client");
+            try {
+                injector.getInstance(TestClient.class).disconnect();
+            } catch (final TimeoutException e) {
+                testRunObserver.invalidateTestRun("Could not stop the test client", e);
+            }
+            return null;
+        });
 
         // flush all data so invariant tests run on most current data
         injector.getInstance(MessageStorage.class).flush();

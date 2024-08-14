@@ -6,6 +6,7 @@
  */
 package com.draeger.medical.sdccc.manipulation.precondition
 
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker
 import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Singleton
@@ -99,7 +100,23 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
     fun runPreconditions() {
         for (precondition in preconditions) {
             logger.info { "Running precondition ${precondition.javaClass.simpleName}" }
-            precondition.verifyPrecondition(injector)
+            // check if the precondition claims the lock for itself
+            if (precondition.javaClass.interfaces.contains(LockingPrecondition::class.java)) {
+                // a LockingPrecondition promises to lock its critical sections as needed, no general lock needed
+                precondition.verifyPrecondition(injector)
+            } else {
+                // legacy preconditions make no statements about locks,
+                // so we unconditionally lock during their execution
+                logger.info {
+                    "Precondition ${precondition.javaClass.simpleName} does not implement" +
+                        " ${LockingPrecondition::class.java.simpleName}, locking ManipulationLocker"
+                }
+                injector.getInstance(ManipulationLocker::class.java).lock(
+                    "PreconditionRegistry.runPreconditions - ${precondition.javaClass.simpleName}"
+                ) {
+                    precondition.verifyPrecondition(injector)
+                }
+            }
         }
     }
 
