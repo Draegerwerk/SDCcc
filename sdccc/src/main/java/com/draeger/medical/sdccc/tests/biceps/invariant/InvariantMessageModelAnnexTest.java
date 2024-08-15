@@ -50,7 +50,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
-import org.somda.sdc.biceps.model.message.AbstractAlertReport;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationType;
@@ -698,10 +697,10 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"
             + " EpisodicAlertReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicAlertReportPrecondition.class})
-    void testRequirementC11() throws NoTestData, IOException {
-        final GetStatesOfReportParts getStatesOfReportParts = report -> ((AbstractAlertReport) report)
+    void testRequirementC11() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicAlertReport) report)
                 .getReportPart().stream()
-                        .map(AbstractAlertReport.ReportPart::getAlertState)
+                        .map(EpisodicAlertReport.ReportPart::getAlertState)
                         .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(EpisodicAlertReport.class, AbstractAlertState.class, getStatesOfReportParts);
@@ -714,7 +713,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicComponentReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
-    void testRequirementC12() throws NoTestData, IOException {
+    void testRequirementC12() throws NoTestData {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicComponentReport) report)
                 .getReportPart().stream()
                         .map(EpisodicComponentReport.ReportPart::getComponentState)
@@ -731,7 +730,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicContextReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
-    void testRequirementC13() throws NoTestData, IOException {
+    void testRequirementC13() throws NoTestData {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicContextReport) report)
                 .getReportPart().stream()
                         .map(EpisodicContextReport.ReportPart::getContextState)
@@ -746,7 +745,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
             + " EpisodicMetricReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicMetricReportPrecondition.class})
-    void testRequirementC14() throws NoTestData, IOException {
+    void testRequirementC14() throws NoTestData {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicMetricReport) report)
                 .getReportPart().stream()
                         .map(EpisodicMetricReport.ReportPart::getMetricState)
@@ -762,7 +761,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicOperationalStateReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.class})
-    void testRequirementC15() throws NoTestData, IOException {
+    void testRequirementC15() throws NoTestData {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicOperationalStateReport) report)
                 .getReportPart().stream()
                         .map(EpisodicOperationalStateReport.ReportPart::getOperationState)
