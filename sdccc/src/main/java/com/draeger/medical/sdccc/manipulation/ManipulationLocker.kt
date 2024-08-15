@@ -4,6 +4,8 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import com.google.inject.Singleton
 import org.apache.logging.log4j.kotlin.Logging
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -24,11 +26,15 @@ class ManipulationLocker @Inject constructor(
         callerName: String,
         supplier: () -> T
     ): T {
+        val start = Instant.now()
         try {
             internalLock.lock()
             logger.debug { "Lock was granted for $callerName, executing lambda" }
             return supplier()
         } finally {
+            val finish = Instant.now()
+            val elapsed = Duration.between(start, finish)
+            logger.debug { "Releasing lock for $callerName after $elapsed" }
             internalLock.unlock()
         }
     }
@@ -48,6 +54,7 @@ class ManipulationLocker @Inject constructor(
             logger.debug { "Lock was granted for $callerName, executing lambda" }
             return supplier(requestedManipulations)
         } finally {
+            logger.debug { "Lock was released for $callerName" }
             internalLock.unlock()
         }
     }
