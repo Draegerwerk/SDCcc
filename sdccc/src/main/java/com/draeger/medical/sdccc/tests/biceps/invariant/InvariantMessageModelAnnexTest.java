@@ -812,18 +812,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             final AtomicInteger acceptableSequenceSeen)
             throws PreprocessingException {
 
-        RemoteMdibAccess manualMdibAccess = mdibHistorian.createNewStorage(sequenceId);
         RemoteMdibAccess mdibAccess;
+        try (final var history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+            mdibAccess = history.next();
 
-        // get relevant reports
-        final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(manualMdibAccess.getMdibVersion());
-        try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-            try (final var history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                mdibAccess = history.next();
-
+            final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion());
+            try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
                 for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
                     final AbstractReport report = iterator.next();
-                    manualMdibAccess = mdibHistorian.applyReportOnStorage(manualMdibAccess, report);
 
                     if (reportClass.isInstance(report)) {
                         acceptableSequenceSeen.incrementAndGet();
@@ -833,45 +829,33 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             mdibAccess = history.next();
                         }
 
-                        // get every state of the report
                         final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
                         for (var reportPart : reportParts) {
                             for (var state : reportPart) {
                                 final Optional<? extends AbstractState> stateBeforeReport;
-                                final Optional<? extends AbstractState> stateAfterReport;
-                                // multi state need a different handling
+
                                 if (state instanceof AbstractMultiState multiState) {
                                     stateBeforeReport =
                                             mdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
-                                    stateAfterReport =
-                                            manualMdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
 
-                                    if (!(stateBeforeReport.isPresent() && stateAfterReport.isPresent())) {
-                                        // when not both AbstractMultiStates are present it must be inserted.
-                                        assertTrue(
-                                                stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
-                                                String.format(STATE_ABSENT, state.getDescriptorHandle()));
+                                    if (stateBeforeReport.isEmpty()) {
+                                        // when stateBeforeReport is not present, the AbstractMultiState was inserted.
                                         continue;
                                     }
                                 } else {
                                     stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
-                                    stateAfterReport =
-                                            manualMdibAccess.getState(state.getDescriptorHandle(), stateClass);
-                                    assertTrue(
-                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                            String.format(STATE_ABSENT, state.getDescriptorHandle()));
                                 }
                                 assertNotEquals(
-                                        stateAfterReport.orElseThrow(),
+                                        state,
                                         stateBeforeReport.orElseThrow(),
                                         String.format(STATE_UNCHANGED, state.getDescriptorHandle()));
                             }
                         }
                     }
                 }
-            } catch (ReportProcessingException e) {
-                fail(e);
             }
+        } catch (ReportProcessingException e) {
+            fail(e);
         }
     }
 
