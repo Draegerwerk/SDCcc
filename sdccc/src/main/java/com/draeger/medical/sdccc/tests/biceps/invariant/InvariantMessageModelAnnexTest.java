@@ -30,10 +30,11 @@ import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -101,27 +103,27 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
     @Test
     @DisplayName("A SERVICE PROVIDER SHALL include the parent descriptor handle in "
-            + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
-            + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
-            + "is “Crt” (Created).")
+        + "msg:DescriptionModificationReport/msg:ReportPart/@ParentDescriptor for any Descriptor that is not a "
+        + "pm:MdsDescriptor, if msg:DescriptionModificationReport/msg:ReportPart/@ModificationType "
+        + "is “Crt” (Created).")
     @TestIdentifier(EnabledTestConfig.BICEPS_R0055_0)
     @TestDescription("Retrieves all DescriptionModificationReports seen during the TestRun and checks for each "
-            + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
-            + "of its ReportPart is set.")
+        + "created AbstractDescriptor which is not an MdsDescriptor that the attribute @ParentDescriptor "
+        + "of its ReportPart is set.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationCrtPrecondition.class)
     void testRequirementR00550() throws NoTestData {
         final var acceptableReportPartSeen = new AtomicInteger(0);
 
         // get DescriptionModification reports
         try (final var reports =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             for (final Iterator<MessageContent> iterator = reports.getStream().iterator(); iterator.hasNext(); ) {
 
                 final MessageContent messageContent = iterator.next();
                 final SoapMessage soapMessage = marshalling.unmarshal(
-                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                 final Optional<DescriptionModificationReport> reportOpt =
-                        soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
+                    soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                 final DescriptionModificationReport descriptionModificationReport = reportOpt.orElseThrow();
 
                 for (var reportPart : descriptionModificationReport.getReportPart()) {
@@ -132,14 +134,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             if (!(createdDescriptor instanceof MdsDescriptor)) {
                                 final String parentDescriptor = reportPart.getParentDescriptor();
                                 assertTrue(
-                                        parentDescriptor != null && !parentDescriptor.isBlank(),
-                                        String.format(
-                                                "msg:DescriptionModificationReport/msg:ReportPart/"
-                                                        + "@ParentDescriptor attribute is not set for a ReportPart "
-                                                        + "with @ModificationType = \"Crt\" that contains "
-                                                        + "AbstractDescriptors that are not MdsDescriptors"
-                                                        + "(for instance: %s).",
-                                                createdDescriptor.getHandle()));
+                                    parentDescriptor != null && !parentDescriptor.isBlank(),
+                                    String.format(
+                                        "msg:DescriptionModificationReport/msg:ReportPart/"
+                                            + "@ParentDescriptor attribute is not set for a ReportPart "
+                                            + "with @ModificationType = \"Crt\" that contains "
+                                            + "AbstractDescriptors that are not MdsDescriptors"
+                                            + "(for instance: %s).",
+                                        createdDescriptor.getHandle()));
                             }
                         }
                     }
@@ -150,20 +152,20 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         }
 
         assertTestData(
-                acceptableReportPartSeen.get(),
-                "No DescriptionModificationReport with ReportParts with "
-                        + "ModificationType=Crt seen during test run, test failed.");
+            acceptableReportPartSeen.get(),
+            "No DescriptionModificationReport with ReportParts with "
+                + "ModificationType=Crt seen during test run, test failed.");
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " for each AbstractDescriptor contained in a DescriptionModificationReport"
-            + " that it was inserted or deleted or updated by changing" + " at least one child or attribute.")
+        + " for each AbstractDescriptor contained in a DescriptionModificationReport"
+        + " that it was inserted or deleted or updated by changing" + " at least one child or attribute.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationUptPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+            messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
@@ -193,48 +195,48 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                                 for (var modifiedDescriptor : reportPart.getDescriptor()) {
 
                                     final var descriptorBeforeReportOpt =
-                                            first.getDescriptor(modifiedDescriptor.getHandle());
+                                        first.getDescriptor(modifiedDescriptor.getHandle());
                                     final var descriptorAfterReportOpt =
-                                            second.getDescriptor(modifiedDescriptor.getHandle());
+                                        second.getDescriptor(modifiedDescriptor.getHandle());
 
                                     final var modificationType = ImpliedValueUtil.getModificationType(reportPart);
                                     if (modificationType.equals(DescriptionModificationType.UPT)) {
                                         assertTrue(
-                                                descriptorBeforeReportOpt.isPresent()
-                                                        && descriptorAfterReportOpt.isPresent(),
-                                                String.format(
-                                                        "The descriptor with handle %s is not present",
-                                                        modifiedDescriptor.getHandle()));
+                                            descriptorBeforeReportOpt.isPresent()
+                                                && descriptorAfterReportOpt.isPresent(),
+                                            String.format(
+                                                "The descriptor with handle %s is not present",
+                                                modifiedDescriptor.getHandle()));
 
                                         assertNotEquals(
-                                                descriptorAfterReportOpt.orElseThrow(),
-                                                descriptorBeforeReportOpt.orElseThrow(),
-                                                String.format(
-                                                        "The descriptor with the handle %s from the report has not changed",
-                                                        modifiedDescriptor.getHandle()));
+                                            descriptorAfterReportOpt.orElseThrow(),
+                                            descriptorBeforeReportOpt.orElseThrow(),
+                                            String.format(
+                                                "The descriptor with the handle %s from the report has not changed",
+                                                modifiedDescriptor.getHandle()));
 
                                     } else if (modificationType.equals(DescriptionModificationType.CRT)) {
                                         assertTrue(
-                                                descriptorBeforeReportOpt.isEmpty()
-                                                        && descriptorAfterReportOpt.isPresent(),
-                                                String.format(
-                                                        "The descriptor with handle %s is missing before applying the report:"
-                                                                + " %s and is present after applying the report: %s,"
-                                                                + " for modification type create",
-                                                        modifiedDescriptor.getHandle(),
-                                                        descriptorBeforeReportOpt.isEmpty(),
-                                                        descriptorAfterReportOpt.isPresent()));
+                                            descriptorBeforeReportOpt.isEmpty()
+                                                && descriptorAfterReportOpt.isPresent(),
+                                            String.format(
+                                                "The descriptor with handle %s is missing before applying the report:"
+                                                    + " %s and is present after applying the report: %s,"
+                                                    + " for modification type create",
+                                                modifiedDescriptor.getHandle(),
+                                                descriptorBeforeReportOpt.isEmpty(),
+                                                descriptorAfterReportOpt.isPresent()));
                                     } else {
                                         assertTrue(
-                                                descriptorBeforeReportOpt.isPresent()
-                                                        && descriptorAfterReportOpt.isEmpty(),
-                                                String.format(
-                                                        "The descriptor with handle %s is present before applying the report:"
-                                                                + " %s and is missing after applying the report: %s,"
-                                                                + " for modification type delete",
-                                                        modifiedDescriptor.getHandle(),
-                                                        descriptorBeforeReportOpt.isPresent(),
-                                                        descriptorAfterReportOpt.isEmpty()));
+                                            descriptorBeforeReportOpt.isPresent()
+                                                && descriptorAfterReportOpt.isEmpty(),
+                                            String.format(
+                                                "The descriptor with handle %s is present before applying the report:"
+                                                    + " %s and is missing after applying the report: %s,"
+                                                    + " for modification type delete",
+                                                modifiedDescriptor.getHandle(),
+                                                descriptorBeforeReportOpt.isPresent(),
+                                                descriptorAfterReportOpt.isEmpty()));
                                     }
                                 }
                             }
@@ -250,65 +252,65 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
         }
         assertTestData(
-                acceptableSequenceSeen.get(), "No DescriptionModificationReport seen during test run, test failed.");
+            acceptableSequenceSeen.get(), "No DescriptionModificationReport seen during test run, test failed.");
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C7)
     @TestDescription("Checks all DescriptionModificationReports seen during the TestRun for ReportParts whose "
-            + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
-            + "@ParentDescriptor attribute set.")
+        + "./Descriptor references an MdsDescriptor and ensures that these ReportParts do not have the "
+        + "@ParentDescriptor attribute set.")
     @RequirePrecondition(
-            simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
+        simplePreconditions = ConditionalPreconditions.DescriptionModificationMdsDescriptorPrecondition.class)
     void testRequirementC7() throws NoTestData, IOException, MarshallingException {
         final var acceptableReportsSeen = new AtomicInteger(0);
 
         try (final MessageStorage.GetterResult<MessageContent> descriptionModificationReports =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             for (MessageContent messageContent :
-                    descriptionModificationReports.getStream().toList()) {
+                descriptionModificationReports.getStream().toList()) {
                 final SoapMessage soapMessage = marshalling.unmarshal(
-                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                    new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                 final DescriptionModificationReport descriptionModificationReport = soapUtil.getBody(
-                                soapMessage, DescriptionModificationReport.class)
-                        .orElseThrow();
+                        soapMessage, DescriptionModificationReport.class)
+                    .orElseThrow();
 
                 for (DescriptionModificationReport.ReportPart reportPart :
-                        descriptionModificationReport.getReportPart()) {
+                    descriptionModificationReport.getReportPart()) {
                     if (reportPart.getDescriptor().stream().anyMatch(MdsDescriptor.class::isInstance)) {
                         acceptableReportsSeen.incrementAndGet();
                         final String parentDescriptor = reportPart.getParentDescriptor();
                         assertTrue(
-                                parentDescriptor == null || parentDescriptor.isBlank(),
-                                String.format(
-                                        "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
-                                                + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
-                                        parentDescriptor));
+                            parentDescriptor == null || parentDescriptor.isBlank(),
+                            String.format(
+                                "Encountered a DescriptionModificationReport/ReportPart whose Descriptor references an "
+                                    + "MdsDescriptor, but whose @ParentDescriptor is set to '%s'.",
+                                parentDescriptor));
                     }
                 }
             }
         }
 
         assertTestData(
-                acceptableReportsSeen.get(),
-                "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
+            acceptableReportsSeen.get(),
+            "No DescriptionModificationReport containing MdsDescriptors seen during test run, test failed.");
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5024)
     @TestDescription("Retrieves each report part from each description modification report seen during the test run and"
-            + " checks that each descriptor does not contain nested descriptors.")
+        + " checks that each descriptor does not contain nested descriptors.")
     @RequirePrecondition(
-            simplePreconditions = {ConditionalPreconditions.TriggerDescriptionModificationReportPrecondition.class})
+        simplePreconditions = {ConditionalPreconditions.TriggerDescriptionModificationReportPrecondition.class})
     void testRequirementR5024() throws NoTestData, IOException {
         try (final var messages =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             final var descriptorsSeen = new AtomicInteger(0);
 
             messages.getStream().forEach(messageContent -> {
                 try {
                     final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                     if (reportOpt.isPresent()) {
                         for (var part : reportOpt.orElseThrow().getReportPart()) {
@@ -324,51 +326,51 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
 
             assertTestData(
-                    descriptorsSeen.get(),
-                    "No Descriptors in DescriptionModificationReports seen during test run, test failed.");
+                descriptorsSeen.get(),
+                "No Descriptors in DescriptionModificationReports seen during test run, test failed.");
         }
     }
 
     @Test
     @DisplayName("Biceps:R5025_0: A SERVICE PROVIDER shall order msg:DescriptionModificationReport/msg:ReportPart"
-            + " elements in a way the report parts containing parent descriptors appear before report parts containing"
-            + " their child descriptors.")
+        + " elements in a way the report parts containing parent descriptors appear before report parts containing"
+        + " their child descriptors.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R5025_0)
     @TestDescription("For every DescriptionModificationReport received from the DUT, and for all parent-child"
-            + " relationships between the elements contained in the report, checks that the reportPart containing"
-            + " the parent comes before the reportPart containing the child.")
+        + " relationships between the elements contained in the report, checks that the reportPart containing"
+        + " the parent comes before the reportPart containing the child.")
     @RequirePrecondition(
-            manipulationPreconditions =
-                    ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
+        manipulationPreconditions =
+            ManipulationPreconditions.DescriptionModificationAllWithParentChildRelationshipPrecondition.class)
     void testRequirementR5025() throws NoTestData, IOException {
         try (final var messages =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             final var descriptorsSeen = new AtomicInteger(0);
 
             messages.getStream().forEach(messageContent -> {
                 try {
                     final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                     reportOpt.ifPresent(descriptionModificationReport ->
-                            checkOrderOfReportParts(descriptionModificationReport, descriptorsSeen));
+                        checkOrderOfReportParts(descriptionModificationReport, descriptorsSeen));
                 } catch (MarshallingException e) {
                     fail("Error unmarshalling MessageContent " + e);
                 }
             });
 
             assertTestData(
-                    descriptorsSeen.get(),
-                    "No DescriptionModificationReports with Parent-Child Relationships between Descriptors "
-                            + " seen during test run, test failed."
-                            + " Please make sure that the device either supports descriptor updates or that the list"
-                            + " of removable descriptors returned by the getRemovableDescriptors() manipulation"
-                            + " includes at least one descriptor that has child descriptors.");
+                descriptorsSeen.get(),
+                "No DescriptionModificationReports with Parent-Child Relationships between Descriptors "
+                    + " seen during test run, test failed."
+                    + " Please make sure that the device either supports descriptor updates or that the list"
+                    + " of removable descriptors returned by the getRemovableDescriptors() manipulation"
+                    + " includes at least one descriptor that has child descriptors.");
         }
     }
 
     private void checkOrderOfReportParts(
-            final DescriptionModificationReport report, final AtomicInteger descriptorsSeen) {
+        final DescriptionModificationReport report, final AtomicInteger descriptorsSeen) {
         final var modifiedParentHandles = new HashMap<String, Pair<Integer, String>>();
         final List<DescriptionModificationReport.ReportPart> reportParts = report.getReportPart();
         for (var i = 0; i < reportParts.size(); i++) {
@@ -392,11 +394,11 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                     final Integer indexOfFirstChildUpdate = pair.getLeft();
                     final String childHandle = pair.getRight();
                     assertTrue(
-                            indexOfParentUpdate < indexOfFirstChildUpdate,
-                            String.format(
-                                    "reportPart containing child descriptor '%s' is listed before the reportPart"
-                                            + " containing its parent descriptor '%s' in a DescriptionModificationReport.",
-                                    childHandle, key));
+                        indexOfParentUpdate < indexOfFirstChildUpdate,
+                        String.format(
+                            "reportPart containing child descriptor '%s' is listed before the reportPart"
+                                + " containing its parent descriptor '%s' in a DescriptionModificationReport.",
+                            childHandle, key));
                     descriptorsSeen.incrementAndGet();
                 }
             }
@@ -409,62 +411,62 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
         if (descriptor instanceof AlertSystemDescriptor alertSystem) {
             // verify that the alarm system has no alarm signals or alarm conditions
             assertTrue(
-                    alertSystem.getAlertCondition().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertCondition()));
+                alertSystem.getAlertCondition().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertCondition()));
             assertTrue(
-                    alertSystem.getAlertSignal().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertSignal()));
+                alertSystem.getAlertSignal().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, alertSystem.getAlertSignal()));
         } else if (descriptor instanceof ChannelDescriptor channel) {
             // verify that the channel has no metrics
             assertTrue(
-                    channel.getMetric().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, channel.getMetric()));
+                channel.getMetric().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, channel.getMetric()));
         } else if (descriptor instanceof MdsDescriptor mds) {
             // verify that the mds has no alert system, sco, system context, clock, batteries or vmds
             assertNull(
-                    mds.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, mds.getAlertSystem()));
+                mds.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, mds.getAlertSystem()));
             assertNull(mds.getSco(), String.format(errorMsg, descriptor.getClass(), handle, mds.getSco()));
             assertNull(
-                    mds.getSystemContext(),
-                    String.format(errorMsg, descriptor.getClass(), handle, mds.getSystemContext()));
+                mds.getSystemContext(),
+                String.format(errorMsg, descriptor.getClass(), handle, mds.getSystemContext()));
             assertNull(mds.getClock(), String.format(errorMsg, descriptor.getClass(), handle, mds.getClock()));
             assertTrue(
-                    mds.getBattery().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, mds.getBattery()));
+                mds.getBattery().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, mds.getBattery()));
             assertTrue(mds.getVmd().isEmpty(), String.format(errorMsg, descriptor.getClass(), handle, mds.getVmd()));
         } else if (descriptor instanceof ScoDescriptor sco) {
             // verify that the sco has no operations
             assertTrue(
-                    sco.getOperation().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, sco.getOperation()));
+                sco.getOperation().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, sco.getOperation()));
         } else if (descriptor instanceof SystemContextDescriptor systemContext) {
             // verify that the system context has no patient and location context and no ensemble, operator
             // workflow and mean contexts
             assertNull(
-                    systemContext.getPatientContext(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getPatientContext()));
+                systemContext.getPatientContext(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getPatientContext()));
             assertNull(
-                    systemContext.getLocationContext(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getLocationContext()));
+                systemContext.getLocationContext(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getLocationContext()));
             assertTrue(
-                    systemContext.getEnsembleContext().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getEnsembleContext()));
+                systemContext.getEnsembleContext().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getEnsembleContext()));
             assertTrue(
-                    systemContext.getOperatorContext().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getOperatorContext()));
+                systemContext.getOperatorContext().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getOperatorContext()));
             assertTrue(
-                    systemContext.getWorkflowContext().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getWorkflowContext()));
+                systemContext.getWorkflowContext().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getWorkflowContext()));
             assertTrue(
-                    systemContext.getMeansContext().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, systemContext.getMeansContext()));
+                systemContext.getMeansContext().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, systemContext.getMeansContext()));
         } else if (descriptor instanceof VmdDescriptor vmd) {
             // verify that the vmd has no channels, vmd and sco
             assertTrue(
-                    vmd.getChannel().isEmpty(),
-                    String.format(errorMsg, descriptor.getClass(), handle, vmd.getChannel()));
+                vmd.getChannel().isEmpty(),
+                String.format(errorMsg, descriptor.getClass(), handle, vmd.getChannel()));
             assertNull(
-                    vmd.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, vmd.getAlertSystem()));
+                vmd.getAlertSystem(), String.format(errorMsg, descriptor.getClass(), handle, vmd.getAlertSystem()));
             assertNull(vmd.getSco(), String.format(errorMsg, descriptor.getClass(), handle, vmd.getSco()));
         }
     }
@@ -473,12 +475,12 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @DisplayName("A SERVICE PROVIDER shall not delete a parent descriptor when it contains child descriptors.")
     @TestIdentifier(EnabledTestConfig.BICEPS_R5046_0)
     @TestDescription("Starting from the initially retrieved mdib, applies each report to the mdib and checks that each"
-            + " descriptor in each description modification report part with modification type del does not contain any"
-            + " child descriptors.")
+        + " descriptor in each description modification report part with modification type del does not contain any"
+        + " child descriptors.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationDelPrecondition.class)
     void testRequirementR50460() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+            messageStorage, getInjector().getInstance(TestRunObserver.class));
         final var acceptableSequenceSeen = new AtomicInteger(0);
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
@@ -502,14 +504,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                                     for (var descriptor : part.getDescriptor()) {
                                         final var entity = mdib.getEntity(descriptor.getHandle());
                                         assertTrue(
-                                                entity.isPresent()
-                                                        && entity.orElseThrow()
-                                                                .getChildren()
-                                                                .isEmpty(),
-                                                String.format(
-                                                        "The descriptor with the handle %s still has following child descriptors %s.",
-                                                        entity.orElseThrow().getHandle(),
-                                                        entity.orElseThrow().getChildren()));
+                                            entity.isPresent()
+                                                && entity.orElseThrow()
+                                                .getChildren()
+                                                .isEmpty(),
+                                            String.format(
+                                                "The descriptor with the handle %s still has following child descriptors %s.",
+                                                entity.orElseThrow().getHandle(),
+                                                entity.orElseThrow().getChildren()));
                                     }
                                 }
                             }
@@ -527,121 +529,121 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5051)
     @TestDescription("Retrieves each report part with modification type crt from each description modification report"
-            + " seen during the test run, and compares the descriptor version from each state to the descriptor version"
-            + " of the respective descriptor.")
+        + " seen during the test run, and compares the descriptor version from each state to the descriptor version"
+        + " of the respective descriptor.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationCrtPrecondition.class})
     void testRequirementR5051() throws NoTestData, IOException {
         try (final var messages =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
 
             final var acceptableSequenceSeen = new AtomicInteger(0);
             final var impliedValueMap = new HashMap<String, InitialImpliedValue>();
             messages.getStream().forEach(messageContent -> {
                 try {
                     final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                     final var crtReportParts = reportOpt.orElseThrow().getReportPart().stream()
-                            .filter(part ->
-                                    ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.CRT))
-                            .toList();
+                        .filter(part ->
+                            ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.CRT))
+                        .toList();
                     for (var part : crtReportParts) {
                         for (var state : part.getState()) {
                             acceptableSequenceSeen.incrementAndGet();
                             final var handle = state.getDescriptorHandle();
                             final var descriptorVersion = ImpliedValueUtil.getStateDescriptorVersion(
-                                    state,
-                                    impliedValueMap.computeIfAbsent(
-                                            reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
+                                state,
+                                impliedValueMap.computeIfAbsent(
+                                    reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
                             final var descriptor = part.getDescriptor().stream()
-                                    .filter(abstractDescriptor ->
-                                            abstractDescriptor.getHandle().equals(handle))
-                                    .findFirst();
+                                .filter(abstractDescriptor ->
+                                    abstractDescriptor.getHandle().equals(handle))
+                                .findFirst();
                             assertTrue(
-                                    descriptor.isPresent(),
-                                    String.format("No matching descriptor for handle %s found.", handle));
+                                descriptor.isPresent(),
+                                String.format("No matching descriptor for handle %s found.", handle));
                             final var descriptorsDescriptorVersion = ImpliedValueUtil.getDescriptorVersion(
-                                    descriptor.orElseThrow(),
-                                    impliedValueMap.computeIfAbsent(
-                                            reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
+                                descriptor.orElseThrow(),
+                                impliedValueMap.computeIfAbsent(
+                                    reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
                             assertEquals(
-                                    descriptorsDescriptorVersion,
-                                    descriptorVersion,
-                                    String.format(
-                                            "The descriptor version of state is %s, but should be %s, for %s.",
-                                            descriptorVersion, descriptorsDescriptorVersion, handle));
+                                descriptorsDescriptorVersion,
+                                descriptorVersion,
+                                String.format(
+                                    "The descriptor version of state is %s, but should be %s, for %s.",
+                                    descriptorVersion, descriptorsDescriptorVersion, handle));
                         }
                     }
                 } catch (MarshallingException e) {
                     fail("Error unmarshalling MessageContent " + e);
                 } catch (InitialImpliedValueException e) {
                     fail(
-                            "The descriptor version was an implied value, but was not allowed to be one."
-                                    + " It occurred previously without an implied value.",
-                            e);
+                        "The descriptor version was an implied value, but was not allowed to be one."
+                            + " It occurred previously without an implied value.",
+                        e);
                 }
             });
 
             assertTestData(
-                    acceptableSequenceSeen.get(),
-                    "No report parts with description modification type crt seen during test run, test failed");
+                acceptableSequenceSeen.get(),
+                "No report parts with description modification type crt seen during test run, test failed");
         }
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5052)
     @TestDescription("Retrieves every report part with modification type upt from every description modification report"
-            + " seen during the test run and compares the descriptor version from each state with the descriptor version"
-            + " of their descriptor.")
+        + " seen during the test run and compares the descriptor version from each state with the descriptor version"
+        + " of their descriptor.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationUptPrecondition.class})
     void testRequirementR5052() throws NoTestData, IOException {
         try (final var messages =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             final var acceptableSequenceSeen = new AtomicInteger(0);
 
             final var impliedValueMap = new HashMap<Object, InitialImpliedValue>();
             messages.getStream().forEach(messageContent -> {
                 try {
                     final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                     final var uptReportParts = reportOpt.orElseThrow().getReportPart().stream()
-                            .filter(part ->
-                                    ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.UPT))
-                            .toList();
+                        .filter(part ->
+                            ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.UPT))
+                        .toList();
                     for (var part : uptReportParts) {
                         acceptableSequenceSeen.incrementAndGet();
                         for (var state : part.getState()) {
                             final var handle = state.getDescriptorHandle();
                             final var descriptorVersion = ImpliedValueUtil.getStateDescriptorVersion(
-                                    state,
-                                    impliedValueMap.computeIfAbsent(
-                                            reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
+                                state,
+                                impliedValueMap.computeIfAbsent(
+                                    reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
                             final var descriptor = part.getDescriptor().stream()
-                                    .filter(abstractDescriptor ->
-                                            abstractDescriptor.getHandle().equals(handle))
-                                    .findFirst();
+                                .filter(abstractDescriptor ->
+                                    abstractDescriptor.getHandle().equals(handle))
+                                .findFirst();
                             assertTrue(
-                                    descriptor.isPresent(),
-                                    String.format("No matching descriptor for handle %s found.", handle));
+                                descriptor.isPresent(),
+                                String.format("No matching descriptor for handle %s found.", handle));
                             final var descriptorsDescriptorVersion = ImpliedValueUtil.getDescriptorVersion(
-                                    descriptor.orElseThrow(),
-                                    impliedValueMap.computeIfAbsent(
-                                            reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
+                                descriptor.orElseThrow(),
+                                impliedValueMap.computeIfAbsent(
+                                    reportOpt.orElseThrow().getSequenceId(), k -> new InitialImpliedValue()));
                             assertEquals(
-                                    descriptorsDescriptorVersion,
+                                descriptorsDescriptorVersion,
+                                descriptorVersion,
+                                String.format(
+                                    "The descriptor version of state is %s, but should be %s, for %s.",
                                     descriptorVersion,
-                                    String.format(
-                                            "The descriptor version of state is %s, but should be %s, for %s.",
-                                            descriptorVersion,
-                                            ImpliedValueUtil.getDescriptorVersion(
-                                                    descriptor.orElseThrow(),
-                                                    impliedValueMap.computeIfAbsent(
-                                                            reportOpt
-                                                                    .orElseThrow()
-                                                                    .getSequenceId(),
-                                                            k -> new InitialImpliedValue())),
-                                            handle));
+                                    ImpliedValueUtil.getDescriptorVersion(
+                                        descriptor.orElseThrow(),
+                                        impliedValueMap.computeIfAbsent(
+                                            reportOpt
+                                                .orElseThrow()
+                                                .getSequenceId(),
+                                            k -> new InitialImpliedValue())),
+                                    handle));
                         }
                     }
                 } catch (MarshallingException | InitialImpliedValueException e) {
@@ -650,35 +652,35 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
 
             assertTestData(
-                    acceptableSequenceSeen.get(),
-                    "No report parts with description modification type upt seen during test run, test failed");
+                acceptableSequenceSeen.get(),
+                "No report parts with description modification type upt seen during test run, test failed");
         }
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_R5053)
     @TestDescription("Retrieves every report part with modification type del from every description modification report"
-            + " seen during the test run and checks if the states are excluded from the message.")
+        + " seen during the test run and checks if the states are excluded from the message.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.DescriptionModificationDelPrecondition.class})
     void testRequirementR5053() throws NoTestData, IOException {
         try (final var messages =
-                messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
+                 messageStorage.getInboundMessagesByBodyType(Constants.MSG_DESCRIPTION_MODIFICATION_REPORT)) {
             final var delReportsSeen = new AtomicInteger(0);
 
             messages.getStream().forEach(messageContent -> {
                 try {
                     final var soapMessage = marshalling.unmarshal(
-                            new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
+                        new ByteArrayInputStream(messageContent.getBody().getBytes(StandardCharsets.UTF_8)));
                     final var reportOpt = soapUtil.getBody(soapMessage, DescriptionModificationReport.class);
                     final var delReportParts = reportOpt.orElseThrow().getReportPart().stream()
-                            .filter(part ->
-                                    ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.DEL))
-                            .toList();
+                        .filter(part ->
+                            ImpliedValueUtil.getModificationType(part).equals(DescriptionModificationType.DEL))
+                        .toList();
                     for (var part : delReportParts) {
                         delReportsSeen.incrementAndGet();
                         assertTrue(
-                                part.getState().isEmpty(),
-                                "State should not be part of the report with modification type delete.");
+                            part.getState().isEmpty(),
+                            "State should not be part of the report with modification type delete.");
                     }
                 } catch (MarshallingException e) {
                     fail("Error unmarshalling MessageContent " + e);
@@ -686,22 +688,22 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             });
 
             assertTestData(
-                    delReportsSeen.get(),
-                    "No report parts with description modification type del seen during test run, test failed");
+                delReportsSeen.get(),
+                "No report parts with description modification type del seen during test run, test failed");
         }
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C11)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"
-            + " EpisodicAlertReport.")
+        + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"
+        + " EpisodicAlertReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicAlertReportPrecondition.class})
     void testRequirementC11() throws NoTestData, IOException {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((AbstractAlertReport) report)
-                .getReportPart().stream()
-                        .map(AbstractAlertReport.ReportPart::getAlertState)
-                        .collect(Collectors.toUnmodifiableList());
+            .getReportPart().stream()
+            .map(AbstractAlertReport.ReportPart::getAlertState)
+            .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(EpisodicAlertReport.class, AbstractAlertState.class, getStatesOfReportParts);
     }
@@ -709,32 +711,32 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C12)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " whether at least one child or attribute has changed for each AbstractComponentState contained in an"
-            + " EpisodicComponentReport.")
+        + " whether at least one child or attribute has changed for each AbstractComponentState contained in an"
+        + " EpisodicComponentReport.")
     @RequirePrecondition(
-            simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
+        simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
     void testRequirementC12() throws NoTestData, IOException {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicComponentReport) report)
-                .getReportPart().stream()
-                        .map(EpisodicComponentReport.ReportPart::getComponentState)
-                        .collect(Collectors.toUnmodifiableList());
+            .getReportPart().stream()
+            .map(EpisodicComponentReport.ReportPart::getComponentState)
+            .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(
-                EpisodicComponentReport.class, AbstractDeviceComponentState.class, getStatesOfReportParts);
+            EpisodicComponentReport.class, AbstractDeviceComponentState.class, getStatesOfReportParts);
     }
 
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C13)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " whether at least one child or attribute has changed for each AbstractContextState contained in an"
-            + " EpisodicContextReport.")
+        + " whether at least one child or attribute has changed for each AbstractContextState contained in an"
+        + " EpisodicContextReport.")
     @RequirePrecondition(
-            simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
+        simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
     void testRequirementC13() throws NoTestData, IOException {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicContextReport) report)
-                .getReportPart().stream()
-                        .map(EpisodicContextReport.ReportPart::getContextState)
-                        .collect(Collectors.toUnmodifiableList());
+            .getReportPart().stream()
+            .map(EpisodicContextReport.ReportPart::getContextState)
+            .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(EpisodicContextReport.class, AbstractContextState.class, getStatesOfReportParts);
     }
@@ -742,14 +744,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C14)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
-            + " EpisodicMetricReport.")
+        + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
+        + " EpisodicMetricReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicMetricReportPrecondition.class})
     void testRequirementC14() throws NoTestData, IOException {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicMetricReport) report)
-                .getReportPart().stream()
-                        .map(EpisodicMetricReport.ReportPart::getMetricState)
-                        .collect(Collectors.toUnmodifiableList());
+            .getReportPart().stream()
+            .map(EpisodicMetricReport.ReportPart::getMetricState)
+            .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(EpisodicMetricReport.class, AbstractMetricState.class, getStatesOfReportParts);
     }
@@ -757,142 +759,100 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @Test
     @TestIdentifier(EnabledTestConfig.BICEPS_C15)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
-            + " whether at least one child or attribute has changed for each AbstractOperationState contained in an"
-            + " EpisodicOperationalStateReport.")
+        + " whether at least one child or attribute has changed for each AbstractOperationState contained in an"
+        + " EpisodicOperationalStateReport.")
     @RequirePrecondition(
-            simplePreconditions = {ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.class})
+        simplePreconditions = {ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.class})
     void testRequirementC15() throws NoTestData, IOException {
         final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicOperationalStateReport) report)
-                .getReportPart().stream()
-                        .map(EpisodicOperationalStateReport.ReportPart::getOperationState)
-                        .collect(Collectors.toUnmodifiableList());
+            .getReportPart().stream()
+            .map(EpisodicOperationalStateReport.ReportPart::getOperationState)
+            .collect(Collectors.toUnmodifiableList());
 
         testEpisodicReportRequirement(
-                EpisodicOperationalStateReport.class, AbstractOperationState.class, getStatesOfReportParts);
+            EpisodicOperationalStateReport.class, AbstractOperationState.class, getStatesOfReportParts);
     }
 
-    private void testEpisodicReportRequirement(
-            final Class<? extends AbstractReport> reportClass,
-            final Class<? extends AbstractState> stateClass,
-            final GetStatesOfReportParts getStatesOfReportParts)
-            throws NoTestData, IOException {
+    private void testEpisodicReportRequirement(final Class<? extends AbstractReport> reportClass,
+                                               final Class<? extends AbstractState> stateClass,
+                                               final GetStatesOfReportParts getStatesOfReportParts) throws NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+            messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
-
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
+                RemoteMdibAccess manualMdibAccess;
+                RemoteMdibAccess mdibAccess;
                 try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
+                    manualMdibAccess = mdibHistorian.createNewStorage(sequenceId);
+                    // get relevant reports
+                    final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(manualMdibAccess.getMdibVersion());
+                    try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                        try (final var history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                            mdibAccess = history.next();
 
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                            for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext();) {
+                                final AbstractReport report = iterator.next();
+                                manualMdibAccess = mdibHistorian.applyReportOnStorage(manualMdibAccess, report);
 
-                    DescriptionModificationReport previousDescriptionModificationReport = null;
-                    final var statesFromDescriptionModificationReport = new ArrayList<>();
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
-
-                        if (report instanceof DescriptionModificationReport) {
-                            previousDescriptionModificationReport = (DescriptionModificationReport) report;
-                        }
-
-                        if (reportClass.isInstance(report)) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-
-                            // collect all relevant states from the DescriptionModificationReport, one with the same
-                            // MdibVersion exists.
-                            statesFromDescriptionModificationReport.clear();
-                            if (previousDescriptionModificationReport != null
-                                    && ImpliedValueUtil.getReportMdibVersion(previousDescriptionModificationReport)
-                                            .equals(ImpliedValueUtil.getReportMdibVersion(report))) {
-                                statesFromDescriptionModificationReport.addAll(
-                                        previousDescriptionModificationReport.getReportPart().stream()
-                                                .map(DescriptionModificationReport.ReportPart::getState)
-                                                .flatMap(List::stream)
-                                                .filter(stateClass::isInstance)
-                                                .map(stateClass::cast)
-                                                .toList());
-                            }
-
-                            final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
-                            for (var reportPart : reportParts) {
-                                for (var state : reportPart) {
-                                    final Optional<? extends AbstractState> stateBeforeReport;
-                                    final Optional<? extends AbstractState> stateAfterReport;
-
-                                    if (state instanceof AbstractMultiState multiState) {
-                                        final var beforeReport = first.getEntity(multiState.getDescriptorHandle());
-                                        final var afterReport = second.getEntity(multiState.getDescriptorHandle());
-                                        stateBeforeReport =
-                                                beforeReport.orElseThrow().getStates(AbstractMultiState.class).stream()
-                                                        .filter(it ->
-                                                                it.getHandle().equals(multiState.getHandle()))
-                                                        .findFirst();
-                                        stateAfterReport =
-                                                afterReport.orElseThrow().getStates(AbstractMultiState.class).stream()
-                                                        .filter(it ->
-                                                                it.getHandle().equals(multiState.getHandle()))
-                                                        .findFirst();
-                                        if (!(stateBeforeReport.isPresent() && stateAfterReport.isPresent())) {
-                                            // when not both AbstractMultiStates are present it must be inserted.
-                                            assertTrue(
-                                                    stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
-                                                    String.format(STATE_ABSENT, state.getDescriptorHandle()));
-                                            continue;
-                                        }
-                                    } else {
-                                        // no AbstractMultiState so state should be present before and after the report
-                                        stateBeforeReport = first.getState(state.getDescriptorHandle(), stateClass);
-                                        stateAfterReport = second.getState(state.getDescriptorHandle(), stateClass);
-                                        assertTrue(
-                                                stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                                String.format(STATE_ABSENT, state.getDescriptorHandle()));
+                                if (reportClass.isInstance(report)) {
+                                    acceptableSequenceSeen.incrementAndGet();
+                                    final var priorMdibVersion = report.getMdibVersion().subtract(BigInteger.ONE);
+                                    // fast-forward history to the mdibversion before the report
+                                    while (mdibAccess.getMdibVersion().getVersion().compareTo(priorMdibVersion) < 0) {
+                                        mdibAccess = history.next();
                                     }
 
-                                    if (statesFromDescriptionModificationReport.stream()
-                                            .anyMatch(it -> ((AbstractState) it)
-                                                    .getDescriptorHandle()
-                                                    .equals(stateAfterReport
-                                                            .orElseThrow()
-                                                            .getDescriptorHandle()))) {
-                                        LOG.debug(
-                                                "The state with handle {} was already seen in a DescriptionModificationReport in MdibVersion {} and SequenceId {}.",
-                                                stateAfterReport.orElseThrow().getDescriptorHandle(),
-                                                ImpliedValueUtil.getReportMdibVersion(report),
-                                                report.getSequenceId());
-                                    } else {
-                                        assertNotEquals(
+                                    // get every state of the report
+                                    final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
+                                    for (var reportPart : reportParts) {
+                                        for (var state : reportPart) {
+                                            final Optional<? extends AbstractState> stateBeforeReport;
+                                            final Optional<? extends AbstractState> stateAfterReport;
+                                            // multistate need a different handling
+                                            if (state instanceof AbstractMultiState multiState) {
+                                                stateBeforeReport = mdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
+                                                stateAfterReport = manualMdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
+
+                                                if (!(stateBeforeReport.isPresent() && stateAfterReport.isPresent())) {
+                                                    // when not both AbstractMultiStates are present it must be inserted.
+                                                    assertTrue(
+                                                        stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
+                                                        String.format(STATE_ABSENT, state.getDescriptorHandle()));
+                                                    continue;
+                                                }
+                                            } else {
+                                                stateBeforeReport =
+                                                    mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                                                stateAfterReport =
+                                                    manualMdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                                                assertTrue(
+                                                    stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
+                                                    String.format(STATE_ABSENT, state.getDescriptorHandle()));
+                                            }
+                                            assertNotEquals(
                                                 stateAfterReport.orElseThrow(),
                                                 stateBeforeReport.orElseThrow(),
                                                 String.format(STATE_UNCHANGED, state.getDescriptorHandle()));
+                                        }
                                     }
                                 }
                             }
-                            previousDescriptionModificationReport = null;
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
+                        } catch (ReportProcessingException e) {
+                            fail(e);
                         }
                     }
-                } catch (PreprocessingException | ReportProcessingException e) {
+                } catch (PreprocessingException e) {
                     fail(e);
                 }
             });
+        } catch (IOException e) {
+            fail(e);
         }
         assertTestData(
-                acceptableSequenceSeen.get(),
-                String.format("No %s seen during test run, test failed.", reportClass.getSimpleName()));
+            acceptableSequenceSeen.get(),
+            String.format("No %s seen during test run, test failed.", reportClass.getSimpleName()));
     }
 
     @FunctionalInterface
