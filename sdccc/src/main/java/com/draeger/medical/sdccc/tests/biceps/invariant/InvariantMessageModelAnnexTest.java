@@ -822,9 +822,12 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
                     if (reportClass.isInstance(report)) {
                         acceptableSequenceSeen.incrementAndGet();
-                        final var priorMdibVersion = report.getMdibVersion().subtract(BigInteger.ONE);
+                        final var priorMdibVersion =
+                                ImpliedValueUtil.getReportMdibVersion(report).subtract(BigInteger.ONE);
                         // fast-forward history to the mdib version before the report
-                        while (mdibAccess.getMdibVersion().getVersion().compareTo(priorMdibVersion) < 0) {
+                        while (ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion())
+                                        .compareTo(priorMdibVersion)
+                                < 0) {
                             mdibAccess = history.next();
                         }
 
