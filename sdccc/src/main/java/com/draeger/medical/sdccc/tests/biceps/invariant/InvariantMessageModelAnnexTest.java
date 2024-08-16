@@ -62,7 +62,6 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
-import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractOperationState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
@@ -866,17 +865,12 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                         for (var state : reportPart) {
                             final Optional<? extends AbstractState> stateBeforeReport;
 
-                            if (state instanceof AbstractMultiState multiState) {
-                                stateBeforeReport =
-                                        mdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
-
-                                if (stateBeforeReport.isEmpty()) {
-                                    // when stateBeforeReport is not present, the AbstractMultiState was
-                                    // inserted.
-                                    continue;
-                                }
-                            } else {
-                                stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                            stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                            if (stateBeforeReport.isEmpty()) {
+                                // If stateBeforeReport is not present, it has either been inserted as a multi-state or
+                                // with a description change report within the same mdib version. In both cases,
+                                // the state has definitely changed.
+                                continue;
                             }
                             assertNotEquals(
                                     state,

@@ -1506,9 +1506,13 @@ public class MessageStorage implements AutoCloseable {
                     criteriaBuilder.exists(mdibVersionGroupSubQuery)));
 
             if (enableSorting) {
-                messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
-                        .join(MessageContent_.mdibVersionGroups)
-                        .get(MdibVersionGroupEntity_.mdibVersion)));
+                messageContentQuery.orderBy(
+                        criteriaBuilder.asc(messageContentRoot
+                                .join(MessageContent_.mdibVersionGroups)
+                                .get(MdibVersionGroupEntity_.mdibVersion)),
+                        criteriaBuilder.asc(messageContentRoot
+                                .join(MessageContent_.mdibVersionGroups)
+                                .get(MdibVersionGroupEntity_.bodyElement)));
             }
         }
 
