@@ -62,6 +62,7 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
+import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractOperationState;
 import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
@@ -157,7 +158,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
             + " for each AbstractDescriptor contained in a DescriptionModificationReport"
-            + " that it was inserted or deleted or updated by changing" + " at least one child or attribute.")
+            + " that it was inserted or deleted or updated by changing at least one child or attribute.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationUptPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
@@ -865,7 +866,11 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                         for (var state : reportPart) {
                             final Optional<? extends AbstractState> stateBeforeReport;
 
-                            stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                            if (state instanceof AbstractMultiState multiState) {
+                                stateBeforeReport = mdibAccess.getState(multiState.getHandle(), stateClass);
+                            } else {
+                                stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                            }
                             if (stateBeforeReport.isEmpty()) {
                                 // If stateBeforeReport is not present, it has either been inserted as a multi-state or
                                 // with a description change report within the same mdib version. In both cases,
