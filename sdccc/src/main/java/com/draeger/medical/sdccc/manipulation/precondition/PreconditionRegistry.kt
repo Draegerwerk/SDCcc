@@ -20,13 +20,13 @@ import kotlin.reflect.KClass
 @Singleton
 class PreconditionRegistry @Inject internal constructor(private val injector: Injector) {
 
+    private val preconditions: MutableList<Precondition> = ArrayList()
+
     /**
      * Returns all registered preconditions which are of type [Observing].
      */
     val observingPreconditions: Collection<Observing>
         get() = preconditions.filterIsInstance<Observing>()
-
-    private val preconditions: MutableList<Precondition> = ArrayList()
 
     @Suppress("TooGenericExceptionThrown") // this is an error during startup and cannot be fixed
     private fun handleRegisteringError(error: Throwable, text: String): Nothing {
@@ -83,7 +83,8 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
      */
     fun registerObservingPrecondition(precondition: KClass<out ObservingPreconditionFactory<*>>) {
         val factoryInstance = checkNotNull(precondition.objectInstance) {
-            "Factory class ${precondition.simpleName} does not provide an object instance. Ensure it is a Companion."
+            "Factory class ${precondition.simpleName ?: "without a simple name"} " +
+                "does not provide an object instance. Ensure it is a Companion."
         }
         val instance = factoryInstance.create(injector)
         if (!preconditions.contains(instance)) {
