@@ -1,6 +1,7 @@
 package com.draeger.medical.sdccc.manipulation
 
 import com.google.inject.Injector
+import org.apache.logging.log4j.kotlin.Logging
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.util.concurrent.CompletableFuture
@@ -11,7 +12,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
-class ManipulationLockerTest {
+internal class ManipulationLockerTest {
 
     private val mockInjector = mock<Injector>()
 
@@ -29,7 +30,7 @@ class ManipulationLockerTest {
         blockingLock.future.join()
         val elapsedBlocked = measureTime {
             locker.lock("blockedResult") {
-                println("blockedResult")
+                logger.debug { "blockedResult is in the lock" }
             }
         }
 
@@ -44,7 +45,7 @@ class ManipulationLockerTest {
     internal fun `test lock fairness`() {
         val locker = ManipulationLocker(mockInjector)
         val timeToBlock = 1.seconds
-        val locksToAcquire = 10000
+        val locksToAcquire = 10_000
         // lock and block
         val hasLock = startThreadWithFuture(locker) {
             Thread.sleep(timeToBlock.inWholeMilliseconds)
@@ -55,7 +56,7 @@ class ManipulationLockerTest {
         val resultList = mutableListOf<Int>()
         // start tasks that should remain in order
 
-        val threads = (0 ..< locksToAcquire).map {
+        val threads = (0..<locksToAcquire).map {
             val res = startThreadWithFuture(locker) {
                 resultList.add(it)
             }
@@ -66,7 +67,7 @@ class ManipulationLockerTest {
         threads.forEach { it.thread.join() }
 
         locker.lock("blockedResult") {
-            println("blockedResult")
+            logger.debug { "blockedResult is in the lock" }
         }
 
         assertEquals(locksToAcquire, resultList.size)
@@ -78,7 +79,7 @@ class ManipulationLockerTest {
         supplier: () -> Unit
     ): ThreadAndFuture {
         val hasLock = CompletableFuture<Unit>()
-        val t = thread (isDaemon = true) {
+        val t = thread(isDaemon = true) {
             locker.lock("result") {
                 hasLock.complete(null)
                 supplier()
@@ -88,4 +89,6 @@ class ManipulationLockerTest {
     }
 
     private data class ThreadAndFuture(val thread: Thread, val future: CompletableFuture<Unit>)
+
+    companion object : Logging
 }
