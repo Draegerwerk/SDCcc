@@ -1663,7 +1663,7 @@ public class InvariantMessageModelAnnexTestTest {
                 buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
                 buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
 
-        final var secondDescrptionModification = buildDescriptionModificationReport(
+        final var secondDescriptionModification = buildDescriptionModificationReport(
                 SEQUENCE_ID,
                 BigInteger.TWO,
                 buildDescriptionModificationReportPart(
@@ -1682,7 +1682,7 @@ public class InvariantMessageModelAnnexTestTest {
 
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
-        messageStorageUtil.addInboundSecureHttpMessage(storage, secondDescrptionModification);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondDescriptionModification);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
 
         testClass.testRequirementC11();
