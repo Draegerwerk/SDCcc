@@ -1447,10 +1447,10 @@ public class MessageStorage implements AutoCloseable {
      * Retrieves all incoming messages which match any of the provided body element QNames.
      *
      * <p>
-     * Messages are sorted by MdibVersion on the inner join result.
+     * Messages are sorted by MdibVersion on the inner join result or, if the MdibVersion is the same,
+     * lexicographically in ascending order according to the name of the bodyType.
      *
-     * @param enableSorting switch to turn off or turn on MdibVersion based sorting, messages with the same MdibVersion
-     *                      are sorted after bodyTypes
+     * @param enableSorting switch to turn off or turn on sorting
      * @param bodyTypes     to match messages against
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
