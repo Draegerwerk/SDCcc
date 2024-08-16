@@ -33,7 +33,6 @@ import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -790,8 +789,8 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                             sequenceId,
                             mdibHistorian,
                             acceptableSequenceSeen);
-                } catch (PreprocessingException e) {
-                    throw new RuntimeException(e);
+                } catch (NoTestData e) {
+                    fail(e);
                 }
             });
         } catch (IOException e) {
@@ -802,62 +801,91 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
                 String.format("No %s seen during test run, test failed.", reportClass.getSimpleName()));
     }
 
-    private static void checkReportsForSequenceId(
+    private void checkReportsForSequenceId(
             final Class<? extends AbstractReport> reportClass,
             final Class<? extends AbstractState> stateClass,
             final GetStatesOfReportParts getStatesOfReportParts,
             final String sequenceId,
             final MdibHistorian mdibHistorian,
             final AtomicInteger acceptableSequenceSeen)
-            throws PreprocessingException {
+            throws NoTestData {
 
-        RemoteMdibAccess mdibAccess;
         try (final var history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-            mdibAccess = history.next();
+            try (final var historyNext = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                // skip the first entry so that history and historyNext are off by one entry
+                final var skippedElement = historyNext.next();
+                if (skippedElement == null) {
+                    throw new NoTestData("Not enough input to compare mdib revisions");
+                }
 
-            final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion());
-            try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-                for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                    final AbstractReport report = iterator.next();
+                compareReportsWithMdib(
+                        mdibHistorian,
+                        sequenceId,
+                        reportClass,
+                        stateClass,
+                        acceptableSequenceSeen,
+                        getStatesOfReportParts,
+                        history,
+                        historyNext);
+            }
+        } catch (ReportProcessingException | PreprocessingException e) {
+            fail(e);
+        }
+    }
 
-                    if (reportClass.isInstance(report)) {
-                        acceptableSequenceSeen.incrementAndGet();
-                        final var priorMdibVersion =
-                                ImpliedValueUtil.getReportMdibVersion(report).subtract(BigInteger.ONE);
-                        // fast-forward history to the mdib version before the report
-                        while (ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion())
-                                        .compareTo(priorMdibVersion)
-                                < 0) {
-                            mdibAccess = history.next();
-                        }
+    private void compareReportsWithMdib(
+            final MdibHistorian mdibHistorian,
+            final String sequenceId,
+            final Class<? extends AbstractReport> reportClass,
+            final Class<? extends AbstractState> stateClass,
+            final AtomicInteger acceptableSequenceSeen,
+            final GetStatesOfReportParts getStatesOfReportParts,
+            final MdibHistorian.HistorianResult history,
+            final MdibHistorian.HistorianResult historyNext) {
+        RemoteMdibAccess mdibAccess = history.next();
+        RemoteMdibAccess mdibAccessAhead = historyNext.next();
 
-                        final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
-                        for (var reportPart : reportParts) {
-                            for (var state : reportPart) {
-                                final Optional<? extends AbstractState> stateBeforeReport;
+        final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion());
+        try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+            for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                final AbstractReport report = iterator.next();
 
-                                if (state instanceof AbstractMultiState multiState) {
-                                    stateBeforeReport =
-                                            mdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
+                if (reportClass.isInstance(report)) {
+                    acceptableSequenceSeen.incrementAndGet();
+                    final var reportMdibVersion = ImpliedValueUtil.getReportMdibVersion(report);
+                    // fast-forward history to the mdib version before the report
+                    while (ImpliedValueUtil.getMdibVersion(mdibAccessAhead.getMdibVersion())
+                                    .compareTo(reportMdibVersion)
+                            < 0) {
+                        mdibAccessAhead = historyNext.next();
+                        mdibAccess = history.next();
+                    }
 
-                                    if (stateBeforeReport.isEmpty()) {
-                                        // when stateBeforeReport is not present, the AbstractMultiState was inserted.
-                                        continue;
-                                    }
-                                } else {
-                                    stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                    final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
+                    for (var reportPart : reportParts) {
+                        for (var state : reportPart) {
+                            final Optional<? extends AbstractState> stateBeforeReport;
+
+                            if (state instanceof AbstractMultiState multiState) {
+                                stateBeforeReport =
+                                        mdibAccess.getState(multiState.getHandle(), AbstractMultiState.class);
+
+                                if (stateBeforeReport.isEmpty()) {
+                                    // when stateBeforeReport is not present, the AbstractMultiState was
+                                    // inserted.
+                                    continue;
                                 }
-                                assertNotEquals(
-                                        state,
-                                        stateBeforeReport.orElseThrow(),
-                                        String.format(STATE_UNCHANGED, state.getDescriptorHandle()));
+                            } else {
+                                stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
                             }
+                            assertNotEquals(
+                                    state,
+                                    stateBeforeReport.orElseThrow(),
+                                    String.format(STATE_UNCHANGED, state.getDescriptorHandle()));
                         }
                     }
                 }
             }
-        } catch (ReportProcessingException e) {
-            fail(e);
         }
     }
 
