@@ -1448,7 +1448,7 @@ public class MessageStorage implements AutoCloseable {
      *
      * <p>
      * Messages are sorted by MdibVersion on the inner join result or, if the MdibVersion is the same,
-     * lexicographically in ascending order according to the name of the bodyType.
+     * are sorted in ascending order of the code points of the name of the body types.
      *
      * @param enableSorting switch to turn off or turn on sorting
      * @param bodyTypes     to match messages against
