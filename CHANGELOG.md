@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [9.0.1] - 2024-08-19
 
+### Fixed
+ 
+- biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14 and biceps:C-15 no longer fails incorrectly if a DescriptionModificationReport with the same MdibVersion has been sent for the respective EpisodicReport.
+
+## [9.0.0] - 2024-02-23
+
 ### Added
 
 - a command line parameter to change the log level threshold of the log file
@@ -26,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the test case for Glue:R0036_0 not accepting a SOAPFault as a valid answer for Subscribe messages
 - ReportWriter.write() could be called with ReportTypes it did not support.
 - the SDCcc.TLS.EnabledProtocols parameter being ignored for the internal TLS configuration
-- biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14 and biceps:C-15 no longer fails incorrectly if a DescriptionModificationReport with the same MdibVersion has been sent for the respective EpisodicReport.
 
 ## [8.0.1] - 2023-09-13
 
