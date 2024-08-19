@@ -8,8 +8,10 @@
 package com.draeger.medical.sdccc.manipulation.precondition;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -19,12 +21,15 @@ import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.google.inject.Injector;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import kotlin.reflect.KClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Unit tests for the precondition registry.
@@ -32,13 +37,14 @@ import org.junit.jupiter.api.Test;
 public class PreconditionRegistryTest {
 
     private Injector mockInjector;
+    private ManipulationLocker locker;
 
     @BeforeEach
     void setUp() {
         PreconditionUtil.MockPrecondition.reset();
         PreconditionUtil.MockManipulation.reset();
         mockInjector = mock(Injector.class);
-        final ManipulationLocker locker = new ManipulationLocker(mockInjector);
+        locker = new ManipulationLocker(mockInjector);
         when(mockInjector.getInstance(ManipulationLocker.class)).thenReturn(locker);
     }
 
@@ -222,5 +228,110 @@ public class PreconditionRegistryTest {
 
         assertThrows(
                 IllegalStateException.class, () -> registry.registerObservingPrecondition(mockPreconditionFactory));
+    }
+
+    /**
+     * Verifies whether Preconditions that do not implement {@link LockingPrecondition}'s are executed in the lock
+     * by the registry.
+     */
+    @Test
+    @Timeout(value = 5)
+    void testPreconditionManipulationLockingLegacy() throws Exception {
+        final var registry = new PreconditionRegistry(mockInjector);
+
+        final var preconditionRunning = new CompletableFuture<Void>();
+        final var preconditionBlock = new CompletableFuture<Void>();
+        final var manipulationWasCalled = new AtomicInteger(0);
+        PreconditionUtil.MockManipulation.setManipulationCall(injector -> {
+            preconditionRunning.complete(null);
+            try {
+                preconditionBlock.get();
+            } catch (InterruptedException | ExecutionException e) {
+                fail(e);
+            }
+            manipulationWasCalled.incrementAndGet();
+            return true;
+        });
+
+        registry.registerManipulationPrecondition(PreconditionUtil.MockManipulation.class);
+        // run the preconditions in a separate thread
+        final var preconditionsFinished = new CompletableFuture<Void>();
+        final var preconditionThread = new Thread(() -> {
+            try {
+                registry.runPreconditions();
+            } catch (PreconditionException e) {
+                fail(e);
+            } finally {
+                preconditionsFinished.complete(null);
+            }
+        });
+        preconditionThread.setDaemon(true);
+        preconditionThread.start();
+
+        // wait until the precondition is running
+        preconditionRunning.get();
+        // ensure the lock is held
+        assertTrue(locker.isLocked());
+
+        // allow the precondition to finish
+        preconditionBlock.complete(null);
+
+        // wait for the precondition execution to have finished
+        preconditionsFinished.get();
+
+        assertEquals(1, manipulationWasCalled.get());
+        assertFalse(locker.isLocked());
+    }
+
+    /**
+     * Verifies whether {@link LockingPrecondition}'s are not causing the registry to lock.
+     */
+    @Test
+    @Timeout(value = 5)
+    void testPreconditionManipulationLocking() throws Exception {
+        final var registry = new PreconditionRegistry(mockInjector);
+
+        final var preconditionRunning = new CompletableFuture<Void>();
+        final var preconditionBlock = new CompletableFuture<Void>();
+        final var manipulationWasCalled = new AtomicInteger(0);
+        PreconditionUtil.MockLockingManipulation.setManipulationCall(injector -> {
+            preconditionRunning.complete(null);
+            try {
+                preconditionBlock.get();
+            } catch (InterruptedException | ExecutionException e) {
+                fail(e);
+            }
+            manipulationWasCalled.incrementAndGet();
+            return true;
+        });
+
+        registry.registerManipulationPrecondition(PreconditionUtil.MockLockingManipulation.class);
+        // run the preconditions in a separate thread
+        final var preconditionsFinished = new CompletableFuture<Void>();
+        final var preconditionThread = new Thread(() -> {
+            try {
+                registry.runPreconditions();
+            } catch (PreconditionException e) {
+                fail(e);
+            } finally {
+                preconditionsFinished.complete(null);
+            }
+        });
+        preconditionThread.setDaemon(true);
+        preconditionThread.start();
+
+        // wait until the precondition is running
+        preconditionRunning.get();
+        // ensure the lock is not held
+        assertFalse(locker.isLocked());
+
+        // allow the precondition to finish
+        preconditionBlock.complete(null);
+
+        // wait for the precondition execution to have finished
+        preconditionsFinished.get();
+
+        assertEquals(1, manipulationWasCalled.get());
+        assertFalse(locker.isLocked());
     }
 }

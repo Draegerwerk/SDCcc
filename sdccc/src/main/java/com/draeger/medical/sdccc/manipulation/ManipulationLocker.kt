@@ -46,6 +46,13 @@ class ManipulationLocker @Inject constructor(
         }
     }
 
+    /**
+     * Returns whether the manipulation is currently locked.
+     *
+     * This is mostly useful for unit testing.
+     */
+    fun isLocked() = internalLock.isLocked
+
     // TODO: Do we want his? Implication: internalLock and injector must be internal
     /**
      * Locks the manipulation and executes the lambda. Returns the result of the lambda.

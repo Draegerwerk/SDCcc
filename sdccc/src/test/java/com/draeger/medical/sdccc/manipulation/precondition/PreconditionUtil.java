@@ -112,4 +112,12 @@ public class PreconditionUtil {
             MockManipulation.afterConstructorCall = afterConstructorCall;
         }
     }
+
+    /**
+     * An extension of {@linkplain MockManipulation} which implements the {@linkplain LockingPrecondition} interface.
+     */
+    public static class MockLockingManipulation extends MockManipulation implements LockingPrecondition {
+
+        MockLockingManipulation() throws Exception {}
+    }
 }

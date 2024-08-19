@@ -110,7 +110,7 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
                 // so we unconditionally lock during their execution
                 logger.info {
                     "Precondition ${precondition.javaClass.simpleName} does not implement" +
-                        " ${LockingPrecondition::class.java.simpleName}, locking ManipulationLocker"
+                        " ${LockingPrecondition::class.java.simpleName}, locking ManipulationLocker."
                 }
                 injector.getInstance(ManipulationLocker::class.java).lock(
                     "PreconditionRegistry.runPreconditions - ${precondition.javaClass.simpleName}"
