@@ -1447,9 +1447,10 @@ public class MessageStorage implements AutoCloseable {
      * Retrieves all incoming messages which match any of the provided body element QNames.
      *
      * <p>
-     * Messages are sorted by MdibVersion on the inner join result.
+     * Messages are sorted by MdibVersion on the inner join result or, if the MdibVersion is the same,
+     * are sorted in ascending order of the code points of the name of the body types.
      *
-     * @param enableSorting switch to turn off or turn on MdibVersion based sorting
+     * @param enableSorting switch to turn off or turn on sorting
      * @param bodyTypes     to match messages against
      * @return container with stream of all matching inbound {@linkplain MessageContent}s
      * @throws IOException if storage is closed
@@ -1506,9 +1507,15 @@ public class MessageStorage implements AutoCloseable {
                     criteriaBuilder.exists(mdibVersionGroupSubQuery)));
 
             if (enableSorting) {
-                messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot
-                        .join(MessageContent_.mdibVersionGroups)
-                        .get(MdibVersionGroupEntity_.mdibVersion)));
+                messageContentQuery.orderBy(
+                        criteriaBuilder.asc(messageContentRoot
+                                .join(MessageContent_.mdibVersionGroups)
+                                .get(MdibVersionGroupEntity_.mdibVersion)),
+                        // also sort by body type to ensure that DescriptionModificationReports are placed
+                        // before EpisodicReports.
+                        criteriaBuilder.asc(messageContentRoot
+                                .join(MessageContent_.mdibVersionGroups)
+                                .get(MdibVersionGroupEntity_.bodyElement)));
             }
         }
 

@@ -26,6 +26,7 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.tests.util.InitialImpliedValue;
 import com.draeger.medical.sdccc.tests.util.InitialImpliedValueException;
+import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.Constants;
@@ -38,16 +39,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
-import org.somda.sdc.biceps.model.message.AbstractAlertReport;
-import org.somda.sdc.biceps.model.message.AbstractComponentReport;
-import org.somda.sdc.biceps.model.message.AbstractContextReport;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationType;
@@ -61,7 +62,9 @@ import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricState;
+import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.AbstractOperationState;
+import org.somda.sdc.biceps.model.participant.AbstractState;
 import org.somda.sdc.biceps.model.participant.AlertSystemDescriptor;
 import org.somda.sdc.biceps.model.participant.ChannelDescriptor;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
@@ -78,6 +81,7 @@ import org.somda.sdc.glue.consumer.report.ReportProcessingException;
  * Test for the normative Annex Message Model of BICEPS.
  */
 public class InvariantMessageModelAnnexTest extends InjectorTestBase {
+    private static final Logger LOG = LogManager.getLogger();
     private static final String STATE_ABSENT = "The state with handle %s is not present";
     private static final String STATE_UNCHANGED = "The state with the handle %s from the report has not changed";
     private MarshallingService marshalling;
@@ -154,8 +158,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
     @TestIdentifier(EnabledTestConfig.BICEPS_C5)
     @TestDescription("Starting from the initially retrieved mdib, applies each episodic report to the mdib and checks"
             + " for each AbstractDescriptor contained in a DescriptionModificationReport"
-            + " that it was inserted or deleted or updated by changing"
-            + " at least one child or attribute.")
+            + " that it was inserted or deleted or updated by changing at least one child or attribute.")
     @RequirePrecondition(simplePreconditions = ConditionalPreconditions.DescriptionModificationUptPrecondition.class)
     void testRequirementC5() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
@@ -693,60 +696,13 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractAlertState contained in an"
             + " EpisodicAlertReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicAlertReportPrecondition.class})
-    void testRequirementC11() throws NoTestData, IOException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+    void testRequirementC11() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicAlertReport) report)
+                .getReportPart().stream()
+                        .map(EpisodicAlertReport.ReportPart::getAlertState)
+                        .collect(Collectors.toUnmodifiableList());
 
-        final var acceptableSequenceSeen = new AtomicInteger(0);
-
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
-                try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
-
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
-
-                        if (report instanceof EpisodicAlertReport) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                            for (var reportPart : ((AbstractAlertReport) report).getReportPart()) {
-                                for (var alertState : reportPart.getAlertState()) {
-                                    final var stateBeforeReport =
-                                            first.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
-                                    final var stateAfterReport =
-                                            second.getState(alertState.getDescriptorHandle(), AbstractAlertState.class);
-                                    assertTrue(
-                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                            String.format(STATE_ABSENT, alertState.getDescriptorHandle()));
-                                    assertNotEquals(
-                                            stateAfterReport.orElseThrow(),
-                                            stateBeforeReport.orElseThrow(),
-                                            String.format(STATE_UNCHANGED, alertState.getDescriptorHandle()));
-                                }
-                            }
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                        }
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
-            });
-        }
-        assertTestData(acceptableSequenceSeen.get(), "No AlertReports seen during test run, test failed.");
+        testEpisodicReportRequirement(EpisodicAlertReport.class, AbstractAlertState.class, getStatesOfReportParts);
     }
 
     @Test
@@ -756,60 +712,14 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicComponentReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicComponentReportPrecondition.class})
-    void testRequirementC12() throws NoTestData, IOException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+    void testRequirementC12() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicComponentReport) report)
+                .getReportPart().stream()
+                        .map(EpisodicComponentReport.ReportPart::getComponentState)
+                        .collect(Collectors.toUnmodifiableList());
 
-        final var acceptableSequenceSeen = new AtomicInteger(0);
-
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
-                try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
-
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
-
-                        if (report instanceof EpisodicComponentReport) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                            for (var reportPart : ((AbstractComponentReport) report).getReportPart()) {
-                                for (var componentState : reportPart.getComponentState()) {
-                                    final var stateBeforeReport = first.getState(
-                                            componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
-                                    final var stateAfterReport = second.getState(
-                                            componentState.getDescriptorHandle(), AbstractDeviceComponentState.class);
-                                    assertTrue(
-                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                            String.format(STATE_ABSENT, componentState.getDescriptorHandle()));
-                                    assertNotEquals(
-                                            stateAfterReport.orElseThrow(),
-                                            stateBeforeReport.orElseThrow(),
-                                            String.format(STATE_UNCHANGED, componentState.getDescriptorHandle()));
-                                }
-                            }
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                        }
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
-            });
-        }
-        assertTestData(acceptableSequenceSeen.get(), "No ComponentReports seen during test run, test failed.");
+        testEpisodicReportRequirement(
+                EpisodicComponentReport.class, AbstractDeviceComponentState.class, getStatesOfReportParts);
     }
 
     @Test
@@ -819,72 +729,13 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicContextReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicContextReportPrecondition.class})
-    void testRequirementC13() throws NoTestData, IOException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+    void testRequirementC13() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicContextReport) report)
+                .getReportPart().stream()
+                        .map(EpisodicContextReport.ReportPart::getContextState)
+                        .collect(Collectors.toUnmodifiableList());
 
-        final var acceptableSequenceSeen = new AtomicInteger(0);
-
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
-                try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
-
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
-
-                        if (report instanceof EpisodicContextReport) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-
-                            for (var reportPart : ((AbstractContextReport) report).getReportPart()) {
-                                for (var contextState : reportPart.getContextState()) {
-                                    final var beforeReport = first.getEntity(contextState.getDescriptorHandle());
-                                    final var afterReport = second.getEntity(contextState.getDescriptorHandle());
-                                    final var stateBeforeReport =
-                                            beforeReport.orElseThrow().getStates(AbstractContextState.class).stream()
-                                                    .filter(state ->
-                                                            state.getHandle().equals(contextState.getHandle()))
-                                                    .findFirst();
-                                    final var stateAfterReport =
-                                            afterReport.orElseThrow().getStates(AbstractContextState.class).stream()
-                                                    .filter(state ->
-                                                            state.getHandle().equals(contextState.getHandle()))
-                                                    .findFirst();
-                                    if (stateBeforeReport.isPresent() && stateAfterReport.isPresent()) {
-                                        assertNotEquals(
-                                                stateAfterReport.orElseThrow(),
-                                                stateBeforeReport.orElseThrow(),
-                                                String.format(STATE_UNCHANGED, contextState.getDescriptorHandle()));
-                                    } else {
-                                        assertTrue(
-                                                stateBeforeReport.isEmpty() && stateAfterReport.isPresent(),
-                                                String.format(STATE_ABSENT, contextState.getDescriptorHandle()));
-                                    }
-                                }
-                            }
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                        }
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
-            });
-        }
-        assertTestData(acceptableSequenceSeen.get(), "No ContextReports seen during test run, test failed.");
+        testEpisodicReportRequirement(EpisodicContextReport.class, AbstractContextState.class, getStatesOfReportParts);
     }
 
     @Test
@@ -893,61 +744,13 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " whether at least one child or attribute has changed for each AbstractMetricState contained in an"
             + " EpisodicMetricReport.")
     @RequirePrecondition(simplePreconditions = {ConditionalPreconditions.TriggerEpisodicMetricReportPrecondition.class})
-    void testRequirementC14() throws NoTestData, IOException {
-        final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
-                messageStorage, getInjector().getInstance(TestRunObserver.class));
+    void testRequirementC14() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicMetricReport) report)
+                .getReportPart().stream()
+                        .map(EpisodicMetricReport.ReportPart::getMetricState)
+                        .collect(Collectors.toUnmodifiableList());
 
-        final var acceptableSequenceSeen = new AtomicInteger(0);
-
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
-                try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
-
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-
-                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
-                        final AbstractReport report = iterator.next();
-
-                        if (report instanceof EpisodicMetricReport metricReport) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-
-                            for (var reportPart : metricReport.getReportPart()) {
-                                for (var metricState : reportPart.getMetricState()) {
-                                    final var stateBeforeReport = first.getState(
-                                            metricState.getDescriptorHandle(), AbstractMetricState.class);
-                                    final var stateAfterReport = second.getState(
-                                            metricState.getDescriptorHandle(), AbstractMetricState.class);
-                                    assertTrue(
-                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                            String.format(STATE_ABSENT, metricState.getDescriptorHandle()));
-                                    assertNotEquals(
-                                            stateAfterReport.orElseThrow(),
-                                            stateBeforeReport.orElseThrow(),
-                                            String.format(STATE_UNCHANGED, metricState.getDescriptorHandle()));
-                                }
-                            }
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                        }
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
-            });
-        }
-        assertTestData(acceptableSequenceSeen.get(), "No MetricReports seen during test run, test failed.");
+        testEpisodicReportRequirement(EpisodicMetricReport.class, AbstractMetricState.class, getStatesOfReportParts);
     }
 
     @Test
@@ -957,61 +760,136 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             + " EpisodicOperationalStateReport.")
     @RequirePrecondition(
             simplePreconditions = {ConditionalPreconditions.TriggerEpisodicOperationalStateReportPrecondition.class})
-    void testRequirementC15() throws NoTestData, IOException {
+    void testRequirementC15() throws NoTestData {
+        final GetStatesOfReportParts getStatesOfReportParts = report -> ((EpisodicOperationalStateReport) report)
+                .getReportPart().stream()
+                        .map(EpisodicOperationalStateReport.ReportPart::getOperationState)
+                        .collect(Collectors.toUnmodifiableList());
+
+        testEpisodicReportRequirement(
+                EpisodicOperationalStateReport.class, AbstractOperationState.class, getStatesOfReportParts);
+    }
+
+    private void testEpisodicReportRequirement(
+            final Class<? extends AbstractReport> reportClass,
+            final Class<? extends AbstractState> stateClass,
+            final GetStatesOfReportParts getStatesOfReportParts)
+            throws NoTestData {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
-
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                RemoteMdibAccess first = null;
-                RemoteMdibAccess second = null;
                 try {
-                    first = mdibHistorian.createNewStorage(sequenceId);
-                    second = mdibHistorian.createNewStorage(sequenceId);
-                } catch (PreprocessingException e) {
-                    fail(e);
-                }
-
-                // get relevant reports
-                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
-                try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
-
-                    for (final Iterator<AbstractReport> reportIterator = reports.iterator();
-                            reportIterator.hasNext(); ) {
-                        final AbstractReport report = reportIterator.next();
-
-                        if (report instanceof EpisodicOperationalStateReport operationalStateReport) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-
-                            for (var reportPart : operationalStateReport.getReportPart()) {
-                                for (var operationState : reportPart.getOperationState()) {
-                                    final var stateBeforeReport = first.getState(
-                                            operationState.getDescriptorHandle(), AbstractOperationState.class);
-                                    final var stateAfterReport = second.getState(
-                                            operationState.getDescriptorHandle(), AbstractOperationState.class);
-                                    assertTrue(
-                                            stateBeforeReport.isPresent() && stateAfterReport.isPresent(),
-                                            String.format(STATE_ABSENT, operationState.getDescriptorHandle()));
-                                    assertNotEquals(
-                                            stateAfterReport.orElseThrow(),
-                                            stateBeforeReport.orElseThrow(),
-                                            String.format(STATE_UNCHANGED, operationState.getDescriptorHandle()));
-                                }
-                            }
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                        } else {
-                            first = mdibHistorian.applyReportOnStorage(first, report);
-                            second = mdibHistorian.applyReportOnStorage(second, report);
-                        }
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
+                    checkReportsForSequenceId(
+                            reportClass,
+                            stateClass,
+                            getStatesOfReportParts,
+                            sequenceId,
+                            mdibHistorian,
+                            acceptableSequenceSeen);
+                } catch (NoTestData e) {
                     fail(e);
                 }
             });
+        } catch (IOException e) {
+            fail(e);
         }
-        assertTestData(acceptableSequenceSeen.get(), "No OperationalStateReports seen during test run, test failed.");
+        assertTestData(
+                acceptableSequenceSeen.get(),
+                String.format("No %s seen during test run, test failed.", reportClass.getSimpleName()));
+    }
+
+    private void checkReportsForSequenceId(
+            final Class<? extends AbstractReport> reportClass,
+            final Class<? extends AbstractState> stateClass,
+            final GetStatesOfReportParts getStatesOfReportParts,
+            final String sequenceId,
+            final MdibHistorian mdibHistorian,
+            final AtomicInteger acceptableSequenceSeen)
+            throws NoTestData {
+
+        try (final var history = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+            try (final var historyNext = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                // skip the first entry so that history and historyNext are off by one entry
+                final var skippedElement = historyNext.next();
+                if (skippedElement == null) {
+                    throw new NoTestData("Not enough input to compare mdib revisions");
+                }
+
+                compareReportsWithMdib(
+                        mdibHistorian,
+                        sequenceId,
+                        reportClass,
+                        stateClass,
+                        acceptableSequenceSeen,
+                        getStatesOfReportParts,
+                        history,
+                        historyNext);
+            }
+        } catch (ReportProcessingException | PreprocessingException e) {
+            fail(e);
+        }
+    }
+
+    private void compareReportsWithMdib(
+            final MdibHistorian mdibHistorian,
+            final String sequenceId,
+            final Class<? extends AbstractReport> reportClass,
+            final Class<? extends AbstractState> stateClass,
+            final AtomicInteger acceptableSequenceSeen,
+            final GetStatesOfReportParts getStatesOfReportParts,
+            final MdibHistorian.HistorianResult history,
+            final MdibHistorian.HistorianResult historyNext) {
+        RemoteMdibAccess mdibAccess = history.next();
+        RemoteMdibAccess mdibAccessAhead = historyNext.next();
+
+        final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdibAccess.getMdibVersion());
+        try (final var reports = mdibHistorian.getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+            for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                final AbstractReport report = iterator.next();
+
+                if (reportClass.isInstance(report)) {
+                    acceptableSequenceSeen.incrementAndGet();
+                    final var reportMdibVersion = ImpliedValueUtil.getReportMdibVersion(report);
+                    // fast-forward history to the mdib version before the report
+                    while (ImpliedValueUtil.getMdibVersion(mdibAccessAhead.getMdibVersion())
+                                    .compareTo(reportMdibVersion)
+                            < 0) {
+                        mdibAccessAhead = historyNext.next();
+                        mdibAccess = history.next();
+                    }
+
+                    final var reportParts = getStatesOfReportParts.apply(reportClass.cast(report));
+                    for (var reportPart : reportParts) {
+                        for (var state : reportPart) {
+                            final Optional<? extends AbstractState> stateBeforeReport;
+
+                            if (state instanceof AbstractMultiState multiState) {
+                                stateBeforeReport = mdibAccess.getState(multiState.getHandle(), stateClass);
+                            } else {
+                                stateBeforeReport = mdibAccess.getState(state.getDescriptorHandle(), stateClass);
+                            }
+                            if (stateBeforeReport.isEmpty()) {
+                                // If stateBeforeReport is not present, it has either been inserted as a multi-state or
+                                // with a description change report within the same mdib version. In both cases,
+                                // the state has definitely changed.
+                                continue;
+                            }
+                            assertNotEquals(
+                                    state,
+                                    stateBeforeReport.orElseThrow(),
+                                    String.format(STATE_UNCHANGED, state.getDescriptorHandle()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @FunctionalInterface
+    private interface GetStatesOfReportParts {
+        List<List<? extends AbstractState>> apply(AbstractReport report);
     }
 }
