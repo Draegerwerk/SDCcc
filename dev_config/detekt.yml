@@ -81,7 +81,7 @@ potential-bugs:
   NullCheckOnMutableProperty:
     active: true
   NullableToStringCall:
-    active: false
+    active: true
   PropertyUsedBeforeDeclaration:
     active: true
   UnconditionalJumpStatementInLoop:
