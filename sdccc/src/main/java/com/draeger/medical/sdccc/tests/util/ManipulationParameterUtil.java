@@ -13,6 +13,7 @@ import java.util.List;
 import javax.xml.namespace.QName;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalManifestation;
 import org.somda.sdc.biceps.model.participant.ComponentActivation;
@@ -211,6 +212,31 @@ public final class ManipulationParameterUtil {
     public static ManipulationParameterData buildTriggerReportManipulationParameterData(final QName report) {
         return new ManipulationParameterData(
                 List.of(new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_QNAME, report.toString())));
+    }
+
+    /**
+     * Build manipulation parameter data containing the parameters of a SetContextStateAssociation manipulation call.
+     *
+     * @param descriptorHandle   - the descriptor handle
+     * @param contextStateHandle - the contextState handle
+     * @param contextAssociation - the context association to set
+     * @return the manipulation parameter data
+     */
+    public static ManipulationParameterData buildSetContextStateAssociationParameterData(
+            @NotNull String descriptorHandle,
+            @NotNull String contextStateHandle,
+            @NotNull ContextAssociation contextAssociation) {
+        return new ManipulationParameterData(List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_DESCRIPTOR_HANDLE, descriptorHandle),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_CONTEXT_STATE_HANDLE, contextStateHandle),
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_CONTEXT_ASSOCIATION, contextAssociation.value())));
+    }
+
+    @NotNull
+    public static ManipulationParameterData buildRemoveAllContextStateValidatorsParameterData(
+            @NotNull String contextStateHandle) {
+        return new ManipulationParameterData(List.of(
+                new ImmutablePair<>(Constants.MANIPULATION_PARAMETER_CONTEXT_STATE_HANDLE, contextStateHandle)));
     }
 
     /**

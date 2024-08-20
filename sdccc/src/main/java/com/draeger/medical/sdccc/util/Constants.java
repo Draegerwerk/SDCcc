@@ -233,6 +233,8 @@ public final class Constants {
     public static final String MANIPULATION_PARAMETER_COMPONENT_ACTIVATION = "ComponentActivation";
     public static final String MANIPULATION_PARAMETER_MEASUREMENT_VALIDITY = "MeasurementValidity";
     public static final String MANIPULATION_PARAMETER_QNAME = "QName";
+    public static final String MANIPULATION_PARAMETER_DESCRIPTOR_HANDLE = "DescriptorHandle";
+    public static final String MANIPULATION_PARAMETER_CONTEXT_STATE_HANDLE = "ContextStateHandle";
 
     private Constants() {}
 
