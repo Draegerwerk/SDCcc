@@ -31,6 +31,7 @@ import com.draeger.medical.biceps.model.participant.CodedValue;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.DistributionSampleArrayMetricState;
 import com.draeger.medical.biceps.model.participant.EnsembleContextDescriptor;
+import com.draeger.medical.biceps.model.participant.EnsembleContextState;
 import com.draeger.medical.biceps.model.participant.EnumStringMetricDescriptor;
 import com.draeger.medical.biceps.model.participant.EnumStringMetricState;
 import com.draeger.medical.biceps.model.participant.InstanceIdentifier;
@@ -42,6 +43,8 @@ import com.draeger.medical.biceps.model.participant.MdState;
 import com.draeger.medical.biceps.model.participant.Mdib;
 import com.draeger.medical.biceps.model.participant.MdsDescriptor;
 import com.draeger.medical.biceps.model.participant.MdsState;
+import com.draeger.medical.biceps.model.participant.MeansContextDescriptor;
+import com.draeger.medical.biceps.model.participant.MeansContextState;
 import com.draeger.medical.biceps.model.participant.MeasurementValidity;
 import com.draeger.medical.biceps.model.participant.MetricAvailability;
 import com.draeger.medical.biceps.model.participant.MetricCategory;
@@ -70,6 +73,8 @@ import com.draeger.medical.biceps.model.participant.SystemContextDescriptor;
 import com.draeger.medical.biceps.model.participant.SystemContextState;
 import com.draeger.medical.biceps.model.participant.VmdDescriptor;
 import com.draeger.medical.biceps.model.participant.VmdState;
+import com.draeger.medical.biceps.model.participant.WorkflowContextDescriptor;
+import com.draeger.medical.biceps.model.participant.WorkflowContextState;
 import com.google.inject.Inject;
 import java.math.BigDecimal;
 import java.util.List;
@@ -1081,6 +1086,32 @@ public class MdibBuilder {
     }
 
     /**
+     * @param descriptorHandle of descriptor for new state
+     * @param stateHandle      of new state
+     * @return new ensemble context state
+     */
+    public EnsembleContextState buildEnsembleContextState(final String descriptorHandle, final String stateHandle) {
+        final var state = participantModelFactory.createEnsembleContextState();
+        state.setDescriptorHandle(descriptorHandle);
+        state.setHandle(stateHandle);
+        return state;
+    }
+
+    /**
+     * Builds a new pair of ensemble context descriptor and state.
+     *
+     * @param descriptorHandle for new descriptor and state
+     * @param stateHandle      for new state
+     * @return new ensemble descriptor and state
+     */
+    public Pair<EnsembleContextDescriptor, EnsembleContextState> buildEnsembleContext(
+            final String descriptorHandle, final String stateHandle) {
+        final var descriptor = buildEnsembleContextDescriptor(descriptorHandle);
+        final var state = buildEnsembleContextState(descriptorHandle, stateHandle);
+        return new ImmutablePair<>(descriptor, state);
+    }
+
+    /**
      * @param handle for new descriptor
      * @return new operator context descriptor
      */
@@ -1113,6 +1144,78 @@ public class MdibBuilder {
             final String descriptorHandle, final String stateHandle) {
         final var descriptor = buildOperatorContextDescriptor(descriptorHandle);
         final var state = buildOperatorContextState(descriptorHandle, stateHandle);
+        return new ImmutablePair<>(descriptor, state);
+    }
+
+    /**
+     * @param handle for new descriptor
+     * @return new means context descriptor
+     */
+    public MeansContextDescriptor buildMeansContextDescriptor(final String handle) {
+        final var descriptor = participantModelFactory.createMeansContextDescriptor();
+        descriptor.setHandle(handle);
+        return descriptor;
+    }
+
+    /**
+     * @param descriptorHandle of descriptor for new state
+     * @param stateHandle      of new state
+     * @return new means context state
+     */
+    public MeansContextState buildMeansContextState(final String descriptorHandle, final String stateHandle) {
+        final var state = participantModelFactory.createMeansContextState();
+        state.setDescriptorHandle(descriptorHandle);
+        state.setHandle(stateHandle);
+        return state;
+    }
+
+    /**
+     * Builds a new pair of means context descriptor and state.
+     *
+     * @param descriptorHandle for new descriptor and state
+     * @param stateHandle      for new state
+     * @return new means descriptor and state
+     */
+    public Pair<MeansContextDescriptor, MeansContextState> buildMeansContext(
+            final String descriptorHandle, final String stateHandle) {
+        final var descriptor = buildMeansContextDescriptor(descriptorHandle);
+        final var state = buildMeansContextState(descriptorHandle, stateHandle);
+        return new ImmutablePair<>(descriptor, state);
+    }
+
+    /**
+     * @param handle for new descriptor
+     * @return new workflow context descriptor
+     */
+    public WorkflowContextDescriptor buildWorkflowContextDescriptor(final String handle) {
+        final var descriptor = participantModelFactory.createWorkflowContextDescriptor();
+        descriptor.setHandle(handle);
+        return descriptor;
+    }
+
+    /**
+     * @param descriptorHandle of descriptor for new state
+     * @param stateHandle      of new state
+     * @return new workflow context state
+     */
+    public WorkflowContextState buildWorkflowContextState(final String descriptorHandle, final String stateHandle) {
+        final var state = participantModelFactory.createWorkflowContextState();
+        state.setDescriptorHandle(descriptorHandle);
+        state.setHandle(stateHandle);
+        return state;
+    }
+
+    /**
+     * Builds a new pair of workflow context descriptor and state.
+     *
+     * @param descriptorHandle for new descriptor and state
+     * @param stateHandle      for new state
+     * @return new workflow descriptor and state
+     */
+    public Pair<WorkflowContextDescriptor, WorkflowContextState> buildWorkflowContext(
+            final String descriptorHandle, final String stateHandle) {
+        final var descriptor = buildWorkflowContextDescriptor(descriptorHandle);
+        final var state = buildWorkflowContextState(descriptorHandle, stateHandle);
         return new ImmutablePair<>(descriptor, state);
     }
 

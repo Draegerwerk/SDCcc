@@ -186,7 +186,12 @@ sealed interface MdibChange {
          */
         @JvmStatic
         fun from(version: MdibVersion, change: DescriptionModificationMessage): Description =
-            Description(version, change.insertedEntities, change.updatedEntities, change.deletedEntities)
+            Description(
+                mdibVersion = version,
+                insertedEntities = change.insertedEntities,
+                updatedEntities = change.updatedEntities,
+                deletedEntities = change.deletedEntities
+            )
 
         /**
          * Factory method to create an [Alert] from an [AlertStateModificationMessage].
