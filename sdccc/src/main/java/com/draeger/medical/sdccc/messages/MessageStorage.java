@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -84,6 +85,7 @@ import org.somda.sdc.dpws.soap.ApplicationInfo;
 import org.somda.sdc.dpws.soap.CommunicationContext;
 import org.somda.sdc.dpws.soap.HttpApplicationInfo;
 import org.somda.sdc.dpws.soap.SoapConstants;
+import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
 /**
@@ -91,6 +93,9 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
  */
 @Singleton
 public class MessageStorage implements AutoCloseable {
+
+    public static final String UNKNOWN_SENDER = "unknown";
+    public static final String DEFAULT_OUTBOUND_SENDER = "SDCcc";
     private static final Logger LOG = LogManager.getLogger(MessageStorage.class);
 
     private static final int FETCH_SIZE = 10;
@@ -310,7 +315,28 @@ public class MessageStorage implements AutoCloseable {
                 mdibVersionGroups,
                 actions,
                 message.getID(),
-                isSOAP);
+                isSOAP,
+                getSender(message));
+    }
+
+    private String getSender(final Message message) {
+        final CommunicationContext communicationContext = message.getCommunicationContext();
+        if (communicationContext == null) {
+            return UNKNOWN_SENDER;
+        }
+        final TransportInfo transportInfo = communicationContext.getTransportInfo();
+        if (transportInfo == null) {
+            return UNKNOWN_SENDER;
+        }
+        if (message.getDirection() == CommunicationLog.Direction.INBOUND) {
+            final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
+            if (remoteAddress.isEmpty()) {
+                return UNKNOWN_SENDER;
+            }
+            return remoteAddress.orElseThrow();
+        } else {
+            return DEFAULT_OUTBOUND_SENDER;
+        }
     }
 
     private boolean processMessageBody(

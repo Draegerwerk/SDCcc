@@ -75,6 +75,9 @@ public class MessageContent {
     private String uuid;
     private boolean isSOAP;
 
+    @Column(name = "sender", length = 15)
+    private String sender;
+
     /**
      * This will be used by hibernate when creating the POJO from database entries.
      */
@@ -94,6 +97,9 @@ public class MessageContent {
      * @param actions              ws addressing actions
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
+     * @param sender               either the String "SDCcc" for outbound messages or the IP Address of the
+     *                             message Sender for inbound messages. NOTE: The String's length must be shorter or
+     *                             equal to 15 characters in order to be stored in the database.
      */
     public MessageContent(
             final String body,
@@ -105,7 +111,8 @@ public class MessageContent {
             final List<MdibVersionGroupEntity.MdibVersionGroup> mdibVersionGroups,
             final Set<String> actions,
             final String uuid,
-            final boolean isSOAP) {
+            final boolean isSOAP,
+            final String sender) {
 
         this.body = body;
         this.direction = direction;
@@ -115,6 +122,7 @@ public class MessageContent {
         this.actions = actions;
         this.uuid = uuid;
         this.isSOAP = isSOAP;
+        this.sender = sender;
 
         this.messageHash = MessageUtil.hashMessage(this.body);
         this.scheme = communicationContext.getTransportInfo().getScheme();
@@ -213,5 +221,9 @@ public class MessageContent {
 
     public List<MdibVersionGroupEntity> getMdibVersionGroups() {
         return this.mdibVersionGroups;
+    }
+
+    public String getSender() {
+        return this.sender;
     }
 }
