@@ -96,6 +96,12 @@ import org.somda.sdc.glue.common.WsdlConstants;
  * SDCcc main class.
  */
 public class TestSuite {
+
+    /**
+     * The name used to hold the manipulation lock during the phase 4 disconnect.
+     */
+    public static final String LOCK_NAME = "TestSuite.phase4";
+
     private static final Logger LOG = LogManager.getLogger(TestSuite.class);
     private static final Duration MAX_WAIT = Duration.ofSeconds(10);
     private static final int TIME_BETWEEN_PHASES = 10000;
@@ -233,7 +239,7 @@ public class TestSuite {
             final SummaryGeneratingListener invariantSummary) {
         // acquire ManipulationLocker lock to ensure we don't lose any calls
         final var manipulationLocker = injector.getInstance(ManipulationLocker.class);
-        manipulationLocker.lock("TestSuite.phase4", () -> {
+        manipulationLocker.lock(LOCK_NAME, () -> {
             LOG.info("Disconnecting TestSuite Client");
             try {
                 injector.getInstance(TestClient.class).disconnect();

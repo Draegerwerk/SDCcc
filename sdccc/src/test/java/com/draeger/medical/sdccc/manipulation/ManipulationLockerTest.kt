@@ -9,11 +9,14 @@ package com.draeger.medical.sdccc.manipulation
 
 import com.google.inject.Injector
 import org.apache.logging.log4j.kotlin.Logging
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.doReturn
 import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -22,6 +25,11 @@ import kotlin.time.measureTime
 internal class ManipulationLockerTest {
 
     private val mockInjector = mock<Injector>()
+
+    @BeforeEach
+    internal fun setUp() {
+        doReturn(mock(Manipulations::class.java)).`when`(mockInjector).getInstance(Manipulations::class.java)
+    }
 
     @Test
     internal fun `test lock`() {
@@ -36,15 +44,68 @@ internal class ManipulationLockerTest {
         // wait for the thread to lock
         blockingLock.future.join()
         val elapsedBlocked = measureTime {
-            locker.lock("blockedResult") {
-                logger.debug { "blockedResult is in the lock" }
+            locker.lock(LOCKED_BY_NAME) {
+                logger.debug { LOCK_LOG_MESSAGE }
+                assertEquals(LOCKED_BY_NAME, locker.lockedBy())
             }
         }
+        assertNull(locker.lockedBy())
 
         val elapsed = timeToBlock - elapsedBlocked
         assertTrue(
             "Elapsed time $elapsedBlocked is not within $timeTolerance of $timeToBlock "
         ) { elapsed.absoluteValue <= timeTolerance }
+    }
+
+    @Test
+    internal fun `test lock observer`() {
+        val locker = ManipulationLocker(mockInjector)
+
+        val lockedNames1 = mutableListOf<String?>()
+        val lockedNames2 = mutableListOf<String?>()
+        val lockedNames3 = mutableListOf<String?>()
+
+        val observer1: (String?) -> Unit = { lockedNames1.add(it) }
+        val observer2: (String?) -> Unit = { lockedNames2.add(it) }
+        val observer3: (String?) -> Unit = { lockedNames3.add(it) }
+
+        locker.subscribe(observer1)
+        locker.subscribe(observer2)
+        locker.subscribe(observer3)
+
+        val timeToBlock = 1.seconds
+        // lock and block
+        val firstLockName = "myFirstLock :)"
+        val blockingLock = startThreadWithFuture(locker, firstLockName) {
+            Thread.sleep(timeToBlock.inWholeMilliseconds)
+        }
+
+        // wait for the thread to complete
+        blockingLock.thread.join()
+        // unsubscribe one
+        locker.unsubscribe(observer3)
+        assertEquals(listOf(firstLockName, null), lockedNames3)
+
+        locker.lock(LOCKED_BY_NAME) {
+            logger.debug { LOCK_LOG_MESSAGE }
+            assertEquals(LOCKED_BY_NAME, locker.lockedBy())
+        }
+        locker.unsubscribe(observer2)
+
+        assertNull(locker.lockedBy())
+        assertEquals(listOf(firstLockName, null), lockedNames3) // remains unchanged
+        assertEquals(listOf(firstLockName, null, LOCKED_BY_NAME, null), lockedNames2)
+
+        locker.lock(LOCKED_BY_NAME) {
+            logger.debug { LOCK_LOG_MESSAGE }
+            assertEquals(LOCKED_BY_NAME, locker.lockedBy())
+        }
+
+        locker.unsubscribe(observer1)
+
+        assertEquals(listOf(firstLockName, null), lockedNames3) // remains unchanged
+        assertEquals(listOf(firstLockName, null, LOCKED_BY_NAME, null), lockedNames2) // remains unchanged
+        assertEquals(listOf(firstLockName, null, LOCKED_BY_NAME, null, LOCKED_BY_NAME, null), lockedNames1)
     }
 
     // this is obviously not a proper test for fairness, functions as a sanity check for fairness
@@ -73,8 +134,9 @@ internal class ManipulationLockerTest {
 
         threads.forEach { it.thread.join() }
 
-        locker.lock("blockedResult") {
-            logger.debug { "blockedResult is in the lock" }
+        locker.lock(LOCKED_BY_NAME) {
+            logger.debug { LOCK_LOG_MESSAGE }
+            assertEquals(LOCKED_BY_NAME, locker.lockedBy())
         }
 
         assertEquals(locksToAcquire, resultList.size)
@@ -83,11 +145,12 @@ internal class ManipulationLockerTest {
 
     private fun startThreadWithFuture(
         locker: ManipulationLocker,
-        supplier: () -> Unit
+        lockName: String = "result",
+        supplier: () -> Unit,
     ): ThreadAndFuture {
         val hasLock = CompletableFuture<Unit>()
         val t = thread(isDaemon = true) {
-            locker.lock("result") {
+            locker.lock(lockName) {
                 hasLock.complete(null)
                 supplier()
             }
@@ -97,5 +160,8 @@ internal class ManipulationLockerTest {
 
     private data class ThreadAndFuture(val thread: Thread, val future: CompletableFuture<Unit>)
 
-    companion object : Logging
+    companion object : Logging {
+        private const val LOCKED_BY_NAME: String = "blockedResult"
+        private const val LOCK_LOG_MESSAGE: String = "blockedResult is in the lock"
+    }
 }

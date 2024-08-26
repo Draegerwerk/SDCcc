@@ -25,6 +25,7 @@ import com.draeger.medical.sdccc.configuration.DefaultTestSuiteConfig;
 import com.draeger.medical.sdccc.configuration.DefaultTestSuiteModule;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
+import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.HibernateConfig;
@@ -53,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -385,6 +387,57 @@ public class TestSuiteIT {
         assertFalse(
                 testRunObserver.isInvalid(),
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+    }
+
+    /**
+     * Runs the test suite with a mock client and mock tests, expected to hold the manipulation lock when disconnecting
+     * the test consumer.
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testConsumerHoldsLockWhenDisconnecting() throws IOException, PreprocessingException, TimeoutException {
+        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
+
+        final var injectorSpy = spy(injector);
+        final var testClientSpy = spy(injector.getInstance(TestClient.class));
+        when(injectorSpy.getInstance(TestClient.class)).thenReturn(testClientSpy);
+
+        final var manipulationLocker = injector.getInstance(ManipulationLocker.class);
+
+        final var manipulationNames = new ArrayList<String>();
+        manipulationLocker.subscribe$sdccc((name) -> {
+            manipulationNames.add(name);
+            return null;
+        });
+
+        InjectorTestBase.setInjector(injectorSpy);
+
+        final var obs = injector.getInstance(WasRunObserver.class);
+        assertFalse(obs.hadDirectRun());
+        assertFalse(obs.hadInvariantRun());
+
+        final var testSuite = injector.getInstance(TestSuite.class);
+
+        final var run = testSuite.runTestSuite();
+        assertEquals(0, run, "SDCcc had an unexpected failure");
+
+        assertTrue(obs.hadDirectRun());
+        assertTrue(obs.hadInvariantRun());
+
+        // no invalidation is allowed in the test run
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+
+        final var expectedList = new ArrayList<String>();
+        expectedList.add(TestSuite.LOCK_NAME);
+        expectedList.add(null);
+
+        assertEquals(expectedList, manipulationNames);
     }
 
     /**

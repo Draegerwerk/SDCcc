@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.manipulation.ManipulationLocker;
+import com.draeger.medical.sdccc.manipulation.Manipulations;
 import com.google.inject.Injector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -46,6 +47,8 @@ public class PreconditionRegistryTest {
         mockInjector = mock(Injector.class);
         locker = new ManipulationLocker(mockInjector);
         when(mockInjector.getInstance(ManipulationLocker.class)).thenReturn(locker);
+        final var mockManipulations = mock(Manipulations.class);
+        when(mockInjector.getInstance(Manipulations.class)).thenReturn(mockManipulations);
     }
 
     /**
