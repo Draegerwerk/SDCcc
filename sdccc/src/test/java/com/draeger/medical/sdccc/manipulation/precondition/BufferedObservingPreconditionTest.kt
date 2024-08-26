@@ -14,15 +14,16 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.any
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.times
+import org.mockito.kotlin.whenever
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
@@ -115,8 +116,9 @@ internal class BufferedObservingPreconditionTest {
     @Test
     internal fun `test processing thread dying invalidates test`() {
         val testRunObserver = mock<TestRunObserver>()
+        whenever(testRunObserver.isInvalid).thenReturn(false)
         val mockInjector = mock<Injector>()
-        doReturn(testRunObserver).`when`(mockInjector).getInstance(TestRunObserver::class.java)
+        whenever(mockInjector.getInstance(TestRunObserver::class.java)).thenReturn(testRunObserver)
 
         val exampleObserving = object : BufferedObservingPrecondition(
             injector = mockInjector,
@@ -130,9 +132,20 @@ internal class BufferedObservingPreconditionTest {
 
         exampleObserving.observeChange(mock<MdibChange.Metric>())
 
-        verify(testRunObserver, times(1)).invalidateTestRun(anyString(), any())
+        exampleObserving
+            .processingThread
+            .join(TIME_TO_WAIT_FOR_CHANGE.inWholeMilliseconds)
+
+        verify(
+            testRunObserver,
+            times(1)
+        ).invalidateTestRun(anyString(), any())
 
         // passing more changes is still possible
         exampleObserving.observeChange(mock<MdibChange.Metric>())
+    }
+
+    companion object {
+        private val TIME_TO_WAIT_FOR_CHANGE = 100.milliseconds
     }
 }
