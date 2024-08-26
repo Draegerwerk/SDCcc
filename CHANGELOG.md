@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - support for Kotlin
 - preconditions which observe mdib changes during the test run
+- Sender IP adresses of inbound messages are stored in TestRun DB
 
 ### Changed
 
