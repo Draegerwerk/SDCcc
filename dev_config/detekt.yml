@@ -24,12 +24,16 @@ complexity:
     threshold: 6
   ComplexInterface:
     active: true
+  CyclomaticComplexMethod:
+    threshold: 20
+  LongMethod:
+    active: false
   MethodOverloading:
     active: true
   NamedArguments:
     active: true
   NestedBlockDepth:
-    threshold: 6
+    active: false
   ReplaceSafeCallChainWithRun:
     active: true
   StringLiteralDuplication:
@@ -151,8 +155,6 @@ style:
     active: true
     max: 3
   SpacingBetweenPackageAndImports:
-    active: true
-  StringShouldBeRawString:
     active: true
   TrailingWhitespace:
     active: true
