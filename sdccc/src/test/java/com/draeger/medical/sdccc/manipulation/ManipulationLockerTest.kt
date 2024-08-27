@@ -16,6 +16,7 @@ import org.mockito.kotlin.doReturn
 import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -32,10 +33,13 @@ internal class ManipulationLockerTest {
     }
 
     @Test
-    internal fun `test lock`() {
+    internal fun `test lock generic`() {
         val locker = ManipulationLocker(mockInjector)
         val timeToBlock = 1.seconds
         val timeTolerance = 100.milliseconds
+
+        assertFalse { locker.isLocked() }
+
         // lock and block
         val blockingLock = startThreadWithFuture(locker) {
             Thread.sleep(timeToBlock.inWholeMilliseconds)
@@ -47,9 +51,42 @@ internal class ManipulationLockerTest {
             locker.lock(LOCKED_BY_NAME) {
                 logger.debug { LOCK_LOG_MESSAGE }
                 assertEquals(LOCKED_BY_NAME, locker.lockedBy())
+                assertTrue { locker.isLocked() }
             }
         }
         assertNull(locker.lockedBy())
+        assertFalse { locker.isLocked() }
+
+        val elapsed = timeToBlock - elapsedBlocked
+        assertTrue(
+            "Elapsed time $elapsedBlocked is not within $timeTolerance of $timeToBlock "
+        ) { elapsed.absoluteValue <= timeTolerance }
+    }
+
+    @Test
+    internal fun `test lock manipulations`() {
+        val locker = ManipulationLocker(mockInjector)
+        val timeToBlock = 1.seconds
+        val timeTolerance = 100.milliseconds
+
+        assertFalse { locker.isLocked() }
+
+        // lock and block
+        val blockingLock = startThreadWithFuture(locker) {
+            Thread.sleep(timeToBlock.inWholeMilliseconds)
+        }
+
+        // wait for the thread to lock
+        blockingLock.future.join()
+        val elapsedBlocked = measureTime {
+            locker.lockManipulations(LOCKED_BY_NAME, Manipulations::class.java) {
+                logger.debug { LOCK_LOG_MESSAGE }
+                assertEquals(LOCKED_BY_NAME, locker.lockedBy())
+                assertTrue { locker.isLocked() }
+            }
+        }
+        assertNull(locker.lockedBy())
+        assertFalse { locker.isLocked() }
 
         val elapsed = timeToBlock - elapsedBlocked
         assertTrue(

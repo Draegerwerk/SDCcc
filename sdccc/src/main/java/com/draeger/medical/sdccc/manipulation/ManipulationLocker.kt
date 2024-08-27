@@ -36,20 +36,29 @@ class ManipulationLocker @Inject constructor(
 
     /**
      * Locks the manipulation and executes the lambda. Returns the result of the lambda.
+     *
+     * @param T the return type of the lambda
+     * @param callerName the name of the caller
+     * @param supplier the lambda to execute
      */
     fun <T> lock(
         callerName: String,
         supplier: () -> T
     ): T {
-        // use the reified call without passing in the argument
+        // use the other call without passing in the argument
         return this.lockManipulations(callerName, Manipulations::class.java) {
             supplier()
         }
     }
 
-    // TODO: Do we want his? Implication: internalLock and injector must be internal
     /**
      * Locks the manipulation and executes the lambda. Returns the result of the lambda.
+     *
+     * @param M the type of the manipulations to provide to the lambda
+     * @param T the return type of the lambda
+     * @param callerName the name of the caller
+     * @param manipulationsClass the class of the manipulations to provide to the lambda
+     * @param supplier the lambda to execute
      */
     fun <M : Manipulations, T> lockManipulations(
         callerName: String,
