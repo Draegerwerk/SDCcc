@@ -23,7 +23,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
@@ -116,7 +115,6 @@ internal class BufferedObservingPreconditionTest {
     @Test
     internal fun `test processing thread dying invalidates test`() {
         val testRunObserver = mock<TestRunObserver>()
-        whenever(testRunObserver.isInvalid).thenReturn(false)
         val mockInjector = mock<Injector>()
         whenever(mockInjector.getInstance(TestRunObserver::class.java)).thenReturn(testRunObserver)
 
