@@ -28,10 +28,14 @@ abstract class BufferedObservingPrecondition(
     // as the queue will fill up (quite quickly with waveforms)
     private val updateQueue = LinkedBlockingQueue<MdibChange>()
 
-    // internal visibility to allow unit tests to inspect the thread. do not use for anything else
-    internal val processingThread: Thread
     private val processDied = AtomicBoolean(false)
     private val testRunObserver = injector.getInstance(TestRunObserver::class.java)
+
+    /**
+     * The thread that processes the incoming changes and provides them to
+     * the concrete observing precondition.
+     */
+    val processingThread: Thread
 
     init {
         processingThread = thread(start = true, isDaemon = true) {
