@@ -75,7 +75,7 @@ public class MessageContent {
     private String uuid;
     private boolean isSOAP;
 
-    @Column(name = "sender", length = 15)
+    @Column(name = "sender")
     private String sender;
 
     /**
@@ -98,8 +98,7 @@ public class MessageContent {
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
      * @param sender               either the String "SDCcc" for outbound messages or the IP Address of the
-     *                             message Sender for inbound messages. NOTE: The String's length must be shorter or
-     *                             equal to 15 characters in order to be stored in the database.
+     *                             message Sender for inbound messages.
      */
     public MessageContent(
             final String body,

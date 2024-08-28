@@ -94,7 +94,7 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 @Singleton
 public class MessageStorage implements AutoCloseable {
 
-    public static final String UNKNOWN_SENDER = "unknown";
+    public static final String UNKNOWN_SENDER = "UNKNOWN";
     public static final String DEFAULT_OUTBOUND_SENDER = "SDCcc";
     private static final Logger LOG = LogManager.getLogger(MessageStorage.class);
 
@@ -322,20 +322,30 @@ public class MessageStorage implements AutoCloseable {
     private String getSender(final Message message) {
         final CommunicationContext communicationContext = message.getCommunicationContext();
         if (communicationContext == null) {
+            LOG.warn("Encountered message (uuid={}) without a CommunicationContext.", message);
             return UNKNOWN_SENDER;
         }
         final TransportInfo transportInfo = communicationContext.getTransportInfo();
         if (transportInfo == null) {
+            LOG.warn("Encountered message (uuid={}) without a TransportInfo.", message);
             return UNKNOWN_SENDER;
         }
         if (message.getDirection() == CommunicationLog.Direction.INBOUND) {
             final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
             if (remoteAddress.isEmpty()) {
+                LOG.warn("Encountered inbound message (uuid={}) without a remoteAddress.", message);
                 return UNKNOWN_SENDER;
+            } else {
+                return remoteAddress.orElseThrow();
             }
-            return remoteAddress.orElseThrow();
-        } else {
+        } else if (message.getDirection() == CommunicationLog.Direction.OUTBOUND) {
             return DEFAULT_OUTBOUND_SENDER;
+        } else {
+            // NOTE: will invalidate the TestRun
+            LOG.error("Encountered unknown direction {} in message with uuid={}",
+                    message.getDirection(),
+                    message.getID());
+            return UNKNOWN_SENDER;
         }
     }
 
