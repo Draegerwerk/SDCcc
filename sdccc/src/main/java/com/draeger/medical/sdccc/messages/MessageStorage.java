@@ -342,7 +342,8 @@ public class MessageStorage implements AutoCloseable {
             return DEFAULT_OUTBOUND_SENDER;
         } else {
             // NOTE: will invalidate the TestRun
-            LOG.error("Encountered unknown direction {} in message with uuid={}",
+            LOG.error(
+                    "Encountered unknown direction {} in message with uuid={}",
                     message.getDirection(),
                     message.getID());
             return UNKNOWN_SENDER;
