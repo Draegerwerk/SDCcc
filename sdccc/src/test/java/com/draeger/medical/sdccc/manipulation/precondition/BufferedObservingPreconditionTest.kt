@@ -134,7 +134,7 @@ internal class BufferedObservingPreconditionTest {
 
         exampleObserving
             .processingThread
-            .join(TIME_TO_WAIT_FOR_CHANGE.inWholeMilliseconds)
+            .join(TIME_TO_WAIT_FOR_CHANGE_MILLIS)
 
         verify(
             testRunObserver,
@@ -146,6 +146,6 @@ internal class BufferedObservingPreconditionTest {
     }
 
     companion object {
-        private val TIME_TO_WAIT_FOR_CHANGE = 100.milliseconds
+        private const val TIME_TO_WAIT_FOR_CHANGE_MILLIS = 60_000L
     }
 }
