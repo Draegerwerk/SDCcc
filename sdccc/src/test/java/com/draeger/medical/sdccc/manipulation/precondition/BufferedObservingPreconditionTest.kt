@@ -139,7 +139,8 @@ internal class BufferedObservingPreconditionTest {
             times(1)
         ).invalidateTestRun(anyString(), any())
 
-        // passing more changes is still possible
+        // passing more changes is still possible and does not block,
+        // but will trigger no processing
         exampleObserving.observeChange(mock<MdibChange.Metric>())
     }
 
