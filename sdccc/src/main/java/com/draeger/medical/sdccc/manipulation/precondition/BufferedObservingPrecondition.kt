@@ -27,9 +27,15 @@ abstract class BufferedObservingPrecondition(
     // this is going to be a problem when the manipulation is very long-running,
     // as the queue will fill up (quite quickly with waveforms)
     private val updateQueue = LinkedBlockingQueue<MdibChange>()
-    private val processingThread: Thread
+
     private val processDied = AtomicBoolean(false)
     private val testRunObserver = injector.getInstance(TestRunObserver::class.java)
+
+    /**
+     * The thread that processes the incoming changes and provides them to
+     * the concrete observing precondition.
+     */
+    val processingThread: Thread
 
     init {
         processingThread = thread(start = true, isDaemon = true) {
