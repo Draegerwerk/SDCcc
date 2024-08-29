@@ -320,33 +320,39 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private String getSender(final Message message) {
-        final CommunicationContext communicationContext = message.getCommunicationContext();
-        if (communicationContext == null) {
-            LOG.warn("Encountered message (uuid={}) without a CommunicationContext.", message);
-            return UNKNOWN_SENDER;
-        }
-        final TransportInfo transportInfo = communicationContext.getTransportInfo();
-        if (transportInfo == null) {
-            LOG.warn("Encountered message (uuid={}) without a TransportInfo.", message);
-            return UNKNOWN_SENDER;
-        }
         if (message.getDirection() == CommunicationLog.Direction.INBOUND) {
+            final CommunicationContext communicationContext = message.getCommunicationContext();
+            if (communicationContext == null) {
+                // NOTE: this should never happen. If it does, this should be considered a bug.
+                LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message);
+                testRunObserver.invalidateTestRun("Encountered message without a CommunicationContext.");
+                return null;
+            }
+            final TransportInfo transportInfo = communicationContext.getTransportInfo();
+            if (transportInfo == null) {
+                // NOTE: this should never happen. If it does, this should be considered a bug.
+                LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message);
+                testRunObserver.invalidateTestRun("Encountered message without a TransportInfo.");
+                return null;
+            }
             final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
             if (remoteAddress.isEmpty()) {
-                LOG.warn("Encountered inbound message (uuid={}) without a remoteAddress.", message);
-                return UNKNOWN_SENDER;
+                // NOTE: this should never happen. If it does, this should be considered a bug.
+                LOG.trace("Encountered inbound message (uuid={}) without a remoteAddress.", message);
+                testRunObserver.invalidateTestRun("Encountered inbound message without a remoteAddress.");
+                return null;
             } else {
                 return remoteAddress.orElseThrow();
             }
         } else if (message.getDirection() == CommunicationLog.Direction.OUTBOUND) {
             return DEFAULT_OUTBOUND_SENDER;
         } else {
-            // NOTE: will invalidate the TestRun
-            LOG.error(
+            testRunObserver.invalidateTestRun("Encountered unknown direction in message.");
+            LOG.trace(
                     "Encountered unknown direction {} in message with uuid={}",
                     message.getDirection(),
                     message.getID());
-            return UNKNOWN_SENDER;
+            return null;
         }
     }
 

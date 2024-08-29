@@ -75,7 +75,7 @@ public class MessageContent {
     private String uuid;
     private boolean isSOAP;
 
-    @Column(name = "sender")
+    @Column(nullable = true)
     private String sender;
 
     /**
