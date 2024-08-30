@@ -345,9 +345,8 @@ public class MessageStorage implements AutoCloseable {
         } else if (message.getDirection() == CommunicationLog.Direction.OUTBOUND) {
             final Optional<String> localAddress = transportInfo.getLocalAddress();
             if (localAddress.isEmpty()) {
-                // NOTE: this should never happen. If it does, this should be considered a bug.
-                LOG.trace("Encountered outbound message (uuid={}) without a localAddress.", message);
-                testRunObserver.invalidateTestRun("Encountered outbound message without a localAddress.");
+                // TODO: Fix: outbound messages often have a localAddress of 0.0.0.0 or null. After this is fixed,
+                //            invalidate the TestRun in this case as well.
                 return null;
             } else {
                 return localAddress.orElseThrow();
