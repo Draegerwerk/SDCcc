@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -111,7 +112,7 @@ public class MessageContent {
             final Set<String> actions,
             final String uuid,
             final boolean isSOAP,
-            final String sender) {
+            @Nullable final String sender) {
 
         this.body = body;
         this.direction = direction;

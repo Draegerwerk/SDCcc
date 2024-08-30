@@ -94,8 +94,6 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 @Singleton
 public class MessageStorage implements AutoCloseable {
 
-    public static final String UNKNOWN_SENDER = "UNKNOWN";
-    public static final String DEFAULT_OUTBOUND_SENDER = "SDCcc";
     private static final Logger LOG = LogManager.getLogger(MessageStorage.class);
 
     private static final int FETCH_SIZE = 10;
@@ -320,21 +318,21 @@ public class MessageStorage implements AutoCloseable {
     }
 
     private String getSender(final Message message) {
+        final CommunicationContext communicationContext = message.getCommunicationContext();
+        if (communicationContext == null) {
+            // NOTE: this should never happen. If it does, this should be considered a bug.
+            LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message);
+            testRunObserver.invalidateTestRun("Encountered message without a CommunicationContext.");
+            return null;
+        }
+        final TransportInfo transportInfo = communicationContext.getTransportInfo();
+        if (transportInfo == null) {
+            // NOTE: this should never happen. If it does, this should be considered a bug.
+            LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message);
+            testRunObserver.invalidateTestRun("Encountered message without a TransportInfo.");
+            return null;
+        }
         if (message.getDirection() == CommunicationLog.Direction.INBOUND) {
-            final CommunicationContext communicationContext = message.getCommunicationContext();
-            if (communicationContext == null) {
-                // NOTE: this should never happen. If it does, this should be considered a bug.
-                LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message);
-                testRunObserver.invalidateTestRun("Encountered message without a CommunicationContext.");
-                return null;
-            }
-            final TransportInfo transportInfo = communicationContext.getTransportInfo();
-            if (transportInfo == null) {
-                // NOTE: this should never happen. If it does, this should be considered a bug.
-                LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message);
-                testRunObserver.invalidateTestRun("Encountered message without a TransportInfo.");
-                return null;
-            }
             final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
             if (remoteAddress.isEmpty()) {
                 // NOTE: this should never happen. If it does, this should be considered a bug.
@@ -345,7 +343,15 @@ public class MessageStorage implements AutoCloseable {
                 return remoteAddress.orElseThrow();
             }
         } else if (message.getDirection() == CommunicationLog.Direction.OUTBOUND) {
-            return DEFAULT_OUTBOUND_SENDER;
+            final Optional<String> localAddress = transportInfo.getLocalAddress();
+            if (localAddress.isEmpty()) {
+                // NOTE: this should never happen. If it does, this should be considered a bug.
+                LOG.trace("Encountered outbound message (uuid={}) without a localAddress.", message);
+                testRunObserver.invalidateTestRun("Encountered outbound message without a localAddress.");
+                return null;
+            } else {
+                return localAddress.orElseThrow();
+            }
         } else {
             testRunObserver.invalidateTestRun("Encountered unknown direction in message.");
             LOG.trace(
