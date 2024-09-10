@@ -721,6 +721,36 @@ public class TestSuite {
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
+        runWithArgs(cmdLine,
+                enabledTestConfigClass,
+                testParameterClass,
+                defaultConfigModules,
+                sdcTestDirectories,
+                overrides,
+                null);
+    }
+
+    /**
+     * Run the test suite with the given already parsed command line arguments and the
+     * specified enabled test config constants.
+     *
+     * @param cmdLine                parsed command line arguments
+     * @param enabledTestConfigClass class containing test identifier constants
+     * @param testParameterClass     class containing test parameter
+     * @param sdcTestDirectories     directories to search for test cases
+     * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
+     * @param overrides              abstract module to override test run injector
+     * @param extensionVersion       String specifying the extension name and version or null if no extension is used.
+     */
+    public static void runWithArgs(
+            final CommandLineOptions cmdLine,
+            final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final Class<? extends TestParameterConfig> testParameterClass,
+            final List<Module> defaultConfigModules,
+            final String[] sdcTestDirectories,
+            @Nullable final AbstractModule overrides,
+            @Nullable final String extensionVersion)
+            throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
                 cmdLine.getTestRunDirectory().orElse(null));
@@ -775,7 +805,11 @@ public class TestSuite {
             } else {
                 versionString = "";
             }
-            LOG.info("Starting SDCcc {}", versionString);
+            if (extensionVersion != null) {
+                LOG.info("Starting SDCcc {} with {} Extension", versionString, extensionVersion);
+            } else {
+                LOG.info("Starting SDCcc {}", versionString);
+            }
 
             try {
 
