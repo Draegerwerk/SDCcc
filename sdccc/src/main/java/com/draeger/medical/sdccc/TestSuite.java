@@ -806,9 +806,9 @@ public class TestSuite {
                 versionString = "";
             }
             if (extensionVersion != null) {
-                LOG.info("Starting SDCcc {} with {} Extension", versionString, extensionVersion);
+                LOG.info("Starting SDCcc{} with {} Extension", versionString, extensionVersion);
             } else {
-                LOG.info("Starting SDCcc {}", versionString);
+                LOG.info("Starting SDCcc{}", versionString);
             }
 
             try {
