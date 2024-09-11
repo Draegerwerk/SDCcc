@@ -721,7 +721,8 @@ public class TestSuite {
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides)
             throws IOException {
-        runWithArgs(cmdLine,
+        runWithArgs(
+                cmdLine,
                 enabledTestConfigClass,
                 testParameterClass,
                 defaultConfigModules,
