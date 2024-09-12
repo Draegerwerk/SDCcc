@@ -321,7 +321,7 @@ public class MessageStorage implements AutoCloseable {
         final CommunicationContext communicationContext = message.getCommunicationContext();
         if (communicationContext == null) {
             // NOTE: this should never happen. If it does, this should be considered a bug.
-            LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message);
+            LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message.getID());
             testRunObserver.invalidateTestRun("Encountered message without a CommunicationContext.");
             return null;
         }
