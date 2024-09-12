@@ -328,7 +328,7 @@ public class MessageStorage implements AutoCloseable {
         final TransportInfo transportInfo = communicationContext.getTransportInfo();
         if (transportInfo == null) {
             // NOTE: this should never happen. If it does, this should be considered a bug.
-            LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message);
+            LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message.getID());
             testRunObserver.invalidateTestRun("Encountered message without a TransportInfo.");
             return null;
         }
