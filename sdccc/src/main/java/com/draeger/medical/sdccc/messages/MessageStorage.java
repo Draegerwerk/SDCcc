@@ -336,7 +336,7 @@ public class MessageStorage implements AutoCloseable {
             final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
             if (remoteAddress.isEmpty()) {
                 // NOTE: this should never happen. If it does, this should be considered a bug.
-                LOG.trace("Encountered inbound message (uuid={}) without a remoteAddress.", message);
+                LOG.trace("Encountered inbound message (uuid={}) without a remoteAddress.", message.getID());
                 testRunObserver.invalidateTestRun("Encountered inbound message without a remoteAddress.");
                 return null;
             } else {
