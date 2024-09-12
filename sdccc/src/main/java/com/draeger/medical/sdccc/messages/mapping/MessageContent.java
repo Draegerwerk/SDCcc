@@ -98,7 +98,7 @@ public class MessageContent {
      * @param actions              ws addressing actions
      * @param uuid                 identifier for ensuring, that a message was written to the database
      * @param isSOAP               shall be true if a SOAP envelope was found and false otherwise
-     * @param sender               the IP Address of the message Sender or null if it could not be determined.
+     * @param sender               the IP address of the message's sender or null if it could not be determined.
      */
     public MessageContent(
             final String body,
