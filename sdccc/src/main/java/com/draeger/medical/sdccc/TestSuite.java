@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -741,7 +742,9 @@ public class TestSuite {
      * @param sdcTestDirectories     directories to search for test cases
      * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
      * @param overrides              abstract module to override test run injector
-     * @param extensionVersion       String specifying the extension name and version or null if no extension is used.
+     * @param logInitializationInfos Lambda that is called after the logger has been initialized and SDCcc's version
+     *                               information has been logged out to give the caller the opportunity to add
+     *                               additional information.
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
@@ -750,7 +753,7 @@ public class TestSuite {
             final List<Module> defaultConfigModules,
             final String[] sdcTestDirectories,
             @Nullable final AbstractModule overrides,
-            @Nullable final String extensionVersion)
+            @Nullable final Consumer<Logger> logInitializationInfos)
             throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
@@ -806,10 +809,9 @@ public class TestSuite {
             } else {
                 versionString = "";
             }
-            if (extensionVersion != null) {
-                LOG.info("Starting SDCcc{} with {} Extension", versionString, extensionVersion);
-            } else {
-                LOG.info("Starting SDCcc{}", versionString);
+            LOG.info("Starting SDCcc{}", versionString);
+            if (logInitializationInfos != null) {
+                logInitializationInfos.accept(LOG);
             }
 
             try {
