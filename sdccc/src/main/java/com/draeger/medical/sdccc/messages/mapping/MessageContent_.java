@@ -40,6 +40,7 @@ public final class MessageContent_ {
     public static volatile SingularAttribute<MessageContent, String> scheme;
     public static volatile SingularAttribute<MessageContent, String> uuid;
     public static volatile SingularAttribute<MessageContent, Boolean> isSOAP;
+    public static volatile SingularAttribute<MessageContent, String> sender;
 
     private MessageContent_() {}
 }

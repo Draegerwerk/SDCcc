@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -84,6 +85,7 @@ import org.somda.sdc.dpws.soap.ApplicationInfo;
 import org.somda.sdc.dpws.soap.CommunicationContext;
 import org.somda.sdc.dpws.soap.HttpApplicationInfo;
 import org.somda.sdc.dpws.soap.SoapConstants;
+import org.somda.sdc.dpws.soap.TransportInfo;
 import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
 
 /**
@@ -91,6 +93,7 @@ import org.somda.sdc.dpws.soap.wsaddressing.WsAddressingConstants;
  */
 @Singleton
 public class MessageStorage implements AutoCloseable {
+
     private static final Logger LOG = LogManager.getLogger(MessageStorage.class);
 
     private static final int FETCH_SIZE = 10;
@@ -310,7 +313,52 @@ public class MessageStorage implements AutoCloseable {
                 mdibVersionGroups,
                 actions,
                 message.getID(),
-                isSOAP);
+                isSOAP,
+                getSender(message));
+    }
+
+    private String getSender(final Message message) {
+        final CommunicationContext communicationContext = message.getCommunicationContext();
+        if (communicationContext == null) {
+            // NOTE: this should never happen. If it does, this should be considered a bug.
+            LOG.trace("Encountered message (uuid={}) without a CommunicationContext.", message.getID());
+            testRunObserver.invalidateTestRun("Encountered message without a CommunicationContext.");
+            return null;
+        }
+        final TransportInfo transportInfo = communicationContext.getTransportInfo();
+        if (transportInfo == null) {
+            // NOTE: this should never happen. If it does, this should be considered a bug.
+            LOG.trace("Encountered message (uuid={}) without a TransportInfo.", message.getID());
+            testRunObserver.invalidateTestRun("Encountered message without a TransportInfo.");
+            return null;
+        }
+        if (message.getDirection() == CommunicationLog.Direction.INBOUND) {
+            final Optional<String> remoteAddress = transportInfo.getRemoteAddress();
+            if (remoteAddress.isEmpty()) {
+                // NOTE: this should never happen. If it does, this should be considered a bug.
+                LOG.trace("Encountered inbound message (uuid={}) without a remoteAddress.", message.getID());
+                testRunObserver.invalidateTestRun("Encountered inbound message without a remoteAddress.");
+                return null;
+            } else {
+                return remoteAddress.orElseThrow();
+            }
+        } else if (message.getDirection() == CommunicationLog.Direction.OUTBOUND) {
+            final Optional<String> localAddress = transportInfo.getLocalAddress();
+            if (localAddress.isEmpty()) {
+                // TODO: Fix: outbound messages often have a localAddress of 0.0.0.0 or null. After this is fixed,
+                //            invalidate the TestRun in this case as well.
+                return null;
+            } else {
+                return localAddress.orElseThrow();
+            }
+        } else {
+            testRunObserver.invalidateTestRun("Encountered unknown direction in message.");
+            LOG.trace(
+                    "Encountered unknown direction {} in message with uuid={}",
+                    message.getDirection(),
+                    message.getID());
+            return null;
+        }
     }
 
     private boolean processMessageBody(
