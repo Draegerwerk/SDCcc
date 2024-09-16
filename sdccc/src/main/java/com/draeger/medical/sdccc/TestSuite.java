@@ -742,7 +742,7 @@ public class TestSuite {
      * @param sdcTestDirectories     directories to search for test cases
      * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
      * @param overrides              abstract module to override test run injector
-     * @param logInitializationInfos Lambda that is called after the logger has been initialized and SDCcc's version
+     * @param logInitializationInfos lambda that is called after the logger has been initialized and SDCcc's version
      *                               information has been logged out to give the caller the opportunity to add
      *                               additional information.
      */
