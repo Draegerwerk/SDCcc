@@ -11,11 +11,13 @@ import com.draeger.medical.t2iapi.ResponseTypes;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -26,6 +28,9 @@ import org.hibernate.annotations.GenericGenerator;
 @Table(name = "manipulation_data")
 public class ManipulationData {
 
+    @Transient
+    private static final int MAXIMUM_LENGTH = 2147483647;
+
     @Id
     @GenericGenerator(name = "ManipulationDataIDGen", strategy = "increment")
     @GeneratedValue(generator = "ManipulationDataIDGen")
@@ -33,7 +38,10 @@ public class ManipulationData {
 
     private long startTimestamp;
     private long finishTimestamp;
+
+    @Column(columnDefinition = "clob", length = MAXIMUM_LENGTH)
     private String response;
+
     private ResponseTypes.Result result;
     private String methodName;
 
