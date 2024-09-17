@@ -685,8 +685,7 @@ public class TestSuite {
                 EnabledTestConfig.class,
                 TestParameterConfig.class,
                 List.of(),
-                DefaultTestSuiteConfig.DEFAULT_DIRECTORIES,
-                null);
+                DefaultTestSuiteConfig.DEFAULT_DIRECTORIES);
     }
 
     /**
@@ -712,15 +711,13 @@ public class TestSuite {
      * @param testParameterClass     class containing test parameter
      * @param sdcTestDirectories     directories to search for test cases
      * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
-     * @param overrides              abstract module to override test run injector
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
             final Class<? extends EnabledTestConfig> enabledTestConfigClass,
             final Class<? extends TestParameterConfig> testParameterClass,
             final List<Module> defaultConfigModules,
-            final String[] sdcTestDirectories,
-            @Nullable final AbstractModule overrides)
+            final String[] sdcTestDirectories)
             throws IOException {
         runWithArgs(
                 cmdLine,
@@ -728,7 +725,7 @@ public class TestSuite {
                 testParameterClass,
                 defaultConfigModules,
                 sdcTestDirectories,
-                overrides,
+                null,
                 null);
     }
 
