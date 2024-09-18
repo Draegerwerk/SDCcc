@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -684,8 +685,7 @@ public class TestSuite {
                 EnabledTestConfig.class,
                 TestParameterConfig.class,
                 List.of(),
-                DefaultTestSuiteConfig.DEFAULT_DIRECTORIES,
-                null);
+                DefaultTestSuiteConfig.DEFAULT_DIRECTORIES);
     }
 
     /**
@@ -711,7 +711,37 @@ public class TestSuite {
      * @param testParameterClass     class containing test parameter
      * @param sdcTestDirectories     directories to search for test cases
      * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
+     */
+    public static void runWithArgs(
+            final CommandLineOptions cmdLine,
+            final Class<? extends EnabledTestConfig> enabledTestConfigClass,
+            final Class<? extends TestParameterConfig> testParameterClass,
+            final List<Module> defaultConfigModules,
+            final String[] sdcTestDirectories)
+            throws IOException {
+        runWithArgs(
+                cmdLine,
+                enabledTestConfigClass,
+                testParameterClass,
+                defaultConfigModules,
+                sdcTestDirectories,
+                null,
+                null);
+    }
+
+    /**
+     * Run the test suite with the given already parsed command line arguments and the
+     * specified enabled test config constants.
+     *
+     * @param cmdLine                parsed command line arguments
+     * @param enabledTestConfigClass class containing test identifier constants
+     * @param testParameterClass     class containing test parameter
+     * @param sdcTestDirectories     directories to search for test cases
+     * @param defaultConfigModules   default configuration modules for extended EnabledTestConfig and TestParameterConfig
      * @param overrides              abstract module to override test run injector
+     * @param logInitializationInfos lambda that is called after the logger has been initialized and SDCcc's version
+     *                               information has been logged out to give the caller the opportunity to add
+     *                               additional information.
      */
     public static void runWithArgs(
             final CommandLineOptions cmdLine,
@@ -719,7 +749,8 @@ public class TestSuite {
             final Class<? extends TestParameterConfig> testParameterClass,
             final List<Module> defaultConfigModules,
             final String[] sdcTestDirectories,
-            @Nullable final AbstractModule overrides)
+            @Nullable final AbstractModule overrides,
+            @Nullable final Consumer<Logger> logInitializationInfos)
             throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
@@ -775,7 +806,10 @@ public class TestSuite {
             } else {
                 versionString = "";
             }
-            LOG.info("Starting SDCcc {}", versionString);
+            LOG.info("Starting SDCcc{}", versionString);
+            if (logInitializationInfos != null) {
+                logInitializationInfos.accept(LOG);
+            }
 
             try {
 
