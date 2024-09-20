@@ -39,6 +39,7 @@ import org.somda.sdc.dpws.soap.TransportInfo;
 public class MessageStorageUtil {
     private static final String SECURE_HTTP_SCHEME = "https";
     private static final String INSECURE_HTTP_SCHEME = "http";
+    private static final String TEST_REMOTE_ADDR = "1.2.3.4";
 
     private final SoapMarshalling marshalling;
     private final MessageBuilder messageBuilder;
@@ -224,7 +225,7 @@ public class MessageStorageUtil {
 
         final CommunicationContext messageContext = new CommunicationContext(
                 new HttpApplicationInfo(httpHeaders, "", ""),
-                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates),
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, TEST_REMOTE_ADDR, null, certificates),
                 null);
         addMessage(
                 storage,
@@ -259,7 +260,7 @@ public class MessageStorageUtil {
 
         final CommunicationContext messageContext = new CommunicationContext(
                 new HttpApplicationInfo(httpHeaders, "", ""),
-                new TransportInfo(SECURE_HTTP_SCHEME, null, null, null, null, certificates),
+                new TransportInfo(SECURE_HTTP_SCHEME, null, null, TEST_REMOTE_ADDR, null, certificates),
                 null);
         addMessage(
                 storage,
@@ -323,7 +324,12 @@ public class MessageStorageUtil {
         final CommunicationContext messageContext = new CommunicationContext(
                 new ApplicationInfo(),
                 new TransportInfo(
-                        DpwsConstants.URI_SCHEME_SOAP_OVER_UDP, null, null, null, null, Collections.emptyList()),
+                        DpwsConstants.URI_SCHEME_SOAP_OVER_UDP,
+                        null,
+                        null,
+                        TEST_REMOTE_ADDR,
+                        null,
+                        Collections.emptyList()),
                 null);
         addMessage(
                 storage,
