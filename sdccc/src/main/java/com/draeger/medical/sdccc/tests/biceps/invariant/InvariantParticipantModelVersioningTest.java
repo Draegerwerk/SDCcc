@@ -104,12 +104,18 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                     RemoteMdibAccess second = historyNext.next();
                     while (second != null) {
                         final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
-                        for (MdibEntity descriptor : currentDescriptors) {
-                            final var nextDescriptorOpt = second.getEntity(descriptor.getHandle());
-                            if (nextDescriptorOpt.isEmpty()) {
+                        for (MdibEntity entity : currentDescriptors) {
+                            final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
+                                    .orElseThrow();
+                            final var nextEntityOpt = second.getEntity(descriptor.getHandle());
+                            if (nextEntityOpt.isEmpty()) {
                                 continue;
                             }
-                            final var nextDescriptor = nextDescriptorOpt.orElseThrow();
+                            final var nextEntity = nextEntityOpt.orElseThrow();
+                            final var nextDescriptor = nextEntity
+                                    .getDescriptor(AbstractDescriptor.class)
+                                    .orElseThrow();
+
                             // compare children of current and next descriptor one by one
                             final var childrenChanged =
                                     haveDescriptorChildrenDisOrReappeared(descriptor.getHandle(), first, second);
@@ -120,16 +126,14 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                             descriptorChanges.incrementAndGet();
                             assertTrue(
                                     isIncrementedVersion(
-                                            ImpliedValueUtil.getDescriptorVersion(
-                                                    descriptor.getDescriptor(), impliedValueMap),
-                                            ImpliedValueUtil.getDescriptorVersion(
-                                                    nextDescriptor.getDescriptor(), impliedValueMap)),
+                                            ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
+                                            ImpliedValueUtil.getDescriptorVersion(nextDescriptor, impliedValueMap)),
                                     "Descriptor version has not changed, but children have."
                                             + " MdibVersions " + first.getMdibVersion()
                                             + " and " + second.getMdibVersion()
                                             + ". Descriptor handle " + descriptor.getHandle()
-                                            + ". Old children " + descriptor.getChildren()
-                                            + " new children " + nextDescriptor.getChildren());
+                                            + ". Old children " + descriptor
+                                            + " new children " + nextEntity.getChildren());
                         }
                         first = history.next();
                         second = historyNext.next();
@@ -179,38 +183,40 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                     RemoteMdibAccess second = historyNext.next();
                     while (second != null) {
                         final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
-                        for (MdibEntity descriptor : currentDescriptors) {
+                        for (MdibEntity entity : currentDescriptors) {
                             // check if this was previously deleted and returned
+                            final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
+                                    .orElseThrow();
                             final var oldVersion = lastDescriptorMap.remove(descriptor.getHandle());
                             if (oldVersion != null) {
-                                final var descriptorChanged =
-                                        hasDescriptorChanged(oldVersion, descriptor.getDescriptor());
+                                final var descriptorChanged = hasDescriptorChanged(oldVersion, descriptor);
                                 if (descriptorChanged) {
                                     descriptorChanges.incrementAndGet();
                                     assertTrue(
                                             isIncrementedVersion(
                                                     ImpliedValueUtil.getDescriptorVersion(oldVersion, impliedValueMap),
-                                                    ImpliedValueUtil.getDescriptorVersion(
-                                                            descriptor.getDescriptor(), impliedValueMap)),
+                                                    ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap)),
                                             DESCRIPTOR_REINSERTION_PREFIX
                                                     + " MdibVersions of insertion " + first.getMdibVersion()
                                                     + ". Descriptor handle " + descriptor.getHandle()
                                                     + ". Old Descriptor " + oldVersion
-                                                    + " Inserted Descriptor " + descriptor.getDescriptor());
+                                                    + " Inserted Descriptor " + descriptor);
                                 }
                             }
 
-                            final var nextDescriptorOpt = second.getEntity(descriptor.getHandle());
-                            if (nextDescriptorOpt.isEmpty()) {
+                            final var nextEntityOpt = second.getEntity(descriptor.getHandle());
+                            if (nextEntityOpt.isEmpty()) {
                                 // descriptor was removed, add to storage
-                                lastDescriptorMap.put(descriptor.getHandle(), descriptor.getDescriptor());
+                                lastDescriptorMap.put(descriptor.getHandle(), descriptor);
                                 continue;
                             }
 
-                            final var nextDescriptor = nextDescriptorOpt.orElseThrow();
+                            final var nextDescriptor = nextEntityOpt
+                                    .orElseThrow()
+                                    .getDescriptor(AbstractDescriptor.class)
+                                    .orElseThrow();
                             // compare children of current and next descriptor one by one
-                            final var descriptorChanged =
-                                    hasDescriptorChanged(descriptor.getDescriptor(), nextDescriptor.getDescriptor());
+                            final var descriptorChanged = hasDescriptorChanged(descriptor, nextDescriptor);
                             if (!descriptorChanged) {
                                 continue;
                             }
@@ -218,16 +224,14 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                             descriptorChanges.incrementAndGet();
                             assertTrue(
                                     isIncrementedVersion(
-                                            ImpliedValueUtil.getDescriptorVersion(
-                                                    descriptor.getDescriptor(), impliedValueMap),
-                                            ImpliedValueUtil.getDescriptorVersion(
-                                                    nextDescriptor.getDescriptor(), impliedValueMap)),
+                                            ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
+                                            ImpliedValueUtil.getDescriptorVersion(nextDescriptor, impliedValueMap)),
                                     DESCRIPTOR_UPDATE_PREFIX
                                             + " MdibVersions " + first.getMdibVersion()
                                             + " and " + second.getMdibVersion()
                                             + ". Descriptor handle " + descriptor.getHandle()
-                                            + ". Old Descriptor " + descriptor.getDescriptor()
-                                            + " New Descriptor " + nextDescriptor.getDescriptor());
+                                            + ". Old Descriptor " + descriptor
+                                            + " New Descriptor " + nextDescriptor);
                         }
                         first = history.next();
                         second = historyNext.next();
@@ -371,8 +375,10 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                         final var currentMdibVersion = ImpliedValueUtil.getMdibVersion(current.getMdibVersion());
                         for (var entity : current.findEntitiesByType(AbstractDescriptor.class)) {
                             final var handle = entity.getHandle();
+                            final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
+                                    .orElseThrow();
                             final var currentDescriptorVersion =
-                                    ImpliedValueUtil.getDescriptorVersion(entity.getDescriptor(), impliedValueMap);
+                                    ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap);
                             if (previousDescriptorVersionMap.containsKey(handle)) {
                                 assertTrue(
                                         isNotDecrementedVersion(

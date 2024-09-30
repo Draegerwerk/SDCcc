@@ -86,11 +86,11 @@ public class InvariantParticipantModelContextStateTest extends InjectorTestBase 
 
                         for (MdibEntity patientContextEntity : patientContextEntities) {
 
-                            final var associatedPatients = patientContextEntity.getStates().stream()
-                                    .map(state -> (PatientContextState) state)
-                                    .filter(state -> ContextAssociation.ASSOC.equals(
-                                            ImpliedValueUtil.getContextAssociation(state)))
-                                    .toList();
+                            final var associatedPatients =
+                                    patientContextEntity.getStates(PatientContextState.class).stream()
+                                            .filter(state -> ContextAssociation.ASSOC.equals(
+                                                    ImpliedValueUtil.getContextAssociation(state)))
+                                            .toList();
 
                             if (!associatedPatients.isEmpty()) {
                                 final var associatedStateHandles = associatedPatients.stream()
@@ -171,11 +171,11 @@ public class InvariantParticipantModelContextStateTest extends InjectorTestBase 
 
                         for (MdibEntity locationContextEntity : locationContextEntities) {
 
-                            final var associatedLocations = locationContextEntity.getStates().stream()
-                                    .map(state -> (LocationContextState) state)
-                                    .filter(state -> ContextAssociation.ASSOC.equals(
-                                            ImpliedValueUtil.getContextAssociation(state)))
-                                    .toList();
+                            final var associatedLocations =
+                                    locationContextEntity.getStates(LocationContextState.class).stream()
+                                            .filter(state -> ContextAssociation.ASSOC.equals(
+                                                    ImpliedValueUtil.getContextAssociation(state)))
+                                            .toList();
 
                             if (!associatedLocations.isEmpty()) {
                                 final var associatedStateHandles = associatedLocations.stream()

@@ -29,6 +29,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
+import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.model.message.AbstractReport;
 import org.somda.sdc.biceps.model.message.DescriptionModificationReport;
 import org.somda.sdc.biceps.model.message.ObservedValueStream;
@@ -292,6 +293,18 @@ public class ArchitecturalRulesTest {
             .accessTargetWhere(
                     target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getStateDescriptorVersion")))
             .because("Initial implied value can not be reliable checked in direct tests");
+
+    @ArchTest
+    private static final ArchRule NO_CALLS_TO_GET_DESCRIPTOR = noClasses()
+            .should()
+            .callMethod(MdibEntity.class, "getDescriptor")
+            .because("Direct calls to getDescriptor are disallowed use getDescriptor(Class<T> var1).");
+
+    @ArchTest
+    private static final ArchRule NO_CALLS_TO_GET_STATES = noClasses()
+            .should()
+            .callMethod(MdibEntity.class, "getStates")
+            .because("Direct calls to getStates are disallowed use getStates(Class<T> var1) instead.");
 
     private static ArchRule checkImpliedValue(
             final String methodName, final Class<?> targetClass, final String reason) {
