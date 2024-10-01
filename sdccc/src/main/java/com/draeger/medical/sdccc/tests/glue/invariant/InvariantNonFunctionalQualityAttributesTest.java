@@ -139,7 +139,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
                         for (var entity : entities) {
 
-                            if (entity.getDescriptor() instanceof RealTimeSampleArrayMetricDescriptor) {
+                            if (entity.getDescriptor(RealTimeSampleArrayMetricDescriptor.class)
+                                    .isPresent()) {
                                 final var metricValue = entity.getFirstState(RealTimeSampleArrayMetricState.class)
                                         .orElseThrow()
                                         .getMetricValue();
@@ -155,7 +156,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                                                             + "even though it has a non-empty sample attribute.",
                                                     entity.getHandle()));
                                 }
-                            } else if (entity.getDescriptor() instanceof DistributionSampleArrayMetricDescriptor) {
+                            } else if (entity.getDescriptor(DistributionSampleArrayMetricDescriptor.class)
+                                    .isPresent()) {
                                 final var metricValue = entity.getFirstState(DistributionSampleArrayMetricState.class)
                                         .orElseThrow()
                                         .getMetricValue();
@@ -171,7 +173,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                                                             + "even though it has a non-empty sample attribute.",
                                                     entity.getHandle()));
                                 }
-                            } else if (entity.getDescriptor() instanceof NumericMetricDescriptor) {
+                            } else if (entity.getDescriptor(NumericMetricDescriptor.class)
+                                    .isPresent()) {
                                 final var metricValue = entity.getFirstState(NumericMetricState.class)
                                         .orElseThrow()
                                         .getMetricValue();
@@ -186,7 +189,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                                                             + "even though it has a non-empty value attribute.",
                                                     entity.getHandle()));
                                 }
-                            } else if (entity.getDescriptor() instanceof EnumStringMetricDescriptor) {
+                            } else if (entity.getDescriptor(EnumStringMetricDescriptor.class)
+                                    .isPresent()) {
                                 final var metricValue = entity.getFirstState(EnumStringMetricState.class)
                                         .orElseThrow()
                                         .getMetricValue();
@@ -201,7 +205,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                                                             + "even though it has a non-empty value attribute.",
                                                     entity.getHandle()));
                                 }
-                            } else if (entity.getDescriptor() instanceof StringMetricDescriptor) {
+                            } else if (entity.getDescriptor(StringMetricDescriptor.class)
+                                    .isPresent()) {
                                 final var metricValue = entity.getFirstState(StringMetricState.class)
                                         .orElseThrow()
                                         .getMetricValue();
@@ -219,7 +224,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
                             } else {
                                 fail(String.format(
                                         "Object of type %s is not supported by the test.",
-                                        entity.getDescriptor().getClass()));
+                                        entity.getDescriptorClass()));
                             }
                         }
 

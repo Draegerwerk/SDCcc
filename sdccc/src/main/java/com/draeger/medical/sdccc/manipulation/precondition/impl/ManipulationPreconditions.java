@@ -217,7 +217,7 @@ public class ManipulationPreconditions {
 
         final Collection<MdibEntity> entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
         for (MdibEntity entity : entities) {
-            if (entity.getDescriptor() instanceof MdsDescriptor) {
+            if (entity.getDescriptor(MdsDescriptor.class).isPresent()) {
                 continue; // we are not interested in MdsDescriptors as many Devices do not support modifying them.
             }
             final List<String> children = entity.getChildren();
