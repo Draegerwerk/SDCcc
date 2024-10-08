@@ -5,4 +5,8 @@ allprojects {
 
     group = "com.draeger.medical"
     version = "$revision$changelist"
+
+    tasks.withType<JavaCompile> {
+        options.release.set(17)
+    }
 }
