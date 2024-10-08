@@ -5,18 +5,13 @@
 
 plugins {
     id("com.draeger.medical.java-conventions")
-
     id("org.somda.sdc.xjc")
-
 }
 
-
 val jaxb: Configuration by configurations.creating
-
 val jaxbVersion: String = "4.0.0"
 val schemaDir = "src/main"
 val xjcOutputDir = "$buildDir/generated/source/xjc/main"
-
 
 dependencies {
     api(libs.org.glassfish.jaxb.jaxb.core)
@@ -36,7 +31,6 @@ dependencies {
 
 description = "SDCri is a set of Java libraries that implements a network communication framework conforming " +
     "with the IEEE 11073 SDC specifications. This project implements the model for IEEE 11073-10207."
-
 
 xjc {
     jaxbClasspath = jaxb
