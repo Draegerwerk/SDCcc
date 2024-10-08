@@ -70,8 +70,8 @@ jobs:
           mkdir sdccc/build/zip
           cp -r sdccc/build/lib sdccc/build/zip/
           cp -r sdccc/build/jre sdccc/build/zip/
-          cp -r sdccc/build/reports/dependency-license/downloaded-licenses/sdccc/build/zip/lib/ sdccc/build/zip/lib/
-          cp -r sdccc/build/reports/dependency-license/downloaded-licenses/index.xml sdccc/build/zip/lib/
+          cp -r sdccc/build/reports/dependency-license/downloaded-licenses/ sdccc/build/zip/lib/
+          cp -r sdccc/build/reports/dependency-license/index.xml sdccc/build/zip/lib/
           cp -r configuration sdccc/build/zip/
           cp sdccc/build/launch4j/sdccc-*.exe sdccc/build/zip/
           cp README.md sdccc/build/zip/
