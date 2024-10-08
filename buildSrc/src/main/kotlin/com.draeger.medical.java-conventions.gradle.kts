@@ -28,7 +28,7 @@ repositories {
 
 group = "com.draeger.medical"
 version = "9.1.0-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 publishing {
     publications.create<MavenPublication>("maven") {
