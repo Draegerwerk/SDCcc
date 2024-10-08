@@ -19,9 +19,9 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@v3
 
-      - name: Retrieve current version from pom
+      - name: Retrieve current version from gradle.properties
         run: |
-          echo RELEASE_VERSION=$(cat pom.xml | grep -o -P '(?<=revision\>).*(?=\<\/revision)') >> $GITHUB_ENV
+          echo RELEASE_VERSION=$(grep '^revision=' gradle.properties | cut -d'=' -f2) >> $GITHUB_ENV
           echo GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA") >> $GITHUB_ENV
 
       - name: Remove SNAPSHOT suffix for release
@@ -32,7 +32,7 @@ jobs:
       - name: Add git hash to snapshot release
         if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo CHANGELIST=${{ env.CHANGELIST }}.${{ env. GIT_HASH_SHORT }} >> $GITHUB_ENV
+          echo CHANGELIST=${{ env.CHANGELIST }}.${{ env.GIT_HASH_SHORT }} >> $GITHUB_ENV
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -43,7 +43,7 @@ jobs:
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: mvn verify -Dchangelist=${{ env.CHANGELIST }} -f pom.xml
+          run: ./gradlew check -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }}
           working-directory: ./ #optional
           options: #optional
         env:
@@ -53,25 +53,25 @@ jobs:
         id: jre-cache
         uses: actions/cache@v3
         with:
-          path: sdccc/target/jre
+          path: sdccc/build/jre
           key: jre-cache
 
       - name: Build package and download license information
         run: |
-          mvn package -Dchangelist=${{ env.CHANGELIST }} -DskipTests=true -f pom.xml -Pexecutable
+          ./gradlew build -x test -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Collect executable artifacts
         run: |
-          mkdir sdccc/target/zip
-          cp -r sdccc/target/lib sdccc/target/zip/
-          cp -r sdccc/target/jre sdccc/target/zip/
-          cp -r sdccc/target/generated-resources/licenses sdccc/target/zip/lib/
-          cp -r sdccc/target/generated-resources/licenses.xml sdccc/target/zip/lib/
-          cp -r configuration sdccc/target/zip/
-          cp sdccc/target/sdccc-*.exe sdccc/target/zip/
-          cp README.md sdccc/target/zip/
+          mkdir sdccc/build/zip
+          cp -r sdccc/build/lib sdccc/build/zip/
+          cp -r sdccc/build/jre sdccc/build/zip/
+          cp -r sdccc/build/reports/dependency-license/downloaded-licesnses/ sdccc/build/zip/lib/
+          cp -r sdccc/build/reports/dependency-license/downloaded-licesnses/index.xml sdccc/build/zip/lib/
+          cp -r configuration sdccc/build/zip/
+          cp sdccc/build/launch4j/sdccc-*.exe sdccc/build/zip/
+          cp README.md sdccc/build/zip/
 
       - name: Set zip file name for release
         if: startsWith(github.ref, 'refs/tags/')
@@ -84,15 +84,15 @@ jobs:
 
       - name: Zip executable
         if: startsWith(github.ref, 'refs/tags/')
-        working-directory: sdccc/target/zip
+        working-directory: sdccc/build/zip
         run: |
           zip -qq -r ${{ env.ZIP_FILE_NAME }} .
 
       - name: Zip test results
         if: startsWith(github.ref, 'refs/tags/')
-        working-directory: sdccc/target/
+        working-directory: sdccc/build/
         run: |
-          zip -qq -r test-results.zip failsafe-reports surefire-reports checkstyle-result.xml spotbugsXml.xml detekt.html
+          zip -qq -r test-results.zip reports/tests reports/checkstyle reports/spotbugs reports/detekt
 
       - name: Attach artifacts to snapshot
         uses: softprops/action-gh-release@v1
@@ -100,7 +100,7 @@ jobs:
         with:
           files: |
             CHANGELOG.md
-            sdccc/target/zip/${{ env.ZIP_FILE_NAME }}
-            sdccc/target/test-results.zip
+            sdccc/build/zip/${{ env.ZIP_FILE_NAME }}
+            sdccc/build/test-results.zip
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
           body_path: CHANGELOG.md
