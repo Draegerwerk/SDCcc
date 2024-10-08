@@ -73,7 +73,7 @@ jobs:
           cp -r sdccc/build/reports/dependency-license/downloaded-licenses/ sdccc/build/zip/lib/
           cp -r sdccc/build/reports/dependency-license/index.xml sdccc/build/zip/lib/
           cp -r configuration sdccc/build/zip/
-          cp sdccc/build/launch4j/sdccc-*.exe sdccc/build/zip/
+          cp sdccc/build/launch4j/SDCcc-*.exe sdccc/build/zip/
           cp README.md sdccc/build/zip/
 
       - name: Set zip file name for release
