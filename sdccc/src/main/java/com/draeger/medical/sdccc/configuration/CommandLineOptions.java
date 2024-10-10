@@ -192,7 +192,7 @@ public class CommandLineOptions {
         {
             final String description =
                     "If set to true creates no timestamped SDCcc run directory inside the test run directory"
-                    + " directory.";
+                            + " directory.";
             final var noSubdirectoriesOpt = new Option("ns", NO_SUBDIRECTORIES, true, description);
             noSubdirectoriesOpt.setRequired(false);
             noSubdirectoriesOpt.setType(Boolean.class);
