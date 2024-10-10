@@ -199,21 +199,21 @@ within the specified seconds.
 ## Running SDCcc
 The following command line options are supported by the test tool, the first two need to be provided.
 
-| **Option**           | **Short** | **Argument**                                                                                         | **Required** | 
-|----------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
-| config               | c         | path to the *config.toml*                                                                            | yes          |
-| testconfig           | t         | path to the *test_configuration.toml*                                                                | yes          |
-| testparam            | p         | path to the *test_parameter.toml*                                                                    | no           |
-| device_epr           | de        | the epr of the target provider, overrides setting from configuration if provided                     | no           |
-| device_facility      | fac       | the facility of the target provider, overrides setting from configuration if provided                | no           |
-| device_building      | bldng     | the building of the target provider, overrides setting from configuration if provided                | no           |
-| device_point_of_care | poc       | the point of care of the target provider, overrides setting from configuration if provided           | no           |
-| device_floor         | flr       | the floor of the target provider, overrides setting from configuration if provided                   | no           |
-| device_room          | rm        | the room of the target provider, overrides setting from configuration if provided                    | no           |
-| device_bed           | bed       | the bed of the target provider, overrides setting from configuration if provided                     | no           |
-| ipaddress            | ip        | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
-| test_run_directory   | d         | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
-| file_log_level       | fll       | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                    | no           |
+| **Option**             | **Short** | **Argument**                                                                                         | **Required** | 
+|------------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
+| --config               | -c        | path to the *config.toml*                                                                            | yes          |
+| --testconfig           | -t        | path to the *test_configuration.toml*                                                                | yes          |
+| --testparam            | -p        | path to the *test_parameter.toml*                                                                    | no           |
+| --device_epr           | -de       | the epr of the target provider, overrides setting from configuration if provided                     | no           |
+| --device_facility      | -fac      | the facility of the target provider, overrides setting from configuration if provided                | no           |
+| --device_building      | -bldng    | the building of the target provider, overrides setting from configuration if provided                | no           |
+| --device_point_of_care | -poc      | the point of care of the target provider, overrides setting from configuration if provided           | no           |
+| --device_floor         | -flr      | the floor of the target provider, overrides setting from configuration if provided                   | no           |
+| --device_room          | -rm       | the room of the target provider, overrides setting from configuration if provided                    | no           |
+| --device_bed           | -bed      | the bed of the target provider, overrides setting from configuration if provided                     | no           |
+| --ipaddress            | -ip       | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
+| --test_run_directory   | -d        | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
+| --file_log_level       | -fll      | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                    | no           |
 
 ### Enabling Tests
 The *test_configuration.toml* file contains the identifiers of all implemented requirement tests. It is located in the
