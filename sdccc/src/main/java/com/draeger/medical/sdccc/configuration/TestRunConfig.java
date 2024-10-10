@@ -46,17 +46,22 @@ public class TestRunConfig extends AbstractConfigurationModule {
      * Also creates the 'testruns' parent directory if it doesn't exist when using default directory.
      *
      * @param baseDirectory directory to create test run dirs in, working directory if null
+     * @param noSubdirectories if true, no test run dirs are created
      * @return File pointing to the new directory.
      * @throws RuntimeException in case directory could not be created or already exists
      */
-    public static File createTestRunDirectory(final @Nullable String baseDirectory) {
-        // create test run dir and bind it as config parameter
-        final String testRunTimestamp = ZonedDateTime.now(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_DATE_TIME)
-                .replace(":", "-");
+    public static File createTestRunDirectory(final @Nullable String baseDirectory, final Boolean noSubdirectories) {
+        if (noSubdirectories) {
+            return createTestRunDirectory(baseDirectory, "");
+        } else {
+            // create test run dir and bind it as config parameter
+            final String testRunTimestamp = ZonedDateTime.now(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_DATE_TIME)
+                    .replace(":", "-");
 
-        final String testRunName = "SDCcc_Testrun_" + testRunTimestamp;
-        return createTestRunDirectory(baseDirectory, testRunName);
+            final String testRunName = "SDCcc_Testrun_" + testRunTimestamp;
+            return createTestRunDirectory(baseDirectory, testRunName);
+        }
     }
 
     private static File createTestRunDirectory(final @Nullable String baseDirectory, final String testRunName) {
@@ -69,11 +74,6 @@ public class TestRunConfig extends AbstractConfigurationModule {
             dirPath = Path.of(System.getProperty("user.dir"), "testruns", testRunName);
         }
         final File runDir = dirPath.toFile();
-        if (runDir.exists()) {
-            if (!runDir.mkdir()) {
-                throw new RuntimeException("Directory for test result data compromised.");
-            }
-        }
         if (!runDir.exists()) {
             if (!runDir.mkdirs()) {
                 throw new RuntimeException("Could not create directory for test result data");

@@ -754,7 +754,7 @@ public class TestSuite {
             throws IOException {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
-                cmdLine.getTestRunDirectory().orElse(null));
+                cmdLine.getTestRunDirectory().orElse(null), cmdLine.getNoSubdirectories());
         final var logConfig = LoggingConfigurator.loggerConfig(testRunDir, cmdLine.getFileLogLevel());
         checkLogConfig(logConfig);
 
