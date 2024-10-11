@@ -853,7 +853,7 @@ public class DirectSubscriptionHandlingTestTest {
         setupGetMdibResponse();
 
         final EventSink eventSink = mock(EventSink.class);
-        when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient), anyString(), any()))
+        when(eventSinkFactory.createWsEventingEventSink(eq(requestResponseClient), anyString(), any(), any()))
                 .thenReturn(eventSink);
 
         final AtomicInteger lastSubscriptionId = new AtomicInteger();
