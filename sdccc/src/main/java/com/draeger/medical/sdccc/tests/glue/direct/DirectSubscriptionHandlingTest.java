@@ -61,6 +61,8 @@ import org.somda.sdc.biceps.model.participant.MdDescription;
 import org.somda.sdc.biceps.model.participant.Mdib;
 import org.somda.sdc.biceps.model.participant.MdsDescriptor;
 import org.somda.sdc.dpws.DpwsConstants;
+import org.somda.sdc.dpws.client.ClientEventObserver;
+import org.somda.sdc.dpws.client.SubscriptionEvent;
 import org.somda.sdc.dpws.service.HostedServiceProxy;
 import org.somda.sdc.dpws.soap.NotificationSink;
 import org.somda.sdc.dpws.soap.RequestResponseClient;
@@ -558,7 +560,13 @@ public class DirectSubscriptionHandlingTest extends InjectorTestBase {
         final RequestResponseClient requestResponseClient =
                 hostedServiceProxy.orElseThrow().getRequestResponseClient();
 
-        final EventSink eventSink = eventSinkFactory.createWsEventingEventSink(requestResponseClient, baseURI, null);
+        final EventSink eventSink = eventSinkFactory.createWsEventingEventSink(
+                requestResponseClient, baseURI, null, new ClientEventObserver() {
+                    @Override
+                    public void onSubscriptionEvent(final SubscriptionEvent event) {
+                        // do nothing
+                    }
+                });
         final NotificationSink notificationSink = notificationSinkFactory.createNotificationSink(wsaServerInterceptor);
         final ListenableFuture<SubscribeResult> subscribeResult = eventSink.subscribe(
                 DpwsConstants.WS_EVENTING_SUPPORTED_DIALECT,
