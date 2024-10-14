@@ -58,6 +58,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -755,6 +756,11 @@ public class TestSuite {
         // setup logging
         final var testRunDir = TestRunConfig.createTestRunDirectory(
                 cmdLine.getTestRunDirectory().orElse(null), cmdLine.getNoSubdirectories());
+        if (cmdLine.getNoSubdirectories() && testRunDir.isDirectory() && Objects.requireNonNull(testRunDir.listFiles()).length > 0) {
+            throw new RuntimeException(String.format("The specified test run directory %s was not empty, " +
+                "although the command line option --no_subdirectories was set to true. Please make sure that you use " +
+                    "--test_run_directory to configure an empty test run directory.", testRunDir));
+        }
         final var logConfig = LoggingConfigurator.loggerConfig(testRunDir, cmdLine.getFileLogLevel());
         checkLogConfig(logConfig);
 

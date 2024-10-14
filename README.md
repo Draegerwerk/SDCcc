@@ -225,22 +225,22 @@ within the specified seconds.
 
 The following command line options are supported by the test tool, the first two need to be provided.
 
-| **Option**             | **Short** | **Argument**                                                                                         | **Required** | 
-|------------------------|-----------|------------------------------------------------------------------------------------------------------|--------------|
-| --config               | -c        | path to the *config.toml*                                                                            | yes          |
-| --testconfig           | -t        | path to the *test_configuration.toml*                                                                | yes          |
-| --testparam            | -p        | path to the *test_parameter.toml*                                                                    | no           |
-| --device_epr           | -de       | the epr of the target provider, overrides setting from configuration if provided                     | no           |
-| --device_facility      | -fac      | the facility of the target provider, overrides setting from configuration if provided                | no           |
-| --device_building      | -bldng    | the building of the target provider, overrides setting from configuration if provided                | no           |
-| --device_point_of_care | -poc      | the point of care of the target provider, overrides setting from configuration if provided           | no           |
-| --device_floor         | -flr      | the floor of the target provider, overrides setting from configuration if provided                   | no           |
-| --device_room          | -rm       | the room of the target provider, overrides setting from configuration if provided                    | no           |
-| --device_bed           | -bed      | the bed of the target provider, overrides setting from configuration if provided                     | no           |
-| --ipaddress            | -ip       | ip address of the adapter to use for communication, overrides setting from configuration if provided | no           |
-| --test_run_directory   | -d        | base directory to store test runs in, creates a timestamped SDCcc run                                | no           |
-| --no_subdirectories    | -ns       | if set to "true", no directories are created in the directory configured with test_run_directory     | no           |
-| --file_log_level       | -fll      | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                    | no           |
+| **Option**             | **Short** | **Argument**                                                                                                                                                                   | **Required** | 
+|------------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| --config               | -c        | path to the *config.toml*                                                                                                                                                      | yes          |
+| --testconfig           | -t        | path to the *test_configuration.toml*                                                                                                                                          | yes          |
+| --testparam            | -p        | path to the *test_parameter.toml*                                                                                                                                              | no           |
+| --device_epr           | -de       | the epr of the target provider, overrides setting from configuration if provided                                                                                               | no           |
+| --device_facility      | -fac      | the facility of the target provider, overrides setting from configuration if provided                                                                                          | no           |
+| --device_building      | -bldng    | the building of the target provider, overrides setting from configuration if provided                                                                                          | no           |
+| --device_point_of_care | -poc      | the point of care of the target provider, overrides setting from configuration if provided                                                                                     | no           |
+| --device_floor         | -flr      | the floor of the target provider, overrides setting from configuration if provided                                                                                             | no           |
+| --device_room          | -rm       | the room of the target provider, overrides setting from configuration if provided                                                                                              | no           |
+| --device_bed           | -bed      | the bed of the target provider, overrides setting from configuration if provided                                                                                               | no           |
+| --ipaddress            | -ip       | ip address of the adapter to use for communication, overrides setting from configuration if provided                                                                           | no           |
+| --test_run_directory   | -d        | base directory to store test runs in, creates a timestamped SDCcc run                                                                                                          | no           |
+| --no_subdirectories    | -ns       | if set to "true", no directories are created in the directory configured with test_run_directory. The configured directory must be empty if no_subdirectories is set to "true" | no           |
+| --file_log_level       | -fll      | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                                                                                              | no           |
 
 ### Enabling Tests
 
@@ -270,9 +270,10 @@ R0021=false
 After a test run, a folder *testruns* is created in the same directory as the executable by default. The directory can
 be changed with the command line argument `test_run_directory` (see Section **Running SDCcc**) and the results are
 saved in that folder. Each test run has its own directory, which is named according to the following scheme
-*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument 'no_subdirecotries' is set, in which case the test run files are saved directly in the *testruns* folder. Inside this directory there is a subdirectory *Database* and three files
-*SDCcc.log*, *TEST-SDCcc_direct.xml* and *TEST-SDCcc_invariant.xml*. *Database* is a database in which all messages
-exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run
+*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument `no_subdirecotries` is set, in which case the test
+run files are saved directly in the *testruns* folder. Inside this directory there is a subdirectory *Database* and 
+three files *SDCcc.log*, *TEST-SDCcc_direct.xml* and *TEST-SDCcc_invariant.xml*. *Database* is a database in which all 
+messages exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run
 in accordance to the log file log level. The test results
 are located in the two result XML files, *TEST-SDCcc_direct.xml* for the direct tests and *TEST-SDCcc_invariant.xml*
 for the invariant tests.
