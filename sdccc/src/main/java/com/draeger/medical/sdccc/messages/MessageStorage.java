@@ -77,9 +77,12 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.ScrollMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.query.spi.ScrollableResultsImplementor;
+import org.hibernate.query.spi.StreamDecorator;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.soap.ApplicationInfo;
 import org.somda.sdc.dpws.soap.CommunicationContext;
@@ -1079,6 +1082,7 @@ public class MessageStorage implements AutoCloseable {
 
     /**
      * Retrieves all SequenceId attribute values that have been seen.
+     * Orders them by the timestamp of the first message that used the respective SequenceId.
      *
      * @return stream of all SequenceId attribute values that have been seen
      * @throws IOException if storage is closed
@@ -1090,17 +1094,20 @@ public class MessageStorage implements AutoCloseable {
             throw new IOException(GET_UNIQUE_SEQUENCE_IDS_CALLED_ON_CLOSED_STORAGE);
         }
 
-        final CriteriaQuery<String> criteria;
-
+        final CriteriaQuery<String> messageContentQuery;
         try (final Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+
             final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            criteria = criteriaBuilder.createQuery(String.class);
-            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot = criteria.from(MdibVersionGroupEntity.class);
-            criteria.select(mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.sequenceId));
-            criteria.distinct(true);
+            messageContentQuery = criteriaBuilder.createQuery(String.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(
+                    messageContentRoot.join(MessageContent_.mdibVersionGroups).get(MdibVersionGroupEntity_.sequenceId));
+
+            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
         }
 
-        return this.getQueryResult(criteria);
+        return this.getOrderedQueryResult(messageContentQuery).distinct();
     }
 
     /**
@@ -1693,11 +1700,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = this.getOrderedQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(this.getOrderedQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1773,11 +1780,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = this.getOrderedQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(this.getOrderedQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1817,11 +1824,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<ManipulationData> countingStream = this.getOrderedQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getOrderedQueryResult(criteria), present);
     }
 
     /**
@@ -1886,15 +1893,25 @@ public class MessageStorage implements AutoCloseable {
                     criteriaBuilder.and(parameterExistPredicates.toArray(new Predicate[0]))));
         }
         final boolean present;
-        try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<ManipulationData> countingStream = this.getOrderedQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getOrderedQueryResult(criteria), present);
     }
 
     private <T> Stream<T> getQueryResult(final CriteriaQuery<T> criteriaQuery) {
         final Session session = sessionFactory.openSession();
         final Stream<T> results = getStreamForQuery(session, criteriaQuery);
+
+        final ResultIterator<T> resultIterator = new ResultIterator<>(session, results);
+
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false)
+                .onClose(resultIterator::close);
+    }
+
+    private <T> Stream<T> getOrderedQueryResult(final CriteriaQuery<T> criteriaQuery) {
+        final Session session = sessionFactory.openSession();
+        final Stream<T> results = getOrderedStreamForQuery(session, criteriaQuery);
 
         final ResultIterator<T> resultIterator = new ResultIterator<>(session, results);
 
@@ -1924,6 +1941,23 @@ public class MessageStorage implements AutoCloseable {
                 .setCacheable(false)
                 .setFetchSize(FETCH_SIZE)
                 .stream();
+    }
+
+    // be aware, that this does not use evict on cached objects
+    private <T> Stream<T> getOrderedStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
+        // The stream provided by Hibernate does not have the ORDERED characteristic.
+        // We hence build our own.
+        final ScrollableResultsImplementor scrollableResults =
+                (ScrollableResultsImplementor) session.createQuery(criteriaQuery)
+                        .setReadOnly(true)
+                        .setCacheable(false)
+                        .setFetchSize(FETCH_SIZE)
+                        .scroll(ScrollMode.FORWARD_ONLY);
+        final OrderedStreamIterator<T> iterator = new OrderedStreamIterator<>(scrollableResults);
+        final Spliterator<T> spliterator =
+                Spliterators.spliteratorUnknownSize(iterator, Spliterator.NONNULL | Spliterator.ORDERED);
+
+        return (Stream<T>) new StreamDecorator(StreamSupport.stream(spliterator, false), scrollableResults::close);
     }
 
     private void transmit(final List<DatabaseEntry> results) {
