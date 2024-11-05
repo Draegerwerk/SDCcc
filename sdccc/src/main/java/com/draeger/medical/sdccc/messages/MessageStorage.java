@@ -1079,6 +1079,7 @@ public class MessageStorage implements AutoCloseable {
 
     /**
      * Retrieves all SequenceId attribute values that have been seen.
+     * Orders them by the timestamp of the first message that used the respective SequenceId.
      *
      * @return stream of all SequenceId attribute values that have been seen
      * @throws IOException if storage is closed
@@ -1090,17 +1091,20 @@ public class MessageStorage implements AutoCloseable {
             throw new IOException(GET_UNIQUE_SEQUENCE_IDS_CALLED_ON_CLOSED_STORAGE);
         }
 
-        final CriteriaQuery<String> criteria;
-
+        final CriteriaQuery<String> messageContentQuery;
         try (final Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+
             final CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            criteria = criteriaBuilder.createQuery(String.class);
-            final Root<MdibVersionGroupEntity> mdibVersionGroupEntityRoot = criteria.from(MdibVersionGroupEntity.class);
-            criteria.select(mdibVersionGroupEntityRoot.get(MdibVersionGroupEntity_.sequenceId));
-            criteria.distinct(true);
+            messageContentQuery = criteriaBuilder.createQuery(String.class);
+            final Root<MessageContent> messageContentRoot = messageContentQuery.from(MessageContent.class);
+            messageContentQuery.select(
+                    messageContentRoot.join(MessageContent_.mdibVersionGroups).get(MdibVersionGroupEntity_.sequenceId));
+
+            messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
         }
 
-        return this.getQueryResult(criteria);
+        return this.getQueryResult(messageContentQuery).distinct();
     }
 
     /**
