@@ -27,6 +27,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +37,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.somda.sdc.common.util.ExecutorWrapperService;
 import org.somda.sdc.dpws.DpwsFramework;
 import org.somda.sdc.dpws.client.Client;
 import org.somda.sdc.dpws.client.DiscoveredDevice;
@@ -59,6 +62,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private static final Logger LOG = LogManager.getLogger(TestClientImpl.class);
 
     private static final String COULDN_T_CONNECT_TO_TARGET = "Couldn't connect to target";
+    private static final String COULDN_T_DISCONNECT = "Could not disconnect the test client";
 
     private static final String LOCATION_CONTEXT_SCOPE_STRING_START = "sdc.ctxt.loc:";
     private static final String MATCHING = "matching";
@@ -101,20 +105,30 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private HostingServiceProxy hostingServiceProxy;
     private List<String> targetXAddrs;
 
+    private final ExecutorWrapperService<ExecutorService> reconnectExecutor;
+    private final AtomicBoolean isConnected;
+    private final Object lock;
+    private final long reconnectTries;
+    private final long reconnectWait;
+    private final AtomicBoolean reconnectEnabled;
+    private final AtomicBoolean inReconnectProcess;
+
     /**
      * Creates an SDCri consumer instance.
      *
-     * @param targetDeviceEpr EPR address to filter for
-     * @param targetDeviceFacility facility to filter for
-     * @param targetDeviceBuilding building to filter for
-     * @param targetDevicePointOfCare point of care to filter for
-     * @param targetDeviceFloor floor to filter for
-     * @param targetDeviceRoom room to filter for
-     * @param targetDeviceBed bed to filter for
-     * @param adapterAddress  ip of the network interface to bind to
-     * @param maxWait         max waiting time to find and connect to target device
-     * @param testClientUtil  test client utility
-     * @param testRunObserver observer for invalidating test runs on unexpected errors
+     * @param targetDeviceEpr              EPR address to filter for
+     * @param targetDeviceFacility         facility to filter for
+     * @param targetDeviceBuilding         building to filter for
+     * @param targetDevicePointOfCare      point of care to filter for
+     * @param targetDeviceFloor            floor to filter for
+     * @param targetDeviceRoom             room to filter for
+     * @param targetDeviceBed              bed to filter for
+     * @param adapterAddress               ip of the network interface to bind to
+     * @param maxWait                      max waiting time to find and connect to target device
+     * @param reconnectTries               number of tries a reconnection is attempted
+     * @param reconnectWait                the wait time between reconnection attempts in seconds
+     * @param testClientUtil               test client utility
+     * @param testRunObserver              observer for invalidating test runs on unexpected errors
      * @param testClientMdibAccessObserver observer for changes to the mdib
      */
     @Inject
@@ -129,6 +143,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
             @Named(TestSuiteConfig.CONSUMER_DEVICE_LOCATION_BED) final @Nullable String targetDeviceBed,
             @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
             @Named(TestSuiteConfig.NETWORK_MAX_WAIT) final long maxWait,
+            @Named(TestSuiteConfig.NETWORK_RECONNECT_TRIES) final long reconnectTries,
+            @Named(TestSuiteConfig.NETWORK_RECONNECT_WAIT) final long reconnectWait,
             final TestClientUtil testClientUtil,
             final TestRunObserver testRunObserver,
             final TestClientMdibAccessObserver testClientMdibAccessObserver) {
@@ -137,6 +153,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
         this.testRunObserver = testRunObserver;
         this.shouldBeConnected = new AtomicBoolean(false);
+        this.isConnected = new AtomicBoolean(false);
+        this.reconnectEnabled = new AtomicBoolean(false);
+        this.inReconnectProcess = new AtomicBoolean(false);
+        this.lock = new Object();
+        this.reconnectTries = reconnectTries;
+        this.reconnectWait = reconnectWait;
         this.maxWait = Duration.ofSeconds(maxWait);
         this.testClientMdibAccessObserver = testClientMdibAccessObserver;
 
@@ -187,6 +209,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 this.floorSearchLogString,
                 this.roomSearchLogString,
                 this.bedSearchLogString);
+        reconnectExecutor = new ExecutorWrapperService<>(
+                Executors::newSingleThreadExecutor, "TestClientExecutor", "InstanceIdentifier");
     }
 
     @Override
@@ -196,10 +220,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         this.dpwsFramework.setNetworkInterface(networkInterface);
         dpwsFramework.startAsync().awaitRunning();
         client.startAsync().awaitRunning();
+        reconnectExecutor.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() {
+        reconnectExecutor.stopAsync().awaitTerminated();
         client.stopAsync().awaitTerminated();
         dpwsFramework.stopAsync().awaitTerminated();
     }
@@ -318,16 +344,29 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 throw new IOException(COULDN_T_CONNECT_TO_TARGET);
             }
         } catch (final InterruptedException | TimeoutException | ExecutionException e) {
-            LOG.error(
-                    "Couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
-                    this.eprSearchLogString,
-                    this.facilitySearchLogString,
-                    this.buildingSearchLogString,
-                    this.pointOfCareSearchLogString,
-                    this.floorSearchLogString,
-                    this.roomSearchLogString,
-                    this.bedSearchLogString,
-                    e);
+            if (inReconnectProcess.get()) {
+                LOG.info(
+                        "Tried to reconnect, but couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
+                        this.eprSearchLogString,
+                        this.facilitySearchLogString,
+                        this.buildingSearchLogString,
+                        this.pointOfCareSearchLogString,
+                        this.floorSearchLogString,
+                        this.roomSearchLogString,
+                        this.bedSearchLogString,
+                        e);
+            } else {
+                LOG.error(
+                        "Couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
+                        this.eprSearchLogString,
+                        this.facilitySearchLogString,
+                        this.buildingSearchLogString,
+                        this.pointOfCareSearchLogString,
+                        this.floorSearchLogString,
+                        this.roomSearchLogString,
+                        this.bedSearchLogString,
+                        e);
+            }
             throw new IOException(COULDN_T_CONNECT_TO_TARGET);
         } finally {
             client.unregisterDiscoveryObserver(obs);
@@ -359,17 +398,29 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         }
 
         sdcRemoteDevice.registerWatchdogObserver(this);
+        isConnected.set(true);
+    }
+
+    @Override
+    public void shouldReconnect(final Boolean shouldReconnect) {
+        this.reconnectEnabled.set(shouldReconnect);
     }
 
     @Override
     public synchronized void disconnect() throws TimeoutException {
-        shouldBeConnected.set(false);
+        disconnect(true);
+    }
+
+    private synchronized void disconnect(final Boolean expected) throws TimeoutException {
+        shouldBeConnected.set(expected);
         if (sdcRemoteDevice != null) {
             sdcRemoteDevice.stopAsync().awaitTerminated(maxWait.toSeconds(), TimeUnit.SECONDS);
             sdcRemoteDevice = null;
         }
         hostingServiceProxy = null;
-        client.stopAsync().awaitTerminated(maxWait.toSeconds(), TimeUnit.SECONDS);
+        if (expected) {
+            client.stopAsync().awaitTerminated(maxWait.toSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -384,12 +435,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
     @Override
     public SdcRemoteDevice getSdcRemoteDevice() {
-        return sdcRemoteDevice;
+        return restrictedGetter(sdcRemoteDevice);
     }
 
     @Override
     public HostingServiceProxy getHostingServiceProxy() {
-        return hostingServiceProxy;
+        return restrictedGetter(hostingServiceProxy);
     }
 
     @Override
@@ -410,17 +461,31 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     @Subscribe
     void onConnectionLoss(final WatchdogMessage watchdogMessage) {
         LOG.info("Watchdog detected disconnect from provider.");
-        if (shouldBeConnected.get()) {
-            testRunObserver.invalidateTestRun(String.format(
-                    "Lost connection to device %s. Reason: %s",
-                    watchdogMessage.getPayload(), watchdogMessage.getReason().getMessage()));
-            try {
-                disconnect();
-            } catch (TimeoutException e) {
-                LOG.error("Error while disconnecting device after connection loss.", e);
+        if (shouldBeConnected.get() && reconnectEnabled.get()) {
+            isConnected.set(false);
+            inReconnectProcess.set(true);
+            LOG.info("The disconnect from provider was unexpected, trying to reconnect.");
+            if (reconnectExecutor.isRunning()) {
+                reconnectExecutor.get().submit(() -> {
+                    synchronized (lock) {
+                        try {
+                            disconnect(false);
+                        } catch (TimeoutException e) {
+                            LOG.error(COULDN_T_DISCONNECT, e);
+                        }
+                        reconnect(watchdogMessage);
+                        lock.notifyAll();
+                    }
+                });
+            } else {
+                LOG.debug("ReconnectExecutor is not running.");
+                invalidateAfterConnectionLoss(watchdogMessage);
             }
+            inReconnectProcess.set(false);
+        } else if (shouldBeConnected.get()) {
+            invalidateAfterConnectionLoss(watchdogMessage);
         } else {
-            LOG.info("Watchdog detected expected disconnect from provider.");
+            LOG.info("The disconnect from provider was expected.");
         }
     }
 
@@ -432,5 +497,56 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     @Override
     public void unregisterMdibObserver(final TestClientMdibObserver observer) {
         testClientMdibAccessObserver.unregisterObserver(observer);
+    }
+
+    private <T> T restrictedGetter(final T t) {
+        synchronized (lock) {
+            while (inReconnectProcess.get()) {
+                LOG.debug("Attempted to access a connection-dependent object while the connection is interrupted, "
+                        + "wait for connection to be re-established.");
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    LOG.error("Waiting for lock interrupted.", e);
+                }
+            }
+            return t;
+        }
+    }
+
+    private void reconnect(final WatchdogMessage watchdogMessage) {
+        var count = 1;
+        while (count <= reconnectTries && !isConnected.get()) {
+            LOG.info("Trying to reconnect, attempt {} of {}.", count, reconnectTries);
+            try {
+                connect();
+                LOG.info("Successfully reconnected.");
+                return;
+            } catch (InterceptorException | TransportException | IOException e) {
+                LOG.info("{}. reconnection attempt failed.", count);
+                try {
+                    LOG.info("Wait for {} seconds, to give the provider time to restart.", reconnectWait);
+                    TimeUnit.SECONDS.sleep(reconnectWait);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException("Error while trying to wait for the provider to restart.", ex);
+                }
+            }
+            count++;
+        }
+        if (!isConnected.get()) {
+            LOG.info("Couldn't reconnect after {} retries", reconnectTries);
+            invalidateAfterConnectionLoss(watchdogMessage);
+        }
+    }
+
+    private void invalidateAfterConnectionLoss(final WatchdogMessage watchdogMessage) {
+        testRunObserver.invalidateTestRun(String.format(
+                "Lost connection to device %s. Reason: %s",
+                watchdogMessage.getPayload(), watchdogMessage.getReason().getMessage()));
+        try {
+            disconnect();
+        } catch (TimeoutException e) {
+            LOG.error(COULDN_T_DISCONNECT, e);
+        }
     }
 }
