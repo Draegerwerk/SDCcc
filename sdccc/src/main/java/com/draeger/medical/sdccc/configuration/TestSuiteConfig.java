@@ -25,6 +25,7 @@ public final class TestSuiteConfig {
     public static final String TEST_EXECUTION_LOGGING = SDCCC + "TestExecutionLogging";
     public static final String SUMMARIZE_MESSAGE_ENCODING_ERRORS = SDCCC + "SummarizeMessageEncodingErrors";
     public static final String ENABLE_MESSAGE_ENCODING_CHECK = SDCCC + "EnableMessageEncodingCheck";
+    public static final String OVER_RIDE = "Override";
 
     /*
      * TLS configuration

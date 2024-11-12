@@ -61,6 +61,7 @@ public class TestClientUtil {
      *                                       Values from 1 to 255 are valid.
      * @param enabledTlsProtocols            TLS protocol versions to be enabled
      * @param enabledCiphers                 ciphers to be enabled
+     * @param override                       overrides for AbstractConfigurationModule
      */
     @Inject
     public TestClientUtil(
@@ -70,7 +71,8 @@ public class TestClientUtil {
             final LocalAddressResolver localAddressResolver,
             @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL,
             @Named(TestSuiteConfig.TLS_ENABLED_PROTOCOLS) final String[] enabledTlsProtocols,
-            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers) {
+            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers,
+            @Named(TestSuiteConfig.OVER_RIDE) final AbstractConfigurationModule override) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
@@ -98,7 +100,8 @@ public class TestClientUtil {
                         bind(TestRunObserver.class).toInstance(testRunObserver);
                         bind(LocalAddressResolver.class).toInstance(localAddressResolver);
                     }
-                }));
+                },
+                override));
     }
 
     /**
