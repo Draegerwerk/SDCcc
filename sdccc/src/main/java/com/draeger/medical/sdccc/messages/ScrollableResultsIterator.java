@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the MIT License.
+ * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.draeger.medical.sdccc.messages;
 
 import org.hibernate.query.spi.CloseableIterator;
