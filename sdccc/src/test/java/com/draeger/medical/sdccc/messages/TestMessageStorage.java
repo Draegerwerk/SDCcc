@@ -328,13 +328,11 @@ public class TestMessageStorage {
             messageStorage.flush();
 
             try (final Stream<String> sequenceIdStream = messageStorage.getUniqueSequenceIds()) {
-                assertEquals(
-                        List.of("urn:uuid:3", "urn:uuid:2", "urn:uuid:1"),
-                        sequenceIdStream.toList());
+                assertEquals(List.of("urn:uuid:3", "urn:uuid:2", "urn:uuid:1"), sequenceIdStream.toList());
             }
 
             try (final MessageStorage.GetterResult<MessageContent> inboundMessages =
-                         messageStorage.getInboundMessages()) {
+                    messageStorage.getInboundMessages()) {
                 assertEquals(3, inboundMessages.getStream().count());
             }
         }
@@ -349,12 +347,7 @@ public class TestMessageStorage {
         return new CommunicationContext(
                 new HttpApplicationInfo(multimap, transactionId, requestUri),
                 new TransportInfo(
-                        Constants.HTTPS_SCHEME,
-                        null,
-                        null,
-                        null,
-                        null,
-                        Collections.singletonList(certificate)),
+                        Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
                 null);
     }
 

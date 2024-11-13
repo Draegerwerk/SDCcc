@@ -77,9 +77,12 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.ScrollMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.query.spi.ScrollableResultsImplementor;
+import org.hibernate.query.spi.StreamDecorator;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.soap.ApplicationInfo;
 import org.somda.sdc.dpws.soap.CommunicationContext;
@@ -1922,12 +1925,22 @@ public class MessageStorage implements AutoCloseable {
 
     // be aware, that this does not use evict on cached objects
     private <T> Stream<T> getStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
-        return session
-                .createQuery(criteriaQuery)
-                .setReadOnly(true)
-                .setCacheable(false)
-                .setFetchSize(FETCH_SIZE)
-                .stream();
+        // The stream provided by Hibernate does not have the ORDERED characteristic.
+        // We hence build our own.
+        ScrollableResultsImplementor scrollableResults =
+                (ScrollableResultsImplementor) session.createQuery(criteriaQuery)
+                        .setReadOnly(true)
+                        .setCacheable(false)
+                        .setFetchSize(FETCH_SIZE)
+                        .scroll(ScrollMode.FORWARD_ONLY);
+        final ScrollableResultsIterator<T> iterator = new ScrollableResultsIterator<>(scrollableResults);
+        final Spliterator<T> spliterator =
+                Spliterators.spliteratorUnknownSize(iterator, Spliterator.NONNULL | Spliterator.ORDERED);
+
+        final Stream<T> stream =
+                new StreamDecorator(StreamSupport.stream(spliterator, false), scrollableResults::close);
+
+        return stream;
     }
 
     private void transmit(final List<DatabaseEntry> results) {
