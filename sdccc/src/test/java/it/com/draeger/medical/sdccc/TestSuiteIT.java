@@ -632,10 +632,13 @@ public class TestSuiteIT {
 
             bind(Identifiers.DIRECT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
             bind(Identifiers.INVARIANT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
-            bind(TestSuiteConfig.OVER_RIDE, AbstractConfigurationModule.class, new AbstractConfigurationModule() {
-                @Override
-                protected void defaultConfigure() {}
-            });
+            bind(
+                    TestSuiteConfig.CONFIGURATION_MODULE,
+                    AbstractConfigurationModule.class,
+                    new AbstractConfigurationModule() {
+                        @Override
+                        protected void defaultConfigure() {}
+                    });
         }
     }
 }
