@@ -56,6 +56,7 @@ import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -155,15 +156,7 @@ public class TestMessageStorage {
                 1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
-            final String transactionId = "transactionId";
-            final String requestUri = "requestUri";
-
-            final X509Certificate certificate = CertificateUtil.getDummyCert();
-            final CommunicationContext headerContext = new CommunicationContext(
-                    new HttpApplicationInfo(multimap, transactionId, requestUri),
-                    new TransportInfo(
-                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
-                    null);
+            final CommunicationContext headerContext = getCommunicationContext(multimap);
 
             try (final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
@@ -196,15 +189,7 @@ public class TestMessageStorage {
                 1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
-            final String transactionId = "transactionId";
-            final String requestUri = "requestUri";
-
-            final X509Certificate certificate = CertificateUtil.getDummyCert();
-            final CommunicationContext headerContext = new CommunicationContext(
-                    new HttpApplicationInfo(multimap, transactionId, requestUri),
-                    new TransportInfo(
-                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
-                    null);
+            final CommunicationContext headerContext = getCommunicationContext(multimap);
 
             try (final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
@@ -248,15 +233,7 @@ public class TestMessageStorage {
                 1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
             final ListMultimap<String, String> multimap = ArrayListMultimap.create();
 
-            final String transactionId = "transactionId";
-            final String requestUri = "requestUri";
-
-            final X509Certificate certificate = CertificateUtil.getDummyCert();
-            final CommunicationContext headerContext = new CommunicationContext(
-                    new HttpApplicationInfo(multimap, transactionId, requestUri),
-                    new TransportInfo(
-                            Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
-                    null);
+            final CommunicationContext headerContext = getCommunicationContext(multimap);
 
             try (final Message message = new Message(
                     CommunicationLog.Direction.INBOUND,
@@ -300,6 +277,80 @@ public class TestMessageStorage {
                 assertEquals(3, inboundMessages.getStream().count());
             }
         }
+    }
+
+    /**
+     * Tests whether SequenceId values are ordered by the timestamp of the first message they appear in.
+     *
+     * @param dir message storage directory
+     * @throws IOException          on io exceptions
+     * @throws CertificateException on certificate exceptions
+     */
+    @Test
+    public void testGetUniqueSequenceIdsOrdering(@TempDir final File dir) throws IOException, CertificateException {
+        try (final MessageStorage messageStorage = new MessageStorage(
+                1, false, true, mock(MessageFactory.class), new HibernateConfigImpl(dir), this.testRunObserver)) {
+            final ListMultimap<String, String> multimap = ArrayListMultimap.create();
+
+            final CommunicationContext headerContext = getCommunicationContext(multimap);
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "3"))
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "2"))
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Message message = new Message(
+                    CommunicationLog.Direction.INBOUND,
+                    CommunicationLog.MessageType.REQUEST,
+                    headerContext,
+                    messageStorage)) {
+                message.write(String.format(
+                                BASE_MESSAGE_STRING, "action", String.format(SEQUENCE_ID_METRIC_BODY_STRING, "3", "1"))
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            messageStorage.flush();
+
+            try (final Stream<String> sequenceIdStream = messageStorage.getUniqueSequenceIds()) {
+                assertEquals(
+                        List.of("urn:uuid:3", "urn:uuid:2", "urn:uuid:1"),
+                        sequenceIdStream.toList());
+            }
+
+            try (final MessageStorage.GetterResult<MessageContent> inboundMessages =
+                         messageStorage.getInboundMessages()) {
+                assertEquals(3, inboundMessages.getStream().count());
+            }
+        }
+    }
+
+    private static @NotNull CommunicationContext getCommunicationContext(ListMultimap<String, String> multimap) throws CertificateException, IOException {
+        final String transactionId = "transactionId";
+        final String requestUri = "requestUri";
+
+        final X509Certificate certificate = CertificateUtil.getDummyCert();
+        final CommunicationContext headerContext = new CommunicationContext(
+                new HttpApplicationInfo(multimap, transactionId, requestUri),
+                new TransportInfo(
+                        Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
+                null);
+        return headerContext;
     }
 
     /**
