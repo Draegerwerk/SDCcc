@@ -1107,7 +1107,7 @@ public class MessageStorage implements AutoCloseable {
             messageContentQuery.orderBy(criteriaBuilder.asc(messageContentRoot.get(MessageContent_.nanoTimestamp)));
         }
 
-        return this.getQueryResult(messageContentQuery).distinct();
+        return this.getOrderedQueryResult(messageContentQuery).distinct();
     }
 
     /**
@@ -1700,11 +1700,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = this.getOrderedQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(this.getOrderedQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1780,11 +1780,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = this.getOrderedQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(this.getOrderedQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1824,11 +1824,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<ManipulationData> countingStream = this.getOrderedQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getOrderedQueryResult(criteria), present);
     }
 
     /**
@@ -1893,15 +1893,25 @@ public class MessageStorage implements AutoCloseable {
                     criteriaBuilder.and(parameterExistPredicates.toArray(new Predicate[0]))));
         }
         final boolean present;
-        try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<ManipulationData> countingStream = this.getOrderedQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getOrderedQueryResult(criteria), present);
     }
 
     private <T> Stream<T> getQueryResult(final CriteriaQuery<T> criteriaQuery) {
         final Session session = sessionFactory.openSession();
         final Stream<T> results = getStreamForQuery(session, criteriaQuery);
+
+        final ResultIterator<T> resultIterator = new ResultIterator<>(session, results);
+
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false)
+                .onClose(resultIterator::close);
+    }
+
+    private <T> Stream<T> getOrderedQueryResult(final CriteriaQuery<T> criteriaQuery) {
+        final Session session = sessionFactory.openSession();
+        final Stream<T> results = getOrderedStreamForQuery(session, criteriaQuery);
 
         final ResultIterator<T> resultIterator = new ResultIterator<>(session, results);
 
@@ -1925,6 +1935,16 @@ public class MessageStorage implements AutoCloseable {
 
     // be aware, that this does not use evict on cached objects
     private <T> Stream<T> getStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
+        return session
+                .createQuery(criteriaQuery)
+                .setReadOnly(true)
+                .setCacheable(false)
+                .setFetchSize(FETCH_SIZE)
+                .stream();
+    }
+
+    // be aware, that this does not use evict on cached objects
+    private <T> Stream<T> getOrderedStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
         // The stream provided by Hibernate does not have the ORDERED characteristic.
         // We hence build our own.
         final ScrollableResultsImplementor scrollableResults =
