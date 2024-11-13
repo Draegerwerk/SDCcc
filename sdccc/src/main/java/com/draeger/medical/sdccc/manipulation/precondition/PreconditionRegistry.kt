@@ -102,7 +102,6 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
         for (precondition in preconditions) {
             logger.info { "Running precondition ${precondition.javaClass.simpleName}" }
             precondition.verifyPrecondition(injector)
-
             // flush data after each precondition to ensure that each precondition has most current data
             injector.getInstance(MessageStorage::class.java).flush()
         }
