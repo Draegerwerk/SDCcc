@@ -1927,7 +1927,7 @@ public class MessageStorage implements AutoCloseable {
     private <T> Stream<T> getStreamForQuery(final Session session, final CriteriaQuery<T> criteriaQuery) {
         // The stream provided by Hibernate does not have the ORDERED characteristic.
         // We hence build our own.
-        ScrollableResultsImplementor scrollableResults =
+        final ScrollableResultsImplementor scrollableResults =
                 (ScrollableResultsImplementor) session.createQuery(criteriaQuery)
                         .setReadOnly(true)
                         .setCacheable(false)
