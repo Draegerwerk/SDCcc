@@ -340,17 +340,22 @@ public class TestMessageStorage {
         }
     }
 
-    private static @NotNull CommunicationContext getCommunicationContext(ListMultimap<String, String> multimap) throws CertificateException, IOException {
+    private static @NotNull CommunicationContext getCommunicationContext(final ListMultimap<String, String> multimap)
+            throws CertificateException, IOException {
         final String transactionId = "transactionId";
         final String requestUri = "requestUri";
 
         final X509Certificate certificate = CertificateUtil.getDummyCert();
-        final CommunicationContext headerContext = new CommunicationContext(
+        return new CommunicationContext(
                 new HttpApplicationInfo(multimap, transactionId, requestUri),
                 new TransportInfo(
-                        Constants.HTTPS_SCHEME, null, null, null, null, Collections.singletonList(certificate)),
+                        Constants.HTTPS_SCHEME,
+                        null,
+                        null,
+                        null,
+                        null,
+                        Collections.singletonList(certificate)),
                 null);
-        return headerContext;
     }
 
     /**
