@@ -15,7 +15,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.google.inject.Injector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +47,9 @@ public class PreconditionRegistryTest {
     public void testPreconditionInteractionRegistrationAndPrompt() throws Exception {
         final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
+
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
 
         final var preconditionWasCalled = new AtomicBoolean(false);
         PreconditionUtil.MockPrecondition.setIsPreconditionMet(injector -> {
@@ -76,6 +81,9 @@ public class PreconditionRegistryTest {
     public void testPreconditionInteractionRegisteredOnlyOnce() throws Exception {
         final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
+
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
 
         final var preconditionWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockPrecondition.setIsPreconditionMet(injector -> {
@@ -124,6 +132,9 @@ public class PreconditionRegistryTest {
         final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
 
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
+
         final var manipulationWasCalled = new AtomicBoolean(false);
         PreconditionUtil.MockManipulation.setManipulationCall(injector -> {
             manipulationWasCalled.set(true);
@@ -146,6 +157,9 @@ public class PreconditionRegistryTest {
     public void testManipulationInteractionRegisteredOnlyOnce() throws Exception {
         final var mockInjector = mock(Injector.class);
         final var registry = new PreconditionRegistry(mockInjector);
+
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
 
         final var manipulationWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockManipulation.setManipulationCall(injector -> {
@@ -194,6 +208,9 @@ public class PreconditionRegistryTest {
 
         final var mockPrecondition = mock(Observing.class);
         doReturn(mockPrecondition).when(mockFactory).create(any());
+
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
 
         // call register twice, expect only one to be registered
         registry.registerObservingPrecondition(mockPreconditionFactory);
