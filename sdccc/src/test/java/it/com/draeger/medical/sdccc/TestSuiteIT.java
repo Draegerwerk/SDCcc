@@ -30,6 +30,7 @@ import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.HibernateConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
+import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
@@ -632,13 +633,10 @@ public class TestSuiteIT {
 
             bind(Identifiers.DIRECT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
             bind(Identifiers.INVARIANT_TEST_IDENTIFIER_FAILING, Boolean.class, failingTests);
-            bind(
-                    TestSuiteConfig.CONFIGURATION_MODULE,
-                    AbstractConfigurationModule.class,
-                    new AbstractConfigurationModule() {
-                        @Override
-                        protected void defaultConfigure() {}
-                    });
+            bind(Constants.CONFIGURATION_MODULE, AbstractConfigurationModule.class, new AbstractConfigurationModule() {
+                @Override
+                protected void defaultConfigure() {}
+            });
         }
     }
 }
