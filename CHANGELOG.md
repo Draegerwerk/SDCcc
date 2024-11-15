@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
 - sdc-ri version to 6.0.0-SNAPSHOT
 
