@@ -31,8 +31,16 @@ import org.junit.jupiter.api.Test;
  */
 public class PreconditionRegistryTest {
 
+    private PreconditionRegistry registry;
+
     @BeforeEach
     void setUp() {
+        final var mockInjector = mock(Injector.class);
+        final var messageStorageMock = mock(MessageStorage.class);
+        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
+
+        registry = new PreconditionRegistry(mockInjector);
+
         PreconditionUtil.MockPrecondition.reset();
         PreconditionUtil.MockManipulation.reset();
     }
@@ -45,12 +53,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests registering a complex interaction and whether it's prompted for")
     public void testPreconditionInteractionRegistrationAndPrompt() throws Exception {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
-        final var messageStorageMock = mock(MessageStorage.class);
-        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
-
         final var preconditionWasCalled = new AtomicBoolean(false);
         PreconditionUtil.MockPrecondition.setIsPreconditionMet(injector -> {
             preconditionWasCalled.set(true);
@@ -79,12 +81,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether registering the same complex interaction thrice only prompts for it once")
     public void testPreconditionInteractionRegisteredOnlyOnce() throws Exception {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
-        final var messageStorageMock = mock(MessageStorage.class);
-        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
-
         final var preconditionWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockPrecondition.setIsPreconditionMet(injector -> {
             preconditionWasCalled.incrementAndGet();
@@ -106,9 +102,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether an exception during registration causes a RuntimeException and stops the test run")
     public void testPreconditionInteractionRegistrationException() {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
         final var mockInteractionWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockPrecondition.setAfterConstructorCall(() -> {
             mockInteractionWasCalled.incrementAndGet();
@@ -129,12 +122,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests registering a manipulation and whether it's prompted for")
     public void testManipulationInteractionRegistrationAndPrompt() throws Exception {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
-        final var messageStorageMock = mock(MessageStorage.class);
-        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
-
         final var manipulationWasCalled = new AtomicBoolean(false);
         PreconditionUtil.MockManipulation.setManipulationCall(injector -> {
             manipulationWasCalled.set(true);
@@ -155,12 +142,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether registering the same manipulation thrice only prompts for it once")
     public void testManipulationInteractionRegisteredOnlyOnce() throws Exception {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
-        final var messageStorageMock = mock(MessageStorage.class);
-        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
-
         final var manipulationWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockManipulation.setManipulationCall(injector -> {
             manipulationWasCalled.incrementAndGet();
@@ -181,9 +162,6 @@ public class PreconditionRegistryTest {
     @Test
     @DisplayName("Tests whether an exception during registration causes a RuntimeException and stops the test run")
     public void testManipulationInteractionRegistrationException() {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
         final var mockInteractionWasCalled = new AtomicInteger(0);
         PreconditionUtil.MockManipulation.setAfterConstructorCall(() -> {
             mockInteractionWasCalled.incrementAndGet();
@@ -198,9 +176,6 @@ public class PreconditionRegistryTest {
 
     @Test
     void testRegisteringObservingPreconditions() throws Exception {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
         final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
 
         final var mockFactory = mock(ObservingPreconditionFactory.class);
@@ -208,9 +183,6 @@ public class PreconditionRegistryTest {
 
         final var mockPrecondition = mock(Observing.class);
         doReturn(mockPrecondition).when(mockFactory).create(any());
-
-        final var messageStorageMock = mock(MessageStorage.class);
-        when(mockInjector.getInstance(MessageStorage.class)).thenReturn(messageStorageMock);
 
         // call register twice, expect only one to be registered
         registry.registerObservingPrecondition(mockPreconditionFactory);
@@ -228,9 +200,6 @@ public class PreconditionRegistryTest {
 
     @Test
     void testRegisteringObservingPreconditionsFailsWhenNoObjectInstanceAvailable() {
-        final var mockInjector = mock(Injector.class);
-        final var registry = new PreconditionRegistry(mockInjector);
-
         final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
 
         final var mockFactory = mock(ObservingPreconditionFactory.class);
