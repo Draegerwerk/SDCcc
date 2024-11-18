@@ -12,6 +12,7 @@ import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.draeger.medical.sdccc.sdcri.CommunicationLogMessageStorage;
 import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
+import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -61,6 +62,7 @@ public class TestClientUtil {
      *                                       Values from 1 to 255 are valid.
      * @param enabledTlsProtocols            TLS protocol versions to be enabled
      * @param enabledCiphers                 ciphers to be enabled
+     * @param configurationModule            configuration for AbstractConfigurationModule
      */
     @Inject
     public TestClientUtil(
@@ -70,7 +72,8 @@ public class TestClientUtil {
             final LocalAddressResolver localAddressResolver,
             @Named(TestSuiteConfig.NETWORK_MULTICAST_TTL) final Long multicastTTL,
             @Named(TestSuiteConfig.TLS_ENABLED_PROTOCOLS) final String[] enabledTlsProtocols,
-            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers) {
+            @Named(TestSuiteConfig.TLS_ENABLED_CIPHERS) final String[] enabledCiphers,
+            @Named(Constants.CONFIGURATION_MODULE) final AbstractConfigurationModule configurationModule) {
 
         injector = createClientInjector(List.of(
                 new AbstractConfigurationModule() {
@@ -98,7 +101,8 @@ public class TestClientUtil {
                         bind(TestRunObserver.class).toInstance(testRunObserver);
                         bind(LocalAddressResolver.class).toInstance(localAddressResolver);
                     }
-                }));
+                },
+                configurationModule));
     }
 
     /**
