@@ -435,12 +435,20 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
     @Override
     public SdcRemoteDevice getSdcRemoteDevice() {
-        return restrictedGetter(sdcRemoteDevice);
+        return restrictedGetter(this::getActualSdcRemoteDevice);
+    }
+
+    private SdcRemoteDevice getActualSdcRemoteDevice() {
+        return sdcRemoteDevice;
     }
 
     @Override
     public HostingServiceProxy getHostingServiceProxy() {
-        return restrictedGetter(hostingServiceProxy);
+        return restrictedGetter(this::getActualHostingServiceProxy);
+    }
+
+    private HostingServiceProxy getActualHostingServiceProxy() {
+        return hostingServiceProxy;
     }
 
     @Override
@@ -474,6 +482,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                             LOG.error(COULDN_T_DISCONNECT, e);
                         }
                         reconnect(watchdogMessage);
+                        inReconnectProcess.set(false);
                         lock.notifyAll();
                     }
                 });
@@ -481,7 +490,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 LOG.debug("ReconnectExecutor is not running.");
                 invalidateAfterConnectionLoss(watchdogMessage);
             }
-            inReconnectProcess.set(false);
         } else if (shouldBeConnected.get()) {
             invalidateAfterConnectionLoss(watchdogMessage);
         } else {
@@ -499,7 +507,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         testClientMdibAccessObserver.unregisterObserver(observer);
     }
 
-    private <T> T restrictedGetter(final T t) {
+    private <T> T restrictedGetter(final RestrictedGetter<T> getter) {
         synchronized (lock) {
             while (inReconnectProcess.get()) {
                 LOG.debug("Attempted to access a connection-dependent object while the connection is interrupted, "
@@ -510,7 +518,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                     LOG.error("Waiting for lock interrupted.", e);
                 }
             }
-            return t;
+            return getter.invoke();
         }
     }
 
@@ -548,5 +556,9 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         } catch (TimeoutException e) {
             LOG.error(COULDN_T_DISCONNECT, e);
         }
+    }
+
+    private interface RestrictedGetter<T> {
+        T invoke();
     }
 }
