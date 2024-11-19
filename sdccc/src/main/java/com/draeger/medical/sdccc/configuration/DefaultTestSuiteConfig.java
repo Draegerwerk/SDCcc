@@ -7,6 +7,7 @@
 
 package com.draeger.medical.sdccc.configuration;
 
+import com.draeger.medical.sdccc.util.Constants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 
@@ -49,6 +50,10 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
         bind(TestSuiteConfig.ENABLE_MESSAGE_ENCODING_CHECK, Boolean.class, true);
         bind(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS, Boolean.class, true);
+        bind(Constants.CONFIGURATION_MODULE, AbstractConfigurationModule.class, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {}
+        });
     }
 
     void configureTLS() {
