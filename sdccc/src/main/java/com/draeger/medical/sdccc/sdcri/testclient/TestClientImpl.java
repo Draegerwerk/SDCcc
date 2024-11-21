@@ -7,12 +7,21 @@
 
 package com.draeger.medical.sdccc.sdcri.testclient;
 
+import static com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil.CONSUMER_NAME_FORMAT;
+import static com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil.NETWORK_THREAD_POOL_NAME_FORMAT;
+import static com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil.RESOLVER_THREAD_POOL_NAME_FORMAT;
+import static com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil.WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT;
+import static com.draeger.medical.sdccc.sdcri.testclient.TestClientUtil.WS_DISCOVERY_NAME_FORMAT;
+import static com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender.APPENDER_NAME;
+
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -37,6 +46,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.somda.sdc.common.util.ExecutorWrapperService;
 import org.somda.sdc.dpws.DpwsFramework;
 import org.somda.sdc.dpws.client.Client;
@@ -67,6 +77,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private static final String LOCATION_CONTEXT_SCOPE_STRING_START = "sdc.ctxt.loc:";
     private static final String MATCHING = "matching";
     private static final String NON_MATCHING = "non-matching";
+    private static final String RECONNECT_THREAD_NAME = "sdcccReconnectThread";
     private final Pattern locExtractionPattern = Pattern.compile("^sdc.ctxt.loc:/.*\\?"
             + "(?=(.*fac=(?<fac>[^&]*))?)"
             + "(?=(.*bldng=(?<bldng>[^&]*))?)"
@@ -210,7 +221,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 this.roomSearchLogString,
                 this.bedSearchLogString);
         reconnectExecutor = new ExecutorWrapperService<>(
-                Executors::newSingleThreadExecutor, "TestClientExecutor", "InstanceIdentifier");
+                () -> Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                        .setNameFormat(RECONNECT_THREAD_NAME)
+                        .setDaemon(true)
+                        .build()),
+                "ReconnectExecutor",
+                "InstanceIdentifier");
     }
 
     @Override
@@ -344,29 +360,16 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 throw new IOException(COULDN_T_CONNECT_TO_TARGET);
             }
         } catch (final InterruptedException | TimeoutException | ExecutionException e) {
-            if (inReconnectProcess.get()) {
-                LOG.info(
-                        "Tried to reconnect, but couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
-                        this.eprSearchLogString,
-                        this.facilitySearchLogString,
-                        this.buildingSearchLogString,
-                        this.pointOfCareSearchLogString,
-                        this.floorSearchLogString,
-                        this.roomSearchLogString,
-                        this.bedSearchLogString,
-                        e);
-            } else {
-                LOG.error(
-                        "Couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
-                        this.eprSearchLogString,
-                        this.facilitySearchLogString,
-                        this.buildingSearchLogString,
-                        this.pointOfCareSearchLogString,
-                        this.floorSearchLogString,
-                        this.roomSearchLogString,
-                        this.bedSearchLogString,
-                        e);
-            }
+            LOG.error(
+                    "Couldn't find a device with {}, {}, {}, {}, {}, {} and {}",
+                    this.eprSearchLogString,
+                    this.facilitySearchLogString,
+                    this.buildingSearchLogString,
+                    this.pointOfCareSearchLogString,
+                    this.floorSearchLogString,
+                    this.roomSearchLogString,
+                    this.bedSearchLogString,
+                    e);
             throw new IOException(COULDN_T_CONNECT_TO_TARGET);
         } finally {
             client.unregisterDiscoveryObserver(obs);
@@ -403,6 +406,14 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
     @Override
     public void shouldReconnect(final Boolean shouldReconnect) {
+        final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
+        final var appender =
+                (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
+        if (shouldReconnect) {
+            appender.setThreadNameWhitelist(buildThreadNameWhiteList());
+        } else {
+            appender.setThreadNameWhitelist(List.of());
+        }
         this.reconnectEnabled.set(shouldReconnect);
     }
 
@@ -556,6 +567,20 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         } catch (TimeoutException e) {
             LOG.error(COULDN_T_DISCONNECT, e);
         }
+    }
+
+    private List<String> buildThreadNameWhiteList() {
+        return List.of(
+                RECONNECT_THREAD_NAME,
+                convertToRegex(NETWORK_THREAD_POOL_NAME_FORMAT),
+                convertToRegex(WS_DISCOVERY_NAME_FORMAT),
+                convertToRegex(RESOLVER_THREAD_POOL_NAME_FORMAT),
+                convertToRegex(CONSUMER_NAME_FORMAT),
+                convertToRegex(WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT));
+    }
+
+    private String convertToRegex(final String pattern) {
+        return pattern.replaceAll("%d", "[\\\\d]+");
     }
 
     private interface RestrictedGetter<T> {

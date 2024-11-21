@@ -32,6 +32,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
+import com.draeger.medical.sdccc.util.LoggingConfigurator;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -64,6 +65,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.junit.jupiter.api.AfterEach;
@@ -123,6 +125,10 @@ public class TestSuiteIT {
         tempDir.toFile().deleteOnExit();
 
         LOG.info("Creating injector for epr {}", eprAddress);
+
+        final var ctx = (LoggerContext) LogManager.getContext(false);
+        ctx.setConfiguration(LoggingConfigurator.loggerConfig(tempDir.toFile(), Level.INFO));
+        ctx.updateLoggers();
 
         return createInjector(ArrayUtils.addAll(
                 override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig, eprAddress)));
