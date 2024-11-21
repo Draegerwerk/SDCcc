@@ -28,6 +28,8 @@ EnabledCiphers = [
 InterfaceAddress="127.0.0.1"
 MaxWait=10
 MulticastTTL=128
+ReconnectTries=3
+ReconnectWait=5
 
 [SDCcc.Consumer]
 DeviceEpr="urn:uuid:857bf583-8a51-475f-a77f-d0ca7de69b11"
