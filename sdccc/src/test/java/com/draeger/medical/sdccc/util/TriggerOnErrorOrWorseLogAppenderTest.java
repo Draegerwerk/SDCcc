@@ -8,28 +8,15 @@
 package com.draeger.medical.sdccc.util;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,7 +41,9 @@ public class TriggerOnErrorOrWorseLogAppenderTest {
         AtomicBoolean flag = new AtomicBoolean(false);
 
         // given
-        TriggerOnErrorOrWorseLogAppender classUnderTest = new TriggerOnErrorOrWorseLogAppender("log", null);
+        Filter filter = mock(Filter.class);
+        TriggerOnErrorOrWorseLogAppender classUnderTest = new TriggerOnErrorOrWorseLogAppender("log",
+                filter);
         classUnderTest.setOnErrorOrWorseHandler(new TriggerOnErrorOrWorseLogAppender.OnErrorOrWorseHandler() {
             @Override
             public void onErrorOrWorse(LogEvent event) {
