@@ -1,5 +1,3 @@
-
-
 plugins {
     id("com.draeger.medical.java-conventions")
     kotlin("jvm") version "1.9.0"
