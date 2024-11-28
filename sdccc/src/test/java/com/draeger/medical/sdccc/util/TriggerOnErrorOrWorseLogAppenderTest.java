@@ -44,12 +44,7 @@ public class TriggerOnErrorOrWorseLogAppenderTest {
         Filter filter = mock(Filter.class);
         TriggerOnErrorOrWorseLogAppender classUnderTest = new TriggerOnErrorOrWorseLogAppender("log",
                 filter);
-        classUnderTest.setOnErrorOrWorseHandler(new TriggerOnErrorOrWorseLogAppender.OnErrorOrWorseHandler() {
-            @Override
-            public void onErrorOrWorse(LogEvent event) {
-                flag.set(true);
-            }
-        });
+        classUnderTest.setOnErrorOrWorseHandler((LogEvent event) -> flag.set(true));
         LogEvent event = mock(LogEvent.class);
         when(event.getLevel()).thenReturn(level);
 
