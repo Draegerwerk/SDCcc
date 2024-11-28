@@ -20,8 +20,10 @@ class OrderedStreamIterator<T>(private val results: ScrollableResultsImplementor
     }
 
     override fun remove() {
-        throw UnsupportedOperationException("this stream does not support the" +
-                " remove operation")
+        throw UnsupportedOperationException(
+            "this stream does not support the" +
+                " remove operation"
+        )
     }
 
     override fun hasNext(): Boolean {
