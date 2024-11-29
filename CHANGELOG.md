@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - support multiple mds for test case for BICEPS.R5042
 - inconsistent messaging in SDCcc logs ("No problems were found" and "Test run was invalid" one after another.)
 - incorrect behavior of the configuration option SDCcc.SummarizeMessageEncodingErrors
+- SequenceIds are now ordered by the timestamp of the first message that used them
 
 ### Removed
 
