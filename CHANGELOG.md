@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
  
 - biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14 and biceps:C-15 no longer fails incorrectly if a DescriptionModificationReport with the same MdibVersion has been sent for the respective EpisodicReport.
+- SequenceIds are now ordered by the timestamp of the first message that used them
 
 ## [9.0.0] - 2024-02-23
 
