@@ -7,23 +7,25 @@
 
 package com.draeger.medical.sdccc.util;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.LogEvent;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.junit.jupiter.api.Test;
+
 /**
- * Unit tests for the {@linkplain TriggerOnErrorOrWorseLogAppender}
+ * Unit tests for the {@linkplain TriggerOnErrorOrWorseLogAppender}.
  */
 public class TriggerOnErrorOrWorseLogAppenderTest {
 
+    /**
+     * Test if the append method handles all Log Levels appropriately.
+     */
     @Test
     public void testAppendWithDifferentLogLevels() {
         testAppend(Level.ALL, false);
@@ -36,16 +38,20 @@ public class TriggerOnErrorOrWorseLogAppenderTest {
         testAppend(Level.OFF, true);
     }
 
-    public void testAppend(Level level, boolean expectHandlerCall) {
+    /**
+     * Used by the unit test testAppendWithDifferentLogLevels().
+     * @param level the Log Level to test
+     * @param expectHandlerCall true if it is expected that the Handler is called, false otherwise.
+     */
+    private void testAppend(final Level level, final boolean expectHandlerCall) {
 
-        AtomicBoolean flag = new AtomicBoolean(false);
+        final AtomicBoolean flag = new AtomicBoolean(false);
 
         // given
-        Filter filter = mock(Filter.class);
-        TriggerOnErrorOrWorseLogAppender classUnderTest = new TriggerOnErrorOrWorseLogAppender("log",
-                filter);
+        final Filter filter = mock(Filter.class);
+        final TriggerOnErrorOrWorseLogAppender classUnderTest = new TriggerOnErrorOrWorseLogAppender("log", filter);
         classUnderTest.setOnErrorOrWorseHandler((LogEvent event) -> flag.set(true));
-        LogEvent event = mock(LogEvent.class);
+        final LogEvent event = mock(LogEvent.class);
         when(event.getLevel()).thenReturn(level);
 
         // when
@@ -58,5 +64,4 @@ public class TriggerOnErrorOrWorseLogAppenderTest {
             assertFalse(flag.get());
         }
     }
-
 }
