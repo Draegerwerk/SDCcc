@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junitVersion>5.10.2</junitVersion>
         <junitPlatformVersion>1.10.2</junitPlatformVersion>
-        <sdcriVersion>6.0.0-SNAPSHOT</sdcriVersion>
+        <sdcriVersion>6.2.0-SNAPSHOT</sdcriVersion>
         <log4jVersion>2.17.1</log4jVersion>
         <spotbugsVersion>4.7.3</spotbugsVersion>
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
