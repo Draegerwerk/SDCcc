@@ -102,7 +102,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 tasks.check {
     dependsOn(detektTask)
     dependsOn("spotbugsMain")
-    dependsOn("spotbugsTest")
+    dependsOn("spotbugsTest"))
+    dependsOn("downloadAndUnpackJre")
 }
 
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
