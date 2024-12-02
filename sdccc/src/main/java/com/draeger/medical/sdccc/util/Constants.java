@@ -30,6 +30,7 @@ public final class Constants {
     public static final String ENABLE_SETTING_POSTFIX = "Enable";
     public static final String DEVICE_EPR_POSTFIX = "DeviceEpr";
     public static final String FIELD_ACCESS_ERROR_BASE_MESSAGE = "Error while accessing field {}";
+    public static final String CONFIGURATION_MODULE = "ConfigurationModule";
 
     /*
     MDPWS constants

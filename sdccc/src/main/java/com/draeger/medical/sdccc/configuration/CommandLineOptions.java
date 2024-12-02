@@ -43,6 +43,7 @@ public class CommandLineOptions {
     private static final String DEVICE_LOCATION_BED = "device_bed";
     private static final String IP_ADDRESS = "ipaddress";
     private static final String TEST_RUN_DIRECTORY = "test_run_directory";
+    private static final String NO_SUBDIRECTORIES = "no_subdirectories";
     private static final String FILE_LOG_LEVEL = "file_log_level";
     private final Path configPath;
     private final Path testConfigPath;
@@ -56,6 +57,7 @@ public class CommandLineOptions {
     private final String deviceBed;
     private final String ipAddress;
     private final String testRunDirectory;
+    private final Boolean noSubdirectories;
     private final Level fileLogLevel;
 
     /**
@@ -103,6 +105,7 @@ public class CommandLineOptions {
         this.deviceBed = cmd.getOptionValue(DEVICE_LOCATION_BED);
         this.ipAddress = cmd.getOptionValue(IP_ADDRESS);
         this.testRunDirectory = cmd.getOptionValue(TEST_RUN_DIRECTORY);
+        this.noSubdirectories = Boolean.parseBoolean(cmd.getOptionValue(NO_SUBDIRECTORIES));
         this.fileLogLevel = Level.toLevel(cmd.getOptionValue(FILE_LOG_LEVEL), Level.INFO);
     }
 
@@ -187,6 +190,14 @@ public class CommandLineOptions {
             options.addOption(testRunDirectoryOpt);
         }
         {
+            final String description =
+                    "If set to true, no directories are created in the directory configured with test_run_directory";
+            final var noSubdirectoriesOpt = new Option("ns", NO_SUBDIRECTORIES, true, description);
+            noSubdirectoriesOpt.setRequired(false);
+            noSubdirectoriesOpt.setType(Boolean.class);
+            options.addOption(noSubdirectoriesOpt);
+        }
+        {
             final String description = "The log level to be used for the log file. e.g. DEBUG . The default is INFO.";
             final var fileLogLevelOpt = new Option("fll", FILE_LOG_LEVEL, true, description);
             fileLogLevelOpt.setRequired(false);
@@ -256,6 +267,10 @@ public class CommandLineOptions {
      */
     public Optional<String> getTestRunDirectory() {
         return Optional.ofNullable(testRunDirectory);
+    }
+
+    public Boolean getNoSubdirectories() {
+        return noSubdirectories;
     }
 
     public Level getFileLogLevel() {
