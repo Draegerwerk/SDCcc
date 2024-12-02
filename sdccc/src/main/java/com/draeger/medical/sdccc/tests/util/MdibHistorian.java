@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
@@ -612,6 +613,43 @@ public class MdibHistorian {
 
         mdibStorage.writeDescription(mdibVersion, mdDescriptionVersion, mdStateVersion, modifications);
         return mdibStorage;
+    }
+
+    /**
+     * Processes each sequenceId using the provided consumer.
+     *
+     * @param sequenceIdConsumer a consumer that processes each sequenceId
+     */
+    public void processSequenceIds(final Consumer<String> sequenceIdConsumer) {
+        try (Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try {
+                    sequenceIdConsumer.accept(sequenceId);
+                } catch (RuntimeException e) {
+                    fail("Exception during processing sequenceId " + sequenceId, e);
+                }
+            });
+        } catch (IOException e) {
+            fail("Failed to retrieve sequence IDs", e);
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     */
+    public void procesAllRemoteMdibAccess(final Consumer<RemoteMdibAccess> processor) {
+        processSequenceIds(sequenceId -> {
+            try (HistorianResult history = episodicReportBasedHistory(sequenceId)) {
+                RemoteMdibAccess mdibAccess;
+                while ((mdibAccess = history.next()) != null) {
+                    processor.accept(mdibAccess);
+                }
+            } catch (PreprocessingException | ReportProcessingException e) {
+                fail(e);
+            }
+        });
     }
 
     /**
