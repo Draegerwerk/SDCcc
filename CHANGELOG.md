@@ -17,13 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
-- sdc-ri version to 6.0.0-SNAPSHOT
+- sdc-ri version to 6.2.0-SNAPSHOT
 
 ### Fixed
 
 - support multiple mds for test case for BICEPS.R5042
 - inconsistent messaging in SDCcc logs ("No problems were found" and "Test run was invalid" one after another.)
 - incorrect behavior of the configuration option SDCcc.SummarizeMessageEncodingErrors
+- SequenceIds are now ordered by the timestamp of the first message that used them
 
 ### Removed
 
