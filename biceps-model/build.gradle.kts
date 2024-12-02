@@ -9,9 +9,8 @@ plugins {
 }
 
 val jaxb: Configuration by configurations.creating
-val jaxbVersion: String = "4.0.0"
 val schemaDir = "src/main"
-val xjcOutputDir = "$buildDir/generated/source/xjc/main"
+
 
 dependencies {
     api(libs.org.glassfish.jaxb.jaxb.core)
@@ -45,10 +44,4 @@ description = "BICEPS model"
 val testsJar by tasks.registering(Jar::class) {
     archiveClassifier.set("tests")
     from(sourceSets["test"].output)
-}
-
-(publishing.publications["maven"] as MavenPublication).artifact(testsJar)
-
-tasks.withType<JavaCompile> {
-    options.release.set(17)
 }

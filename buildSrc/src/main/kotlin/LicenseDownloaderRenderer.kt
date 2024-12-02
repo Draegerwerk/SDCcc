@@ -10,6 +10,11 @@ class LicenseDownloaderRenderer(
     private val outputDirName: String = "downloaded-licenses"
 ) : ReportRenderer {
 
+    companion object {
+        private const val CONNECT_TIMEOUT = 5000 // 5 seconds
+        private const val READ_TIMEOUT = 10000   // 10 seconds
+    }
+
     private lateinit var project: Project
     private lateinit var outputDir: File
     private val downloadedLicenses = mutableSetOf<String>()
@@ -61,9 +66,10 @@ class LicenseDownloaderRenderer(
     private fun downloadLicense(licenseUrl: String, moduleName: String, fileName: String) {
         val sanitizedUrl = licenseUrl.trim()
         val url = URL(sanitizedUrl)
-        val safeModuleName = moduleName.replace("[^a-zA-Z0-9.-]".toRegex(), "_")
 
         val connection = url.openConnection()
+        connection.connectTimeout = CONNECT_TIMEOUT
+        connection.readTimeout = READ_TIMEOUT
         connection.connect()
 
         val contentType = connection.contentType ?: "application/octet-stream"
@@ -86,4 +92,5 @@ class LicenseDownloaderRenderer(
 
         project.logger.lifecycle("Downloaded license for $moduleName from $licenseUrl to $file")
     }
+
 }

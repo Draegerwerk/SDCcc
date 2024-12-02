@@ -34,5 +34,3 @@ val testsJar by tasks.registering(Jar::class) {
     archiveClassifier.set("tests")
     from(sourceSets["test"].output)
 }
-
-(publishing.publications["maven"] as MavenPublication).artifact(testsJar)

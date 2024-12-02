@@ -26,5 +26,5 @@ gradlePlugin {
 }
 
 dependencies {
-    implementation("com.github.jk1:gradle-license-report:2.0")
+    implementation("com.github.jk1:gradle-license-report:2.9")
 }

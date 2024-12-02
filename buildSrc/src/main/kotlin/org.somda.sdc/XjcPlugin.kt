@@ -98,12 +98,6 @@ class XjcPlugin : Plugin<Project> {
                     "-extension",
                     "-npa",
                     "-no-header",
-                    "-Xsetters",
-                    "-Xsetters-mode=accessor",
-                    "-XsimpleEquals",
-                    "-XsimpleHashCode",
-                    "-XtoString",
-                    "-Xcopyable",
                 ) + extension.args.orElse(emptyList()).get() + listOf(
                     "-b",
                     extension.schemaLocation.get().toString(),

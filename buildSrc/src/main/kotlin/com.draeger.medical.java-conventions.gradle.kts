@@ -9,34 +9,35 @@ plugins {
 
 repositories {
     mavenLocal()
+
     maven {
         url = uri("https://maven.pkg.github.com/Draegerwerk/t2iapi")
     }
 
-    maven {
-        url = uri("https://repo.maven.apache.org/maven2/")
-    }
-
-    maven {
-        url = uri("https://artifactory.draeger.com:443/artifactory/libs-snapshot")
-    }
+    mavenCentral()
 
     maven {
         url = uri("https://oss.sonatype.org/content/repositories/snapshots")
     }
 }
 
-group = "com.draeger.medical"
-version = "9.1.0-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_17
 
-publishing {
-    publications.create<MavenPublication>("maven") {
-        from(components["java"])
-    }
+val defaultVersion = "9.1.0-SNAPSHOT"
+val actualVersion = project.findProperty("revision") ?: defaultVersion
+val actualRevision = project.findProperty("changelist") ?: ""
+
+val javaVersion = property("javaVersion").toString()
+
+group = "com.draeger.medical"
+version = "$actualVersion$actualRevision"
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
 tasks.withType<JavaCompile>() {
+    options.release.set(javaVersion.toInt())
     options.encoding = "UTF-8"
 }
 

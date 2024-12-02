@@ -1,12 +1,12 @@
 plugins {
     id("com.draeger.medical.java-conventions")
-    kotlin("jvm") version "1.9.0"
-    id("com.github.spotbugs") version "5.0.14"
     checkstyle
-    id("com.diffplug.spotless") version "6.21.0"
-    id("de.undercouch.download") version "5.3.0"
-    id("edu.sc.seis.launch4j") version "2.5.0"
     id("com.example.license-report")
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.download)
+    alias(libs.plugins.spotbugs)
+    alias(libs.plugins.launch4j)
 }
 
 tasks.named("build") {
@@ -22,7 +22,10 @@ val detektTask = tasks.register<JavaExec>("detekt") {
     val input = projectDir
     val config = "$projectDir/../dev_config/detekt.yml"
     val exclude = ".*/build/.*,.*/resources/.*,**/build.gradle.kts,**/settings.gradle.kts"
-    val classpathNeededForDetekt = sourceSets.main.get().runtimeClasspath.asPath
+    val classpathNeededForDetekt = files(
+        sourceSets.main.get().runtimeClasspath,
+        sourceSets.test.get().runtimeClasspath
+    )
     val jdkHome = System.getProperty("java.home")
     args(
         "--input", input.absolutePath,
@@ -36,10 +39,9 @@ val detektTask = tasks.register<JavaExec>("detekt") {
     )
 }
 
-val log4jVersion = "2.23.1"
 
 dependencies {
-    detekt("io.gitlab.arturbosch.detekt:detekt-cli:1.23.3")
+    detekt(libs.detekt.cli)
     api(libs.org.junit.jupiter.junit.jupiter.api)
     api(libs.org.junit.jupiter.junit.jupiter.engine)
     api(libs.org.junit.platform.junit.platform.launcher)
@@ -47,11 +49,16 @@ dependencies {
     api(libs.org.somda.sdc.glue)
     api(libs.org.somda.sdc.common)
     api(libs.commons.cli.commons.cli)
+
     api(libs.com.google.inject.guice)
+    api(libs.com.google.inject.extensions.guice.assistedinject)
+
     api(libs.org.tomlj.tomlj)
-    api("org.apache.logging.log4j:log4j-api:$log4jVersion")
-    api("org.apache.logging.log4j:log4j-core:$log4jVersion")
-    api("org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion")
+
+    api(libs.org.apache.logging.log4j.log4j.api)
+    api(libs.org.apache.logging.log4j.log4j.core)
+    api(libs.org.apache.logging.log4j.log4j.slf4j.impl)
+
     api(libs.com.github.spotbugs.spotbugs.annotations)
     api(libs.net.sf.saxon.saxon.he)
     api(libs.org.apache.derby.derby)
@@ -82,12 +89,6 @@ description = "sdccc"
 val testsJar by tasks.registering(Jar::class) {
     archiveClassifier.set("tests")
     from(sourceSets["test"].output)
-}
-
-(publishing.publications["maven"] as MavenPublication).artifact(testsJar)
-
-tasks.withType<JavaCompile> {
-    options.release.set(17)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
