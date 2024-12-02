@@ -33,7 +33,6 @@ org-jvnet-jaxb-plugins = "4.0.8"
 edu-sc-seis-launch4j = "2.5.0"
 com-diffplug-spotless = "6.21.0"
 de-undercouch-download = "5.3.0"
-gradle-license-report = "2.9"
 
 [libraries]
 com-google-inject-guice = { module = "com.google.inject:guice", version.ref = "guice" }
@@ -79,7 +78,6 @@ org-mockito-mockito-core = { module = "org.mockito:mockito-core", version.ref = 
 org-somda-sdc-common = { module = "org.somda.sdc:common", version.ref = "org-somda-sdc" }
 org-somda-sdc-glue = { module = "org.somda.sdc:glue", version.ref = "org-somda-sdc" }
 org-tomlj-tomlj = { module = "org.tomlj:tomlj", version.ref = "org-tomlj" }
-gradle-license-report = { module = "com.github.jk1:gradle-license-report", version.ref = "gradle-license-report" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org-jetbrains-kotlin" }
