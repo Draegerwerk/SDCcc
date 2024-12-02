@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.launch4j)
 }
 
+val javaVersion = property("javaVersion").toString()
+
 tasks.named("build") {
     dependsOn("generateLicenseReport")
 }
@@ -34,7 +36,7 @@ val detektTask = tasks.register<JavaExec>("detekt") {
         "--report", "html:${layout.buildDirectory.get().asFile}/reports/detekt/detekt.html",
         "--classpath", classpathNeededForDetekt,
         "--jdk-home", jdkHome,
-        "--jvm-target", "17",
+        "--jvm-target", javaVersion,
         "--build-upon-default-config"
     )
 }
@@ -93,7 +95,7 @@ val testsJar by tasks.registering(Jar::class) {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = javaVersion
     }
 }
 
@@ -101,8 +103,6 @@ tasks.check {
     dependsOn(detektTask)
     dependsOn("spotbugsMain")
     dependsOn("spotbugsTest")
-    dependsOn("checkstyleMain", "checkstyleTest")
-    dependsOn("downloadAndUnpackJre")
 }
 
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
@@ -161,7 +161,7 @@ launch4j {
     outfile = "${projectName}-${project.version}.exe" // Absolute path not allowed. File gets placed in build/launch4j
     mainClassName = "com.draeger.medical.sdccc.TestSuite"
     classpath = mutableSetOf("lib/**")
-    jreMinVersion = "17"
+    jreMinVersion = javaVersion
     bundledJrePath = "\$\${jreFullPath}"
 
     version = "${project.version}.0"
