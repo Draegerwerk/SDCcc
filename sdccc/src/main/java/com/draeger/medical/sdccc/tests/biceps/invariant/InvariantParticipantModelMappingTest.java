@@ -18,6 +18,7 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ public class InvariantParticipantModelMappingTest extends InjectorTestBase {
             + " The relationship between a state and its descriptor is further verified by checking the naming scheme."
             + " The existence of a descriptor for a state is implicitly tested in MdibHistorian"
             + " and is covered by a unittest.")
-    void testRequirementR0023() throws NoTestData {
+    void testRequirementR0023() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 

@@ -620,17 +620,9 @@ public class MdibHistorian {
      *
      * @param sequenceIdConsumer a consumer that processes each sequenceId
      */
-    public void processSequenceIds(final Consumer<String> sequenceIdConsumer) {
+    public void processSequenceIds(final Consumer<String> sequenceIdConsumer) throws IOException {
         try (Stream<String> sequenceIds = this.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try {
-                    sequenceIdConsumer.accept(sequenceId);
-                } catch (RuntimeException e) {
-                    fail("Exception during processing sequenceId " + sequenceId, e);
-                }
-            });
-        } catch (IOException e) {
-            fail("Failed to retrieve sequence IDs", e);
+            sequenceIds.forEach(sequenceIdConsumer);
         }
     }
 
@@ -639,7 +631,7 @@ public class MdibHistorian {
      *
      * @param processor  a consumer that processes each RemoteMdibAccess
      */
-    public void procesAllRemoteMdibAccess(final Consumer<RemoteMdibAccess> processor) {
+    public void procesAllRemoteMdibAccess(final Consumer<RemoteMdibAccess> processor) throws IOException {
         processSequenceIds(sequenceId -> {
             try (HistorianResult history = episodicReportBasedHistory(sequenceId)) {
                 RemoteMdibAccess mdibAccess;
