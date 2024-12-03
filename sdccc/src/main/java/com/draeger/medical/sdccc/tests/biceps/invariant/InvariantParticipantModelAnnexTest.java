@@ -185,36 +185,24 @@ public class InvariantParticipantModelAnnexTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    RemoteMdibAccess first = history.next();
-
-                    while (first != null) {
-                        final var vmdEntities = first.findEntitiesByType(VmdDescriptor.class);
-                        for (var vmd : vmdEntities) {
-                            final var descriptor = vmd.getDescriptor(VmdDescriptor.class);
-                            final var state = vmd.getFirstState(VmdState.class);
-                            final var approvedJurisdiction =
-                                    descriptor.orElseThrow().getApprovedJurisdictions();
-                            if (approvedJurisdiction == null) {
-                                acceptableSequenceSeen.incrementAndGet();
-                                assertNull(
-                                        state.orElseThrow().getOperatingJurisdiction(),
-                                        String.format(
-                                                "OperatingJurisdiction should not be present, because ApprovedJurisdiction is not"
-                                                        + " present for vmd with handle %s",
-                                                descriptor.orElseThrow().getHandle()));
-                            }
-                        }
-                        first = history.next();
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+            final var vmdEntities = first.findEntitiesByType(VmdDescriptor.class);
+            for (var vmd : vmdEntities) {
+                final var descriptor = vmd.getDescriptor(VmdDescriptor.class);
+                final var state = vmd.getFirstState(VmdState.class);
+                final var approvedJurisdiction = descriptor.orElseThrow().getApprovedJurisdictions();
+                if (approvedJurisdiction == null) {
+                    acceptableSequenceSeen.incrementAndGet();
+                    assertNull(
+                            state.orElseThrow().getOperatingJurisdiction(),
+                            String.format(
+                                    "OperatingJurisdiction should not be present, because ApprovedJurisdiction is not"
+                                            + " present for vmd with handle %s",
+                                    descriptor.orElseThrow().getHandle()));
                 }
-            });
-        }
+            }
+        });
+
         assertTestData(
                 acceptableSequenceSeen.get(),
                 "No vmd descriptor without approved jurisdiction seen," + " during test run, test failed.");

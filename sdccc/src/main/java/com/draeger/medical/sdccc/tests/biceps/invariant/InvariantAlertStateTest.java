@@ -76,61 +76,45 @@ public class InvariantAlertStateTest extends InjectorTestBase {
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var presenceOnSeen = new AtomicInteger(0);
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        mdibHistorian.procesAllRemoteMdibAccess(mdibAccess -> {
+            final var alertConditionStates = mdibAccess.getStatesByType(AlertConditionState.class);
+            for (var alertConditionState : alertConditionStates) {
+                final var isPresence = ImpliedValueUtil.isPresence(alertConditionState);
+                if (isPresence) {
+                    presenceOnSeen.incrementAndGet();
+                    final var descriptorHandle = alertConditionState.getDescriptorHandle();
+                    final var alertSystemStateHandle = mdibAccess
+                            .getEntity(descriptorHandle)
+                            .orElseThrow()
+                            .getParent()
+                            .orElseThrow();
+                    final var alertSystemState = mdibAccess
+                            .getState(alertSystemStateHandle, AlertSystemState.class)
+                            .orElseThrow();
 
-                    RemoteMdibAccess mdibAccess = history.next();
-
-                    while (mdibAccess != null) {
-                        final var alertConditionStates = mdibAccess.getStatesByType(AlertConditionState.class);
-                        for (var alertConditionState : alertConditionStates) {
-                            final var isPresence = ImpliedValueUtil.isPresence(alertConditionState);
-                            if (isPresence) {
-                                presenceOnSeen.incrementAndGet();
-                                final var descriptorHandle = alertConditionState.getDescriptorHandle();
-                                final var alertSystemStateHandle = mdibAccess
-                                        .getEntity(descriptorHandle)
-                                        .orElseThrow()
-                                        .getParent()
-                                        .orElseThrow();
-                                final var alertSystemState = mdibAccess
-                                        .getState(alertSystemStateHandle, AlertSystemState.class)
-                                        .orElseThrow();
-
-                                assertEquals(
-                                        AlertActivation.ON,
-                                        alertConditionState.getActivationState(),
-                                        String.format(
-                                                "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
-                                                        + "The AlertConditionState/@Activation state should be 'On' but is '%s'",
-                                                descriptorHandle,
-                                                alertConditionState
-                                                        .getActivationState()
-                                                        .value()));
-                                assertEquals(
-                                        AlertActivation.ON,
-                                        alertSystemState.getActivationState(),
-                                        String.format(
-                                                "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
-                                                        + " The AlertSystemState/@Activation "
-                                                        + "state for AlertSystemState with handle %s"
-                                                        + " should be 'On' but is '%s'",
-                                                descriptorHandle,
-                                                alertSystemStateHandle,
-                                                alertSystemState
-                                                        .getActivationState()
-                                                        .value()));
-                            }
-                        }
-                        mdibAccess = history.next();
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+                    assertEquals(
+                            AlertActivation.ON,
+                            alertConditionState.getActivationState(),
+                            String.format(
+                                    "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
+                                            + "The AlertConditionState/@Activation state should be 'On' but is '%s'",
+                                    descriptorHandle,
+                                    alertConditionState.getActivationState().value()));
+                    assertEquals(
+                            AlertActivation.ON,
+                            alertSystemState.getActivationState(),
+                            String.format(
+                                    "AlertConditionState/@Presence is true, for AlertConditionState with handle %s."
+                                            + " The AlertSystemState/@Activation "
+                                            + "state for AlertSystemState with handle %s"
+                                            + " should be 'On' but is '%s'",
+                                    descriptorHandle,
+                                    alertSystemStateHandle,
+                                    alertSystemState.getActivationState().value()));
                 }
-            });
-        }
+            }
+        });
+
         assertTestData(presenceOnSeen.get(), NO_PRESENCE_TRUE);
     }
 

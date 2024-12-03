@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.tests.biceps.invariant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
@@ -20,7 +19,6 @@ import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -32,10 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
 import org.somda.sdc.biceps.model.participant.AlertSignalDescriptor;
@@ -44,7 +40,6 @@ import org.somda.sdc.biceps.model.participant.AlertSignalPrimaryLocation;
 import org.somda.sdc.biceps.model.participant.AlertSignalState;
 import org.somda.sdc.biceps.model.participant.AlertSystemState;
 import org.somda.sdc.biceps.model.participant.SystemSignalActivation;
-import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
  * BICEPS Annex B alert tests (B.88 - B.128).
@@ -76,64 +71,49 @@ public class InvariantAnnexAlertTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    RemoteMdibAccess first = history.next();
+        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+            final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
 
-                    while (first != null) {
-                        final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
+            for (var alertSystemState : alertSystemStates) {
+                final var manifestationAndAlertActivationsMap =
+                        createSystemSignalActivationMap(alertSystemState.getSystemSignalActivation());
 
-                        for (var alertSystemState : alertSystemStates) {
-                            final var manifestationAndAlertActivationsMap =
-                                    createSystemSignalActivationMap(alertSystemState.getSystemSignalActivation());
+                final var childAlertSignals = getChildAlertSignals(first, alertSystemState.getDescriptorHandle());
 
-                            final var childAlertSignals =
-                                    getChildAlertSignals(first, alertSystemState.getDescriptorHandle());
-
-                            for (var manifestationAndState : manifestationAndAlertActivationsMap.entrySet()) {
-                                final var currentActivationStates = manifestationAndState.getValue();
-                                final var onSeen = new AtomicBoolean(false);
-                                final var allPsd = new AtomicInteger(0);
-                                final var allOff = new AtomicInteger(0);
-                                final var childrenWithSameManifestation = getChildrenWithSameManifestation(
-                                        childAlertSignals, manifestationAndState.getKey());
-                                for (var entry : childrenWithSameManifestation) {
-                                    acceptableSequenceSeen.incrementAndGet();
-                                    final var alertSignalActivationState = entry.getActivationState();
-                                    for (var currentActivationState : currentActivationStates) {
-                                        verifyAlertSignalActivationState(
-                                                currentActivationState,
-                                                alertSignalActivationState,
-                                                entry.getDescriptorHandle());
-                                    }
-
-                                    switch (alertSignalActivationState) {
-                                        case ON -> onSeen.set(true);
-                                        case PSD -> allPsd.incrementAndGet();
-                                        case OFF -> allOff.incrementAndGet();
-                                        default -> {}
-                                    }
-                                }
-                                if (onSeen.get()) {
-                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.ON);
-                                } else if (!childrenWithSameManifestation.isEmpty()
-                                        && allPsd.get() == childrenWithSameManifestation.size()) {
-                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.PSD);
-                                } else if (!childrenWithSameManifestation.isEmpty()
-                                        && allOff.get() == childrenWithSameManifestation.size()) {
-                                    checkActivationState(manifestationAndState.getValue(), AlertActivation.OFF);
-                                }
-                            }
+                for (var manifestationAndState : manifestationAndAlertActivationsMap.entrySet()) {
+                    final var currentActivationStates = manifestationAndState.getValue();
+                    final var onSeen = new AtomicBoolean(false);
+                    final var allPsd = new AtomicInteger(0);
+                    final var allOff = new AtomicInteger(0);
+                    final var childrenWithSameManifestation =
+                            getChildrenWithSameManifestation(childAlertSignals, manifestationAndState.getKey());
+                    for (var entry : childrenWithSameManifestation) {
+                        acceptableSequenceSeen.incrementAndGet();
+                        final var alertSignalActivationState = entry.getActivationState();
+                        for (var currentActivationState : currentActivationStates) {
+                            verifyAlertSignalActivationState(
+                                    currentActivationState, alertSignalActivationState, entry.getDescriptorHandle());
                         }
-                        first = history.next();
+
+                        switch (alertSignalActivationState) {
+                            case ON -> onSeen.set(true);
+                            case PSD -> allPsd.incrementAndGet();
+                            case OFF -> allOff.incrementAndGet();
+                            default -> {}
+                        }
                     }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+                    if (onSeen.get()) {
+                        checkActivationState(manifestationAndState.getValue(), AlertActivation.ON);
+                    } else if (!childrenWithSameManifestation.isEmpty()
+                            && allPsd.get() == childrenWithSameManifestation.size()) {
+                        checkActivationState(manifestationAndState.getValue(), AlertActivation.PSD);
+                    } else if (!childrenWithSameManifestation.isEmpty()
+                            && allOff.get() == childrenWithSameManifestation.size()) {
+                        checkActivationState(manifestationAndState.getValue(), AlertActivation.OFF);
+                    }
                 }
-            });
-        }
+            }
+        });
 
         assertTestData(acceptableSequenceSeen.get(), "No acceptable sequence seen, test failed");
     }

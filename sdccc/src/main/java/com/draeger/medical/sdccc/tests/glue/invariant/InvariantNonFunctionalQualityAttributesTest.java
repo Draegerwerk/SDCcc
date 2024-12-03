@@ -77,43 +77,29 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    RemoteMdibAccess remoteMdibAccess = history.next();
+        mdibHistorian.procesAllRemoteMdibAccess(remoteMdibAccess -> {
+            final var entities = remoteMdibAccess.findEntitiesByType(MdsDescriptor.class);
 
-                    while (remoteMdibAccess != null) {
-                        final var entities = remoteMdibAccess.findEntitiesByType(MdsDescriptor.class);
-
-                        for (var entity : entities) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            final var children = entity.getChildren();
-                            final var clockDescriptorSeen = new AtomicBoolean(false);
-                            for (var child : children) {
-                                final var clockOpt = remoteMdibAccess.getDescriptor(child, ClockDescriptor.class);
-                                if (clockOpt.isPresent()) {
-                                    clockDescriptorSeen.set(true);
-                                    final var clockStateOpt = remoteMdibAccess.getState(child, ClockState.class);
-                                    assertTrue(
-                                            clockStateOpt.isPresent(),
-                                            String.format(
-                                                    "No clock state present for mds with handle %s.",
-                                                    entity.getHandle()));
-                                }
-                            }
-                            assertTrue(
-                                    clockDescriptorSeen.get(),
-                                    String.format(
-                                            "No clock descriptor present for mds with handle %s.", entity.getHandle()));
-                        }
-                        remoteMdibAccess = history.next();
+            for (var entity : entities) {
+                acceptableSequenceSeen.incrementAndGet();
+                final var children = entity.getChildren();
+                final var clockDescriptorSeen = new AtomicBoolean(false);
+                for (var child : children) {
+                    final var clockOpt = remoteMdibAccess.getDescriptor(child, ClockDescriptor.class);
+                    if (clockOpt.isPresent()) {
+                        clockDescriptorSeen.set(true);
+                        final var clockStateOpt = remoteMdibAccess.getState(child, ClockState.class);
+                        assertTrue(
+                                clockStateOpt.isPresent(),
+                                String.format("No clock state present for mds with handle %s.", entity.getHandle()));
                     }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
                 }
-            });
-        }
+                assertTrue(
+                        clockDescriptorSeen.get(),
+                        String.format("No clock descriptor present for mds with handle %s.", entity.getHandle()));
+            }
+        });
+
         assertTestData(acceptableSequenceSeen.get(), "No mds seen during test run, test failed.");
     }
 
@@ -127,114 +113,95 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+        mdibHistorian.procesAllRemoteMdibAccess(remoteMdibAccess -> {
+            final var entities = remoteMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class);
 
-                    RemoteMdibAccess remoteMdibAccess = history.next();
+            for (var entity : entities) {
 
-                    while (remoteMdibAccess != null) {
-                        final var entities = remoteMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class);
+                if (entity.getDescriptor(RealTimeSampleArrayMetricDescriptor.class)
+                        .isPresent()) {
+                    final var metricValue = entity.getFirstState(RealTimeSampleArrayMetricState.class)
+                            .orElseThrow()
+                            .getMetricValue();
 
-                        for (var entity : entities) {
+                    if (metricValue != null && !metricValue.getSamples().isEmpty()) {
+                        acceptableSequenceSeen.incrementAndGet();
 
-                            if (entity.getDescriptor(RealTimeSampleArrayMetricDescriptor.class)
-                                    .isPresent()) {
-                                final var metricValue = entity.getFirstState(RealTimeSampleArrayMetricState.class)
-                                        .orElseThrow()
-                                        .getMetricValue();
-
-                                if (metricValue != null
-                                        && !metricValue.getSamples().isEmpty()) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    assertNotNull(
-                                            metricValue.getDeterminationTime(),
-                                            String.format(
-                                                    "No DeterminationTime for the metric with the handle %s "
-                                                            + "even though it has a non-empty sample attribute.",
-                                                    entity.getHandle()));
-                                }
-                            } else if (entity.getDescriptor(DistributionSampleArrayMetricDescriptor.class)
-                                    .isPresent()) {
-                                final var metricValue = entity.getFirstState(DistributionSampleArrayMetricState.class)
-                                        .orElseThrow()
-                                        .getMetricValue();
-
-                                if (metricValue != null
-                                        && !metricValue.getSamples().isEmpty()) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    assertNotNull(
-                                            metricValue.getDeterminationTime(),
-                                            String.format(
-                                                    "No DeterminationTime for the metric with the handle %s "
-                                                            + "even though it has a non-empty sample attribute.",
-                                                    entity.getHandle()));
-                                }
-                            } else if (entity.getDescriptor(NumericMetricDescriptor.class)
-                                    .isPresent()) {
-                                final var metricValue = entity.getFirstState(NumericMetricState.class)
-                                        .orElseThrow()
-                                        .getMetricValue();
-
-                                if (metricValue != null && metricValue.getValue() != null) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    assertNotNull(
-                                            metricValue.getDeterminationTime(),
-                                            String.format(
-                                                    "No DeterminationTime for the metric with the handle %s "
-                                                            + "even though it has a non-empty value attribute.",
-                                                    entity.getHandle()));
-                                }
-                            } else if (entity.getDescriptor(EnumStringMetricDescriptor.class)
-                                    .isPresent()) {
-                                final var metricValue = entity.getFirstState(EnumStringMetricState.class)
-                                        .orElseThrow()
-                                        .getMetricValue();
-
-                                if (metricValue != null && metricValue.getValue() != null) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    assertNotNull(
-                                            metricValue.getDeterminationTime(),
-                                            String.format(
-                                                    "No DeterminationTime for the metric with the handle %s "
-                                                            + "even though it has a non-empty value attribute.",
-                                                    entity.getHandle()));
-                                }
-                            } else if (entity.getDescriptor(StringMetricDescriptor.class)
-                                    .isPresent()) {
-                                final var metricValue = entity.getFirstState(StringMetricState.class)
-                                        .orElseThrow()
-                                        .getMetricValue();
-
-                                if (metricValue != null && metricValue.getValue() != null) {
-                                    acceptableSequenceSeen.incrementAndGet();
-
-                                    assertNotNull(
-                                            metricValue.getDeterminationTime(),
-                                            String.format(
-                                                    "No DeterminationTime for the metric with the handle %s "
-                                                            + "even though it has a non-empty value attribute.",
-                                                    entity.getHandle()));
-                                }
-                            } else {
-                                fail(String.format(
-                                        "Object of type %s is not supported by the test.",
-                                        entity.getDescriptorClass()));
-                            }
-                        }
-
-                        remoteMdibAccess = history.next();
+                        assertNotNull(
+                                metricValue.getDeterminationTime(),
+                                String.format(
+                                        "No DeterminationTime for the metric with the handle %s "
+                                                + "even though it has a non-empty sample attribute.",
+                                        entity.getHandle()));
                     }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+                } else if (entity.getDescriptor(DistributionSampleArrayMetricDescriptor.class)
+                        .isPresent()) {
+                    final var metricValue = entity.getFirstState(DistributionSampleArrayMetricState.class)
+                            .orElseThrow()
+                            .getMetricValue();
+
+                    if (metricValue != null && !metricValue.getSamples().isEmpty()) {
+                        acceptableSequenceSeen.incrementAndGet();
+
+                        assertNotNull(
+                                metricValue.getDeterminationTime(),
+                                String.format(
+                                        "No DeterminationTime for the metric with the handle %s "
+                                                + "even though it has a non-empty sample attribute.",
+                                        entity.getHandle()));
+                    }
+                } else if (entity.getDescriptor(NumericMetricDescriptor.class).isPresent()) {
+                    final var metricValue = entity.getFirstState(NumericMetricState.class)
+                            .orElseThrow()
+                            .getMetricValue();
+
+                    if (metricValue != null && metricValue.getValue() != null) {
+                        acceptableSequenceSeen.incrementAndGet();
+
+                        assertNotNull(
+                                metricValue.getDeterminationTime(),
+                                String.format(
+                                        "No DeterminationTime for the metric with the handle %s "
+                                                + "even though it has a non-empty value attribute.",
+                                        entity.getHandle()));
+                    }
+                } else if (entity.getDescriptor(EnumStringMetricDescriptor.class)
+                        .isPresent()) {
+                    final var metricValue = entity.getFirstState(EnumStringMetricState.class)
+                            .orElseThrow()
+                            .getMetricValue();
+
+                    if (metricValue != null && metricValue.getValue() != null) {
+                        acceptableSequenceSeen.incrementAndGet();
+
+                        assertNotNull(
+                                metricValue.getDeterminationTime(),
+                                String.format(
+                                        "No DeterminationTime for the metric with the handle %s "
+                                                + "even though it has a non-empty value attribute.",
+                                        entity.getHandle()));
+                    }
+                } else if (entity.getDescriptor(StringMetricDescriptor.class).isPresent()) {
+                    final var metricValue = entity.getFirstState(StringMetricState.class)
+                            .orElseThrow()
+                            .getMetricValue();
+
+                    if (metricValue != null && metricValue.getValue() != null) {
+                        acceptableSequenceSeen.incrementAndGet();
+
+                        assertNotNull(
+                                metricValue.getDeterminationTime(),
+                                String.format(
+                                        "No DeterminationTime for the metric with the handle %s "
+                                                + "even though it has a non-empty value attribute.",
+                                        entity.getHandle()));
+                    }
+                } else {
+                    fail(String.format("Object of type %s is not supported by the test.", entity.getDescriptorClass()));
                 }
-            });
-        }
+            }
+        });
+
         assertTestData(acceptableSequenceSeen.get(), "No metric with a value has been seen.");
     }
 
@@ -314,35 +281,22 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-
-                    RemoteMdibAccess first = history.next();
-
-                    while (first != null) {
-                        final var contextStates = first.getStatesByType(AbstractContextState.class);
-                        for (var contextState : contextStates) {
-                            final var bindingMdibVersion = contextState.getBindingMdibVersion();
-                            if (bindingMdibVersion != null) {
-                                final var bindingStartTime = contextState.getBindingStartTime();
-                                assertNotNull(
-                                        bindingStartTime,
-                                        String.format(
-                                                "The binding start time should not be null for state %s.",
-                                                contextState.getHandle()));
-                                acceptableSequenceSeen.incrementAndGet();
-                            }
-                        }
-                        first = history.next();
-                    }
-
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+            final var contextStates = first.getStatesByType(AbstractContextState.class);
+            for (var contextState : contextStates) {
+                final var bindingMdibVersion = contextState.getBindingMdibVersion();
+                if (bindingMdibVersion != null) {
+                    final var bindingStartTime = contextState.getBindingStartTime();
+                    assertNotNull(
+                            bindingStartTime,
+                            String.format(
+                                    "The binding start time should not be null for state %s.",
+                                    contextState.getHandle()));
+                    acceptableSequenceSeen.incrementAndGet();
                 }
-            });
-        }
+            }
+        });
+
         assertTestData(acceptableSequenceSeen.get(), "No suitable context states seen, test failed.");
     }
 
@@ -357,35 +311,21 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-
-                    RemoteMdibAccess first = history.next();
-
-                    while (first != null) {
-                        final var contextStates = first.getStatesByType(AbstractContextState.class);
-                        for (var contextState : contextStates) {
-                            final var unbindingMdibVersion = contextState.getUnbindingMdibVersion();
-                            if (unbindingMdibVersion != null) {
-                                final var bindingEndTime = contextState.getBindingEndTime();
-                                assertNotNull(
-                                        bindingEndTime,
-                                        String.format(
-                                                "The binding end time should not be null for state %s.",
-                                                contextState.getHandle()));
-                                acceptableSequenceSeen.incrementAndGet();
-                            }
-                        }
-                        first = history.next();
-                    }
-
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+            final var contextStates = first.getStatesByType(AbstractContextState.class);
+            for (var contextState : contextStates) {
+                final var unbindingMdibVersion = contextState.getUnbindingMdibVersion();
+                if (unbindingMdibVersion != null) {
+                    final var bindingEndTime = contextState.getBindingEndTime();
+                    assertNotNull(
+                            bindingEndTime,
+                            String.format(
+                                    "The binding end time should not be null for state %s.", contextState.getHandle()));
+                    acceptableSequenceSeen.incrementAndGet();
                 }
-            });
-        }
+            }
+        });
+
         assertTestData(acceptableSequenceSeen.get(), "No suitable context states seen, test failed.");
     }
 }
