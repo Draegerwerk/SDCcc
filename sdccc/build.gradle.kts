@@ -156,14 +156,14 @@ tasks.register<Copy>("copyRuntimeLibs") {
 
 val projectName = "SDCcc-gradle"
 
-launch4j {
+tasks.createExe {
     headerType = "console"
     jar = "${layout.buildDirectory.get().asFile}/libs/${projectName}-${project.version}.jar"
     outfile = "${projectName}-${project.version}.exe" // Absolute path not allowed. File gets placed in build/launch4j
     mainClassName = "com.draeger.medical.sdccc.TestSuite"
     classpath = mutableSetOf("lib/**")
     jreMinVersion = javaVersion
-    bundledJrePath = "\$\${jreFullPath}"
+    bundledJrePath = "${layout.buildDirectory.get().asFile}/${jreFullPath}"
 
     version = "${project.version}.0"
     textVersion = "${project.version}"
@@ -175,12 +175,12 @@ launch4j {
     internalName = "sdccc"
 }
 
-tasks.named("launch4j") {
+tasks.named("createExe") {
     dependsOn("copyRuntimeLibs", "downloadAndUnpackJre")
 }
 
 tasks.named("build") {
-    dependsOn("launch4j")
+    dependsOn("createExe")
 }
 
 tasks.test {

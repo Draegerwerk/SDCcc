@@ -21,15 +21,7 @@ repositories {
     }
 }
 
-
-val defaultVersion = "9.1.0-SNAPSHOT"
-val actualVersion = project.findProperty("revision") ?: defaultVersion
-val actualRevision = project.findProperty("changelist") ?: ""
-
 val javaVersion = property("javaVersion").toString()
-
-group = "com.draeger.medical"
-version = "$actualVersion$actualRevision"
 
 java {
     sourceCompatibility = JavaVersion.toVersion(javaVersion)
