@@ -76,7 +76,7 @@ public class InvariantAlertStateTest extends InjectorTestBase {
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
 
         final var presenceOnSeen = new AtomicInteger(0);
-        mdibHistorian.procesAllRemoteMdibAccess(mdibAccess -> {
+        mdibHistorian.processAllRemoteMdibAccess(mdibAccess -> {
             final var alertConditionStates = mdibAccess.getStatesByType(AlertConditionState.class);
             for (var alertConditionState : alertConditionStates) {
                 final var isPresence = ImpliedValueUtil.isPresence(alertConditionState);

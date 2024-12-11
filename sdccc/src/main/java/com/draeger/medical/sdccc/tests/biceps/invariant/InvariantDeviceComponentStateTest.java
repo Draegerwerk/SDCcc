@@ -76,7 +76,7 @@ public class InvariantDeviceComponentStateTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(remoteMdibAccess -> {
+        mdibHistorian.processAllRemoteMdibAccess(remoteMdibAccess -> {
             final var entities = remoteMdibAccess.findEntitiesByType(AbstractDeviceComponentDescriptor.class);
 
             for (var entity : entities) {

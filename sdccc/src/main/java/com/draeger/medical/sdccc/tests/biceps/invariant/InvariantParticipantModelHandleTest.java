@@ -88,7 +88,7 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
 
         final AtomicInteger handlesSeen = new AtomicInteger();
 
-        mdibHistorian.procesAllRemoteMdibAccess(current -> {
+        mdibHistorian.processAllRemoteMdibAccess(current -> {
             final var allEntities = current.findEntitiesByType(AbstractDescriptor.class);
 
             final List<String> entityHandles =
@@ -131,7 +131,7 @@ public class InvariantParticipantModelHandleTest extends InjectorTestBase {
 
         final var handlesSeen = new HashSet<String>();
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             final var mdibVersion = first.getMdibVersion();
             final var allEntities = first.findEntitiesByType(AbstractDescriptor.class);
             for (MdibEntity entity : allEntities) {

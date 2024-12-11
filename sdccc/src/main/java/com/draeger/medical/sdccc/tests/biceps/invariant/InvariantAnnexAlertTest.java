@@ -71,7 +71,7 @@ public class InvariantAnnexAlertTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             final var alertSystemStates = first.getStatesByType(AlertSystemState.class);
 
             for (var alertSystemState : alertSystemStates) {

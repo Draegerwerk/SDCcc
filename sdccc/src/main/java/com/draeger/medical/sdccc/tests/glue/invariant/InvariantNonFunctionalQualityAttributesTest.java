@@ -19,7 +19,6 @@ import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -31,8 +30,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.somda.sdc.biceps.common.storage.PreprocessingException;
-import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractMetricDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertConditionState;
@@ -49,7 +46,6 @@ import org.somda.sdc.biceps.model.participant.RealTimeSampleArrayMetricDescripto
 import org.somda.sdc.biceps.model.participant.RealTimeSampleArrayMetricState;
 import org.somda.sdc.biceps.model.participant.StringMetricDescriptor;
 import org.somda.sdc.biceps.model.participant.StringMetricState;
-import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
  * Glue Non-functional quality attributes tests (ch. 10).
@@ -77,7 +73,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(remoteMdibAccess -> {
+        mdibHistorian.processAllRemoteMdibAccess(remoteMdibAccess -> {
             final var entities = remoteMdibAccess.findEntitiesByType(MdsDescriptor.class);
 
             for (var entity : entities) {
@@ -113,7 +109,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(remoteMdibAccess -> {
+        mdibHistorian.processAllRemoteMdibAccess(remoteMdibAccess -> {
             final var entities = remoteMdibAccess.findEntitiesByType(AbstractMetricDescriptor.class);
 
             for (var entity : entities) {
@@ -220,51 +216,41 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId);
-                        final MdibHistorian.HistorianResult prevHistory =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    history.next(); // history must be one element ahead of prevHistory
-                    RemoteMdibAccess last = prevHistory.next();
-                    RemoteMdibAccess current = history.next();
+                mdibHistorian.processAllConsecutivePairsForSequenceId(
+                        (last, current) -> {
+                            final var currentAlertConditionStates = current.getStatesByType(AlertConditionState.class);
 
-                    while (current != null) {
-                        final var currentAlertConditionStates = current.getStatesByType(AlertConditionState.class);
+                            for (var currentAlertConditionState : currentAlertConditionStates) {
+                                acceptableSequenceSeen.incrementAndGet();
+                                final Optional<AlertConditionState> lastAlertConditionState = last.getState(
+                                        currentAlertConditionState.getDescriptorHandle(), AlertConditionState.class);
+                                if (lastAlertConditionState.isEmpty()) {
+                                    continue;
+                                }
 
-                        for (var currentAlertConditionState : currentAlertConditionStates) {
-                            acceptableSequenceSeen.incrementAndGet();
-                            final Optional<AlertConditionState> lastAlertConditionState = last.getState(
-                                    currentAlertConditionState.getDescriptorHandle(), AlertConditionState.class);
-                            if (lastAlertConditionState.isEmpty()) {
-                                continue;
+                                if (ImpliedValueUtil.isPresence(currentAlertConditionState)
+                                        != ImpliedValueUtil.isPresence(lastAlertConditionState.orElseThrow())) {
+                                    assertNotEquals(
+                                            currentAlertConditionState.getDeterminationTime(),
+                                            lastAlertConditionState
+                                                    .orElseThrow()
+                                                    .getDeterminationTime(),
+                                            String.format(
+                                                    "The AlertConditionState with descriptor handle '%s' has changed "
+                                                            + "its @Presence attribute from mdibVersion '%s' to mdibVersion '%s', "
+                                                            + "but its @DeterminationTime was not updated ('%s' in both cases).",
+                                                    currentAlertConditionState.getDescriptorHandle(),
+                                                    ImpliedValueUtil.getMdibVersion(last.getMdibVersion())
+                                                            .toString(),
+                                                    ImpliedValueUtil.getMdibVersion(current.getMdibVersion())
+                                                            .toString(),
+                                                    currentAlertConditionState
+                                                            .getDeterminationTime()
+                                                            .toString()));
+                                }
                             }
-
-                            if (ImpliedValueUtil.isPresence(currentAlertConditionState)
-                                    != ImpliedValueUtil.isPresence(lastAlertConditionState.orElseThrow())) {
-                                assertNotEquals(
-                                        currentAlertConditionState.getDeterminationTime(),
-                                        lastAlertConditionState.orElseThrow().getDeterminationTime(),
-                                        String.format(
-                                                "The AlertConditionState with descriptor handle '%s' has changed "
-                                                        + "its @Presence attribute from mdibVersion '%s' to mdibVersion '%s', "
-                                                        + "but its @DeterminationTime was not updated ('%s' in both cases).",
-                                                currentAlertConditionState.getDescriptorHandle(),
-                                                ImpliedValueUtil.getMdibVersion(last.getMdibVersion())
-                                                        .toString(),
-                                                ImpliedValueUtil.getMdibVersion(current.getMdibVersion())
-                                                        .toString(),
-                                                currentAlertConditionState
-                                                        .getDeterminationTime()
-                                                        .toString()));
-                            }
-                        }
-                        last = prevHistory.next();
-                        current = history.next();
-                    }
-
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
             });
         }
         assertTestData(acceptableSequenceSeen.get(), "No AlertConditionState seen during the test run, test failed.");
@@ -281,7 +267,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             final var contextStates = first.getStatesByType(AbstractContextState.class);
             for (var contextState : contextStates) {
                 final var bindingMdibVersion = contextState.getBindingMdibVersion();
@@ -311,7 +297,7 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             final var contextStates = first.getStatesByType(AbstractContextState.class);
             for (var contextState : contextStates) {
                 final var unbindingMdibVersion = contextState.getUnbindingMdibVersion();

@@ -54,7 +54,7 @@ public class InvariantParticipantModelMappingTest extends InjectorTestBase {
 
         final var statesSeen = new AtomicInteger(0);
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             final var allStates = first.getStatesByType(AbstractState.class);
             for (var state : allStates) {
                 statesSeen.incrementAndGet();

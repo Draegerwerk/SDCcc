@@ -57,7 +57,7 @@ public class InvariantSdcParticipantModelBindingTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicBoolean(false);
 
-        mdibHistorian.procesAllRemoteMdibAccess(first -> {
+        mdibHistorian.processAllRemoteMdibAccess(first -> {
             acceptableSequenceSeen.compareAndSet(
                     false,
                     checkForTypeAttribute(
