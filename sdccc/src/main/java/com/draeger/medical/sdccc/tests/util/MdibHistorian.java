@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
@@ -612,6 +614,91 @@ public class MdibHistorian {
 
         mdibStorage.writeDescription(mdibVersion, mdDescriptionVersion, mdStateVersion, modifications);
         return mdibStorage;
+    }
+
+    /**
+     * Processes each sequenceId using the provided consumer.
+     *
+     * @param sequenceIdConsumer a consumer that processes each sequenceId
+     */
+    public void processSequenceIds(final Consumer<String> sequenceIdConsumer) throws IOException {
+        try (Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceIdConsumer);
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     * @param sequenceId  of the sequence to retrieve reports for
+     */
+    public void processRemoteMdibAccessForSequence(
+            final Consumer<RemoteMdibAccess> processor, final String sequenceId) {
+        try (HistorianResult history = episodicReportBasedHistory(sequenceId)) {
+            RemoteMdibAccess mdibAccess;
+            while ((mdibAccess = history.next()) != null) {
+                processor.accept(mdibAccess);
+            }
+        } catch (PreprocessingException | ReportProcessingException e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     */
+    public void processAllRemoteMdibAccess(final Consumer<RemoteMdibAccess> processor) throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                processRemoteMdibAccessForSequence(processor, sequenceId);
+            });
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     * @param sequenceId  of the sequence to retrieve reports for
+     */
+    public void processAllConsecutivePairsForSequenceId(
+            final BiConsumer<RemoteMdibAccess, RemoteMdibAccess> processor, final String sequenceId) {
+        try (final MdibHistorian.HistorianResult history = episodicReportBasedHistory(sequenceId);
+                final MdibHistorian.HistorianResult historyNext = episodicReportBasedHistory(sequenceId)) {
+
+            // skip the first entry so that history and historyNext are off by one entry
+            final var skippedElement = historyNext.next();
+            if (skippedElement == null) {
+                throw new NoTestData("Not enough input to compare mdib revisions");
+            }
+
+            RemoteMdibAccess first = history.next();
+            RemoteMdibAccess second = historyNext.next();
+            while (second != null) {
+                processor.accept(first, second);
+                first = history.next();
+                second = historyNext.next();
+            }
+        } catch (PreprocessingException | ReportProcessingException | NoTestData e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     */
+    public void processAllConsecutivePairs(final BiConsumer<RemoteMdibAccess, RemoteMdibAccess> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                processAllConsecutivePairsForSequenceId(processor, sequenceId);
+            });
+        }
     }
 
     /**

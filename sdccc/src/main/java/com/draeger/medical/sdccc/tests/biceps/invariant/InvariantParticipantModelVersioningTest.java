@@ -91,60 +91,49 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
                 final var impliedValueMap = new InitialImpliedValue();
-                try (final MdibHistorian.HistorianResult history =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId);
-                        final MdibHistorian.HistorianResult historyNext =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                mdibHistorian.processAllConsecutivePairsForSequenceId(
+                        (first, second) -> {
+                            final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
+                            for (MdibEntity entity : currentDescriptors) {
+                                final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
+                                        .orElseThrow();
+                                final var nextEntityOpt = second.getEntity(descriptor.getHandle());
+                                if (nextEntityOpt.isEmpty()) {
+                                    continue;
+                                }
+                                final var nextEntity = nextEntityOpt.orElseThrow();
+                                final var nextDescriptor = nextEntity
+                                        .getDescriptor(AbstractDescriptor.class)
+                                        .orElseThrow();
 
-                    // skip the first entry so that history and historyNext are off by one entry
-                    final var skippedElement = historyNext.next();
-                    assertTestData(skippedElement != null, "Not enough input to compare mdib revisions");
+                                // compare children of current and next descriptor one by one
+                                final var childrenChanged =
+                                        haveDescriptorChildrenDisOrReappeared(descriptor.getHandle(), first, second);
 
-                    RemoteMdibAccess first = history.next();
-                    RemoteMdibAccess second = historyNext.next();
-                    while (second != null) {
-                        final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
-                        for (MdibEntity entity : currentDescriptors) {
-                            final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
-                                    .orElseThrow();
-                            final var nextEntityOpt = second.getEntity(descriptor.getHandle());
-                            if (nextEntityOpt.isEmpty()) {
-                                continue;
+                                if (!childrenChanged) {
+                                    continue;
+                                }
+
+                                descriptorChanges.incrementAndGet();
+
+                                try {
+                                    assertTrue(
+                                            isIncrementedVersion(
+                                                    ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
+                                                    ImpliedValueUtil.getDescriptorVersion(
+                                                            nextDescriptor, impliedValueMap)),
+                                            "Descriptor version has not changed, but children have."
+                                                    + " MdibVersions " + first.getMdibVersion()
+                                                    + " and " + second.getMdibVersion()
+                                                    + ". Descriptor handle " + descriptor.getHandle()
+                                                    + ". Old children " + descriptor
+                                                    + " new children " + nextEntity.getChildren());
+                                } catch (InitialImpliedValueException e) {
+                                    fail(e);
+                                }
                             }
-                            final var nextEntity = nextEntityOpt.orElseThrow();
-                            final var nextDescriptor = nextEntity
-                                    .getDescriptor(AbstractDescriptor.class)
-                                    .orElseThrow();
-
-                            // compare children of current and next descriptor one by one
-                            final var childrenChanged =
-                                    haveDescriptorChildrenDisOrReappeared(descriptor.getHandle(), first, second);
-                            if (!childrenChanged) {
-                                continue;
-                            }
-
-                            descriptorChanges.incrementAndGet();
-                            assertTrue(
-                                    isIncrementedVersion(
-                                            ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
-                                            ImpliedValueUtil.getDescriptorVersion(nextDescriptor, impliedValueMap)),
-                                    "Descriptor version has not changed, but children have."
-                                            + " MdibVersions " + first.getMdibVersion()
-                                            + " and " + second.getMdibVersion()
-                                            + ". Descriptor handle " + descriptor.getHandle()
-                                            + ". Old children " + descriptor
-                                            + " new children " + nextEntity.getChildren());
-                        }
-                        first = history.next();
-                        second = historyNext.next();
-                    }
-
-                } catch (PreprocessingException
-                        | ReportProcessingException
-                        | InitialImpliedValueException
-                        | NoTestData e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
             });
         }
         assertTestData(descriptorChanges.get(), "No descriptor changed during the test run.");
@@ -170,79 +159,72 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             sequenceIds.forEach(sequenceId -> {
                 final var impliedValueMap = new InitialImpliedValue();
                 final var lastDescriptorMap = new HashMap<String, AbstractDescriptor>();
-                try (final MdibHistorian.HistorianResult history =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId);
-                        final MdibHistorian.HistorianResult historyNext =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                mdibHistorian.processAllConsecutivePairsForSequenceId(
+                        (first, second) -> {
+                            final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
+                            for (MdibEntity entity : currentDescriptors) {
+                                // check if this was previously deleted and returned
+                                final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
+                                        .orElseThrow();
+                                final var oldVersion = lastDescriptorMap.remove(descriptor.getHandle());
+                                if (oldVersion != null) {
+                                    final var descriptorChanged = hasDescriptorChanged(oldVersion, descriptor);
+                                    if (descriptorChanged) {
+                                        descriptorChanges.incrementAndGet();
+                                        try {
+                                            assertTrue(
+                                                    isIncrementedVersion(
+                                                            ImpliedValueUtil.getDescriptorVersion(
+                                                                    oldVersion, impliedValueMap),
+                                                            ImpliedValueUtil.getDescriptorVersion(
+                                                                    descriptor, impliedValueMap)),
+                                                    DESCRIPTOR_REINSERTION_PREFIX
+                                                            + " MdibVersions of insertion " + first.getMdibVersion()
+                                                            + ". Descriptor handle " + descriptor.getHandle()
+                                                            + ". Old Descriptor " + oldVersion
+                                                            + " Inserted Descriptor " + descriptor);
+                                        } catch (InitialImpliedValueException e) {
+                                            fail(e);
+                                        }
+                                    }
+                                }
 
-                    // skip the first entry so that history and historyNext are off by one entry
-                    final var skippedElement = historyNext.next();
-                    assertTestData(skippedElement != null, "Not enough input to compare mdib revisions");
+                                final var nextEntityOpt = second.getEntity(descriptor.getHandle());
+                                if (nextEntityOpt.isEmpty()) {
+                                    // descriptor was removed, add to storage
+                                    lastDescriptorMap.put(descriptor.getHandle(), descriptor);
+                                    continue;
+                                }
 
-                    RemoteMdibAccess first = history.next();
-                    RemoteMdibAccess second = historyNext.next();
-                    while (second != null) {
-                        final var currentDescriptors = first.findEntitiesByType(AbstractDescriptor.class);
-                        for (MdibEntity entity : currentDescriptors) {
-                            // check if this was previously deleted and returned
-                            final var descriptor = entity.getDescriptor(AbstractDescriptor.class)
-                                    .orElseThrow();
-                            final var oldVersion = lastDescriptorMap.remove(descriptor.getHandle());
-                            if (oldVersion != null) {
-                                final var descriptorChanged = hasDescriptorChanged(oldVersion, descriptor);
-                                if (descriptorChanged) {
-                                    descriptorChanges.incrementAndGet();
+                                final var nextDescriptor = nextEntityOpt
+                                        .orElseThrow()
+                                        .getDescriptor(AbstractDescriptor.class)
+                                        .orElseThrow();
+                                // compare children of current and next descriptor one by one
+                                final var descriptorChanged = hasDescriptorChanged(descriptor, nextDescriptor);
+                                if (!descriptorChanged) {
+                                    continue;
+                                }
+
+                                descriptorChanges.incrementAndGet();
+                                try {
                                     assertTrue(
                                             isIncrementedVersion(
-                                                    ImpliedValueUtil.getDescriptorVersion(oldVersion, impliedValueMap),
-                                                    ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap)),
-                                            DESCRIPTOR_REINSERTION_PREFIX
-                                                    + " MdibVersions of insertion " + first.getMdibVersion()
+                                                    ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
+                                                    ImpliedValueUtil.getDescriptorVersion(
+                                                            nextDescriptor, impliedValueMap)),
+                                            DESCRIPTOR_UPDATE_PREFIX
+                                                    + " MdibVersions " + first.getMdibVersion()
+                                                    + " and " + second.getMdibVersion()
                                                     + ". Descriptor handle " + descriptor.getHandle()
-                                                    + ". Old Descriptor " + oldVersion
-                                                    + " Inserted Descriptor " + descriptor);
+                                                    + ". Old Descriptor " + descriptor
+                                                    + " New Descriptor " + nextDescriptor);
+                                } catch (InitialImpliedValueException e) {
+                                    fail(e);
                                 }
                             }
-
-                            final var nextEntityOpt = second.getEntity(descriptor.getHandle());
-                            if (nextEntityOpt.isEmpty()) {
-                                // descriptor was removed, add to storage
-                                lastDescriptorMap.put(descriptor.getHandle(), descriptor);
-                                continue;
-                            }
-
-                            final var nextDescriptor = nextEntityOpt
-                                    .orElseThrow()
-                                    .getDescriptor(AbstractDescriptor.class)
-                                    .orElseThrow();
-                            // compare children of current and next descriptor one by one
-                            final var descriptorChanged = hasDescriptorChanged(descriptor, nextDescriptor);
-                            if (!descriptorChanged) {
-                                continue;
-                            }
-
-                            descriptorChanges.incrementAndGet();
-                            assertTrue(
-                                    isIncrementedVersion(
-                                            ImpliedValueUtil.getDescriptorVersion(descriptor, impliedValueMap),
-                                            ImpliedValueUtil.getDescriptorVersion(nextDescriptor, impliedValueMap)),
-                                    DESCRIPTOR_UPDATE_PREFIX
-                                            + " MdibVersions " + first.getMdibVersion()
-                                            + " and " + second.getMdibVersion()
-                                            + ". Descriptor handle " + descriptor.getHandle()
-                                            + ". Old Descriptor " + descriptor
-                                            + " New Descriptor " + nextDescriptor);
-                        }
-                        first = history.next();
-                        second = historyNext.next();
-                    }
-
-                } catch (PreprocessingException
-                        | ReportProcessingException
-                        | InitialImpliedValueException
-                        | NoTestData e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
             });
         }
         assertTestData(descriptorChanges.get(), "No descriptor changed during the test run.");
@@ -266,80 +248,71 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
             sequenceIds.forEach(sequenceId -> {
                 final var impliedValueMap = new InitialImpliedValue();
                 final var removedStatesMap = new HashMap<String, AbstractState>();
-                try (final MdibHistorian.HistorianResult history =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId);
-                        final MdibHistorian.HistorianResult historyNext =
-                                mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    // skip the first entry so that history and historyNext are off by one entry
-                    final var skippedElement = historyNext.next();
-                    assertTestData(skippedElement != null, "Not enough input to compare mdib revisions");
+                mdibHistorian.processAllConsecutivePairsForSequenceId(
+                        (first, second) -> {
+                            final var states = first.getStatesByType(AbstractState.class);
+                            for (var state : states) {
 
-                    RemoteMdibAccess first = history.next();
-                    RemoteMdibAccess second = historyNext.next();
+                                final String stateHandle;
+                                if (state instanceof AbstractMultiState) {
+                                    stateHandle = ((AbstractMultiState) state).getHandle();
+                                } else {
+                                    stateHandle = state.getDescriptorHandle();
+                                }
+                                final Optional<AbstractState> nextStateOpt = second.getState(stateHandle);
 
-                    while (second != null) {
-                        final var states = first.getStatesByType(AbstractState.class);
-                        for (var state : states) {
+                                if (removedStatesMap.containsKey(stateHandle)) {
+                                    final var removedState = removedStatesMap.get(stateHandle);
+                                    if (!removedState.equals(state)) {
+                                        try {
+                                            assertTrue(
+                                                    isIncrementedVersion(
+                                                            ImpliedValueUtil.getStateVersion(
+                                                                    removedState, impliedValueMap),
+                                                            ImpliedValueUtil.getStateVersion(state, impliedValueMap)),
+                                                    "State version has not been incremented by one, but reinserted state"
+                                                            + " has changed. MdibVersions " + first.getMdibVersion()
+                                                            + " and " + second.getMdibVersion()
+                                                            + ". State handle " + stateHandle
+                                                            + ". Old State " + removedState
+                                                            + " New State " + state);
+                                        } catch (InitialImpliedValueException e) {
+                                            fail(e);
+                                        }
+                                    }
+                                    removedStatesMap.remove(stateHandle);
+                                }
 
-                            final String stateHandle;
-                            if (state instanceof AbstractMultiState) {
-                                stateHandle = ((AbstractMultiState) state).getHandle();
-                            } else {
-                                stateHandle = state.getDescriptorHandle();
-                            }
-                            final Optional<AbstractState> nextStateOpt = second.getState(stateHandle);
+                                if (nextStateOpt.isEmpty()) {
+                                    // state will be removed
+                                    removedStatesMap.put(stateHandle, state);
+                                    continue;
+                                }
 
-                            if (removedStatesMap.containsKey(stateHandle)) {
-                                final var removedState = removedStatesMap.get(stateHandle);
-                                if (!removedState.equals(state)) {
+                                final var nextState = nextStateOpt.orElseThrow();
+
+                                if (state.equals(nextState)) {
+                                    continue;
+                                }
+
+                                stateChanges.incrementAndGet();
+                                try {
                                     assertTrue(
                                             isIncrementedVersion(
-                                                    ImpliedValueUtil.getStateVersion(removedState, impliedValueMap),
-                                                    ImpliedValueUtil.getStateVersion(state, impliedValueMap)),
-                                            "State version has not been incremented by one, but reinserted state"
-                                                    + " has changed. MdibVersions " + first.getMdibVersion()
+                                                    ImpliedValueUtil.getStateVersion(state, impliedValueMap),
+                                                    ImpliedValueUtil.getStateVersion(nextState, impliedValueMap)),
+                                            "State version has not been incremented by one, but state has changed."
+                                                    + " MdibVersions " + first.getMdibVersion()
                                                     + " and " + second.getMdibVersion()
                                                     + ". State handle " + stateHandle
-                                                    + ". Old State " + removedState
-                                                    + " New State " + state);
+                                                    + ". Old State " + state
+                                                    + " New State " + nextState);
+                                } catch (InitialImpliedValueException e) {
+                                    fail(e);
                                 }
-                                removedStatesMap.remove(stateHandle);
                             }
-
-                            if (nextStateOpt.isEmpty()) {
-                                // state will be removed
-                                removedStatesMap.put(stateHandle, state);
-                                continue;
-                            }
-
-                            final var nextState = nextStateOpt.orElseThrow();
-
-                            if (state.equals(nextState)) {
-                                continue;
-                            }
-
-                            stateChanges.incrementAndGet();
-                            assertTrue(
-                                    isIncrementedVersion(
-                                            ImpliedValueUtil.getStateVersion(state, impliedValueMap),
-                                            ImpliedValueUtil.getStateVersion(nextState, impliedValueMap)),
-                                    "State version has not been incremented by one, but state has changed."
-                                            + " MdibVersions " + first.getMdibVersion()
-                                            + " and " + second.getMdibVersion()
-                                            + ". State handle " + stateHandle
-                                            + ". Old State " + state
-                                            + " New State " + nextState);
-                        }
-                        first = history.next();
-                        second = historyNext.next();
-                    }
-
-                } catch (PreprocessingException
-                        | ReportProcessingException
-                        | InitialImpliedValueException
-                        | NoTestData e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
                 removedStatesMap.clear();
             });
         }

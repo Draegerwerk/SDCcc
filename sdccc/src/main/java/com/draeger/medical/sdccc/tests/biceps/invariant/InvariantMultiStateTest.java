@@ -9,7 +9,6 @@ package com.draeger.medical.sdccc.tests.biceps.invariant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ConditionalPreconditions;
@@ -20,7 +19,6 @@ import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -37,7 +35,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.MdibEntity;
-import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
@@ -50,7 +47,6 @@ import org.somda.sdc.biceps.model.participant.MeansContextDescriptor;
 import org.somda.sdc.biceps.model.participant.OperatorContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.WorkflowContextDescriptor;
-import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
  * BICEPS participant model multistate tests (ch. 5.4.3).
@@ -85,45 +81,42 @@ public class InvariantMultiStateTest extends InjectorTestBase {
             simplePreconditions = {ConditionalPreconditions.AllKindsOfContextStatesAssociatedPrecondition.class})
     void testRequirement0097() throws NoTestData, IOException {
 
-        final var descriptorHandles = new HashSet<String>();
-        final var multiStateHandles = new HashSet<String>();
-
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
         final var seenAcceptableSequence = new AtomicBoolean(false);
 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
-                    RemoteMdibAccess first = history.next();
-                    final var seenMultiStatesMap = initMultiStateMap(first, CONTEXT_DESCRIPTOR_CLASSES);
-                    while (first != null) {
-                        final var entities = first.findEntitiesByType(AbstractDescriptor.class);
-                        final var states = first.findContextStatesByType(AbstractContextState.class);
-                        addAllDescriptorHandles(entities, descriptorHandles);
-                        if (states.isEmpty()) {
-                            first = history.next();
-                            continue;
-                        }
-                        addAllMultiStateHandles(states, multiStateHandles, seenMultiStatesMap);
-                        areMultiStatesHandlesUnique(states);
-                        areHandlesDisjunctive(descriptorHandles, multiStateHandles, first.getMdibVersion());
-                        first = history.next();
-                    }
-                    var acceptableSequence = true;
-                    for (var value : seenMultiStatesMap.values()) {
-                        acceptableSequence &= value.size() > 1;
-                    }
+                final var descriptorHandles = new HashSet<String>();
+                final var multiStateHandles = new HashSet<String>();
+                final var seenMultiStatesMap = new HashMap<String, Set<String>>();
+                final var firstAccess = new AtomicBoolean(true);
 
-                    if (acceptableSequence) {
-                        seenAcceptableSequence.set(acceptableSequence);
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
+                mdibHistorian.processRemoteMdibAccessForSequence(
+                        mdibAccess -> {
+                            if (firstAccess.getAndSet(false)) {
+                                seenMultiStatesMap.putAll(initMultiStateMap(mdibAccess, CONTEXT_DESCRIPTOR_CLASSES));
+                            }
+                            final var entities = mdibAccess.findEntitiesByType(AbstractDescriptor.class);
+                            final var states = mdibAccess.findContextStatesByType(AbstractContextState.class);
+                            addAllDescriptorHandles(entities, descriptorHandles);
+                            if (!states.isEmpty()) {
+                                addAllMultiStateHandles(states, multiStateHandles, seenMultiStatesMap);
+                                areMultiStatesHandlesUnique(states);
+                                areHandlesDisjunctive(
+                                        descriptorHandles, multiStateHandles, mdibAccess.getMdibVersion());
+                            }
+                        },
+                        sequenceId);
+
+                var acceptableSequence = true;
+                for (var value : seenMultiStatesMap.values()) {
+                    acceptableSequence &= value.size() > 1;
                 }
-                descriptorHandles.clear();
-                multiStateHandles.clear();
+
+                if (acceptableSequence) {
+                    seenAcceptableSequence.set(true);
+                }
             });
         }
         assertTestData(
@@ -161,7 +154,7 @@ public class InvariantMultiStateTest extends InjectorTestBase {
             multiStateHandles.add(state.getHandle());
             if (ImpliedValueUtil.getContextAssociation(state) == ContextAssociation.ASSOC) {
                 seenMultiStatesMap
-                        .computeIfAbsent(state.getDescriptorHandle(), stateClass -> new HashSet<String>())
+                        .computeIfAbsent(state.getDescriptorHandle(), stateClass -> new HashSet<>())
                         .add(state.getHandle());
             }
         });

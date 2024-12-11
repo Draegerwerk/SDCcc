@@ -8,7 +8,6 @@
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.draeger.medical.sdccc.configuration.EnabledTestConfig;
 import com.draeger.medical.sdccc.manipulation.precondition.impl.ManipulationPreconditions;
@@ -19,7 +18,6 @@ import com.draeger.medical.sdccc.tests.annotations.RequirePrecondition;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.TestRunObserver;
@@ -33,15 +31,12 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.somda.sdc.biceps.common.MdibEntity;
-import org.somda.sdc.biceps.common.storage.PreprocessingException;
-import org.somda.sdc.biceps.consumer.access.RemoteMdibAccess;
 import org.somda.sdc.biceps.model.participant.AbstractMultiState;
 import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationContextDescriptor;
 import org.somda.sdc.biceps.model.participant.LocationContextState;
 import org.somda.sdc.biceps.model.participant.PatientContextDescriptor;
 import org.somda.sdc.biceps.model.participant.PatientContextState;
-import org.somda.sdc.glue.consumer.report.ReportProcessingException;
 
 /**
  * BICEPS participant model context state tests (ch. 5.4.4).
@@ -75,53 +70,47 @@ public class InvariantParticipantModelContextStateTest extends InjectorTestBase 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
                 final var associationCounterMap = HashMultimap.<String, String>create();
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                mdibHistorian.processRemoteMdibAccessForSequence(
+                        mdibAccess -> {
+                            final var patientContextEntities =
+                                    mdibAccess.findEntitiesByType(PatientContextDescriptor.class);
 
-                    RemoteMdibAccess mdibAccess = history.next();
-                    while (mdibAccess != null) {
+                            for (MdibEntity patientContextEntity : patientContextEntities) {
 
-                        final var patientContextEntities =
-                                mdibAccess.findEntitiesByType(PatientContextDescriptor.class);
+                                final var associatedPatients =
+                                        patientContextEntity.getStates(PatientContextState.class).stream()
+                                                .filter(state -> ContextAssociation.ASSOC.equals(
+                                                        ImpliedValueUtil.getContextAssociation(state)))
+                                                .toList();
 
-                        for (MdibEntity patientContextEntity : patientContextEntities) {
+                                if (!associatedPatients.isEmpty()) {
+                                    final var associatedStateHandles = associatedPatients.stream()
+                                            .map(AbstractMultiState::getHandle)
+                                            .collect(Collectors.toList());
 
-                            final var associatedPatients =
-                                    patientContextEntity.getStates(PatientContextState.class).stream()
-                                            .filter(state -> ContextAssociation.ASSOC.equals(
-                                                    ImpliedValueUtil.getContextAssociation(state)))
-                                            .toList();
+                                    assertEquals(
+                                            1,
+                                            associatedPatients.size(),
+                                            String.format(
+                                                    "More than one PatientContextState was associated for the"
+                                                            + " handle %s, associated state handles were %s, mdib version %s",
+                                                    patientContextEntity.getHandle(),
+                                                    String.join(", ", associatedStateHandles),
+                                                    mdibAccess.getMdibVersion()));
 
-                            if (!associatedPatients.isEmpty()) {
-                                final var associatedStateHandles = associatedPatients.stream()
-                                        .map(AbstractMultiState::getHandle)
-                                        .collect(Collectors.toList());
-
-                                assertEquals(
-                                        1,
-                                        associatedPatients.size(),
-                                        String.format(
-                                                "More than one PatientContextState was associated for the"
-                                                        + " handle %s, associated state handles were %s, mdib version %s",
-                                                patientContextEntity.getHandle(),
-                                                String.join(", ", associatedStateHandles),
-                                                mdibAccess.getMdibVersion()));
-
-                                // only add handles if the check above passed
-                                LOG.debug(
-                                        "Adding desc {} state {}",
-                                        patientContextEntity.getHandle(),
-                                        associatedPatients.get(0).getHandle());
-                                associationCounterMap.put(
-                                        patientContextEntity.getHandle(),
-                                        associatedPatients.get(0).getHandle());
+                                    // only add handles if the check above passed
+                                    LOG.debug(
+                                            "Adding desc {} state {}",
+                                            patientContextEntity.getHandle(),
+                                            associatedPatients.get(0).getHandle());
+                                    associationCounterMap.put(
+                                            patientContextEntity.getHandle(),
+                                            associatedPatients.get(0).getHandle());
+                                }
                             }
-                        }
-                        mdibAccess = history.next();
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
+
                 // determine if any context descriptor had 2+ associated states
                 final var hadSufficientContexts =
                         associationCounterMap.asMap().values().stream().anyMatch(values -> values.size() >= 2);
@@ -160,53 +149,46 @@ public class InvariantParticipantModelContextStateTest extends InjectorTestBase 
         try (final Stream<String> sequenceIds = mdibHistorian.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
                 final var associationCounterMap = HashMultimap.<String, String>create();
-                try (final MdibHistorian.HistorianResult history =
-                        mdibHistorian.episodicReportBasedHistory(sequenceId)) {
+                mdibHistorian.processRemoteMdibAccessForSequence(
+                        mdibAccess -> {
+                            final var locationContextEntities =
+                                    mdibAccess.findEntitiesByType(LocationContextDescriptor.class);
 
-                    RemoteMdibAccess mdibAccess = history.next();
-                    while (mdibAccess != null) {
+                            for (MdibEntity locationContextEntity : locationContextEntities) {
 
-                        final var locationContextEntities =
-                                mdibAccess.findEntitiesByType(LocationContextDescriptor.class);
+                                final var associatedLocations =
+                                        locationContextEntity.getStates(LocationContextState.class).stream()
+                                                .filter(state -> ContextAssociation.ASSOC.equals(
+                                                        ImpliedValueUtil.getContextAssociation(state)))
+                                                .toList();
 
-                        for (MdibEntity locationContextEntity : locationContextEntities) {
+                                if (!associatedLocations.isEmpty()) {
+                                    final var associatedStateHandles = associatedLocations.stream()
+                                            .map(AbstractMultiState::getHandle)
+                                            .collect(Collectors.toList());
 
-                            final var associatedLocations =
-                                    locationContextEntity.getStates(LocationContextState.class).stream()
-                                            .filter(state -> ContextAssociation.ASSOC.equals(
-                                                    ImpliedValueUtil.getContextAssociation(state)))
-                                            .toList();
+                                    assertEquals(
+                                            1,
+                                            associatedLocations.size(),
+                                            String.format(
+                                                    "More than one LocationContextState was associated for the"
+                                                            + " handle %s, associated state handles were %s, mdib version %s",
+                                                    locationContextEntity.getHandle(),
+                                                    String.join(", ", associatedStateHandles),
+                                                    mdibAccess.getMdibVersion()));
 
-                            if (!associatedLocations.isEmpty()) {
-                                final var associatedStateHandles = associatedLocations.stream()
-                                        .map(AbstractMultiState::getHandle)
-                                        .collect(Collectors.toList());
-
-                                assertEquals(
-                                        1,
-                                        associatedLocations.size(),
-                                        String.format(
-                                                "More than one LocationContextState was associated for the"
-                                                        + " handle %s, associated state handles were %s, mdib version %s",
-                                                locationContextEntity.getHandle(),
-                                                String.join(", ", associatedStateHandles),
-                                                mdibAccess.getMdibVersion()));
-
-                                // only add handles if the check above passed
-                                LOG.debug(
-                                        "Adding desc {} state {}",
-                                        locationContextEntity.getHandle(),
-                                        associatedLocations.get(0).getHandle());
-                                associationCounterMap.put(
-                                        locationContextEntity.getHandle(),
-                                        associatedLocations.get(0).getHandle());
+                                    // only add handles if the check above passed
+                                    LOG.debug(
+                                            "Adding desc {} state {}",
+                                            locationContextEntity.getHandle(),
+                                            associatedLocations.get(0).getHandle());
+                                    associationCounterMap.put(
+                                            locationContextEntity.getHandle(),
+                                            associatedLocations.get(0).getHandle());
+                                }
                             }
-                        }
-                        mdibAccess = history.next();
-                    }
-                } catch (PreprocessingException | ReportProcessingException e) {
-                    fail(e);
-                }
+                        },
+                        sequenceId);
                 // determine if any context descriptor had 2+ associated states
                 final var hadSufficientContexts = !associationCounterMap.isEmpty()
                         && associationCounterMap.asMap().values().stream().allMatch(values -> values.size() >= 2);
