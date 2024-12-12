@@ -29,10 +29,10 @@ jobs:
         run: |
           echo CHANGELIST= >> $GITHUB_ENV
 
-      - name: Add git hash to snapshot release
+      - name: Add git hash and  to snapshot release
         if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
         run: |
-          echo CHANGELIST=${{ env.CHANGELIST }}.${{ env. GIT_HASH_SHORT }} >> $GITHUB_ENV
+          echo CHANGELIST=${{ env.CHANGELIST }}#$GITHUB_RUN_NUMBER-${{ env.GIT_HASH_SHORT }} >> $GITHUB_ENV
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
