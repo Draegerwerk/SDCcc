@@ -16,6 +16,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
@@ -87,14 +88,13 @@ public class CommandLineOptions {
             final var versionParser = new DefaultParser();
             try {
                 final CommandLine cmdVersion = versionParser.parse(version, commandLineArguments);
-                final var isSet = cmdVersion.hasOption(VERSION);
-                if (isSet) {
+                if (cmdVersion.hasOption(VERSION)) {
                     printVersion();
                 } else {
-                    printNetworkInfo(e, help, options);
+                    printNetworkInfo(e, help, options, version);
                 }
             } catch (final ParseException ex) {
-                printNetworkInfo(ex, help, options);
+                printNetworkInfo(e, help, options, version);
             }
             System.exit(1);
         }
@@ -118,21 +118,25 @@ public class CommandLineOptions {
     }
 
     private void printVersion() {
-        var devVersion = "";
-
         final Properties properties = new Properties();
         try (InputStream input = this.getClass().getResourceAsStream("config.properties")) {
             properties.load(input);
-            devVersion = properties.getProperty("project.version");
+            final var devVersion = properties.getProperty("project.version");
+            System.out.println(Objects.requireNonNullElse(devVersion, "No project version information available."));
         } catch (IOException ex) {
-            ex.printStackTrace();
+            LOG.error("Error loading project version", ex);
+            throw new RuntimeException(ex);
         }
-        System.out.println(devVersion);
     }
 
-    private void printNetworkInfo(final ParseException e, final HelpFormatter help, final Options options) {
+    private void printNetworkInfo(
+            final ParseException e, final HelpFormatter help, final Options options, final Options version) {
         System.out.println(e.getMessage());
+        for (var option : version.getOptions()) {
+            options.addOption(option);
+        }
         help.printHelp("SDCcc", options);
+
         try {
             printNetworkAdapterInformation();
         } catch (final SocketException e2) {
@@ -144,7 +148,8 @@ public class CommandLineOptions {
     private Options setupVersion() {
         final var options = new Options();
         {
-            final String description = "The version of the tool.";
+            final String description =
+                    "Print the version of the test tool. Can only be used without any other command line options.";
             final var version = new Option("v", VERSION, false, description);
             version.setRequired(false);
             options.addOption(version);

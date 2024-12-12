@@ -241,7 +241,7 @@ The following command line options are supported by the test tool, the first two
 | --test_run_directory   | -d        | base directory to store test runs in, creates a timestamped SDCcc run                                                                                                          | no           |
 | --no_subdirectories    | -ns       | if set to "true", no directories are created in the directory configured with test_run_directory. The configured directory must be empty if no_subdirectories is set to "true" | no           |
 | --file_log_level       | -fll      | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                                                                                              | no           |
-| --version              | -v        | print the version of the sdccc test tool                                                                                                                                       | no           |
+| --version              | -v        | Print the version of the test tool. Can only be used without any other command line options.                                                                                   | no           |
 
 ### Enabling Tests
 
