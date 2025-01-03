@@ -16,6 +16,7 @@ import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
@@ -37,6 +39,7 @@ import org.xml.sax.SAXException;
  * Utility for marshalling classes to XML.
  */
 public class SoapMarshalling {
+
     private static final Logger LOG = LogManager.getLogger(SoapMarshalling.class);
 
     private static final String PKG_BASE = "com.draeger.medical.";
@@ -70,6 +73,18 @@ public class SoapMarshalling {
     private static final String PKG_DELIM = ":";
     private static final String SCHEMA_DELIM = ":";
 
+    public static final List<String> PACKAGES = List.of(
+            PKG_EXT, PKG_PM, PKG_MSG, PKG_SOAP, PKG_DPWS, PKG_WSA, PKG_WSD, PKG_WSE, PKG_WST, PKG_MEX);
+    public static final List<String> SCHEMAS = List.of(
+            SCHEMA_SOAP,
+            SCHEMA_WSA,
+            SCHEMA_WSD,
+            SCHEMA_WSE,
+            SCHEMA_MEX,
+            SCHEMA_WST,
+            SCHEMA_DPWS,
+            SCHEMA_BICEPS);
+
     private final JAXBContext jaxbContext;
     private final Schema schema;
 
@@ -77,37 +92,27 @@ public class SoapMarshalling {
      * Create a SoapMarshalling instance for use in unit tests.
      *
      * @param validateMessages enable schema validation for messages
+     * @param packages         packages to scan for JAXB classes
+     * @param schemas          schemas to validate against
      * @throws ParserConfigurationException on error when preparing schema
      * @throws SAXException                 on error when preparing schema
      * @throws IOException                  on error when preparing schema
      */
     @Inject
-    public SoapMarshalling(@Named(MarshallingConfig.VALIDATE_SOAP_MESSAGES) final boolean validateMessages)
+    public SoapMarshalling(@Named(MarshallingConfig.VALIDATE_SOAP_MESSAGES) final boolean validateMessages,
+                           @Named(MarshallingConfig.PACKAGES) final List<String> packages,
+                           @Named(MarshallingConfig.SCHEMAS) final List<String> schemas)
             throws ParserConfigurationException, SAXException, IOException {
-        final var packageList =
-                List.of(PKG_EXT, PKG_PM, PKG_MSG, PKG_SOAP, PKG_DPWS, PKG_WSA, PKG_WSD, PKG_WSE, PKG_WST, PKG_MEX);
-        final String contextPackages = String.join(PKG_DELIM, packageList);
 
         try {
-            jaxbContext = JAXBContext.newInstance(contextPackages);
+            jaxbContext = JAXBContext.newInstance(String.join(PKG_DELIM, packages));
         } catch (final JAXBException e) {
             LOG.error("JAXB context for SOAP model(s) could not be created", e);
             throw new RuntimeException("JAXB context for SOAP model(s) could not be created");
         }
 
         if (validateMessages) {
-            final var schemaList = List.of(
-                    SCHEMA_SOAP,
-                    SCHEMA_WSA,
-                    SCHEMA_WSD,
-                    SCHEMA_WSE,
-                    SCHEMA_MEX,
-                    SCHEMA_WST,
-                    SCHEMA_DPWS,
-                    SCHEMA_BICEPS);
-            final var schemas = String.join(SCHEMA_DELIM, schemaList);
-
-            schema = generateTopLevelSchema(schemas);
+            schema = generateTopLevelSchema(String.join(SCHEMA_DELIM, schemas));
         } else {
             schema = null;
         }
@@ -131,7 +136,7 @@ public class SoapMarshalling {
     /**
      * Takes an InputStream and unmarshals it.
      *
-     * @param inputStream  the inputStream to unmarshal
+     * @param inputStream the inputStream to unmarshal
      * @return an Envelope created from the inputstream
      * @throws JAXBException if marshalling fails
      */
