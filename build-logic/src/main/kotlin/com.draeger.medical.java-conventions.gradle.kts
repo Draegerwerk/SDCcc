@@ -4,7 +4,6 @@
 
 plugins {
     `java-library`
-    `maven-publish`
 }
 
 repositories {
@@ -23,16 +22,23 @@ repositories {
 
 val javaVersion = property("javaVersion").toString()
 
+val defaultVersion = "9.1.0-SNAPSHOT"
+val actualRevision = project.findProperty("revision") ?: defaultVersion
+val actualChangeList = project.findProperty("changelist") ?: ""
+
+group = "com.draeger.medical"
+version = "$actualRevision$actualChangeList"
+
 java {
     sourceCompatibility = JavaVersion.toVersion(javaVersion)
     targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
 tasks.withType<JavaCompile>() {
-    options.release.set(javaVersion.toInt())
     options.encoding = "UTF-8"
 }
 
 tasks.withType<Javadoc>() {
     options.encoding = "UTF-8"
 }
+

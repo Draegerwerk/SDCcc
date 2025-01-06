@@ -26,5 +26,11 @@ gradlePlugin {
 }
 
 dependencies {
+    implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
     implementation("com.github.jk1:gradle-license-report:2.9")
+    implementation(libs.gradleplugins.spotbugs)
+    implementation(libs.gradleplugins.spotless)
+    implementation(libs.gradleplugins.kotlin.jvm)
+    implementation(libs.gradleplugins.download)
+    implementation(libs.gradleplugins.launch4j)
 }

@@ -79,9 +79,9 @@ org-somda-sdc-common = { module = "org.somda.sdc:common", version.ref = "org-som
 org-somda-sdc-glue = { module = "org.somda.sdc:glue", version.ref = "org-somda-sdc" }
 org-tomlj-tomlj = { module = "org.tomlj:tomlj", version.ref = "org-tomlj" }
 
-[plugins]
-kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org-jetbrains-kotlin" }
-spotbugs = { id = "com.github.spotbugs", version.ref = "com-github-spotbugs" }
-spotless = { id = "com.diffplug.spotless", version.ref = "com-diffplug-spotless" }
-download = { id = "de.undercouch.download", version.ref = "de-undercouch-download" }
-launch4j = { id = "edu.sc.seis.launch4j", version.ref = "edu-sc-seis-launch4j" }
+# workaround for making these available in build-logic
+gradleplugins-spotbugs = { module = "com.github.spotbugs.snom:spotbugs-gradle-plugin", version.ref = "com-github-spotbugs" }
+gradleplugins-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "com-diffplug-spotless" }
+gradleplugins-kotlin-jvm = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
+gradleplugins-download = { module = "de.undercouch:gradle-download-task", version.ref = "de-undercouch-download" }
+gradleplugins-launch4j = { module = "edu.sc.seis.launch4j:launch4j", version.ref = "edu-sc-seis-launch4j" }

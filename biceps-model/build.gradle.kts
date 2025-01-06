@@ -23,9 +23,6 @@ dependencies {
 
     testImplementation(libs.org.junit.jupiter.junit.jupiter.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.engine)
-
-    jaxb(libs.org.jetbrains.annotations)
-    jaxb(libs.org.jvnet.jaxb.jaxb.plugin.annotate)
 }
 
 description = "SDCri is a set of Java libraries that implements a network communication framework conforming " +
@@ -34,9 +31,6 @@ description = "SDCri is a set of Java libraries that implements a network commun
 xjc {
     jaxbClasspath = jaxb
     schemaLocation = layout.projectDirectory.dir(schemaDir)
-    args = listOf(
-        "-Xannotate",
-    )
 }
 
 description = "BICEPS model"
