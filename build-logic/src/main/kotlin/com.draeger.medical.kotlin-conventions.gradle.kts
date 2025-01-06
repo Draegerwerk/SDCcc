@@ -8,9 +8,11 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 
+val javaVersion = property("javaVersion").toString()
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = javaVersion
     }
 }
 
@@ -35,7 +37,7 @@ val detektTask = tasks.register<JavaExec>("detekt") {
         "--report", "html:${layout.buildDirectory.get().asFile}/reports/detekt/detekt.html",
         "--classpath", classpathNeededForDetekt,
         "--jdk-home", jdkHome,
-        "--jvm-target", "17",
+        "--jvm-target", javaVersion,
         "--build-upon-default-config"
     )
 }
