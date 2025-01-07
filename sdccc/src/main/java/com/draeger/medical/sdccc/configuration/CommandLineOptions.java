@@ -90,6 +90,7 @@ public class CommandLineOptions {
                 final CommandLine cmdVersion = versionParser.parse(version, commandLineArguments);
                 if (cmdVersion.hasOption(VERSION)) {
                     printVersion();
+                    System.exit(0);
                 } else {
                     printNetworkInfo(e, help, options, version);
                 }
