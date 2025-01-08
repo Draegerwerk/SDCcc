@@ -29,6 +29,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
@@ -617,18 +618,8 @@ public class MdibHistorian {
     }
 
     /**
-     * Processes each sequenceId using the provided consumer.
-     *
-     * @param sequenceIdConsumer a consumer that processes each sequenceId
-     */
-    public void processSequenceIds(final Consumer<String> sequenceIdConsumer) throws IOException {
-        try (Stream<String> sequenceIds = this.getKnownSequenceIds()) {
-            sequenceIds.forEach(sequenceIdConsumer);
-        }
-    }
-
-    /**
-     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     * Processes each RemoteMdibAccess from the episodic report based history for the specified sequence ID
+     * using the provided processor.
      *
      * @param processor  a consumer that processes each RemoteMdibAccess
      * @param sequenceId  of the sequence to retrieve reports for
@@ -646,7 +637,8 @@ public class MdibHistorian {
     }
 
     /**
-     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     * Processes each RemoteMdibAccess from the episodic report based histories of all known sequence ids
+     * using the provided processor.
      *
      * @param processor  a consumer that processes each RemoteMdibAccess
      */
@@ -659,9 +651,10 @@ public class MdibHistorian {
     }
 
     /**
-     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based history
+     * of the specified sequenceId using the provided processor.
      *
-     * @param processor  a consumer that processes each RemoteMdibAccess
+     * @param processor  a consumer that processes each pair of RemoteMdibAccess
      * @param sequenceId  of the sequence to retrieve reports for
      */
     public void processAllConsecutivePairsForSequenceId(
@@ -688,9 +681,10 @@ public class MdibHistorian {
     }
 
     /**
-     * Processes each RemoteMdibAccess for a given sequenceId using the provided processor.
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based histories
+     * of all known sequence ids using the provided processor.
      *
-     * @param processor  a consumer that processes each RemoteMdibAccess
+     * @param processor a consumer that processes each pair of RemoteMdibAccess
      */
     public void processAllConsecutivePairs(final BiConsumer<RemoteMdibAccess, RemoteMdibAccess> processor)
             throws IOException {
@@ -702,8 +696,86 @@ public class MdibHistorian {
     }
 
     /**
-     * Result container providing a {@linkplain RemoteMdibAccess} on which every incoming report is applied in order of
-     * arrival.
+     * Processes a RemoteMdibAccess instance for which the AbstractReport is applicable across all known sequence ids.
+     *
+     * @param applicable a predicate that determines whether a given AbstractReport should be processed
+     * @param processor  a consumer that processes a RemoteMdibAccess and an AbstractReport
+     */
+    public void processAllApplicableReports(
+            final Predicate<AbstractReport> applicable, final BiConsumer<RemoteMdibAccess, AbstractReport> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess mdib = null;
+                try {
+                    mdib = createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdib.getMdibVersion());
+                try (final var reports = getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (applicable.test(report)) {
+                            processor.accept(mdib, report);
+                        }
+                        mdib = applyReportOnStorage(mdib, report);
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Processes each consecutive pair of RemoteMdibAccess instances for which the AbstractReport is applicable
+     * across all known sequence ids.
+     *
+     * @param applicable  a predicate that determines whether a given AbstractReport should be processed
+     * @param processor  a consumer that processes each pair of RemoteMdibAccess and an AbstractReport
+     *
+     */
+    public void processAllApplicableReportsConsecutivePairs(
+            final Predicate<AbstractReport> applicable,
+            final TriConsumer<RemoteMdibAccess, RemoteMdibAccess, AbstractReport> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = createNewStorage(sequenceId);
+                    second = createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+                        if (applicable.test(report)) {
+                            second = applyReportOnStorage(second, report);
+                            processor.accept(first, second, report);
+                            first = applyReportOnStorage(first, report);
+                        } else {
+                            first = applyReportOnStorage(first, report);
+                            second = applyReportOnStorage(second, report);
+                        }
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based history
+     * of the specified sequence ids using the provided processor.
      */
     public static class HistorianResult implements AutoCloseable {
         // this is intentionally not implementing the iterator interface, as we're only updating the same
