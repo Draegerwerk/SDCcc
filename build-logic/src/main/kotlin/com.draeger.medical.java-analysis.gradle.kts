@@ -5,7 +5,7 @@ plugins {
     checkstyle
 }
 
-tasks.check{
+tasks.check {
     dependsOn("spotbugsMain")
     dependsOn("spotbugsTest")
 }

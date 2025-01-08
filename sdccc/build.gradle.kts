@@ -56,11 +56,6 @@ dependencies {
 
 description = "sdccc"
 
-val testsJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("tests")
-    from(sourceSets["test"].output)
-}
-
 tasks.test {
     useJUnitPlatform()
     exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
