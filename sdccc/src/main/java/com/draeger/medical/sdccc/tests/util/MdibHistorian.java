@@ -774,8 +774,8 @@ public class MdibHistorian {
     }
 
     /**
-     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based history
-     * of the specified sequence ids using the provided processor.
+     * Result container providing a {@linkplain RemoteMdibAccess} on which every incoming report is applied in order of
+     * arrival.
      */
     public static class HistorianResult implements AutoCloseable {
         // this is intentionally not implementing the iterator interface, as we're only updating the same
