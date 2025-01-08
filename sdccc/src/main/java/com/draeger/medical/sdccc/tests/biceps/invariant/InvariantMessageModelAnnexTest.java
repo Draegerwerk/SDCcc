@@ -162,65 +162,67 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
 
         final var acceptableSequenceSeen = new AtomicInteger(0);
 
-        Predicate<AbstractReport> isDescriptionModificationReport =
+        final Predicate<AbstractReport> isDescriptionModificationReport =
                 report -> report instanceof DescriptionModificationReport;
 
-        TriConsumer<RemoteMdibAccess, RemoteMdibAccess, AbstractReport> reportProcessor = (first, second, report) -> {
-            acceptableSequenceSeen.incrementAndGet();
+        final TriConsumer<RemoteMdibAccess, RemoteMdibAccess, AbstractReport> reportProcessor =
+                (first, second, report) -> {
+                    acceptableSequenceSeen.incrementAndGet();
 
-            DescriptionModificationReport descriptionModificationReport = (DescriptionModificationReport) report;
+                    final DescriptionModificationReport descriptionModificationReport =
+                            (DescriptionModificationReport) report;
 
-            for (var reportPart : descriptionModificationReport.getReportPart()) {
-                for (var modifiedDescriptor : reportPart.getDescriptor()) {
+                    for (var reportPart : descriptionModificationReport.getReportPart()) {
+                        for (var modifiedDescriptor : reportPart.getDescriptor()) {
 
-                    final var descriptorBeforeReportOpt = first.getDescriptor(modifiedDescriptor.getHandle());
-                    final var descriptorAfterReportOpt = second.getDescriptor(modifiedDescriptor.getHandle());
+                            final var descriptorBeforeReportOpt = first.getDescriptor(modifiedDescriptor.getHandle());
+                            final var descriptorAfterReportOpt = second.getDescriptor(modifiedDescriptor.getHandle());
 
-                    final var modificationType = ImpliedValueUtil.getModificationType(reportPart);
-                    if (modificationType.equals(DescriptionModificationType.UPT)) {
-                        assertTrue(
-                                descriptorBeforeReportOpt.isPresent() && descriptorAfterReportOpt.isPresent(),
-                                String.format(
-                                        "The descriptor with handle %s is not present",
-                                        modifiedDescriptor.getHandle()));
+                            final var modificationType = ImpliedValueUtil.getModificationType(reportPart);
+                            if (modificationType.equals(DescriptionModificationType.UPT)) {
+                                assertTrue(
+                                        descriptorBeforeReportOpt.isPresent() && descriptorAfterReportOpt.isPresent(),
+                                        String.format(
+                                                "The descriptor with handle %s is not present",
+                                                modifiedDescriptor.getHandle()));
 
-                        assertNotEquals(
-                                descriptorAfterReportOpt.orElseThrow(),
-                                descriptorBeforeReportOpt.orElseThrow(),
-                                String.format(
-                                        "The descriptor with the handle %s from the report has not changed",
-                                        modifiedDescriptor.getHandle()));
+                                assertNotEquals(
+                                        descriptorAfterReportOpt.orElseThrow(),
+                                        descriptorBeforeReportOpt.orElseThrow(),
+                                        String.format(
+                                                "The descriptor with the handle %s from the report has not changed",
+                                                modifiedDescriptor.getHandle()));
 
-                    } else if (modificationType.equals(DescriptionModificationType.CRT)) {
-                        assertTrue(
-                                descriptorBeforeReportOpt.isEmpty(),
-                                String.format(
-                                        "The descriptor with handle %s is present before applying the report"
-                                                + " for modification type create",
-                                        modifiedDescriptor.getHandle()));
-                        assertTrue(
-                                descriptorAfterReportOpt.isPresent(),
-                                String.format(
-                                        "The descriptor with handle %s is missing after applying the report"
-                                                + " for modification type create",
-                                        modifiedDescriptor.getHandle()));
-                    } else {
-                        assertTrue(
-                                descriptorBeforeReportOpt.isPresent(),
-                                String.format(
-                                        "The descriptor with handle %s is missing before applying the report"
-                                                + " for modification type delete",
-                                        modifiedDescriptor.getHandle()));
-                        assertTrue(
-                                descriptorAfterReportOpt.isEmpty(),
-                                String.format(
-                                        "The descriptor with handle %s is present after applying the report"
-                                                + " for modification type delete",
-                                        modifiedDescriptor.getHandle()));
+                            } else if (modificationType.equals(DescriptionModificationType.CRT)) {
+                                assertTrue(
+                                        descriptorBeforeReportOpt.isEmpty(),
+                                        String.format(
+                                                "The descriptor with handle %s is present before applying the report"
+                                                        + " for modification type create",
+                                                modifiedDescriptor.getHandle()));
+                                assertTrue(
+                                        descriptorAfterReportOpt.isPresent(),
+                                        String.format(
+                                                "The descriptor with handle %s is missing after applying the report"
+                                                        + " for modification type create",
+                                                modifiedDescriptor.getHandle()));
+                            } else {
+                                assertTrue(
+                                        descriptorBeforeReportOpt.isPresent(),
+                                        String.format(
+                                                "The descriptor with handle %s is missing before applying the report"
+                                                        + " for modification type delete",
+                                                modifiedDescriptor.getHandle()));
+                                assertTrue(
+                                        descriptorAfterReportOpt.isEmpty(),
+                                        String.format(
+                                                "The descriptor with handle %s is present after applying the report"
+                                                        + " for modification type delete",
+                                                modifiedDescriptor.getHandle()));
+                            }
+                        }
                     }
-                }
-            }
-        };
+                };
 
         mdibHistorian.processAllApplicableReportsConsecutivePairs(isDescriptionModificationReport, reportProcessor);
 
