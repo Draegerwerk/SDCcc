@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the SoapMarshalling is now configurable regarding packages to scan for JAXB classes and the schemas for validation 
 - the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
 - sdc-ri version to 6.2.0-SNAPSHOT
