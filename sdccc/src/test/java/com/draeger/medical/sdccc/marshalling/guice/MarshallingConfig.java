@@ -21,5 +21,8 @@ public final class MarshallingConfig {
      */
     public static final String VALIDATE_SOAP_MESSAGES = "ValidateSoapMessages";
 
+    public static final String PACKAGES = "Packages";
+    public static final String SCHEMAS = "Schemas";
+
     private MarshallingConfig() {}
 }
