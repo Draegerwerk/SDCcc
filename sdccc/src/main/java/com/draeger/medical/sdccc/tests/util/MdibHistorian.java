@@ -27,6 +27,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
@@ -34,6 +37,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.somda.sdc.biceps.common.CommonConfig;
 import org.somda.sdc.biceps.common.access.ReadTransaction;
 import org.somda.sdc.biceps.common.access.ReadTransactionImpl;
@@ -612,6 +616,162 @@ public class MdibHistorian {
 
         mdibStorage.writeDescription(mdibVersion, mdDescriptionVersion, mdStateVersion, modifications);
         return mdibStorage;
+    }
+
+    /**
+     * Processes each RemoteMdibAccess from the episodic report based history for the specified sequence ID
+     * using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     * @param sequenceId  of the sequence to retrieve reports for
+     */
+    public void processRemoteMdibAccessForSequence(
+            final Consumer<RemoteMdibAccess> processor, final String sequenceId) {
+        try (HistorianResult history = episodicReportBasedHistory(sequenceId)) {
+            RemoteMdibAccess mdibAccess;
+            while ((mdibAccess = history.next()) != null) {
+                processor.accept(mdibAccess);
+            }
+        } catch (PreprocessingException | ReportProcessingException e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * Processes each RemoteMdibAccess from the episodic report based histories of all known sequence ids
+     * using the provided processor.
+     *
+     * @param processor  a consumer that processes each RemoteMdibAccess
+     */
+    public void processAllRemoteMdibAccess(final Consumer<RemoteMdibAccess> processor) throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                processRemoteMdibAccessForSequence(processor, sequenceId);
+            });
+        }
+    }
+
+    /**
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based history
+     * of the specified sequenceId using the provided processor.
+     *
+     * @param processor  a consumer that processes each pair of RemoteMdibAccess
+     * @param sequenceId  of the sequence to retrieve reports for
+     */
+    public void processAllConsecutivePairsForSequenceId(
+            final BiConsumer<RemoteMdibAccess, RemoteMdibAccess> processor, final String sequenceId) {
+        try (final MdibHistorian.HistorianResult history = episodicReportBasedHistory(sequenceId);
+                final MdibHistorian.HistorianResult historyNext = episodicReportBasedHistory(sequenceId)) {
+
+            // skip the first entry so that history and historyNext are off by one entry
+            final var skippedElement = historyNext.next();
+            if (skippedElement == null) {
+                throw new NoTestData("Not enough input to compare mdib revisions");
+            }
+
+            RemoteMdibAccess first = history.next();
+            RemoteMdibAccess second = historyNext.next();
+            while (second != null) {
+                processor.accept(first, second);
+                first = history.next();
+                second = historyNext.next();
+            }
+        } catch (PreprocessingException | ReportProcessingException | NoTestData e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based histories
+     * of all known sequence ids using the provided processor.
+     *
+     * @param processor a consumer that processes each pair of RemoteMdibAccess
+     */
+    public void processAllConsecutivePairs(final BiConsumer<RemoteMdibAccess, RemoteMdibAccess> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                processAllConsecutivePairsForSequenceId(processor, sequenceId);
+            });
+        }
+    }
+
+    /**
+     * Processes a RemoteMdibAccess instance for which the AbstractReport is applicable across all known sequence ids.
+     *
+     * @param applicable a predicate that determines whether a given AbstractReport should be processed
+     * @param processor  a consumer that processes a RemoteMdibAccess and an AbstractReport
+     */
+    public void processAllApplicableReports(
+            final Predicate<AbstractReport> applicable, final BiConsumer<RemoteMdibAccess, AbstractReport> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess mdib = null;
+                try {
+                    mdib = createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(mdib.getMdibVersion());
+                try (final var reports = getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+
+                        if (applicable.test(report)) {
+                            processor.accept(mdib, report);
+                        }
+                        mdib = applyReportOnStorage(mdib, report);
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Processes each consecutive pair of RemoteMdibAccess instances for which the AbstractReport is applicable
+     * across all known sequence ids.
+     *
+     * @param applicable  a predicate that determines whether a given AbstractReport should be processed
+     * @param processor  a consumer that processes each pair of RemoteMdibAccess and an AbstractReport
+     *
+     */
+    public void processAllApplicableReportsConsecutivePairs(
+            final Predicate<AbstractReport> applicable,
+            final TriConsumer<RemoteMdibAccess, RemoteMdibAccess, AbstractReport> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                RemoteMdibAccess first = null;
+                RemoteMdibAccess second = null;
+                try {
+                    first = createNewStorage(sequenceId);
+                    second = createNewStorage(sequenceId);
+                } catch (PreprocessingException e) {
+                    fail(e);
+                }
+
+                final var minimumMdibVersion = ImpliedValueUtil.getMdibVersion(first.getMdibVersion());
+                try (final var reports = getAllUniqueReports(sequenceId, minimumMdibVersion)) {
+                    for (final Iterator<AbstractReport> iterator = reports.iterator(); iterator.hasNext(); ) {
+                        final AbstractReport report = iterator.next();
+                        if (applicable.test(report)) {
+                            second = applyReportOnStorage(second, report);
+                            processor.accept(first, second, report);
+                            first = applyReportOnStorage(first, report);
+                        } else {
+                            first = applyReportOnStorage(first, report);
+                            second = applyReportOnStorage(second, report);
+                        }
+                    }
+                } catch (PreprocessingException | ReportProcessingException e) {
+                    fail(e);
+                }
+            });
+        }
     }
 
     /**
