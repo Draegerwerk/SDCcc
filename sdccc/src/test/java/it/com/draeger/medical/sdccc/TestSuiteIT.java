@@ -485,7 +485,9 @@ public class TestSuiteIT {
         assertFalse(obs.hadInvariantRun());
 
         final var client = injector.getInstance(TestClient.class);
-        client.shouldReconnect(shouldReconnect);
+        if (shouldReconnect) {
+            client.enableReconnect();
+        }
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
@@ -549,7 +551,7 @@ public class TestSuiteIT {
         InjectorTestBase.setInjector(injector);
 
         final var client = injector.getInstance(TestClient.class);
-        client.shouldReconnect(true);
+        client.enableReconnect();
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 

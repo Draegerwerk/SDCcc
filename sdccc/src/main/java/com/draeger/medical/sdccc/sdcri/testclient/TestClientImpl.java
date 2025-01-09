@@ -405,16 +405,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     }
 
     @Override
-    public void shouldReconnect(final Boolean shouldReconnect) {
+    public void enableReconnect() {
         final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
         final var appender =
                 (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
-        if (shouldReconnect) {
-            appender.setThreadNameWhitelist(buildThreadNameWhiteList());
-        } else {
-            appender.setThreadNameWhitelist(List.of());
-        }
-        this.reconnectEnabled.set(shouldReconnect);
+        appender.setThreadNameWhitelist(buildThreadNameWhiteList());
+        this.reconnectEnabled.set(true);
     }
 
     @Override
@@ -494,17 +490,19 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                         }
                         reconnect(watchdogMessage);
                         inReconnectProcess.set(false);
+                        disableReconnect();
                         lock.notifyAll();
                     }
                 });
             } else {
                 LOG.debug("ReconnectExecutor is not running.");
+                disableReconnect();
                 invalidateAfterConnectionLoss(watchdogMessage);
             }
         } else if (shouldBeConnected.get()) {
             invalidateAfterConnectionLoss(watchdogMessage);
         } else {
-            LOG.info("The disconnect from provider was expected.");
+            LOG.info("The disconnect from the provider was expected.");
         }
     }
 
@@ -577,6 +575,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 convertToRegex(RESOLVER_THREAD_POOL_NAME_FORMAT),
                 convertToRegex(CONSUMER_NAME_FORMAT),
                 convertToRegex(WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT));
+    }
+
+    private void disableReconnect() {
+        LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
+        this.reconnectEnabled.set(false);
     }
 
     private String convertToRegex(final String pattern) {

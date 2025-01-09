@@ -55,11 +55,9 @@ public interface TestClient {
     void connect() throws InterceptorException, TransportException, IOException;
 
     /**
-     * Enable or disable reconnection attempts on connection loss.
-     *
-     * @param shouldReconnect true if reconnect should be attempted, false otherwise.
+     * Enable reconnection attempts on connection loss.
      */
-    void shouldReconnect(Boolean shouldReconnect);
+    void enableReconnect();
 
     /**
      * Disconnects the SDC client from the target.
