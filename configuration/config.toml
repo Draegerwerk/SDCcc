@@ -4,7 +4,7 @@ GraphicalPopups=true
 TestExecutionLogging=true
 EnableMessageEncodingCheck=true
 SummarizeMessageEncodingErrors=true
-MinCollectDataTime=20
+MinCollectDataTime=10
 
 [SDCcc.TLS]
 FileDirectory="./configuration"
