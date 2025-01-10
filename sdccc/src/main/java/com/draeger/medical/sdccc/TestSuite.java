@@ -104,6 +104,7 @@ public class TestSuite {
 
     private final Injector injector;
     private final String[] sdcTestDirectories;
+    private final Duration minCollectDataTime;
     private final File testRunDir;
     private final TestRunObserver testRunObserver;
     private final MessageGeneratingUtil messageGenerator;
@@ -118,6 +119,7 @@ public class TestSuite {
      * @param injector             a reference to the injector injecting here
      * @param testRunObserver      observer for invalidating test runs
      * @param sdcTestDirectories   directories to search for test cases
+     * @param minCollectDataTime   minimum amount of time to collect data
      * @param testRunDir           directory to run the tests in and store artifacts
      * @param testExecutionLogging whether logging of test case starts etc. shall be done
      * @param messageGenerator     utility for generating messages to send
@@ -129,6 +131,7 @@ public class TestSuite {
             final Injector injector,
             final TestRunObserver testRunObserver,
             @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
+            @Named(TestSuiteConfig.MIN_COLLECT_DATA_TIME) final long minCollectDataTime,
             @Named(TestRunConfig.TEST_RUN_DIR) final File testRunDir,
             @Named(TestSuiteConfig.TEST_EXECUTION_LOGGING) final boolean testExecutionLogging,
             final MessageGeneratingUtil messageGenerator,
@@ -137,6 +140,7 @@ public class TestSuite {
         this.injector = injector;
         this.sdcTestDirectories = sdcTestDirectories;
         this.testRunObserver = testRunObserver;
+        this.minCollectDataTime = Duration.ofSeconds(minCollectDataTime);
         this.testRunDir = testRunDir;
         this.messageGenerator = messageGenerator;
         this.testRunInformation = testRunInformation;
@@ -284,8 +288,9 @@ public class TestSuite {
     private void phase1() {
         performBasicMessagingCheck();
 
+        LOG.info("Waiting for {} to collect data.", this.minCollectDataTime);
         try {
-            Thread.sleep(TIME_BETWEEN_PHASES);
+            Thread.sleep(this.minCollectDataTime.toMillis());
         } catch (final InterruptedException e) {
             LOG.error("", e);
         }
