@@ -55,6 +55,11 @@ public interface TestClient {
     void connect() throws InterceptorException, TransportException, IOException;
 
     /**
+     * Enable reconnection attempts on connection loss.
+     */
+    void enableReconnect();
+
+    /**
      * Disconnects the SDC client from the target.
      *
      * @throws TimeoutException in case the disconnect did not finish on time

@@ -32,6 +32,7 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
+import com.draeger.medical.sdccc.util.LoggingConfigurator;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -64,6 +65,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.junit.jupiter.api.AfterEach;
@@ -123,6 +125,10 @@ public class TestSuiteIT {
         tempDir.toFile().deleteOnExit();
 
         LOG.info("Creating injector for epr {}", eprAddress);
+
+        final var ctx = (LoggerContext) LogManager.getContext(false);
+        ctx.setConfiguration(LoggingConfigurator.loggerConfig(tempDir.toFile(), Level.INFO));
+        ctx.updateLoggers();
 
         return createInjector(ArrayUtils.addAll(
                 override, new MockConfiguration(cryptoSettings, tempDir, failingTests, locationConfig, eprAddress)));
@@ -447,11 +453,41 @@ public class TestSuiteIT {
                 getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
         InjectorTestBase.setInjector(injector);
 
+        unexpectedSubscriptionEnd(injector, false);
+        // dead subscription must've been marked
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertTrue(testRunObserver.isInvalid(), "TestRunObserver had unexpectedly absent failures");
+    }
+
+    /**
+     * Runs the test consumer and causes a failed renewal with reconnection enabled,
+     * verifies that test run is not marked as invalid.
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testConsumerReconnectsSuccessfulAfterUnexpectedSubscriptionEnd() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
+        InjectorTestBase.setInjector(injector);
+
+        unexpectedSubscriptionEnd(injector, true);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(testRunObserver.isInvalid(), "TestRunObserver should not be invalid");
+        final var client = injector.getInstance(TestClient.class);
+        assertFalse(client.getConnector().getConnectedDevices().isEmpty(), "Client should be reconnected");
+    }
+
+    private void unexpectedSubscriptionEnd(final Injector injector, final boolean shouldReconnect) throws Exception {
         final var obs = injector.getInstance(WasRunObserver.class);
         assertFalse(obs.hadDirectRun());
         assertFalse(obs.hadInvariantRun());
 
         final var client = injector.getInstance(TestClient.class);
+        if (shouldReconnect) {
+            client.enableReconnect();
+        }
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
@@ -487,10 +523,72 @@ public class TestSuiteIT {
         if (!subscriptionEnd.isNegative()) {
             Thread.sleep(subscriptionEnd.toMillis());
         }
+    }
 
-        // dead subscription must've been marked
+    /**
+     * Runs the test consumer and stops and starts a provider with the same epr,
+     * verifies that the consumer reconnects and the test run is not marked as invalid.
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testConsumerSuccessfullyReconnect() throws Exception {
+        final var providerEpr = getRandomEpr();
+        final var provider = getProvider(providerEpr);
+
+        final DiscoveryAccess discoveryAccess =
+                provider.getSdcDevice().getDevice().getDiscoveryAccess();
+        discoveryAccess.setTypes(List.of(CommonConstants.MEDICAL_DEVICE_TYPE));
+        discoveryAccess.setScopes(List.of(GlueConstants.SCOPE_SDC_PROVIDER));
+
+        provider.startService(DEFAULT_TIMEOUT);
+
+        final var injector = getConsumerInjector(false, null, providerEpr, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, 2L);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.enableReconnect();
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        provider.stopService(DEFAULT_TIMEOUT);
+        final var provider2 = getProvider(providerEpr);
+        provider2.startService(DEFAULT_TIMEOUT);
+
+        final DiscoveryAccess discoveryAccess2 =
+                provider2.getSdcDevice().getDevice().getDiscoveryAccess();
+        discoveryAccess2.setTypes(List.of(CommonConstants.MEDICAL_DEVICE_TYPE));
+        discoveryAccess2.setScopes(List.of(GlueConstants.SCOPE_SDC_PROVIDER));
+
+        final var waitTime = 1000;
+        while (provider2.getActiveSubscriptions().isEmpty()) {
+            Thread.sleep(waitTime);
+        }
+        // get active subscription id
+        final var activeSubs = provider2.getActiveSubscriptions();
+        assertEquals(1, activeSubs.size(), "Expected only one active subscription");
+
+        final var subManTimeout =
+                activeSubs.values().stream().findFirst().orElseThrow().getExpiresTimeout();
+
+        client.disconnect();
+
+        // wait until subscription must've ended
+        final var subscriptionEnd = Duration.between(Instant.now(), subManTimeout);
+
+        if (!subscriptionEnd.isNegative()) {
+            Thread.sleep(subscriptionEnd.toMillis());
+        }
+
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
-        assertTrue(testRunObserver.isInvalid(), "TestRunObserver had unexpectedly absent failures");
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+        provider2.stopService(DEFAULT_TIMEOUT);
     }
 
     /**

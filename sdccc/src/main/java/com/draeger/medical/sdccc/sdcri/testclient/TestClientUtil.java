@@ -14,23 +14,35 @@ import com.draeger.medical.sdccc.tests.util.MdibHistorian;
 import com.draeger.medical.sdccc.tests.util.guice.MdibHistorianFactory;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import org.somda.sdc.biceps.guice.DefaultBicepsConfigModule;
 import org.somda.sdc.biceps.guice.DefaultBicepsModule;
+import org.somda.sdc.common.CommonConfig;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
 import org.somda.sdc.common.guice.DefaultCommonConfigModule;
 import org.somda.sdc.common.guice.DefaultCommonModule;
+import org.somda.sdc.common.util.ExecutorWrapperService;
 import org.somda.sdc.dpws.CommunicationLog;
 import org.somda.sdc.dpws.CommunicationLogImpl;
 import org.somda.sdc.dpws.CommunicationLogSink;
@@ -39,17 +51,44 @@ import org.somda.sdc.dpws.crypto.CryptoConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 import org.somda.sdc.dpws.factory.CommunicationLogFactory;
 import org.somda.sdc.dpws.guice.DefaultDpwsModule;
+import org.somda.sdc.dpws.guice.NetworkJobThreadPool;
+import org.somda.sdc.dpws.guice.ResolverThreadPool;
+import org.somda.sdc.dpws.guice.WsDiscovery;
 import org.somda.sdc.dpws.network.LocalAddressResolver;
 import org.somda.sdc.glue.consumer.ConsumerConfig;
+import org.somda.sdc.glue.guice.Consumer;
 import org.somda.sdc.glue.guice.DefaultGlueConfigModule;
 import org.somda.sdc.glue.guice.DefaultGlueModule;
 import org.somda.sdc.glue.guice.GlueDpwsConfigModule;
+import org.somda.sdc.glue.guice.WatchdogScheduledExecutor;
 
 /**
  * Utility for a {@linkplain TestClient} instance.
  */
 public class TestClientUtil {
+    private static final String SDCCC_PREFIX = "sdccc";
+    private static final String THREAD_NAME_FORMAT = "-thread-%d";
+
+    private static final String NETWORK_THREAD_POOL_NAME = SDCCC_PREFIX + "NetworkThreadPool";
+    private static final String WS_DISCOVERY_NAME = SDCCC_PREFIX + "WsDiscovery";
+    private static final String RESOLVER_THREAD_POOL_NAME = SDCCC_PREFIX + "ResolverThreadPool";
+    private static final String CONSUMER_NAME = SDCCC_PREFIX + "Consumer";
+    private static final String WATCHDOG_SCHEDULED_EXECUTOR_NAME = SDCCC_PREFIX + "WatchdogScheduledExecutor";
+
+    public static final String NETWORK_THREAD_POOL_NAME_FORMAT = NETWORK_THREAD_POOL_NAME + THREAD_NAME_FORMAT;
+    public static final String WS_DISCOVERY_NAME_FORMAT = WS_DISCOVERY_NAME + THREAD_NAME_FORMAT;
+    public static final String RESOLVER_THREAD_POOL_NAME_FORMAT = RESOLVER_THREAD_POOL_NAME + THREAD_NAME_FORMAT;
+    public static final String CONSUMER_NAME_FORMAT = CONSUMER_NAME + THREAD_NAME_FORMAT;
+    public static final String WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT =
+            WATCHDOG_SCHEDULED_EXECUTOR_NAME + THREAD_NAME_FORMAT;
+
     private final Injector injector;
+
+    private ExecutorWrapperService<ListeningExecutorService> networkJobThreadPoolExecutor;
+    private ExecutorWrapperService<ListeningExecutorService> wsDiscoveryExecutor;
+    private ExecutorWrapperService<ListeningExecutorService> resolveExecutor;
+    private ExecutorWrapperService<ListeningExecutorService> consumerExecutor;
+    private ExecutorWrapperService<ScheduledExecutorService> watchdogScheduledExecutor;
 
     /**
      * Creates a utility instance which prepares the injector for the client.
@@ -100,6 +139,111 @@ public class TestClientUtil {
                         bind(CommunicationLogSink.class).toInstance(communicationLogMessageStorage);
                         bind(TestRunObserver.class).toInstance(testRunObserver);
                         bind(LocalAddressResolver.class).toInstance(localAddressResolver);
+                    }
+                },
+                new AbstractModule() {
+
+                    @Provides
+                    @NetworkJobThreadPool
+                    ExecutorWrapperService<ListeningExecutorService> getNetworkJobThreadPool(
+                            final @Named(CommonConfig.INSTANCE_IDENTIFIER) String frameworkIdentifier) {
+                        if (networkJobThreadPoolExecutor == null) {
+                            final Callable<ListeningExecutorService> executor =
+                                    () -> MoreExecutors.listeningDecorator(new ThreadPoolExecutor(
+                                            10,
+                                            50,
+                                            60L,
+                                            TimeUnit.SECONDS,
+                                            new LinkedBlockingQueue<>(),
+                                            new ThreadFactoryBuilder()
+                                                    .setNameFormat(NETWORK_THREAD_POOL_NAME_FORMAT)
+                                                    .setDaemon(true)
+                                                    .build()));
+                            networkJobThreadPoolExecutor = new ExecutorWrapperService<>(
+                                    executor, NETWORK_THREAD_POOL_NAME, frameworkIdentifier);
+                        }
+
+                        return networkJobThreadPoolExecutor;
+                    }
+
+                    @Provides
+                    @WsDiscovery
+                    ExecutorWrapperService<ListeningExecutorService> getWsDiscoveryExecutor(
+                            final @Named(CommonConfig.INSTANCE_IDENTIFIER) String frameworkIdentifier) {
+                        if (wsDiscoveryExecutor == null) {
+                            final Callable<ListeningExecutorService> executor =
+                                    () -> MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
+                                            10,
+                                            new ThreadFactoryBuilder()
+                                                    .setNameFormat(WS_DISCOVERY_NAME_FORMAT)
+                                                    .setDaemon(true)
+                                                    .build()));
+
+                            wsDiscoveryExecutor =
+                                    new ExecutorWrapperService<>(executor, WS_DISCOVERY_NAME, frameworkIdentifier);
+                        }
+
+                        return wsDiscoveryExecutor;
+                    }
+
+                    @Provides
+                    @ResolverThreadPool
+                    ExecutorWrapperService<ListeningExecutorService> getResolverThreadPool(
+                            final @Named(CommonConfig.INSTANCE_IDENTIFIER) String frameworkIdentifier) {
+                        if (resolveExecutor == null) {
+                            final Callable<ListeningExecutorService> executor =
+                                    () -> MoreExecutors.listeningDecorator(new ThreadPoolExecutor(
+                                            10,
+                                            50,
+                                            60L,
+                                            TimeUnit.SECONDS,
+                                            new LinkedBlockingQueue<>(),
+                                            new ThreadFactoryBuilder()
+                                                    .setNameFormat(RESOLVER_THREAD_POOL_NAME_FORMAT)
+                                                    .setDaemon(true)
+                                                    .build()));
+                            resolveExecutor = new ExecutorWrapperService<>(
+                                    executor, RESOLVER_THREAD_POOL_NAME, frameworkIdentifier);
+                        }
+
+                        return resolveExecutor;
+                    }
+
+                    @Provides
+                    @Consumer
+                    ExecutorWrapperService<ListeningExecutorService> getConsumerExecutor(
+                            final @Named(CommonConfig.INSTANCE_IDENTIFIER) String frameworkIdentifier) {
+                        if (consumerExecutor == null) {
+                            final Callable<ListeningExecutorService> executor =
+                                    () -> MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
+                                            10,
+                                            new ThreadFactoryBuilder()
+                                                    .setNameFormat(CONSUMER_NAME_FORMAT)
+                                                    .setDaemon(true)
+                                                    .build()));
+                            consumerExecutor =
+                                    new ExecutorWrapperService<>(executor, CONSUMER_NAME, frameworkIdentifier);
+                        }
+                        return consumerExecutor;
+                    }
+
+                    @Provides
+                    @WatchdogScheduledExecutor
+                    ExecutorWrapperService<ScheduledExecutorService> getWatchdogScheduledExecutor(
+                            final @Named(CommonConfig.INSTANCE_IDENTIFIER) String frameworkIdentifier) {
+                        if (watchdogScheduledExecutor == null) {
+                            final Callable<ScheduledExecutorService> executor = () -> Executors.newScheduledThreadPool(
+                                    10,
+                                    new ThreadFactoryBuilder()
+                                            .setNameFormat(WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT)
+                                            .setDaemon(true)
+                                            .build());
+
+                            watchdogScheduledExecutor = new ExecutorWrapperService<>(
+                                    executor, WATCHDOG_SCHEDULED_EXECUTOR_NAME, frameworkIdentifier);
+                        }
+
+                        return watchdogScheduledExecutor;
                     }
                 },
                 configurationModule));
