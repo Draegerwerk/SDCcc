@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - support for Kotlin
 - storing of IP addresses of inbound messages in the database
 - a command line parameter to not create subdirectories in the test run directory
+- a command line parameter to print the version of the sdccc test tool
 
 ### Changed
 
