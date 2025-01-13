@@ -9,12 +9,16 @@ package com.draeger.medical.sdccc.configuration;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -45,6 +49,7 @@ public class CommandLineOptions {
     private static final String TEST_RUN_DIRECTORY = "test_run_directory";
     private static final String NO_SUBDIRECTORIES = "no_subdirectories";
     private static final String FILE_LOG_LEVEL = "file_log_level";
+    private static final String VERSION = "version";
     private final Path configPath;
     private final Path testConfigPath;
     private final Path testParameterPath;
@@ -79,14 +84,18 @@ public class CommandLineOptions {
         try {
             cmd = parser.parse(options, commandLineArguments);
         } catch (final ParseException e) {
-            System.out.println(e.getMessage());
-            help.printHelp("SDCcc", options);
-
+            final var version = setupVersion();
+            final var versionParser = new DefaultParser();
             try {
-                printNetworkAdapterInformation();
-            } catch (final SocketException e2) {
-                LOG.error("Error while printing network adapter info", e2);
-                throw new RuntimeException(e2);
+                final CommandLine cmdVersion = versionParser.parse(version, commandLineArguments);
+                if (cmdVersion.hasOption(VERSION)) {
+                    printVersion();
+                    System.exit(0);
+                } else {
+                    printNetworkInfo(e, help, options, version);
+                }
+            } catch (final ParseException ex) {
+                printNetworkInfo(e, help, options, version);
             }
             System.exit(1);
         }
@@ -107,6 +116,46 @@ public class CommandLineOptions {
         this.testRunDirectory = cmd.getOptionValue(TEST_RUN_DIRECTORY);
         this.noSubdirectories = Boolean.parseBoolean(cmd.getOptionValue(NO_SUBDIRECTORIES));
         this.fileLogLevel = Level.toLevel(cmd.getOptionValue(FILE_LOG_LEVEL), Level.INFO);
+    }
+
+    private void printVersion() {
+        final Properties properties = new Properties();
+        try (InputStream input = this.getClass().getResourceAsStream("config.properties")) {
+            properties.load(input);
+            final var devVersion = properties.getProperty("project.version");
+            System.out.println(Objects.requireNonNullElse(devVersion, "No project version information available."));
+        } catch (IOException ex) {
+            LOG.error("Error loading project version", ex);
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private void printNetworkInfo(
+            final ParseException e, final HelpFormatter help, final Options options, final Options version) {
+        System.out.println(e.getMessage());
+        for (var option : version.getOptions()) {
+            options.addOption(option);
+        }
+        help.printHelp("SDCcc", options);
+
+        try {
+            printNetworkAdapterInformation();
+        } catch (final SocketException e2) {
+            LOG.error("Error while printing network adapter info", e2);
+            throw new RuntimeException(e2);
+        }
+    }
+
+    private Options setupVersion() {
+        final var options = new Options();
+        {
+            final String description =
+                    "Print the version of the test tool. Can only be used without any other command line options.";
+            final var version = new Option("v", VERSION, false, description);
+            version.setRequired(false);
+            options.addOption(version);
+        }
+        return options;
     }
 
     private Options setupOptions() {
@@ -203,7 +252,6 @@ public class CommandLineOptions {
             fileLogLevelOpt.setRequired(false);
             options.addOption(fileLogLevelOpt);
         }
-
         return options;
     }
 
