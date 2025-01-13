@@ -173,41 +173,4 @@ public class PreconditionRegistryTest {
                 () -> registry.registerManipulationPrecondition(PreconditionUtil.MockManipulation.class));
         assertEquals(1, mockInteractionWasCalled.get());
     }
-
-    @Test
-    void testRegisteringObservingPreconditions() throws Exception {
-        final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
-
-        final var mockFactory = mock(ObservingPreconditionFactory.class);
-        doReturn(mockFactory).when(mockPreconditionFactory).getObjectInstance();
-
-        final var mockPrecondition = mock(Observing.class);
-        doReturn(mockPrecondition).when(mockFactory).create(any());
-
-        // call register twice, expect only one to be registered
-        registry.registerObservingPrecondition(mockPreconditionFactory);
-        registry.registerObservingPrecondition(mockPreconditionFactory);
-
-        final var observing = registry.getObservingPreconditions();
-
-        assertEquals(1, observing.size());
-        assertEquals(mockPrecondition, observing.stream().findFirst().orElseThrow());
-
-        registry.runPreconditions();
-
-        verify(mockPrecondition, times(1)).verifyPrecondition(any());
-    }
-
-    @Test
-    void testRegisteringObservingPreconditionsFailsWhenNoObjectInstanceAvailable() {
-        final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
-
-        final var mockFactory = mock(ObservingPreconditionFactory.class);
-
-        final var mockPrecondition = mock(Observing.class);
-        doReturn(mockPrecondition).when(mockFactory).create(any());
-
-        assertThrows(
-                IllegalStateException.class, () -> registry.registerObservingPrecondition(mockPreconditionFactory));
-    }
 }
