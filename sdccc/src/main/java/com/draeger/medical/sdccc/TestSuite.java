@@ -97,7 +97,6 @@ import org.somda.sdc.glue.common.WsdlConstants;
 public class TestSuite {
     private static final Logger LOG = LogManager.getLogger(TestSuite.class);
     private static final Duration MAX_WAIT = Duration.ofSeconds(10);
-    private static final int TIME_BETWEEN_PHASES = 10000;
     private static final String SUFFIX_DIRECT = ".direct";
     private static final String SUFFIX_INVARIANT = ".invariant";
 
