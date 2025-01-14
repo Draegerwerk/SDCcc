@@ -12,7 +12,6 @@ import com.google.inject.Injector
 import com.google.inject.Singleton
 import org.apache.logging.log4j.kotlin.Logging
 import java.lang.reflect.InvocationTargetException
-import kotlin.reflect.KClass
 
 /**
  * Registry which allows executing preconditions during a test run.
@@ -21,12 +20,6 @@ import kotlin.reflect.KClass
 class PreconditionRegistry @Inject internal constructor(private val injector: Injector) {
 
     private val preconditions: MutableList<Precondition> = ArrayList()
-
-    /**
-     * Returns all registered preconditions which are of type [Observing].
-     */
-    val observingPreconditions: Collection<Observing>
-        get() = preconditions.filterIsInstance<Observing>()
 
     @Suppress("TooGenericExceptionThrown") // this is an error during startup and cannot be fixed
     private fun handleRegisteringError(error: Throwable, text: String): Nothing {
@@ -72,24 +65,6 @@ class PreconditionRegistry @Inject internal constructor(private val injector: In
      */
     fun registerManipulationPrecondition(precondition: Class<out ManipulationPrecondition?>) {
         registerPreconditionInternal(precondition)
-    }
-
-    /**
-     * Registers an observing precondition for running and observing before disconnecting from the DUT.
-     *
-     * Duplicate preconditions will be ignored.
-     *
-     * @param precondition precondition to run
-     */
-    fun registerObservingPrecondition(precondition: KClass<out ObservingPreconditionFactory<*>>) {
-        val factoryInstance = checkNotNull(precondition.objectInstance) {
-            "Factory class ${precondition.simpleName ?: "without a simple name"} " +
-                "does not provide an object instance. Ensure it is a Companion."
-        }
-        val instance = factoryInstance.create(injector)
-        if (!preconditions.contains(instance)) {
-            preconditions.add(instance)
-        }
     }
 
     /**
