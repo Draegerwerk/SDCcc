@@ -66,16 +66,6 @@ public interface TestClient {
      */
     void disconnect() throws TimeoutException;
 
-    /**
-     * @param observer to register for all mdib changes the test client receives, including the initial mdib.
-     */
-    void registerMdibObserver(TestClientMdibObserver observer);
-
-    /**
-     * @param observer to unregister from observing changes
-     */
-    void unregisterMdibObserver(TestClientMdibObserver observer);
-
     Client getClient();
 
     SdcRemoteDevicesConnector getConnector();

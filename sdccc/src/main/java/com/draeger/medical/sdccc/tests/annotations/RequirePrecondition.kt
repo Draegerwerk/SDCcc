@@ -7,7 +7,6 @@
 package com.draeger.medical.sdccc.tests.annotations
 
 import com.draeger.medical.sdccc.manipulation.precondition.ManipulationPrecondition
-import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionFactory
 import com.draeger.medical.sdccc.manipulation.precondition.SimplePrecondition
 import kotlin.reflect.KClass
 
@@ -39,10 +38,4 @@ annotation class RequirePrecondition(
      * @return array of manipulation classes to trigger for the test
      */
     val manipulationPreconditions: Array<KClass<out ManipulationPrecondition>> = [],
-    /**
-     * Observing preconditions to attach.
-     *
-     * @return array of manipulation classes to trigger for the test
-     */
-    val observingPreconditions: Array<KClass<out ObservingPreconditionFactory<*>>> = []
 )

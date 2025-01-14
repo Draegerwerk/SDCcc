@@ -110,7 +110,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private final String floorSearchLogString;
     private final String roomSearchLogString;
     private final String bedSearchLogString;
-    private final TestClientMdibAccessObserver testClientMdibAccessObserver;
     private DpwsFramework dpwsFramework;
     private SdcRemoteDevice sdcRemoteDevice;
     private HostingServiceProxy hostingServiceProxy;
@@ -127,20 +126,19 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     /**
      * Creates an SDCri consumer instance.
      *
-     * @param targetDeviceEpr              EPR address to filter for
-     * @param targetDeviceFacility         facility to filter for
-     * @param targetDeviceBuilding         building to filter for
-     * @param targetDevicePointOfCare      point of care to filter for
-     * @param targetDeviceFloor            floor to filter for
-     * @param targetDeviceRoom             room to filter for
-     * @param targetDeviceBed              bed to filter for
-     * @param adapterAddress               ip of the network interface to bind to
-     * @param maxWait                      max waiting time to find and connect to target device
+     * @param targetDeviceEpr EPR address to filter for
+     * @param targetDeviceFacility facility to filter for
+     * @param targetDeviceBuilding building to filter for
+     * @param targetDevicePointOfCare point of care to filter for
+     * @param targetDeviceFloor floor to filter for
+     * @param targetDeviceRoom room to filter for
+     * @param targetDeviceBed bed to filter for
+     * @param adapterAddress  ip of the network interface to bind to
+     * @param maxWait         max waiting time to find and connect to target device
      * @param reconnectTries               number of tries a reconnection is attempted
      * @param reconnectWait                the wait time between reconnection attempts in seconds
-     * @param testClientUtil               test client utility
-     * @param testRunObserver              observer for invalidating test runs on unexpected errors
-     * @param testClientMdibAccessObserver observer for changes to the mdib
+     * @param testClientUtil  test client utility
+     * @param testRunObserver observer for invalidating test runs on unexpected errors
      */
     @Inject
     public TestClientImpl(
@@ -157,8 +155,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
             @Named(TestSuiteConfig.NETWORK_RECONNECT_TRIES) final long reconnectTries,
             @Named(TestSuiteConfig.NETWORK_RECONNECT_WAIT) final long reconnectWait,
             final TestClientUtil testClientUtil,
-            final TestRunObserver testRunObserver,
-            final TestClientMdibAccessObserver testClientMdibAccessObserver) {
+            final TestRunObserver testRunObserver) {
         this.injector = testClientUtil.getInjector();
         this.client = injector.getInstance(Client.class);
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
@@ -171,7 +168,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         this.reconnectTries = reconnectTries;
         this.reconnectWait = reconnectWait;
         this.maxWait = Duration.ofSeconds(maxWait);
-        this.testClientMdibAccessObserver = testClientMdibAccessObserver;
 
         // get interface for address
         try {
@@ -392,8 +388,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         try {
             remoteDeviceFuture = connector.connect(
                     hostingServiceProxy,
-                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS),
-                    testClientMdibAccessObserver);
+                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS));
             sdcRemoteDevice = remoteDeviceFuture.get(maxWait.toSeconds(), TimeUnit.SECONDS);
         } catch (final PrerequisitesException | InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Couldn't attach to remote mdib and subscriptions for {}", discoveredDevice.getEprAddress(), e);
