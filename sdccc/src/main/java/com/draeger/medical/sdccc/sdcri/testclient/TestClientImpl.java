@@ -501,16 +501,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         }
     }
 
-    @Override
-    public void registerMdibObserver(final TestClientMdibObserver observer) {
-        testClientMdibAccessObserver.registerObserver(observer);
-    }
-
-    @Override
-    public void unregisterMdibObserver(final TestClientMdibObserver observer) {
-        testClientMdibAccessObserver.unregisterObserver(observer);
-    }
-
     private <T> T restrictedGetter(final RestrictedGetter<T> getter) {
         synchronized (lock) {
             while (inReconnectProcess.get()) {
