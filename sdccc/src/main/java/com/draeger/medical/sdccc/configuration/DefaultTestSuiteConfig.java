@@ -50,6 +50,7 @@ public class DefaultTestSuiteConfig extends AbstractConfigurationModule {
 
         bind(TestSuiteConfig.ENABLE_MESSAGE_ENCODING_CHECK, Boolean.class, true);
         bind(TestSuiteConfig.SUMMARIZE_MESSAGE_ENCODING_ERRORS, Boolean.class, true);
+        bind(TestSuiteConfig.MIN_COLLECT_DATA_TIME, long.class, 10L);
         bind(Constants.CONFIGURATION_MODULE, AbstractConfigurationModule.class, new AbstractConfigurationModule() {
             @Override
             protected void defaultConfigure() {}

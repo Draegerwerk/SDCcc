@@ -216,6 +216,14 @@ in high numbers. When this option is set to true, then the errors will not be di
 at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
 these problems.
 
+```
+[SDCcc] 
+MinCollectDataTime=10
+```
+
+MinCollectDataTime defaults to 10 seconds and allows the user to control minimum amount of time in seconds the 
+test tool is supposed to collect data.
+
 ### Test parameter configuration
 
 Some test cases require individual parameters that can be overwritten in the *test_parameter.toml* file.
