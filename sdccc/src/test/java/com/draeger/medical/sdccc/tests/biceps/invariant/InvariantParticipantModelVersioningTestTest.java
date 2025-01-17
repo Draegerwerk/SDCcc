@@ -1194,6 +1194,29 @@ public class InvariantParticipantModelVersioningTestTest {
     }
 
     /**
+     * The old implementation of the test also checked the MdDescriptionVersion and MdStateVersion, although changes to
+     * these values are not visible via reports. The check for these versions were removed and this test is intended
+     * to ensure, that MdDescriptionVersion and MdStateVersion does not affect the test result.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementR5003TestMdDescriptionVersionAndMdStateVersion() throws Exception {
+        final var initial = buildMdib(null, BigInteger.valueOf(8));
+        final var firstUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.valueOf(74),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildVmd(VMD_HANDLE, BigInteger.ONE, BigInteger.ONE),
+                        buildChannel(CHANNEL_HANDLE, BigInteger.ONE, BigInteger.ONE)));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
+        assertDoesNotThrow(testClass::testRequirementR5003);
+    }
+
+    /**
      * Tests whether versions which are only incremented causes the test to pass.
      *
      * @throws Exception on any exception

@@ -337,8 +337,6 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                 final var impliedValueMap = new InitialImpliedValue();
                 final var previousDescriptorVersionMap = new HashMap<String, BigInteger>();
                 final var previousStateVersionMap = new HashMap<String, BigInteger>();
-                var previousMdDescriptionVersion = BigInteger.valueOf(-1);
-                var previousMdStateVersion = BigInteger.valueOf(-1);
                 var previousMdibVersion = BigInteger.valueOf(-1);
 
                 try (final MdibHistorian.HistorianResult history =
@@ -388,32 +386,11 @@ public class InvariantParticipantModelVersioningTest extends InjectorTestBase {
                             previousStateVersionMap.put(stateHandle, currentStateVersion);
                             stateVersionsSeen.incrementAndGet();
                         }
-                        final var currentMdDescriptionVersion =
-                                ImpliedValueUtil.getMdibAccessDescriptionVersion(current);
-                        final var currentMdStateVersion = ImpliedValueUtil.getMdibAccessMdStateVersion(current);
-                        assertTrue(
-                                isNotDecrementedVersion(previousMdDescriptionVersion, currentMdDescriptionVersion),
-                                String.format(
-                                        DECREMENTED_VERSION_ERROR_MESSAGE,
-                                        "MdDescription",
-                                        currentMdibVersion,
-                                        previousMdDescriptionVersion,
-                                        currentMdDescriptionVersion));
-                        assertTrue(
-                                isNotDecrementedVersion(previousMdStateVersion, currentMdStateVersion),
-                                String.format(
-                                        DECREMENTED_VERSION_ERROR_MESSAGE,
-                                        "MdState",
-                                        currentMdibVersion,
-                                        previousMdStateVersion,
-                                        currentMdStateVersion));
                         assertTrue(
                                 isNotDecrementedVersion(previousMdibVersion, currentMdibVersion),
                                 String.format(
                                         "The mdib version has been decremented. It was %s and is now %s.",
                                         previousMdibVersion, currentMdibVersion));
-                        previousMdDescriptionVersion = currentMdDescriptionVersion;
-                        previousMdStateVersion = currentMdStateVersion;
                         previousMdibVersion = currentMdibVersion;
                         current = history.next();
                     }
