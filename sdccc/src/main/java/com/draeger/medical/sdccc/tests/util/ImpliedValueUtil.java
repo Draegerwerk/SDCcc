@@ -374,17 +374,6 @@ public final class ImpliedValueUtil {
     }
 
     /**
-     * Retrieves the description version of mdib access or the implied value.
-     *
-     * @param mdibAccess to retrieve the description version from
-     * @return the description version
-     */
-    public static BigInteger getMdibAccessDescriptionVersion(final MdibAccess mdibAccess) {
-        final var descriptionVersion = mdibAccess.getMdDescriptionVersion();
-        return descriptionVersion != null ? descriptionVersion : BigInteger.ZERO;
-    }
-
-    /**
      * Retrieves the language of an mds state or the implied value.
      *
      * @param mdsState to retrieve the language from
@@ -418,17 +407,6 @@ public final class ImpliedValueUtil {
             return stateVersion != null ? stateVersion : BigInteger.ZERO;
         }
         return BigInteger.ZERO;
-    }
-
-    /**
-     * Retrieves the md state version of mdib access or the implied value.
-     *
-     * @param mdibAccess to retrieve the state version from
-     * @return the state version
-     */
-    public static BigInteger getMdibAccessMdStateVersion(final MdibAccess mdibAccess) {
-        final var stateVersion = mdibAccess.getMdStateVersion();
-        return stateVersion != null ? stateVersion : BigInteger.ZERO;
     }
 
     /**
