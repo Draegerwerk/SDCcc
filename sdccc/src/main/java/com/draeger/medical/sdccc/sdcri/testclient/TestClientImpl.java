@@ -126,19 +126,19 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     /**
      * Creates an SDCri consumer instance.
      *
-     * @param targetDeviceEpr EPR address to filter for
-     * @param targetDeviceFacility facility to filter for
-     * @param targetDeviceBuilding building to filter for
+     * @param targetDeviceEpr         EPR address to filter for
+     * @param targetDeviceFacility    facility to filter for
+     * @param targetDeviceBuilding    building to filter for
      * @param targetDevicePointOfCare point of care to filter for
-     * @param targetDeviceFloor floor to filter for
-     * @param targetDeviceRoom room to filter for
-     * @param targetDeviceBed bed to filter for
-     * @param adapterAddress  ip of the network interface to bind to
-     * @param maxWait         max waiting time to find and connect to target device
-     * @param reconnectTries               number of tries a reconnection is attempted
-     * @param reconnectWait                the wait time between reconnection attempts in seconds
-     * @param testClientUtil  test client utility
-     * @param testRunObserver observer for invalidating test runs on unexpected errors
+     * @param targetDeviceFloor       floor to filter for
+     * @param targetDeviceRoom        room to filter for
+     * @param targetDeviceBed         bed to filter for
+     * @param adapterAddress          ip of the network interface to bind to
+     * @param maxWait                 max waiting time to find and connect to target device
+     * @param reconnectTries          number of tries a reconnection is attempted
+     * @param reconnectWait           the wait time between reconnection attempts in seconds
+     * @param testClientUtil          test client utility
+     * @param testRunObserver         observer for invalidating test runs on unexpected errors
      */
     @Inject
     public TestClientImpl(
@@ -409,6 +409,12 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     }
 
     @Override
+    public void disableReconnect() {
+        LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
+        this.reconnectEnabled.set(false);
+    }
+
+    @Override
     public synchronized void disconnect() throws TimeoutException {
         disconnect(true);
     }
@@ -560,11 +566,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 convertToRegex(RESOLVER_THREAD_POOL_NAME_FORMAT),
                 convertToRegex(CONSUMER_NAME_FORMAT),
                 convertToRegex(WATCHDOG_SCHEDULED_EXECUTOR_NAME_FORMAT));
-    }
-
-    private void disableReconnect() {
-        LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
-        this.reconnectEnabled.set(false);
     }
 
     private String convertToRegex(final String pattern) {

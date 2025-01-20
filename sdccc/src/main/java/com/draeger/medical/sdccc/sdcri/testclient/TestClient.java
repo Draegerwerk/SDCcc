@@ -60,6 +60,11 @@ public interface TestClient {
     void enableReconnect();
 
     /**
+     * Disable reconnection attempts on connection loss.
+     */
+    void disableReconnect();
+
+    /**
      * Disconnects the SDC client from the target.
      *
      * @throws TimeoutException in case the disconnect did not finish on time
