@@ -1211,8 +1211,7 @@ public class InvariantParticipantModelVersioningTestTest {
      * </p>
      *
      * @param mdDescriptionVersion the MdDescriptionVersion to set
-     * @param mdStateVersion the MdStateVersion to set
-     *
+     * @param mdStateVersion       the MdStateVersion to set
      * @throws Exception on any exception
      */
     @ParameterizedTest
@@ -1220,8 +1219,8 @@ public class InvariantParticipantModelVersioningTestTest {
     public void testRequirementR5003TestMdDescriptionVersionAndMdStateVersion(
             final @Nullable BigInteger mdDescriptionVersion, final @Nullable BigInteger mdStateVersion)
             throws Exception {
-        final var initial = buildMdibWithMdDescriptionAndStateVersion(
-                MdibBuilder.DEFAULT_SEQUENCE_ID, mdDescriptionVersion, mdStateVersion);
+        final var initial =
+                buildMdibWithMdDescriptionAndStateVersion(SEQUENCE_ID, mdDescriptionVersion, mdStateVersion);
         final var firstUpdate = buildDescriptionModificationReportWithParts(
                 SEQUENCE_ID,
                 BigInteger.valueOf(74),
@@ -1633,7 +1632,7 @@ public class InvariantParticipantModelVersioningTestTest {
     }
 
     Envelope buildMdib(final @Nullable BigInteger vmdVersion, final @Nullable BigInteger mdsVersion) {
-        return buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, vmdVersion, mdsVersion);
+        return buildMdib(SEQUENCE_ID, vmdVersion, mdsVersion);
     }
 
     /*
