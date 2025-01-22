@@ -55,12 +55,16 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.AssertionFailedError;
 import org.somda.sdc.biceps.model.participant.ActivateOperationDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertConditionDescriptor;
@@ -1194,6 +1198,43 @@ public class InvariantParticipantModelVersioningTestTest {
     }
 
     /**
+     * In the mdib representation on the consumer side in sdc-ri, when processing description modifications, the values
+     * for the MdDescriptionVersion and MdStateVersion are set to the implied value if the description modification
+     * does not contain any values for them. This is the case if the versions are missing in the GetMdibResponse,
+     * or generally for DescriptionModificationReports. If the MdDescriptionVersion or MdStateVersion in the
+     * GetMdibResponse is set to a value other than the implied value, they would be set to the implied value again in the next
+     * DescriptionModificationReport, which would cause the test to fail. As the actual values are not communicated via
+     * reports, the check of the MdDescriptionVersion and MdStateVersion has been removed from the test implementation.
+     * <p>
+     * This unit test ensures that a decrement of the MdDescriptionVersion or MdStateVersion does not cause the test to
+     * fail.
+     * </p>
+     *
+     * @param mdDescriptionVersion the MdDescriptionVersion to set
+     * @param mdStateVersion       the MdStateVersion to set
+     * @throws Exception on any exception
+     */
+    @ParameterizedTest
+    @MethodSource("provideMdDescriptionVersionAndMdStateVersion")
+    public void testRequirementR5003TestMdDescriptionVersionAndMdStateVersion(
+            final @Nullable BigInteger mdDescriptionVersion, final @Nullable BigInteger mdStateVersion)
+            throws Exception {
+        final var initial =
+                buildMdibWithMdDescriptionAndStateVersion(SEQUENCE_ID, mdDescriptionVersion, mdStateVersion);
+        final var firstUpdate = buildDescriptionModificationReportWithParts(
+                SEQUENCE_ID,
+                BigInteger.valueOf(74),
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        buildVmd(VMD_HANDLE, BigInteger.ONE, BigInteger.ONE),
+                        buildChannel(CHANNEL_HANDLE, BigInteger.ONE, BigInteger.ONE)));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, firstUpdate);
+        assertDoesNotThrow(testClass::testRequirementR5003);
+    }
+
+    /**
      * Tests whether versions which are only incremented causes the test to pass.
      *
      * @throws Exception on any exception
@@ -1591,7 +1632,7 @@ public class InvariantParticipantModelVersioningTestTest {
     }
 
     Envelope buildMdib(final @Nullable BigInteger vmdVersion, final @Nullable BigInteger mdsVersion) {
-        return buildMdib(MdibBuilder.DEFAULT_SEQUENCE_ID, vmdVersion, mdsVersion);
+        return buildMdib(SEQUENCE_ID, vmdVersion, mdsVersion);
     }
 
     /*
@@ -1630,6 +1671,39 @@ public class InvariantParticipantModelVersioningTestTest {
 
         final var patConDescriptor = mdibBuilder.buildPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
         mdsDescriptor.getSystemContext().setPatientContext(patConDescriptor);
+
+        final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
+        getMdibResponse.setMdib(mdib);
+
+        return messageBuilder.createSoapMessageWithBody(
+                ActionConstants.getResponseAction(ActionConstants.ACTION_GET_MDIB), getMdibResponse);
+    }
+
+    private static Stream<Arguments> provideMdDescriptionVersionAndMdStateVersion() {
+        return Stream.of(
+                Arguments.of(BigInteger.TWO, null),
+                Arguments.of(null, BigInteger.TWO),
+                Arguments.of(BigInteger.TWO, BigInteger.TWO));
+    }
+
+    private Envelope buildMdibWithMdDescriptionAndStateVersion(
+            final String sequenceId,
+            final @Nullable BigInteger mdDescriptionVersion,
+            final @Nullable BigInteger mdStateVersion) {
+        final var mdib = mdibBuilder.buildMinimalMdib(sequenceId);
+        mdib.getMdDescription().setDescriptionVersion(mdDescriptionVersion);
+
+        final var mdState = mdib.getMdState();
+        mdState.setStateVersion(mdStateVersion);
+
+        final var mdsDescriptor = mdib.getMdDescription().getMds().get(0);
+        mdsDescriptor.setDescriptorVersion(BigInteger.ZERO);
+
+        final var vmd = mdibBuilder.buildVmd(VMD_HANDLE);
+        vmd.getLeft().setDescriptorVersion(BigInteger.ZERO);
+        vmd.getRight().setDescriptorVersion(BigInteger.ZERO);
+        mdsDescriptor.getVmd().add(vmd.getLeft());
+        mdState.getState().add(vmd.getRight());
 
         final var getMdibResponse = messageBuilder.buildGetMdibResponse(mdib.getSequenceId());
         getMdibResponse.setMdib(mdib);
