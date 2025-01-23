@@ -1528,15 +1528,16 @@ public class MessageStorage implements AutoCloseable {
 
         final boolean present;
         try (final Stream<MessageContent> countingStream = enableSorting
-            ? this.getOrderedQueryResult(messageContentQuery)
-            : this.getQueryResult(messageContentQuery)) {
+                ? this.getOrderedQueryResult(messageContentQuery)
+                : this.getQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
         return new GetterResult<>(
-            enableSorting ? this.getOrderedQueryResult(messageContentQuery) : this.getQueryResult(messageContentQuery),
-            present
-        );
+                enableSorting
+                        ? this.getOrderedQueryResult(messageContentQuery)
+                        : this.getQueryResult(messageContentQuery),
+                present);
     }
 
     /**
