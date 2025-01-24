@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- support for Kotlin
-
 ### Fixed
 
 - SequenceIds are now ordered by the timestamp of the first message that used them

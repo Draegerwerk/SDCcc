@@ -439,23 +439,50 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>com.github.ozsie</groupId>
-                <artifactId>detekt-maven-plugin</artifactId>
-                <version>${detektVersion}</version>
-                <configuration>
-                    <buildUponDefaultConfig>true</buildUponDefaultConfig>
-                    <config>${project.basedir}/../dev_config/detekt.yml</config>
-                    <report>html:${project.build.directory}/detekt.html</report>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
                 <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
+                <execution>
+                <!-- This can be run separately with mvn antrun:run@detekt -->
+                <id>detekt</id>
+                <phase>verify</phase>
+                <configuration>
+                    <target name="detekt">
+                        <property name="classpath_needed_for_detekt" refid="maven.test.classpath"/>
+                        <java taskname="detekt" dir="${basedir}"
+                              fork="true"
+                              failonerror="true"
+                              classname="io.gitlab.arturbosch.detekt.cli.Main"
+                              classpathref="maven.plugin.classpath">
+                            <arg value="--input"/>
+                            <arg value="${basedir}/../"/>
+                            <arg value="--excludes"/>
+                            <arg value="**/special/package/internal/**"/>
+                            <arg value="--report"/>
+                            <arg value="html:${project.build.directory}/detekt.html"/>
+                            <arg value="--config"/>
+                            <arg value="${project.basedir}/../dev_config/detekt.yml"/>
+                            <arg value="--debug"/>
+                            <arg value="--build-upon-default-config"/>
+                            <arg value="--classpath"/>
+                            <arg value="${classpath_needed_for_detekt}"/>
+                            <arg value="--jdk-home"/>
+                            <arg value="${java.home}"/>
+                            <arg value="--jvm-target"/>
+                            <arg value="17"/>
+                        </java>
+                    </target>
+                </configuration>
+                <goals><goal>run</goal></goals>
+                </execution>
                 </executions>
                 <dependencies>
+                    <dependency>
+                        <groupId>io.gitlab.arturbosch.detekt</groupId>
+                        <artifactId>detekt-cli</artifactId>
+                        <version>${detektVersion}</version>
+                    </dependency>
                     <dependency>
                         <groupId>io.gitlab.arturbosch.detekt</groupId>
                         <artifactId>detekt-formatting</artifactId>
