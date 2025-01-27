@@ -21,6 +21,7 @@
         <checkstyleConfigDir>../checkstyle</checkstyleConfigDir>
         <bouncyCastleVersion>1.67</bouncyCastleVersion>
 
+        <detektVersion>1.23.5</detektVersion>
         <!-- name of the directory inside the archive -->
         <jreDirectoryName>jdk-17.0.5+8-jre</jreDirectoryName>
         <jreBasePath>./jre</jreBasePath>
@@ -253,6 +254,20 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-test-junit5 -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <reporting>
@@ -373,7 +388,7 @@
                 </executions>
                 <configuration>
                     <includeTests>true</includeTests>
-                    <excludeFilterFile>../spotbugs/filter.xml</excludeFilterFile>
+                    <excludeFilterFile>${project.basedir}/../dev_config/filter.xml</excludeFilterFile>
                 </configuration>
             </plugin>
 
@@ -422,6 +437,58 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                <execution>
+                <!-- This can be run separately with mvn antrun:run@detekt -->
+                <id>detekt</id>
+                <phase>verify</phase>
+                <configuration>
+                    <target name="detekt">
+                        <property name="classpath_needed_for_detekt" refid="maven.test.classpath"/>
+                        <java taskname="detekt" dir="${basedir}"
+                              fork="true"
+                              failonerror="true"
+                              classname="io.gitlab.arturbosch.detekt.cli.Main"
+                              classpathref="maven.plugin.classpath">
+                            <arg value="--input"/>
+                            <arg value="${basedir}/../"/>
+                            <arg value="--excludes"/>
+                            <arg value="**/special/package/internal/**"/>
+                            <arg value="--report"/>
+                            <arg value="html:${project.build.directory}/detekt.html"/>
+                            <arg value="--config"/>
+                            <arg value="${project.basedir}/../dev_config/detekt.yml"/>
+                            <arg value="--debug"/>
+                            <arg value="--build-upon-default-config"/>
+                            <arg value="--classpath"/>
+                            <arg value="${classpath_needed_for_detekt}"/>
+                            <arg value="--jdk-home"/>
+                            <arg value="${java.home}"/>
+                            <arg value="--jvm-target"/>
+                            <arg value="17"/>
+                        </java>
+                    </target>
+                </configuration>
+                <goals><goal>run</goal></goals>
+                </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>io.gitlab.arturbosch.detekt</groupId>
+                        <artifactId>detekt-cli</artifactId>
+                        <version>${detektVersion}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>io.gitlab.arturbosch.detekt</groupId>
+                        <artifactId>detekt-formatting</artifactId>
+                        <version>${detektVersion}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
