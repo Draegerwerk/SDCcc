@@ -59,15 +59,12 @@ if (!skipModuleTests) {
         dependsOn("detekt")
     }
 
-    tasks.test {
-        useJUnitPlatform()
-        exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
-        maxHeapSize = "3g"
-        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
-    }
 }
 
 if (createExecutable) {
     apply(plugin = "com.example.license-report")
+    tasks.named("build") {
+        dependsOn("generateLicenseReport")
+    }
     apply(plugin = "com.draeger.medical.executable-conventions")
 }
