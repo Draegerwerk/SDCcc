@@ -10,18 +10,13 @@ package com.draeger.medical.sdccc.manipulation.precondition;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.draeger.medical.sdccc.messages.MessageStorage;
 import com.google.inject.Injector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import kotlin.reflect.KClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -172,42 +167,5 @@ public class PreconditionRegistryTest {
                 RuntimeException.class,
                 () -> registry.registerManipulationPrecondition(PreconditionUtil.MockManipulation.class));
         assertEquals(1, mockInteractionWasCalled.get());
-    }
-
-    @Test
-    void testRegisteringObservingPreconditions() throws Exception {
-        final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
-
-        final var mockFactory = mock(ObservingPreconditionFactory.class);
-        doReturn(mockFactory).when(mockPreconditionFactory).getObjectInstance();
-
-        final var mockPrecondition = mock(Observing.class);
-        doReturn(mockPrecondition).when(mockFactory).create(any());
-
-        // call register twice, expect only one to be registered
-        registry.registerObservingPrecondition(mockPreconditionFactory);
-        registry.registerObservingPrecondition(mockPreconditionFactory);
-
-        final var observing = registry.getObservingPreconditions();
-
-        assertEquals(1, observing.size());
-        assertEquals(mockPrecondition, observing.stream().findFirst().orElseThrow());
-
-        registry.runPreconditions();
-
-        verify(mockPrecondition, times(1)).verifyPrecondition(any());
-    }
-
-    @Test
-    void testRegisteringObservingPreconditionsFailsWhenNoObjectInstanceAvailable() {
-        final KClass<? extends ObservingPreconditionFactory<?>> mockPreconditionFactory = mock(KClass.class);
-
-        final var mockFactory = mock(ObservingPreconditionFactory.class);
-
-        final var mockPrecondition = mock(Observing.class);
-        doReturn(mockPrecondition).when(mockFactory).create(any());
-
-        assertThrows(
-                IllegalStateException.class, () -> registry.registerObservingPrecondition(mockPreconditionFactory));
     }
 }

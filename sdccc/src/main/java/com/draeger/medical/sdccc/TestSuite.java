@@ -19,7 +19,6 @@ import com.draeger.medical.sdccc.configuration.TestParameterConfig;
 import com.draeger.medical.sdccc.configuration.TestRunConfig;
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.guice.TomlConfigParser;
-import com.draeger.medical.sdccc.manipulation.precondition.ObservingPreconditionMdibObserver;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException;
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.MessageStorage;
@@ -98,12 +97,12 @@ import org.somda.sdc.glue.common.WsdlConstants;
 public class TestSuite {
     private static final Logger LOG = LogManager.getLogger(TestSuite.class);
     private static final Duration MAX_WAIT = Duration.ofSeconds(10);
-    private static final int TIME_BETWEEN_PHASES = 10000;
     private static final String SUFFIX_DIRECT = ".direct";
     private static final String SUFFIX_INVARIANT = ".invariant";
 
     private final Injector injector;
     private final String[] sdcTestDirectories;
+    private final Duration minCollectDataTime;
     private final File testRunDir;
     private final TestRunObserver testRunObserver;
     private final MessageGeneratingUtil messageGenerator;
@@ -118,6 +117,7 @@ public class TestSuite {
      * @param injector             a reference to the injector injecting here
      * @param testRunObserver      observer for invalidating test runs
      * @param sdcTestDirectories   directories to search for test cases
+     * @param minCollectDataTime   minimum amount of time to collect data
      * @param testRunDir           directory to run the tests in and store artifacts
      * @param testExecutionLogging whether logging of test case starts etc. shall be done
      * @param messageGenerator     utility for generating messages to send
@@ -129,6 +129,7 @@ public class TestSuite {
             final Injector injector,
             final TestRunObserver testRunObserver,
             @Named(TestSuiteConfig.SDC_TEST_DIRECTORIES) final String[] sdcTestDirectories,
+            @Named(TestSuiteConfig.MIN_COLLECT_DATA_TIME) final long minCollectDataTime,
             @Named(TestRunConfig.TEST_RUN_DIR) final File testRunDir,
             @Named(TestSuiteConfig.TEST_EXECUTION_LOGGING) final boolean testExecutionLogging,
             final MessageGeneratingUtil messageGenerator,
@@ -137,6 +138,7 @@ public class TestSuite {
         this.injector = injector;
         this.sdcTestDirectories = sdcTestDirectories;
         this.testRunObserver = testRunObserver;
+        this.minCollectDataTime = Duration.ofSeconds(minCollectDataTime);
         this.testRunDir = testRunDir;
         this.messageGenerator = messageGenerator;
         this.testRunInformation = testRunInformation;
@@ -284,8 +286,9 @@ public class TestSuite {
     private void phase1() {
         performBasicMessagingCheck();
 
+        LOG.info("Waiting for {} to collect data.", this.minCollectDataTime);
         try {
-            Thread.sleep(TIME_BETWEEN_PHASES);
+            Thread.sleep(this.minCollectDataTime.toMillis());
         } catch (final InterruptedException e) {
             LOG.error("", e);
         }
@@ -379,17 +382,6 @@ public class TestSuite {
             LOG.error("Could not start the test consumer for {}", client.getTargetEpr());
             testRunObserver.invalidateTestRun("Could not start the test consumer", e);
             throw new RuntimeException(e);
-        }
-
-        // register observing preconditions in test client before connecting to the target
-        // this allows us to see the initial mdib as a change
-        final var preconditions = injector.getInstance(PreconditionRegistry.class);
-        final var observingPreconditions = preconditions.getObservingPreconditions();
-        for (final var precondition : observingPreconditions) {
-            LOG.info(
-                    "Registering observing precondition in test client {}",
-                    precondition.getClass().getSimpleName());
-            client.registerMdibObserver(new ObservingPreconditionMdibObserver(precondition));
         }
 
         try {

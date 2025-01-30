@@ -95,7 +95,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private final String floorSearchLogString;
     private final String roomSearchLogString;
     private final String bedSearchLogString;
-    private final TestClientMdibAccessObserver testClientMdibAccessObserver;
     private DpwsFramework dpwsFramework;
     private SdcRemoteDevice sdcRemoteDevice;
     private HostingServiceProxy hostingServiceProxy;
@@ -115,7 +114,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
      * @param maxWait         max waiting time to find and connect to target device
      * @param testClientUtil  test client utility
      * @param testRunObserver observer for invalidating test runs on unexpected errors
-     * @param testClientMdibAccessObserver observer for changes to the mdib
      */
     @Inject
     public TestClientImpl(
@@ -130,15 +128,13 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
             @Named(TestSuiteConfig.NETWORK_INTERFACE_ADDRESS) final String adapterAddress,
             @Named(TestSuiteConfig.NETWORK_MAX_WAIT) final long maxWait,
             final TestClientUtil testClientUtil,
-            final TestRunObserver testRunObserver,
-            final TestClientMdibAccessObserver testClientMdibAccessObserver) {
+            final TestRunObserver testRunObserver) {
         this.injector = testClientUtil.getInjector();
         this.client = injector.getInstance(Client.class);
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
         this.testRunObserver = testRunObserver;
         this.shouldBeConnected = new AtomicBoolean(false);
         this.maxWait = Duration.ofSeconds(maxWait);
-        this.testClientMdibAccessObserver = testClientMdibAccessObserver;
 
         // get interface for address
         try {
@@ -350,8 +346,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         try {
             remoteDeviceFuture = connector.connect(
                     hostingServiceProxy,
-                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS),
-                    testClientMdibAccessObserver);
+                    ConnectConfiguration.create(ConnectConfiguration.ALL_EPISODIC_AND_WAVEFORM_REPORTS));
             sdcRemoteDevice = remoteDeviceFuture.get(maxWait.toSeconds(), TimeUnit.SECONDS);
         } catch (final PrerequisitesException | InterruptedException | ExecutionException | TimeoutException e) {
             LOG.error("Couldn't attach to remote mdib and subscriptions for {}", discoveredDevice.getEprAddress(), e);
@@ -422,15 +417,5 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         } else {
             LOG.info("Watchdog detected expected disconnect from provider.");
         }
-    }
-
-    @Override
-    public void registerMdibObserver(final TestClientMdibObserver observer) {
-        testClientMdibAccessObserver.registerObserver(observer);
-    }
-
-    @Override
-    public void unregisterMdibObserver(final TestClientMdibObserver observer) {
-        testClientMdibAccessObserver.unregisterObserver(observer);
     }
 }

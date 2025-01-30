@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - support for Kotlin
-- preconditions which observe mdib changes during the test run
 - storing of IP addresses of inbound messages in the database
 - a command line parameter to not create subdirectories in the test run directory
+- a command line parameter to print the version of the sdccc test tool
+- add config parameter to set the minimum amount of time the test tool is supposed to collect data
 
 ### Changed
 
+- the SoapMarshalling is now configurable regarding packages to scan for JAXB classes and the schemas for validation 
 - the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
 - sdc-ri version to 6.2.0-SNAPSHOT
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - inconsistent messaging in SDCcc logs ("No problems were found" and "Test run was invalid" one after another.)
 - incorrect behavior of the configuration option SDCcc.SummarizeMessageEncodingErrors
 - SequenceIds are now ordered by the timestamp of the first message that used them
+- test for BICEPS.R5003 does not check MdDescriptionVersion and MdStateVersion anymore (see [PR 232](https://github.com/Draegerwerk/SDCcc/pull/232))
 
 ### Removed
 

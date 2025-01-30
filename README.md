@@ -208,6 +208,14 @@ in high numbers. When this option is set to true, then the errors will not be di
 at the end. When the option is set to false, then the individual errors are displayed, which is useful for fixing
 these problems.
 
+```
+[SDCcc] 
+MinCollectDataTime=10
+```
+
+MinCollectDataTime defaults to 10 seconds and allows the user to control minimum amount of time in seconds the 
+test tool is supposed to collect data.
+
 ### Test parameter configuration
 
 Some test cases require individual parameters that can be overwritten in the *test_parameter.toml* file.
@@ -241,6 +249,7 @@ The following command line options are supported by the test tool, the first two
 | --test_run_directory   | -d        | base directory to store test runs in, creates a timestamped SDCcc run                                                                                                          | no           |
 | --no_subdirectories    | -ns       | if set to "true", no directories are created in the directory configured with test_run_directory. The configured directory must be empty if no_subdirectories is set to "true" | no           |
 | --file_log_level       | -fll      | log level to be used for the log file being created, e.g. DEBUG, defaults to INFO                                                                                              | no           |
+| --version              | -v        | Print the version of the test tool. Can only be used without any other command line options.                                                                                   | no           |
 
 ### Enabling Tests
 
