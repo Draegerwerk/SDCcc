@@ -30,7 +30,7 @@ jobs:
 
       - name: Retrieve current version from gradle.properties
         run: |
-          echo RELEASE_VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{print $2}') >> $GITHUB_ENV
+          echo RELEASE_VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{print $2}')  | sed "s/-SNAPSHOT//" >> $GITHUB_ENV
           echo GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA") >> $GITHUB_ENV
 
       - name: Remove SNAPSHOT suffix for release
@@ -61,7 +61,7 @@ jobs:
 
       - name: Build package and download license information
         run: |
-          ./gradlew build -x test -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }}
+          ./gradlew build -x test -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }} -PexecutableSDCcc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

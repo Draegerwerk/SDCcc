@@ -1,16 +1,9 @@
 plugins {
     id("com.draeger.medical.java-conventions")
     id("com.draeger.medical.kotlin-conventions")
-    id("com.draeger.medical.executable-conventions")
-    id("com.draeger.medical.java-analysis")
-    id("com.example.license-report")
 }
 
 val javaVersion = property("javaVersion").toString()
-
-tasks.named("build") {
-    dependsOn("generateLicenseReport")
-}
 
 dependencies {
     api(libs.org.junit.jupiter.junit.jupiter.api)
@@ -56,9 +49,25 @@ dependencies {
 
 description = "sdccc"
 
-tasks.test {
-    useJUnitPlatform()
-    exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
-    maxHeapSize = "3g"
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+val skipModuleTests: Boolean = project.hasProperty("noTestSDCcc")
+val createExecutable: Boolean = project.hasProperty("executableSDCcc")
+
+if (!skipModuleTests) {
+    apply(plugin = "com.draeger.medical.java-analysis")
+
+    tasks.check {
+        dependsOn("detekt")
+    }
+
+    tasks.test {
+        useJUnitPlatform()
+        exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
+        maxHeapSize = "3g"
+        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    }
+}
+
+if (createExecutable) {
+    apply(plugin = "com.example.license-report")
+    apply(plugin = "com.draeger.medical.executable-conventions")
 }

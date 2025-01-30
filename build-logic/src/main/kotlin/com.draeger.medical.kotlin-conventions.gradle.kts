@@ -18,17 +18,22 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 val detekt by configurations.creating
 
+val detektConfigPath = projectDir.path + File.separator +
+    (project.findProperty("detektConfigFilePath")?.toString() ?: "dev_config/detekt.yml")
+
 val detektTask = tasks.register<JavaExec>("detekt") {
+    dependsOn("assemble")
     mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
     classpath = detekt
 
     val input = projectDir
-    val config = "$projectDir/../dev_config/detekt.yml"
+    val config = detektConfigPath
     val exclude = ".*/build/.*,.*/resources/.*,**/build.gradle.kts,**/settings.gradle.kts"
     val classpathNeededForDetekt = files(
         sourceSets.main.get().runtimeClasspath,
         sourceSets.test.get().runtimeClasspath
-    )
+    ).asPath
+
     val jdkHome = System.getProperty("java.home")
     args(
         "--input", input.absolutePath,
@@ -42,11 +47,8 @@ val detektTask = tasks.register<JavaExec>("detekt") {
     )
 }
 
-tasks.check {
-    dependsOn(detektTask)
-}
-
 dependencies {
     detekt(libs.detekt.cli)
+    detekt(libs.detekt.formatting)
     api(libs.org.jetbrains.kotlin.kotlin.stdlib)
 }
