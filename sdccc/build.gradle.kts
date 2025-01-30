@@ -74,3 +74,12 @@ if (createExecutable) {
     }
     apply(plugin = "com.draeger.medical.executable-conventions")
 }
+
+val testsJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("tests")
+    from(sourceSets["test"].output)
+}
+
+artifacts {
+    add("archives", tasks.named("testsJar"))
+}
