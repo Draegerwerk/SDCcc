@@ -49,19 +49,20 @@ tasks.register<Copy>("copyRuntimeLibs") {
     into("${layout.buildDirectory.get().asFile}/lib")
 }
 
-val projectName = rootProject.name
+val projectName = if (project.name == "sdccc") "SDCcc" else project.name
+val projectVersion = rootProject.extra["projectVersion"] as String
 
 tasks.createExe {
     headerType = "console"
-    jar = "${layout.buildDirectory.get().asFile}/libs/${projectName}-${project.version}.jar"
-    outfile = "${projectName}-${project.version}.exe" // Absolute path not allowed. File gets placed in build/launch4j
+    jar = "${layout.buildDirectory.get().asFile}/libs/${projectName}-${projectVersion}.jar"
+    outfile = "${projectName}-${projectVersion}.exe" // Absolute path not allowed. File gets placed in build/launch4j
     mainClassName = "com.draeger.medical.sdccc.TestSuite"
     classpath = setOf("lib/**")
     jreMinVersion = javaVersion
     bundledJrePath = "../${jreFullPath}"
 
-    version = "${project.version}.0"
-    textVersion = "${project.version}"
+    version = "${projectVersion}.0"
+    textVersion = "${projectVersion}"
     fileDescription = "${project.name}"
     copyright = "2023-2024 Draegerwerk AG & Co. KGaA"
 
@@ -77,4 +78,3 @@ tasks.named("createExe") {
 tasks.named("build") {
     dependsOn("createExe")
 }
-
