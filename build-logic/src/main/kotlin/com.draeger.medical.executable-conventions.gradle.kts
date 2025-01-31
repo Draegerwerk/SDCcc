@@ -49,7 +49,7 @@ tasks.register<Copy>("copyRuntimeLibs") {
     into("${layout.buildDirectory.get().asFile}/lib")
 }
 
-val projectName = "SDCcc-gradle"
+val projectName = rootProject.name
 
 tasks.createExe {
     headerType = "console"
