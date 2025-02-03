@@ -45,6 +45,8 @@ dependencies {
     testImplementation(libs.com.tngtech.archunit.archunit.junit5)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.params)
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test.junit5)
+
+    annotationProcessor(libs.org.apache.logging.log4j.log4j.core)
 }
 
 description = "sdccc"
