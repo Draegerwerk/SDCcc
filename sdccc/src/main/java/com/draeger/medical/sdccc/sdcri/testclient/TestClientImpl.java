@@ -525,19 +525,17 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private void reconnect(final WatchdogMessage watchdogMessage) {
         var count = 1;
         while (count <= reconnectTries && !isConnected.get()) {
-            LOG.info("Trying to reconnect, attempt {} of {}.", count, reconnectTries);
             try {
+                LOG.info("Wait for {} seconds before attempting to reconnect.", reconnectWait);
+                TimeUnit.SECONDS.sleep(reconnectWait);
+                LOG.info("Trying to reconnect, attempt {} of {}.", count, reconnectTries);
                 connect();
                 LOG.info("Successfully reconnected.");
                 return;
             } catch (InterceptorException | TransportException | IOException e) {
                 LOG.info("{}. reconnection attempt failed.", count);
-                try {
-                    LOG.info("Wait for {} seconds, to give the provider time to restart.", reconnectWait);
-                    TimeUnit.SECONDS.sleep(reconnectWait);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException("Error while trying to wait for the provider to restart.", ex);
-                }
+            } catch (InterruptedException ex) {
+                throw new RuntimeException("Error while trying to wait for the provider to restart.", ex);
             }
             count++;
         }
