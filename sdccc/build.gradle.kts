@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id("com.draeger.medical.java-conventions")
     id("com.draeger.medical.kotlin-conventions")
@@ -84,4 +86,11 @@ val testsJar by tasks.registering(Jar::class) {
 
 artifacts {
     add("archives", tasks.named("testsJar"))
+}
+
+tasks.processResources {
+    filter<ReplaceTokens>("tokens" to mapOf(
+        "revision" to (project.findProperty("revision")?.toString() ?: ""),
+        "changelist" to (project.findProperty("changelist")?.toString() ?: "")
+    ))
 }

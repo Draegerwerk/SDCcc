@@ -56,7 +56,7 @@ tasks.createExe {
     headerType = "console"
     jar = "${layout.buildDirectory.get().asFile}/libs/${projectName}-${projectVersion}.jar"
     outfile = "${projectName}-${projectVersion}.exe" // Absolute path not allowed. File gets placed in build/launch4j
-    mainClassName = "com.draeger.medical.sdccc.TestSuite"
+    mainClassName = findProperty("mainClass")?.toString() ?: "com.draeger.medical.sdccc.TestSuite"
     classpath = setOf("lib/**")
     jreMinVersion = javaVersion
     bundledJrePath = "../${jreFullPath}"
@@ -78,3 +78,4 @@ tasks.named("createExe") {
 tasks.named("build") {
     dependsOn("createExe")
 }
+
