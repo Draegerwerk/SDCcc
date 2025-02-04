@@ -2,6 +2,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     id("com.draeger.medical.java-conventions")
+    id("com.draeger.medical.java-analysis")
     id("com.draeger.medical.kotlin-conventions")
 }
 
@@ -53,23 +54,7 @@ dependencies {
 
 description = "sdccc"
 
-val skipModuleTests: Boolean = project.hasProperty("noTestSDCcc")
 val createExecutable: Boolean = project.hasProperty("executableSDCcc")
-
-if (!skipModuleTests) {
-    apply(plugin = "com.draeger.medical.java-analysis")
-
-    tasks.check {
-        dependsOn("detekt")
-    }
-
-    tasks.test {
-        useJUnitPlatform()
-        exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
-        maxHeapSize = "3g"
-        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
-    }
-}
 
 if (createExecutable) {
     apply(plugin = "com.example.license-report")
@@ -77,6 +62,17 @@ if (createExecutable) {
         dependsOn("generateLicenseReport")
     }
     apply(plugin = "com.draeger.medical.executable-conventions")
+}
+
+tasks.check {
+    dependsOn("detekt")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
+    maxHeapSize = "3g"
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 }
 
 val testsJar by tasks.registering(Jar::class) {
