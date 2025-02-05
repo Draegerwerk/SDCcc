@@ -49,13 +49,12 @@ tasks.register<Copy>("copyRuntimeLibs") {
     into("${layout.buildDirectory.get().asFile}/lib")
 }
 
-val projectName = if (project.name == "sdccc") "SDCcc" else project.name
 val projectVersion = rootProject.extra["projectVersion"] as String
 
 tasks.createExe {
     headerType = "console"
-    jar = "${layout.buildDirectory.get().asFile}/libs/${projectName}-${projectVersion}.jar"
-    outfile = "${projectName}-${projectVersion}.exe" // Absolute path not allowed. File gets placed in build/launch4j
+    jar = "${layout.buildDirectory.get().asFile}/libs/${project.name}-${projectVersion}.jar"
+    outfile = "${project.name}-${projectVersion}.exe" // Absolute path not allowed. File gets placed in build/launch4j
     mainClassName = findProperty("mainClass")?.toString() ?: "com.draeger.medical.sdccc.TestSuite"
     classpath = setOf("lib/**")
     jreMinVersion = javaVersion

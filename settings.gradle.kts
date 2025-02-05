@@ -14,9 +14,8 @@ include(":biceps-model")
 include(":dpws-model")
 include(":sdccc")
 
-val defaultVersion = "9.1.0-SNAPSHOT"
 
-val actualRevision = providers.gradleProperty("revision").orElse(defaultVersion).get()
+val actualRevision = providers.gradleProperty("revision").orElse("").get()
 val actualChangelist = providers.gradleProperty("changelist").orElse("").get()
 
 gradle.rootProject {
