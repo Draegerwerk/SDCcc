@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2025 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -1494,11 +1494,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = this.getOrderedQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(this.getOrderedQueryResult(messageContentQuery), present);
     }
 
     /**
@@ -1571,11 +1571,17 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<MessageContent> countingStream = this.getQueryResult(messageContentQuery)) {
+        try (final Stream<MessageContent> countingStream = enableSorting
+                ? this.getOrderedQueryResult(messageContentQuery)
+                : this.getQueryResult(messageContentQuery)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(messageContentQuery), present);
+        return new GetterResult<>(
+                enableSorting
+                        ? this.getOrderedQueryResult(messageContentQuery)
+                        : this.getQueryResult(messageContentQuery),
+                present);
     }
 
     /**
@@ -1621,11 +1627,11 @@ public class MessageStorage implements AutoCloseable {
         }
 
         final boolean present;
-        try (final Stream<ManipulationData> countingStream = this.getQueryResult(criteria)) {
+        try (final Stream<ManipulationData> countingStream = this.getOrderedQueryResult(criteria)) {
             present = countingStream.findAny().isPresent();
         }
 
-        return new GetterResult<>(this.getQueryResult(criteria), present);
+        return new GetterResult<>(this.getOrderedQueryResult(criteria), present);
     }
 
     /**
@@ -1957,7 +1963,7 @@ public class MessageStorage implements AutoCloseable {
         final Spliterator<T> spliterator =
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.NONNULL | Spliterator.ORDERED);
 
-        return (Stream<T>) new StreamDecorator(StreamSupport.stream(spliterator, false), scrollableResults::close);
+        return new StreamDecorator<>(StreamSupport.stream(spliterator, false), scrollableResults::close);
     }
 
     private void transmit(final List<DatabaseEntry> results) {
