@@ -1963,7 +1963,7 @@ public class MessageStorage implements AutoCloseable {
         final Spliterator<T> spliterator =
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.NONNULL | Spliterator.ORDERED);
 
-        return (Stream<T>) new StreamDecorator(StreamSupport.stream(spliterator, false), scrollableResults::close);
+        return new StreamDecorator<>(StreamSupport.stream(spliterator, false), scrollableResults::close);
     }
 
     private void transmit(final List<DatabaseEntry> results) {
