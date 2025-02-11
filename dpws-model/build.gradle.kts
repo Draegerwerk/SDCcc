@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("com.draeger.medical.version-conventions")
     id("com.draeger.medical.java-conventions")
     id("org.somda.sdc.xjc")
 }

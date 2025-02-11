@@ -13,11 +13,3 @@ rootProject.name = "sdccc_parent"
 include(":biceps-model")
 include(":dpws-model")
 include(":sdccc")
-
-
-val actualRevision = providers.gradleProperty("revision").orElse("").get()
-val actualChangelist = providers.gradleProperty("changelist").orElse("").get()
-
-gradle.rootProject {
-    extra["projectVersion"] = "$actualRevision$actualChangelist"
-}

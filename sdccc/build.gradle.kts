@@ -1,6 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
+    id("com.draeger.medical.version-conventions")
     id("com.draeger.medical.java-conventions")
     id("com.draeger.medical.java-analysis")
     id("com.draeger.medical.kotlin-conventions")

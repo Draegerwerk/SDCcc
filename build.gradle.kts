@@ -1,3 +1,3 @@
 plugins {
-    id("com.draeger.medical.java-conventions")
+    id("com.draeger.medical.version-conventions")
 }
