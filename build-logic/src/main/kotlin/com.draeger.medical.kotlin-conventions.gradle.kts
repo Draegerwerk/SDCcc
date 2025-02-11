@@ -31,7 +31,8 @@ val detektTask = tasks.register<JavaExec>("detekt") {
     val exclude = ".*/build/.*,.*/resources/.*,**/build.gradle.kts,**/settings.gradle.kts"
     val classpathNeededForDetekt = files(
         sourceSets.main.get().runtimeClasspath,
-        sourceSets.test.get().runtimeClasspath
+        sourceSets.test.get().runtimeClasspath,
+        sourceSets.test.get().compileClasspath,
     ).asPath
 
     val jdkHome = System.getProperty("java.home")
