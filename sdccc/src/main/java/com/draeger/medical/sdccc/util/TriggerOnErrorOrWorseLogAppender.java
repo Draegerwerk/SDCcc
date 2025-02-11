@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.Filter;
@@ -30,8 +28,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 @Plugin(name = "TriggerOnErrorOrWorseLogAppender", category = Core.CATEGORY_NAME, elementType = Appender.ELEMENT_TYPE)
 public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
     public static final String APPENDER_NAME = "triggerOnErrorOrWorse";
-    private static final String RESET_WHITELIST_MARKER_NAME = "resetting_the_whitelist_marker";
-    public static final Marker RESET_WHITELIST_MARKER = MarkerManager.getMarker(RESET_WHITELIST_MARKER_NAME);
 
     private OnErrorOrWorseHandler onErrorOrWorseHandler;
 
@@ -80,10 +76,6 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
             if (threadNameWhiteList.stream().noneMatch(event.getThreadName()::matches)) {
                 onErrorOrWorseHandler.onErrorOrWorse(event);
             }
-        }
-        // reset whitelist, if log message with marker is seen
-        if (event.getMarker() != null && event.getMarker().getName().equals(RESET_WHITELIST_MARKER_NAME)) {
-            this.threadNameWhiteList = List.of();
         }
     }
 

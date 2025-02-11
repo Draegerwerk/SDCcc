@@ -11,6 +11,7 @@ import com.google.inject.Injector;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import org.somda.sdc.dpws.client.Client;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
@@ -56,13 +57,33 @@ public interface TestClient {
 
     /**
      * Enable reconnection attempts on connection loss.
+     *
+     * <p>
+     * When the completable future is:
+     * <ul> true -> a successful reconnect happened within the timeout </ul>
+     * <ul> false -> no successful reconnect attempt happened, or the connection was not lost </ul>
+     * <ul> ReconnectException -> if interrupted by timeout, or the feature is not available </ul>
+     *
+     * <p>
+     * Example to enable the reconnect feature for 10 seconds and check if a reconnect happened:
+     * <pre>
+     *
+     * TestClient testClient = getInjector().getInstance(TestClient.class);
+     *
+     * // enable reconnect feature for 10 seconds
+     * var reconnectFuture = testClient.enableReconnect(10);
+     * // some other code here that may cause a connection loss
+     *
+     * // wait for reconnect or for timeout until feature is disabled again
+     * reconnectFuture.get();
+     *
+     * </pre>
+     *
+     * @param timeoutInSeconds time to wait until reconnect is finished or disabled again
+     * @return a CompletableFuture that completes with true if a successful reconnection happened within the timeout,
+     * and false if no successful reconnect attempt was made, or the timeout was reached without a connection loss.
      */
-    void enableReconnect();
-
-    /**
-     * Disable reconnection attempts on connection loss.
-     */
-    void disableReconnect();
+    CompletableFuture<Boolean> enableReconnect(long timeoutInSeconds);
 
     /**
      * Disconnects the SDC client from the target.
