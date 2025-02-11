@@ -58,7 +58,7 @@ tasks.createExe {
     mainClassName = findProperty("mainClass")?.toString() ?: "com.draeger.medical.sdccc.TestSuite"
     classpath = setOf("lib/**")
     jreMinVersion = javaVersion
-    bundledJrePath = "../${jreFullPath}"
+    bundledJrePath = "./${jreFullPath}"
 
     version = "${projectVersion}.0"
     textVersion = "${projectVersion}"
