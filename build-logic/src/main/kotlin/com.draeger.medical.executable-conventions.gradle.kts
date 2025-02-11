@@ -20,21 +20,21 @@ val jreDownloadUrl = "${jreDownloadUrlPrefix}${jreDownloadUrlSuffix}"
 
 tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadJre") {
     src(jreDownloadUrl)
-    dest(file("${layout.buildDirectory.get().asFile}/${jreBasePath}/${jreDownloadFileName}"))
+    dest(file("${layout.buildDirectory.get().asFile}/${jreDownloadFileName}"))
     overwrite(false)
     onlyIfModified(true)
 }
 
 tasks.register<Copy>("unpackJre") {
     doFirst {
-        file("${layout.buildDirectory.get().asFile}/${jreBasePath}").walk().forEach { file ->
+        file("${layout.buildDirectory.get().asFile}/").walk().forEach { file ->
             if (!file.setWritable(true)) {
                 println("Failed to set writable permission for ${file.absolutePath}")
             }
         }
     }
     dependsOn("downloadJre")
-    from(zipTree(file("${layout.buildDirectory.get().asFile}/${jreBasePath}/${jreDownloadFileName}")))
+    from(zipTree(file("${layout.buildDirectory.get().asFile}/${jreDownloadFileName}")))
     into("${layout.buildDirectory.get().asFile}/${jreBasePath}")
 }
 
