@@ -91,3 +91,9 @@ tasks.processResources {
         "changelist" to (project.findProperty("changelist")?.toString() ?: "")
     ))
 }
+
+java {
+    registerFeature("tests") {
+        usingSourceSet(sourceSets.test.get())
+    }
+}
