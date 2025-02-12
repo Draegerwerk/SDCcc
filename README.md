@@ -289,7 +289,7 @@ for the invariant tests.
 
 ## Prerequisites for building SDCcc
 
-Maven >= 3.8.1 and Java 17 are required to build the project.
+Gradle >= 8.10.2 and Java 17 are required to build the project.
 
 ## Limitations
 
