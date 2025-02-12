@@ -6,8 +6,8 @@ plugins {
     `java-library`
 }
 
-val actualRevision = checkNotNull(project.findProperty("revision")) { "No internalRevision property configured" }
-val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No internalChangelist property configured" }
+val actualRevision = checkNotNull(project.findProperty("revision")) { "No revision property configured" }
+val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No changelist property configured" }
 
 group = "com.draeger.medical"
 version = "$actualRevision$actualChangeList"
