@@ -21,6 +21,11 @@ val detekt by configurations.creating
 val detektConfigPath = projectDir.path + File.separator +
     (project.findProperty("detektConfigFilePath")?.toString() ?: "dev_config/detekt.yml")
 
+// container to lazily call asPath upon evaluation, not during configuration, which can be too early
+data class LazyToStringFileCollection(private val fileCollection: FileCollection) {
+    override fun toString(): String = fileCollection.asPath
+}
+
 val detektTask = tasks.register<JavaExec>("detekt") {
     dependsOn("assemble")
     mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
@@ -29,11 +34,12 @@ val detektTask = tasks.register<JavaExec>("detekt") {
     val input = projectDir
     val config = detektConfigPath
     val exclude = ".*/build/.*,.*/resources/.*,**/build.gradle.kts,**/settings.gradle.kts"
-    val classpathNeededForDetekt = files(
-        sourceSets.main.get().runtimeClasspath,
-        sourceSets.test.get().runtimeClasspath,
-        sourceSets.test.get().compileClasspath,
-    ).asPath
+    val classpathNeededForDetekt = LazyToStringFileCollection(
+        project.sourceSets.main.get().runtimeClasspath +
+            project.sourceSets.test.get().runtimeClasspath +
+            project.sourceSets.main.get().compileClasspath +
+            project.sourceSets.test.get().compileClasspath
+    )
 
     val jdkHome = System.getProperty("java.home")
     args(
