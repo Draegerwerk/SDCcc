@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - a command line parameter to not create subdirectories in the test run directory
 - a command line parameter to print the version of the sdccc test tool
 - add config parameter to set the minimum amount of time the test tool is supposed to collect data
+- unmarshal SOAP messages with casting to a configurable class
 
 ### Changed
 
