@@ -27,7 +27,7 @@ data class LazyToStringFileCollection(private val fileCollection: FileCollection
 }
 
 val detektTask = tasks.register<JavaExec>("detekt") {
-    dependsOn("assemble")
+    dependsOn("testClasses")
     mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
     classpath = detekt
 
