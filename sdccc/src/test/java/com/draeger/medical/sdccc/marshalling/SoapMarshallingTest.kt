@@ -36,11 +36,11 @@ class SoapMarshallingTest {
         val rawEnvelope = SoapMarshallingTest::class.java.getResourceAsStream("SoapMarshallingTestData.xml")
         assertNotNull(rawEnvelope, "The test data is not present.")
 
-        val unmarshaledExtension = soapMarshaller.unmarshal(rawEnvelope)
+        val unmarshaledEnvelope = soapMarshaller.unmarshal(rawEnvelope)
 
         assertEquals(
             Envelope::class.java,
-            unmarshaledExtension::class.java,
+            unmarshaledEnvelope::class.java,
             "The unmarshalled data is not of the expected type."
         )
     }
@@ -77,6 +77,7 @@ class SoapMarshallingTest {
             "http://standards.ieee.org/downloads/11073/11073-10207-2017/extension",
             "MustUnderstand"
         )
+        assertNotNull(mustUndertand, "The attribute MustUnderstand is not present.")
         assertEquals("true", mustUndertand.nodeValue, "value of attribute MustUnderstand is not as expected.")
         assertEquals(
             "Youwillnotunderstandthis",
