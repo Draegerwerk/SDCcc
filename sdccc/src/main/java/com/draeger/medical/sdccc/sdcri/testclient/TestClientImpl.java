@@ -16,6 +16,7 @@ import static com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender.AP
 
 import com.draeger.medical.sdccc.configuration.TestSuiteConfig;
 import com.draeger.medical.sdccc.util.ReconnectException;
+import com.draeger.medical.sdccc.util.ReconnectWaitBarrier;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender;
 import com.google.common.eventbus.Subscribe;
@@ -36,6 +37,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -133,6 +135,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private final AtomicBoolean inReconnectProcess;
     private CompletableFuture<Boolean> reconnectFuture;
     private Future<?> reconnectScheduledTimeoutTask;
+    private final ReconnectWaitBarrier providerWaitBarrier;
 
     /**
      * Creates an SDCri consumer instance.
@@ -235,6 +238,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 "ReconnectExecutor",
                 "InstanceIdentifier");
         this.reconnectScheduledTimeoutTask = null;
+        this.providerWaitBarrier = new ReconnectWaitBarrier();
     }
 
     @Override
@@ -422,6 +426,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
         appender.setThreadNameWhitelist(buildThreadNameWhiteList());
 
+        this.providerWaitBarrier.reset();
         this.reconnectFuture = new CompletableFuture<>();
 
         final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -479,6 +484,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
         this.inReconnectProcess.set(false);
         this.reconnectEnabled.set(false);
+    }
+
+    @Override
+    public boolean notifyReconnectProviderReady() {
+        return providerWaitBarrier.notifyProviderIsReady();
     }
 
     private long getReconnectFeatureTimeout(final long proposedTimeout) {
@@ -626,15 +636,20 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private boolean tryToReconnect() {
         for (int count = 1; count <= reconnectTries && !isConnected.get() && !reconnectFuture.isDone(); count++) {
             try {
-                LOG.info("Wait for {} seconds before attempting to reconnect.", reconnectWait);
-                TimeUnit.SECONDS.sleep(reconnectWait);
+                if (count == 1) {
+                    LOG.info("Wait for at most {} seconds before attempting to reconnect.", reconnectWait);
+                    providerWaitBarrier.waitForProvider(reconnectWait);
+                } else {
+                    LOG.info("Wait for {} seconds before attempting to reconnect.", reconnectWait);
+                    TimeUnit.SECONDS.sleep(reconnectWait);
+                }
                 LOG.info("Trying to reconnect, attempt {} of {}.", count, reconnectTries);
                 connect();
                 LOG.info("Successfully reconnected.");
                 return true;
-            } catch (InterceptorException | TransportException | IOException e) {
+            } catch (InterceptorException | TransportException | IOException | TimeoutException e) {
                 LOG.info("{}. reconnection attempt failed.", count);
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException | BrokenBarrierException ex) {
                 LOG.error("Reconnect attempt {} interrupted.", count, ex);
             }
         }

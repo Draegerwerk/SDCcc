@@ -622,6 +622,55 @@ public class TestSuiteIT {
     }
 
     /**
+     * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled.
+     * Notifies when the provider is ready, to skip the reconnectWait time.
+     * Verifies whether a reconnection was successful and detected and whether the test run was not marked as
+     * invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT * 2)
+    public void testReconnectEnabledProviderWaitBarrierNotified() throws Exception {
+        final var reconnectWaitTime = 80L;
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, reconnectWaitTime);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        // enable reconnect feature for the same time as the reconnectWaitTime, so the feature should be disabled when
+        // the barrier is not notified before
+        final var reconnectFuture = client.enableReconnect(reconnectWaitTime);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertTrue(client.notifyReconnectProviderReady(), "Reconnect barrier should be successful notified");
+        assertTrue(reconnectFuture.get(), "Reconnect did not happen.");
+        client.disableReconnect();
+
+        final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+
+        stopProviderAndWaitForSubscriptionEnd(restartedProvider, restartedSub);
+    }
+
+    /**
      * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled, but the
      * provider is not restarted.
      * Verifies whether a reconnection was unsuccessful and whether the test run was marked as invalid.
@@ -809,7 +858,6 @@ public class TestSuiteIT {
      */
     @Test
     @Timeout(TEST_TIMEOUT)
-    //TODO flaky
     public void testReconnectDisabledAfterTimeout() throws Exception {
         final var reconnectionEnabledTime = 6;
         testProvider.startService(DEFAULT_TIMEOUT);

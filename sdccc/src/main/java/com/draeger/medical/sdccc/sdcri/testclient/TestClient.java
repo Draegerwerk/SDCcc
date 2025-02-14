@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2025 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -89,6 +89,15 @@ public interface TestClient {
      * Disable the reconnect feature after using it.
      */
     void disableReconnect();
+
+    /**
+     * Notify that the provider is ready. Can be used to skip the initial wait time for the provider startup during the
+     * reconnect process.
+     *
+     * @return  true if the reconnect feature was notified successfully
+     *          false if something
+     */
+    boolean notifyReconnectProviderReady();
 
     /**
      * Disconnects the SDC client from the target.
