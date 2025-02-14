@@ -39,11 +39,7 @@ class SoapMarshallingTest {
 
         val unmarshaledEnvelope = soapMarshaller.unmarshal(rawEnvelope)
 
-        assertEquals(
-            Envelope::class.java,
-            unmarshaledEnvelope::class.java,
-            "The unmarshalled data is not of the expected type."
-        )
+        assertEquals(Envelope::class.java, unmarshaledEnvelope::class.java, ERROR_MESSAGE)
     }
 
     /**
@@ -59,11 +55,7 @@ class SoapMarshallingTest {
 
         val unmarshaledExtension = soapMarshaller.unmarshalToGeneric(xml.byteInputStream(), ExtensionType::class.java)
 
-        assertEquals(
-            ExtensionType::class.java,
-            unmarshaledExtension::class.java,
-            "The unmarshalled data is not of the expected type."
-        )
+        assertEquals(ExtensionType::class.java, unmarshaledExtension::class.java, ERROR_MESSAGE)
 
         assertEquals(1, unmarshaledExtension.any.size, "The unmarshalled data is not present.")
 
@@ -103,17 +95,18 @@ class SoapMarshallingTest {
 
         val unmarshaledExtension = soapMarshaller.unmarshalToGeneric(xml.byteInputStream(), GetMdibResponse::class.java)
 
-        assertEquals(
-            GetMdibResponse::class.java,
-            unmarshaledExtension::class.java,
-            "The unmarshalled data is not of the expected type."
-        )
+        assertEquals(GetMdibResponse::class.java, unmarshaledExtension::class.java, ERROR_MESSAGE)
     }
 
     companion object {
         /**
-         * Error message for failed assertions.
+         * Number of expected assertions in unmarshalled element.
          */
         const val EXPECTED_NUMBER_ATTRIBUTES = 3
+
+        /**
+         * Error message for failed assertions.
+         */
+        const val ERROR_MESSAGE = "The unmarshalled data is not of the expected type."
     }
 }
