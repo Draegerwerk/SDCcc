@@ -86,6 +86,11 @@ public interface TestClient {
     CompletableFuture<Boolean> enableReconnect(long timeoutInSeconds);
 
     /**
+     * Disable the reconnect feature after using it.
+     */
+    void disableReconnect();
+
+    /**
      * Disconnects the SDC client from the target.
      *
      * @throws TimeoutException in case the disconnect did not finish on time

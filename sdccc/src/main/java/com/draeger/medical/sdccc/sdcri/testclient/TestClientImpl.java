@@ -40,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -131,6 +132,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private final AtomicBoolean reconnectEnabled;
     private final AtomicBoolean inReconnectProcess;
     private CompletableFuture<Boolean> reconnectFuture;
+    private Future<?> reconnectScheduledTimeoutTask;
 
     /**
      * Creates an SDCri consumer instance.
@@ -232,6 +234,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                         .build()),
                 "ReconnectExecutor",
                 "InstanceIdentifier");
+        this.reconnectScheduledTimeoutTask = null;
     }
 
     @Override
@@ -421,30 +424,17 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
         this.reconnectFuture = new CompletableFuture<>();
 
-        reconnectFuture.whenComplete((result, exception) -> {
-            if (exception != null) {
-                LOG.error("Something went wrong during reconnect.", exception);
-                testRunObserver.invalidateTestRun(exception.getMessage());
-            } else if (!isConnected.get()) {
-                LOG.debug("No connection established during reconnect process, invalidating the test run.");
-                testRunObserver.invalidateTestRun(COULDN_T_RECONNECT);
-            }
-            appender.setThreadNameWhitelist(List.of());
-            this.inReconnectProcess.set(false);
-            this.reconnectEnabled.set(false);
-        });
-
         final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
         try {
-            timeoutScheduler.schedule(
+            reconnectScheduledTimeoutTask = timeoutScheduler.schedule(
                     () -> {
                         if (!reconnectFuture.isDone()) {
                             if (isConnected.get()) {
                                 // timeout reached but no disconnect with reconnect happened
-                                reconnectFuture.complete(false);
+                                completeReconnectFuture(false);
                             } else {
                                 // timeout reached but no reconnection happened
-                                reconnectFuture.completeExceptionally(
+                                completeReconnectFutureExceptionally(
                                         new ReconnectException(TIMEOUT_REACHED_WITH_NO_RECONNECT));
                             }
                         }
@@ -456,6 +446,39 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         }
 
         return this.reconnectFuture;
+    }
+
+    private void completeReconnectFuture(final boolean result) {
+        if (!reconnectFuture.isDone()) {
+            if (!isConnected.get()) {
+                LOG.debug("No connection established during reconnect process, invalidating the test run.");
+                testRunObserver.invalidateTestRun(COULDN_T_RECONNECT);
+            }
+            reconnectFuture.complete(result);
+        }
+    }
+
+    private void completeReconnectFutureExceptionally(final Exception exception) {
+        if (!reconnectFuture.isDone()) {
+            LOG.error("Something went wrong during reconnect.", exception);
+            testRunObserver.invalidateTestRun(exception.getMessage());
+            reconnectFuture.completeExceptionally(exception);
+        }
+    }
+
+    @Override
+    public void disableReconnect() {
+        if (reconnectScheduledTimeoutTask != null) {
+            reconnectScheduledTimeoutTask.cancel(true);
+        }
+
+        final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
+        final var appender =
+                (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
+        appender.setThreadNameWhitelist(List.of());
+
+        this.inReconnectProcess.set(false);
+        this.reconnectEnabled.set(false);
     }
 
     private long getReconnectFeatureTimeout(final long proposedTimeout) {
@@ -538,7 +561,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     void onConnectionLoss(final WatchdogMessage watchdogMessage) {
         LOG.info("Watchdog detected disconnect from provider.");
         isConnected.set(false);
-        if (shouldBeConnected.get() && reconnectEnabled.get()) {
+        if (shouldBeConnected.get() && reconnectEnabled.get() && !reconnectFuture.isDone()) {
             inReconnectProcess.set(true);
             LOG.info("The disconnect from provider was expected, trying to reconnect.");
             if (reconnectExecutor.isRunning()) {
@@ -550,13 +573,13 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                             LOG.error(COULDN_T_DISCONNECT, e);
                         }
                         final var reconnectResult = tryToReconnect();
-                        reconnectFuture.complete(reconnectResult);
+                        completeReconnectFuture(reconnectResult);
                         resourceLock.notifyAll();
                     }
                 });
             } else {
                 LOG.debug("ReconnectExecutor is not running.");
-                reconnectFuture.completeExceptionally(new ReconnectException(RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING));
+                completeReconnectFutureExceptionally(new ReconnectException(RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING));
             }
         } else if (shouldBeConnected.get()) {
             LOG.info("The disconnect from the provider was unexpected.");
