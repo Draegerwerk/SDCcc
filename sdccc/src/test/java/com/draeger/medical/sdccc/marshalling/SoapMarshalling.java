@@ -152,15 +152,17 @@ public class SoapMarshalling {
         if (schema != null) {
             unmarshaller.setSchema(schema);
         }
-        final Object obj = unmarshaller.unmarshal(inputStream);
+        final Object unmarshalledObject = unmarshaller.unmarshal(inputStream);
 
-        if (obj instanceof JAXBElement) {
-            final Object castedElement = ((JAXBElement<?>) obj).getValue();
-            if (clazz.isInstance(castedElement)) {
-                return clazz.cast(castedElement);
-            }
+        final Object obj = (unmarshalledObject instanceof JAXBElement)
+                ? ((JAXBElement<?>) unmarshalledObject).getValue()
+                : unmarshalledObject;
+
+        if (!clazz.isInstance(obj)) {
+            throw new ClassCastException("Unmarshalled object is not of type " + clazz.getName() + ". Found: "
+                    + obj.getClass().getName());
         }
-        throw new ClassCastException("Unmarshalled object is not an instance of Envelope");
+        return clazz.cast(obj);
     }
 
     private Schema generateTopLevelSchema(final String schemaPath)
