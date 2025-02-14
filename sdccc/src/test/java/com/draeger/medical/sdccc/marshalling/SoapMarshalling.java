@@ -157,7 +157,8 @@ public class SoapMarshalling {
         if (obj instanceof JAXBElement) {
             final Object castedElement = ((JAXBElement<?>) obj).getValue();
             if (clazz.isInstance(castedElement)) {
-                return clazz.cast(castedElement); }
+                return clazz.cast(castedElement);
+            }
         }
         throw new ClassCastException("Unmarshalled object is not an instance of Envelope");
     }
