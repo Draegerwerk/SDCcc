@@ -130,7 +130,7 @@ public class SoapMarshalling {
      *
      * @param inputStream the inputStream to unmarshal
      * @return an Envelope created from the inputstream
-     * @throws JAXBException      if marshalling fails
+     * @throws JAXBException      if unmarshalling fails
      * @throws ClassCastException if casting to Envelope fails
      */
     public Envelope unmarshal(final InputStream inputStream) throws JAXBException {
@@ -144,21 +144,22 @@ public class SoapMarshalling {
      * @param clazz       the class to cast the unmarshalled object to
      * @param <T>         the type of the class
      * @return an object of the give class, created from the input stream
-     * @throws JAXBException      if marshalling fails
+     * @throws JAXBException      if unmarshalling fails
      * @throws ClassCastException if casting fails
      */
-    @SuppressWarnings("unchecked")
     public <T> T unmarshalToGeneric(final InputStream inputStream, final Class<T> clazz) throws JAXBException {
         final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         if (schema != null) {
             unmarshaller.setSchema(schema);
         }
-        try {
-            return ((JAXBElement<T>) unmarshaller.unmarshal(inputStream)).getValue();
-        } catch (final ClassCastException e) {
-            LOG.error("Could not cast unmarshalled object to {}", clazz.getSimpleName(), e);
-            throw e;
+        final Object obj = unmarshaller.unmarshal(inputStream);
+
+        if (obj instanceof JAXBElement) {
+            final Object castedElement = ((JAXBElement<?>) obj).getValue();
+            if (clazz.isInstance(castedElement)) {
+                return clazz.cast(castedElement); }
         }
+        throw new ClassCastException("Unmarshalled object is not an instance of Envelope");
     }
 
     private Schema generateTopLevelSchema(final String schemaPath)
