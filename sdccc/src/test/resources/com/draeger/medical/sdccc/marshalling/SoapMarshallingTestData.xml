@@ -1,0 +1,62 @@
+<!--
+~ This Source Code Form is subject to the terms of the MIT License.
+~ Copyright (c) 2025 Draegerwerk AG & Co. KGaA.
+~
+~ SPDX-License-Identifier: MIT
+-->
+
+
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+                   xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
+                   xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+                   xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SOAP-ENV:Header>
+        <wsa5:MessageID>urn:uuid:748b1111-1111-1111-1111-111111112345</wsa5:MessageID>
+        <wsa5:RelatesTo>urn:uuid:bc032222-2222-2222-2222-167322222222</wsa5:RelatesTo>
+        <wsa5:Action SOAP-ENV:mustUnderstand="true">
+            http://standards.ieee.org/downloads/11073/11073-20701-2018/GetService/GetMdibResponse
+        </wsa5:Action>
+    </SOAP-ENV:Header>
+    <SOAP-ENV:Body>
+        <msg:GetMdibResponse MdibVersion="19516" SequenceId="urn:uuid:16115207-2e9e-4193-aa36-172864ab8073">
+            <msg:Mdib MdibVersion="19516" SequenceId="urn:uuid:16115207-2e9e-4193-aa36-172864ab8073">
+                <pm:MdDescription DescriptionVersion="1">
+                    <pm:Mds Handle="mds0" DescriptorVersion="1" SafetyClassification="MedC">
+                        <pm:Type Code="130535">
+                            <pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:AlertSystem Handle="asy.mds0" DescriptorVersion="0" SafetyClassification="MedA"
+                                        SelfCheckPeriod="P0Y0M0DT0H0M5.0S" xsi:type="pm:AlertSystemDescriptor">
+                            <pm:AlertCondition Handle="ac0.mds0" DescriptorVersion="0" SafetyClassification="MedA"
+                                               Kind="Phy" Priority="Me" xsi:type="pm:AlertConditionDescriptor">
+                                <pm:Type Code="262108">
+                                    <pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
+                                </pm:Type>
+                                <pm:Source>mds0</pm:Source>
+                            </pm:AlertCondition>
+                            <pm:AlertSignal Handle="as0.mds0" DescriptorVersion="0" SafetyClassification="MedA"
+                                            ConditionSignaled="ac0.mds0" Manifestation="Aud" Latching="false"
+                                            xsi:type="pm:AlertSignalDescriptor"/>
+                        </pm:AlertSystem>
+                    </pm:Mds>
+                </pm:MdDescription>
+                <pm:MdState StateVersion="1">
+                    <pm:State xsi:type="pm:MdsState" DescriptorVersion="0" StateVersion="0" OperatingMode="Nml"
+                              Lang="en" DescriptorHandle="mds0"/>
+                    <pm:State xsi:type="pm:AlertSystemState" DescriptorVersion="0" StateVersion="0" ActivationState="On"
+                              LastSelfCheck="1579170442507" SelfCheckCount="40"
+                              PresentPhysiologicalAlarmConditions="ac0.mds0" PresentTechnicalAlarmConditions=""
+                              DescriptorHandle="asy.mds0">
+                        <pm:SystemSignalActivation Manifestation="Aud" State="Psd"/>
+                    </pm:State>
+                    <pm:State xsi:type="pm:AlertConditionState" DescriptorVersion="0" StateVersion="0"
+                              ActivationState="On" DeterminationTime="1579170442508" Presence="true"
+                              DescriptorHandle="ac0.mds0"/>
+                    <pm:State xsi:type="pm:AlertSignalState" DescriptorVersion="0" StateVersion="0" ActivationState="On"
+                              Presence="On" DescriptorHandle="as0.mds0"/>
+                </pm:MdState>
+            </msg:Mdib>
+        </msg:GetMdibResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
