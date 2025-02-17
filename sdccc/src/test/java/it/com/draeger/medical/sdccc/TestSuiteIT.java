@@ -639,6 +639,7 @@ public class TestSuiteIT {
             @Override
             protected void defaultConfigure() {
                 bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, reconnectWaitTime);
+                bind(TestSuiteConfig.NETWORK_RECONNECT_TRIES, int.class, 1);
             }
         });
         InjectorTestBase.setInjector(injector);
@@ -902,10 +903,10 @@ public class TestSuiteIT {
     }
 
     /**
-     * Runs the test consumer and enables reconnect but triggers a connection loss to the test provider when it is
-     * disabled again. So the consumer should recognize a failed connection, but the reconnect feature should be
-     * disabled again.
-     * Verifies that the connection is not reestablished and the test run is marked as invalid.
+     * Runs the test consumer and enables reconnect with a long enabling time, reconnects the provider and repeats
+     * that process. This test is intended to verify that no lingering tasks interfere with the second reconnect
+     * process.
+     * Verifies that the connection is reestablished both times and the test run is not marked as invalid.
      *
      * @throws Exception on any exception
      */
@@ -926,11 +927,10 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(100);
+        final var reconnectFuture = client.enableReconnect(TEST_TIMEOUT);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
-        // testProvider.stopService(DEFAULT_TIMEOUT);
 
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
@@ -947,7 +947,6 @@ public class TestSuiteIT {
 
         assertTrue(reconnectFutureSubsequent.get(), "Reconnect did not happen.");
         client.disableReconnect();
-        // assertThrows(TimeoutException.class, reconnectFutureSubsequent::get);
 
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
