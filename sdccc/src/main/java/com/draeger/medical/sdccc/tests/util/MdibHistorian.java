@@ -660,10 +660,7 @@ public class MdibHistorian {
     public void processAllRemoteMdibAccess(final BiConsumer<RemoteMdibAccess, String> processor) throws IOException {
         try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
             sequenceIds.forEach(sequenceId -> {
-                processRemoteMdibAccessForSequence(
-                        mdibAccess -> processor.accept(mdibAccess, sequenceId),
-                        sequenceId
-                );
+                processRemoteMdibAccessForSequence(mdibAccess -> processor.accept(mdibAccess, sequenceId), sequenceId);
             });
         }
     }
