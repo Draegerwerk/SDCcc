@@ -652,6 +652,23 @@ public class MdibHistorian {
     }
 
     /**
+     * Processes each RemoteMdibAccess from the episodic report based histories
+     * for all known sequence ids using the provided processor.
+     *
+     * @param processor a BiConsumer that processes a RemoteMdibAccess and its associated sequence id.
+     */
+    public void processAllRemoteMdibAccess(final BiConsumer<RemoteMdibAccess, String> processor) throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                processRemoteMdibAccessForSequence(
+                        mdibAccess -> processor.accept(mdibAccess, sequenceId),
+                        sequenceId
+                );
+            });
+        }
+    }
+
+    /**
      * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based history
      * of the specified sequenceId using the provided processor.
      *
