@@ -420,13 +420,13 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         final var actualTimeout = getReconnectFeatureTimeout(timeoutInSeconds);
         LOG.debug("Reconnect enabled for {} seconds.", actualTimeout);
 
+        this.providerWaitBarrier.reset();
         this.reconnectEnabled.set(true);
         final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
         final var appender =
                 (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
         appender.setThreadNameWhitelist(buildThreadNameWhiteList());
 
-        this.providerWaitBarrier.reset();
         this.reconnectFuture = new CompletableFuture<>();
 
         final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -477,10 +477,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
             reconnectScheduledTimeoutTask.cancel(true);
         }
 
-        final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
-        final var appender =
-                (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
-        appender.setThreadNameWhitelist(List.of());
+        LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
 
         this.inReconnectProcess.set(false);
         this.reconnectEnabled.set(false);
@@ -647,7 +644,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 connect();
                 LOG.info("Successfully reconnected.");
                 return true;
-            } catch (InterceptorException | TransportException | IOException | TimeoutException e) {
+            } catch (InterceptorException | TransportException | IOException e) {
                 LOG.info("{}. reconnection attempt failed.", count);
             } catch (InterruptedException | BrokenBarrierException ex) {
                 LOG.error("Reconnect attempt {} interrupted.", count, ex);
