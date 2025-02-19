@@ -74,9 +74,13 @@ public interface TestClient {
      * var reconnectFuture = testClient.enableReconnect(10);
      * // some other code here that may cause a connection loss
      *
+     * // optional: if the provider is ready to reconnect {@link TestClient#notifyReconnectProviderReady()}
+     * // can be used to skip the initial wait time for the first reconnect attempt
+     * testClient.notifyReconnectProviderReady();
      * // wait for reconnect or for timeout until feature is disabled again
      * reconnectFuture.get();
-     *
+     * // disable reconnect feature
+     * testClient.disableReconnect();
      * </pre>
      *
      * @param timeoutInSeconds time to wait until reconnect is finished or disabled again
@@ -94,6 +98,7 @@ public interface TestClient {
      * Notify that the provider is ready. Can be used to skip the initial wait time for the provider startup during the
      * reconnect process.
      *
+     * @see TestClient#enableReconnect(long)
      * @return  true if the reconnect feature was notified successfully
      *          false if something
      */
