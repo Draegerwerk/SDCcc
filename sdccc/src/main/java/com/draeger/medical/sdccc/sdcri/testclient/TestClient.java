@@ -98,9 +98,9 @@ public interface TestClient {
      * Notify that the provider is ready. Can be used to skip the initial wait time for the provider startup during the
      * reconnect process.
      *
-     * @see TestClient#enableReconnect(long)
      * @return  true if the reconnect feature was notified successfully
      *          false if something
+     * @see TestClient#enableReconnect(long)
      */
     boolean notifyReconnectProviderReady();
 

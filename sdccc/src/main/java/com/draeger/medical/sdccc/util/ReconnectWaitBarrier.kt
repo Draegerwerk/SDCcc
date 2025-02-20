@@ -30,6 +30,8 @@ class ReconnectWaitBarrier(parties: Int = 2) {
      * @throws InterruptedException if the current thread is interrupted while waiting.
      * @throws BrokenBarrierException if the barrier is broken while waiting.
      */
+    @Suppress("SwallowedException") // The TimeoutException is expected, since the barrier is used for waiting
+    // and the exception is thrown when the barrier is not tripped in time.
     @Throws(InterruptedException::class, BrokenBarrierException::class)
     fun waitForProvider(timeout: Long) {
         logger.info { "Waiting at most $timeout seconds for the provider to be ready" }
