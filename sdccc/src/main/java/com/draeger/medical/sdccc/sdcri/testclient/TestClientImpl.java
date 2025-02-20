@@ -435,7 +435,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                     () -> {
                         if (!reconnectFuture.isDone()) {
                             if (isConnected.get()) {
-                                // timeout reached but no disconnect with reconnect happened
                                 completeReconnectFuture(false);
                             } else {
                                 // timeout reached but no reconnection happened
