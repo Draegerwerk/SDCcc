@@ -12,6 +12,7 @@ plugins {
 val javaVersion = property("javaVersion").toString()
 val jreDirectoryName = "jdk-17.0.5+8-jre"
 val jreBasePath = "jre"
+val executablePath = "launch4j"
 val jreFullPath = "${jreBasePath}/${jreDirectoryName}"
 val jreDownloadUrlPrefix = "https://github.com/adoptium/temurin17-binaries/releases/download/"
 val jreDownloadFileName = "OpenJDK17U-jre_x64_windows_hotspot_17.0.5_8.zip"
@@ -35,7 +36,7 @@ tasks.register<Copy>("unpackJre") {
     }
     dependsOn("downloadJre")
     from(zipTree(file("${layout.buildDirectory.get().asFile}/${jreDownloadFileName}")))
-    into("${layout.buildDirectory.get().asFile}/${jreBasePath}")
+    into("${layout.buildDirectory.get().asFile}/${executablePath}/${jreBasePath}")
 }
 
 tasks.register("downloadAndUnpackJre") {
@@ -75,4 +76,3 @@ tasks.named("createExe") {
 tasks.named("build") {
     dependsOn("createExe")
 }
-
