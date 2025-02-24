@@ -583,7 +583,7 @@ public class TestSuiteIT {
      * @throws Exception on any exception
      */
     @Test
-    @Timeout(TEST_TIMEOUT * 2)
+    @Timeout(TEST_TIMEOUT)
     public void testReconnectEnabledAndProviderRestarted() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
         final var eprAddress = testProvider.getSdcDevice().getEprAddress();
@@ -610,13 +610,13 @@ public class TestSuiteIT {
         assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
 
-        final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
+        verifyOnlyOneActiveSubscription(restartedProvider);
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
                 testRunObserver.isInvalid(),
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
-
-        stopProviderAndWaitForSubscriptionEnd(restartedProvider, restartedSub);
+        client.disconnect();
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
     }
 
     /**
@@ -628,7 +628,7 @@ public class TestSuiteIT {
      * @throws Exception on any exception
      */
     @Test
-    @Timeout(TEST_TIMEOUT * 2)
+    @Timeout(TEST_TIMEOUT)
     public void testReconnectEnabledProviderWaitBarrierNotified() throws Exception {
         final var reconnectWaitTime = 80L;
         testProvider.startService(DEFAULT_TIMEOUT);
@@ -660,13 +660,13 @@ public class TestSuiteIT {
         assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
 
-        final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
+        verifyOnlyOneActiveSubscription(restartedProvider);
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertFalse(
                 testRunObserver.isInvalid(),
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
-
-        stopProviderAndWaitForSubscriptionEnd(restartedProvider, restartedSub);
+        client.disconnect();
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
     }
 
     /**
