@@ -11,7 +11,6 @@ import com.google.inject.Injector;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import org.somda.sdc.dpws.client.Client;
 import org.somda.sdc.dpws.service.HostingServiceProxy;
@@ -22,6 +21,29 @@ import org.somda.sdc.glue.consumer.SdcRemoteDevicesConnector;
 
 /**
  * An SDC consumer used for testing.
+ *
+ * <p>
+ * It is possible to enable a reconnect feature that will try to reconnect the provider after a connection loss.
+ * To use this feature, the following steps are necessary:
+ * </p>
+ * <p>
+ *     Example to enable the reconnect feature for 10 seconds and check if a reconnect happened:
+ *     <pre>
+ *         TestClient testClient = getInjector().getInstance(TestClient.class);
+ *         // enable reconnect feature for 10 seconds
+ *         testClient.enableReconnect(10);
+ *         // some other code here that may cause a connection loss
+ *         ...
+ *         // optional: if the provider is ready to reconnect {@link TestClient#notifyReconnectProviderReady()}
+ *         // can be used to skip the initial wait time for the first reconnect attempt
+ *         boolean successfullyNotified = testClient.notifyReconnectProviderReady();
+ *         // get the result of the reconnect. This call blocks until the process is completed
+ *         boolean reconnectHappened = testClient.getReconnectResult();
+ *         // disable reconnect feature to reset the feature, this is necessary to call
+ *         // {@link TestClient#enableReconnect(long)} again
+ *         testClient.disableReconnect();
+ *         </pre>
+ * </p>
  */
 public interface TestClient {
 
@@ -56,53 +78,36 @@ public interface TestClient {
     void connect() throws InterceptorException, TransportException, IOException;
 
     /**
-     * Enable reconnection attempts on connection loss.
-     *
-     * <p>
-     * When the completable future is:
-     * <ul> true -> a successful reconnect happened within the timeout </ul>
-     * <ul> false -> no successful reconnect attempt happened, or the connection was not lost </ul>
-     * <ul> ReconnectException -> if interrupted by timeout, or the feature is not available </ul>
-     *
-     * <p>
-     * Example to enable the reconnect feature for 10 seconds and check if a reconnect happened:
-     * <pre>
-     *
-     * TestClient testClient = getInjector().getInstance(TestClient.class);
-     *
-     * // enable reconnect feature for 10 seconds
-     * var reconnectFuture = testClient.enableReconnect(10);
-     * // some other code here that may cause a connection loss
-     *
-     * // optional: if the provider is ready to reconnect {@link TestClient#notifyReconnectProviderReady()}
-     * // can be used to skip the initial wait time for the first reconnect attempt
-     * testClient.notifyReconnectProviderReady();
-     * // wait for reconnect or for timeout until feature is disabled again
-     * reconnectFuture.get();
-     * // disable reconnect feature
-     * testClient.disableReconnect();
-     * </pre>
-     *
-     * @param timeoutInSeconds time to wait until reconnect is finished or disabled again
-     * @return a CompletableFuture that completes with true if a successful reconnection happened within the timeout,
-     * and false if no successful reconnect attempt was made, or the timeout was reached without a connection loss.
+     * Enable reconnection attempts on connection loss. {@link TestClient#disableReconnect()} needs to be called before
+     * calling this method again, otherwise an exception will be thrown.
+     * @param timeoutInSeconds time to wait until the reconnect needs to be finished, when the provided timeout is
+     *                         smaller than
+     *                         {@link com.draeger.medical.sdccc.configuration.TestSuiteConfig#NETWORK_RECONNECT_WAIT} *
+     *                         {@link com.draeger.medical.sdccc.configuration.TestSuiteConfig#NETWORK_RECONNECT_TRIES}
+     *                         it will be set to that value
+     * @throws IllegalStateException if the reconnect feature is already enabled
      */
-    CompletableFuture<Boolean> enableReconnect(long timeoutInSeconds);
-
-    /**
-     * Disable the reconnect feature after using it.
-     */
-    void disableReconnect();
+    void enableReconnect(long timeoutInSeconds) throws IllegalStateException;
 
     /**
      * Notify that the provider is ready. Can be used to skip the initial wait time for the provider startup during the
      * reconnect process.
      *
-     * @return  true if the reconnect feature was notified successfully
-     *          false if something
-     * @see TestClient#enableReconnect(long)
+     * @return true if the provider was successfully notified, false otherwise
      */
     boolean notifyReconnectProviderReady();
+
+    /**
+     * @return true if a successful reconnection happened within the timeout,
+     *         and false if the timeout was reached or the reconnect was unsuccessful
+     */
+    boolean getReconnectResult();
+
+    /**
+     * Disable the reconnect feature again. This needs to be called when {@link TestClient#enableReconnect(long)} was
+     * called before, otherwise another call to {@link TestClient#enableReconnect(long)} will result in an exception.
+     */
+    void disableReconnect();
 
     /**
      * Disconnects the SDC client from the target.

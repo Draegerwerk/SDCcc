@@ -35,7 +35,6 @@ import com.draeger.medical.sdccc.sdcri.testclient.TestClientImpl;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
-import com.draeger.medical.sdccc.util.ReconnectException;
 import com.draeger.medical.sdccc.util.TestRunObserver;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
@@ -64,7 +63,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -601,7 +599,7 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(TEST_TIMEOUT);
+        client.enableReconnect(TEST_TIMEOUT);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
@@ -609,7 +607,7 @@ public class TestSuiteIT {
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
 
-        assertTrue(reconnectFuture.get(), "Reconnect did not happen.");
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
 
         final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
@@ -650,7 +648,7 @@ public class TestSuiteIT {
 
         // enable reconnect feature for the same time as the reconnectWaitTime, so the feature should be disabled when
         // the barrier is not notified before
-        final var reconnectFuture = client.enableReconnect(reconnectWaitTime);
+        client.enableReconnect(reconnectWaitTime);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
@@ -658,8 +656,8 @@ public class TestSuiteIT {
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
 
-        assertTrue(client.notifyReconnectProviderReady(), "Reconnect barrier should be successful notified");
-        assertTrue(reconnectFuture.get(), "Reconnect did not happen.");
+        assertTrue(client::notifyReconnectProviderReady);
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
 
         final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
@@ -690,12 +688,12 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(TEST_TIMEOUT);
+        client.enableReconnect(TEST_TIMEOUT);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
 
-        assertFalse(reconnectFuture.get(), "Reconnect should not have happened.");
+        assertFalse(client::getReconnectResult, "Reconnect should not have happened.");
         client.disableReconnect();
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalidated.");
@@ -725,12 +723,12 @@ public class TestSuiteIT {
         final var client = injector.getInstance(TestClient.class);
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
-        final var reconnectFuture = client.enableReconnect(20);
+        client.enableReconnect(20);
 
         verifyOnlyOneActiveSubscription(testProvider);
 
         // wait until reconnect timeout is reached without losing connection
-        assertFalse(reconnectFuture.get(), "Should be false, since the connection was never lost.");
+        assertFalse(client::getReconnectResult, "Should be false, since the connection was never lost.");
         client.disableReconnect();
         // test run should not be marked invalid, as disconnect was intentional
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
@@ -758,7 +756,7 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(TEST_TIMEOUT);
+        client.enableReconnect(TEST_TIMEOUT);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
 
@@ -777,10 +775,8 @@ public class TestSuiteIT {
 
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
 
-        final var exception = assertThrows(ExecutionException.class, reconnectFuture::get);
+        assertFalse(client::getReconnectResult, "Reconnect should not have happened.");
         client.disableReconnect();
-        assertInstanceOf(ReconnectException.class, exception.getCause());
-        assertTrue(exception.getMessage().contains(TestClientImpl.RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING));
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertTrue(testRunObserver.isInvalid(), "TestRunObserver should be invalid.");
         final var reasons = testRunObserver.getReasons();
@@ -818,7 +814,7 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(enableReconnectTime);
+        client.enableReconnect(enableReconnectTime);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
@@ -829,13 +825,11 @@ public class TestSuiteIT {
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
 
-        final var exception = assertThrows(
-                ExecutionException.class,
-                reconnectFuture::get,
+        assertFalse(
+                client::getReconnectResult,
                 "Reconnect should not have happened, reconnect feature should have been disabled.");
         client.disableReconnect();
-        assertInstanceOf(ReconnectException.class, exception.getCause());
-        assertTrue(exception.getMessage().contains(TestClientImpl.TIMEOUT_REACHED_WITH_NO_RECONNECT));
+
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalid.");
         final var reasons = testRunObserver.getReasons();
@@ -875,7 +869,7 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(reconnectionEnabledTime);
+        client.enableReconnect(reconnectionEnabledTime);
 
         // wait for the reconnect timeout to be reached
         Thread.sleep(TimeUnit.SECONDS.toMillis(reconnectionEnabledTime));
@@ -886,7 +880,7 @@ public class TestSuiteIT {
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
 
-        assertFalse(reconnectFuture.get(), "Reconnect did not happen.");
+        assertFalse(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
         assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalid.");
@@ -927,7 +921,7 @@ public class TestSuiteIT {
         client.startService(DEFAULT_TIMEOUT);
         client.connect();
 
-        final var reconnectFuture = client.enableReconnect(TEST_TIMEOUT);
+        client.enableReconnect(TEST_TIMEOUT);
 
         final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
         stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
@@ -935,17 +929,17 @@ public class TestSuiteIT {
         final var restartedProvider = buildTestProvider(eprAddress);
         restartedProvider.startService(DEFAULT_TIMEOUT);
 
-        assertTrue(reconnectFuture.get(), "Reconnect did not happen.");
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
         final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
 
-        final var reconnectFutureSubsequent = client.enableReconnect(TEST_TIMEOUT);
+        client.enableReconnect(TEST_TIMEOUT);
         stopProviderAndWaitForSubscriptionEnd(restartedProvider, restartedSub);
 
         final var rerestartedProvider = buildTestProvider(eprAddress);
         rerestartedProvider.startService(DEFAULT_TIMEOUT);
 
-        assertTrue(reconnectFutureSubsequent.get(), "Reconnect did not happen.");
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
         client.disableReconnect();
 
         final var testRunObserver = injector.getInstance(TestRunObserver.class);
@@ -954,6 +948,31 @@ public class TestSuiteIT {
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
 
         rerestartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and enables reconnect multiple times without disabling it in between.
+     * Verifies that a reconnect exception is thrown.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testEnableReconnectThrowsException() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var exception = assertThrows(IllegalStateException.class, () -> client.enableReconnect(TEST_TIMEOUT));
+        assertInstanceOf(IllegalStateException.class, exception);
+        assertEquals(TestClientImpl.RECONNECT_ALREADY_ENABLED, exception.getMessage());
     }
 
     private Map<String, SubscriptionManager> verifyOnlyOneActiveSubscription(final TestProvider provider) {

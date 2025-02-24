@@ -47,6 +47,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -79,6 +82,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     public static final String TIMEOUT_REACHED_WITH_NO_RECONNECT =
             "Timeout for re-establishing a connection was reached.";
     public static final String RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING = "Reconnect executor service not running.";
+    public static final String RECONNECT_ALREADY_ENABLED = "Reconnect is already enabled.";
     public static final String UNEXPECTED_DISCONNECT_DETECTED = "Unexpected disconnect detected.";
 
     private static final Logger LOG = LogManager.getLogger(TestClientImpl.class);
@@ -89,6 +93,14 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private static final String MATCHING = "matching";
     private static final String NON_MATCHING = "non-matching";
     private static final String RECONNECT_THREAD_NAME = "sdcccReconnectThread";
+
+    private enum InternalReconnectState {
+        DISABLED,
+        ENABLED,
+        RECONNECTING,
+        COMPLETED
+    }
+
     private final Pattern locExtractionPattern = Pattern.compile("^sdc.ctxt.loc:/.*\\?"
             + "(?=(.*fac=(?<fac>[^&]*))?)"
             + "(?=(.*bldng=(?<bldng>[^&]*))?)"
@@ -127,15 +139,16 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private List<String> targetXAddrs;
 
     private final ExecutorWrapperService<ExecutorService> reconnectExecutor;
-    private final AtomicBoolean isConnected;
     private final Object resourceLock;
     private final long reconnectTries;
     private final long reconnectWait;
-    private final AtomicBoolean reconnectEnabled;
-    private final AtomicBoolean inReconnectProcess;
     private CompletableFuture<Boolean> reconnectFuture;
     private Future<?> reconnectScheduledTimeoutTask;
+    private final ReentrantLock reconnectLock;
+    private final Condition reconnectLockCondition;
+    private final AtomicReference<InternalReconnectState> reconnectState;
     private final ReconnectWaitBarrier providerWaitBarrier;
+    private final AtomicBoolean isConnected;
 
     /**
      * Creates an SDCri consumer instance.
@@ -175,9 +188,6 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         this.connector = injector.getInstance(SdcRemoteDevicesConnector.class);
         this.testRunObserver = testRunObserver;
         this.shouldBeConnected = new AtomicBoolean(false);
-        this.isConnected = new AtomicBoolean(false);
-        this.reconnectEnabled = new AtomicBoolean(false);
-        this.inReconnectProcess = new AtomicBoolean(false);
         this.resourceLock = new Object();
         this.reconnectTries = reconnectTries;
         this.reconnectWait = reconnectWait;
@@ -238,7 +248,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
                 "ReconnectExecutor",
                 "InstanceIdentifier");
         this.reconnectScheduledTimeoutTask = null;
+        this.reconnectLock = new ReentrantLock();
+        this.reconnectLockCondition = reconnectLock.newCondition();
+        this.reconnectState = new AtomicReference<>(InternalReconnectState.DISABLED);
         this.providerWaitBarrier = new ReconnectWaitBarrier();
+        this.isConnected = new AtomicBoolean(false);
     }
 
     @Override
@@ -416,70 +430,39 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     }
 
     @Override
-    public synchronized CompletableFuture<Boolean> enableReconnect(final long timeoutInSeconds) {
-        final var actualTimeout = getReconnectFeatureTimeout(timeoutInSeconds);
-        LOG.debug("Reconnect enabled for {} seconds.", actualTimeout);
-
-        this.providerWaitBarrier.reset();
-        this.reconnectEnabled.set(true);
-        final var ctx = (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
-        final var appender =
-                (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
-        appender.setThreadNameWhitelist(buildThreadNameWhiteList());
-
-        this.reconnectFuture = new CompletableFuture<>();
-
-        final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+    public void enableReconnect(final long timeoutInSeconds) throws IllegalStateException {
+        reconnectLock.lock();
         try {
-            reconnectScheduledTimeoutTask = timeoutScheduler.schedule(
-                    () -> {
-                        if (!reconnectFuture.isDone()) {
-                            if (isConnected.get()) {
-                                completeReconnectFuture(false);
-                            } else {
-                                // timeout reached but no reconnection happened
-                                completeReconnectFutureExceptionally(
-                                        new ReconnectException(TIMEOUT_REACHED_WITH_NO_RECONNECT));
-                            }
-                        }
-                    },
-                    actualTimeout,
-                    TimeUnit.SECONDS);
-        } finally {
-            timeoutScheduler.shutdown();
-        }
-
-        return this.reconnectFuture;
-    }
-
-    private void completeReconnectFuture(final boolean result) {
-        if (!reconnectFuture.isDone()) {
-            if (!isConnected.get()) {
-                LOG.debug("No connection established during reconnect process, invalidating the test run.");
-                testRunObserver.invalidateTestRun(COULDN_T_RECONNECT);
+            if (reconnectState.get() != InternalReconnectState.DISABLED) {
+                testRunObserver.invalidateTestRun(RECONNECT_ALREADY_ENABLED);
+                throw new IllegalStateException(RECONNECT_ALREADY_ENABLED);
             }
-            reconnectFuture.complete(result);
+
+            final var actualTimeout = getReconnectFeatureTimeout(timeoutInSeconds);
+            LOG.debug("Reconnect enabled for {} seconds.", actualTimeout);
+
+            providerWaitBarrier.reset();
+
+            final var ctx =
+                    (LoggerContext) LogManager.getContext(this.getClass().getClassLoader(), false);
+            final var appender =
+                    (TriggerOnErrorOrWorseLogAppender) ctx.getConfiguration().getAppender(APPENDER_NAME);
+            appender.setThreadNameWhitelist(buildThreadNameWhiteList());
+
+            this.reconnectFuture = new CompletableFuture<>();
+
+            final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+            try {
+                reconnectScheduledTimeoutTask =
+                        timeoutScheduler.schedule(this::handleReconnectTimeout, actualTimeout, TimeUnit.SECONDS);
+            } finally {
+                timeoutScheduler.shutdown();
+            }
+
+            reconnectState.set(InternalReconnectState.ENABLED);
+        } finally {
+            reconnectLock.unlock();
         }
-    }
-
-    private void completeReconnectFutureExceptionally(final Exception exception) {
-        if (!reconnectFuture.isDone()) {
-            LOG.error("Something went wrong during reconnect.", exception);
-            testRunObserver.invalidateTestRun(exception.getMessage());
-            reconnectFuture.completeExceptionally(exception);
-        }
-    }
-
-    @Override
-    public void disableReconnect() {
-        if (reconnectScheduledTimeoutTask != null) {
-            reconnectScheduledTimeoutTask.cancel(true);
-        }
-
-        LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
-
-        this.inReconnectProcess.set(false);
-        this.reconnectEnabled.set(false);
     }
 
     @Override
@@ -487,19 +470,39 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         return providerWaitBarrier.notifyProviderIsReady();
     }
 
-    private long getReconnectFeatureTimeout(final long proposedTimeout) {
-        var actualTimeout = proposedTimeout;
-        final var minimalTimeout = reconnectTries * reconnectWait;
-        if (proposedTimeout < minimalTimeout) {
-            LOG.info(
-                    "The provided timeout of {} seconds is too short for the configured ReconnectTries {} and ReconnectWait {}.",
-                    proposedTimeout,
-                    reconnectTries,
-                    reconnectWait);
-            LOG.info("Replacing the timeout with minimal applicable value {}.", minimalTimeout);
-            actualTimeout = minimalTimeout;
+    @Override
+    public boolean getReconnectResult() {
+        reconnectLock.lock();
+        try {
+            while (reconnectState.get() != InternalReconnectState.COMPLETED) {
+                reconnectLockCondition.await();
+            }
+            return reconnectFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            LOG.debug("Error while waiting for reconnect future", e);
+            return false;
+        } finally {
+            reconnectLock.unlock();
         }
-        return actualTimeout;
+    }
+
+    @Override
+    public void disableReconnect() {
+        reconnectLock.lock();
+        try {
+            if (reconnectScheduledTimeoutTask != null) {
+                reconnectScheduledTimeoutTask.cancel(true);
+                reconnectScheduledTimeoutTask = null;
+            }
+
+            completeReconnectFutureExceptionally(
+                    new ReconnectException("Reconnect feature was disabled before the process was completed."));
+
+            LOG.info(TriggerOnErrorOrWorseLogAppender.RESET_WHITELIST_MARKER, "Disable reconnect feature.");
+            reconnectState.set(InternalReconnectState.DISABLED);
+        } finally {
+            reconnectLock.unlock();
+        }
     }
 
     @Override
@@ -566,9 +569,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     @Subscribe
     void onConnectionLoss(final WatchdogMessage watchdogMessage) {
         LOG.info("Watchdog detected disconnect from provider.");
-        isConnected.set(false);
-        if (shouldBeConnected.get() && reconnectEnabled.get() && !reconnectFuture.isDone()) {
-            inReconnectProcess.set(true);
+        if (shouldBeConnected.get() && reconnectState.get() == InternalReconnectState.ENABLED) {
+            reconnectState.set(InternalReconnectState.RECONNECTING);
             LOG.info("The disconnect from provider was expected, trying to reconnect.");
             if (reconnectExecutor.isRunning()) {
                 reconnectExecutor.get().submit(() -> {
@@ -595,6 +597,69 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
         }
     }
 
+    private void completeReconnectFuture(final boolean result) {
+        reconnectLock.lock();
+        try {
+            if (reconnectState.get() != InternalReconnectState.COMPLETED) {
+                if (!isConnected.get()) {
+                    LOG.debug("No connection established during reconnect process, invalidating the test run.");
+                    testRunObserver.invalidateTestRun(COULDN_T_RECONNECT);
+                }
+                reconnectFuture.complete(result);
+            }
+            reconnectState.set(InternalReconnectState.COMPLETED);
+            reconnectLockCondition.signalAll();
+        } finally {
+            reconnectLock.unlock();
+        }
+    }
+
+    private void completeReconnectFutureExceptionally(final Exception exception) {
+        reconnectLock.lock();
+        try {
+            if (reconnectState.get() != InternalReconnectState.COMPLETED) {
+                LOG.error("Something went wrong during reconnect.", exception);
+                testRunObserver.invalidateTestRun(exception.getMessage());
+                reconnectFuture.completeExceptionally(exception);
+            }
+            reconnectState.set(InternalReconnectState.COMPLETED);
+            reconnectLockCondition.signalAll();
+        } finally {
+            reconnectLock.unlock();
+        }
+    }
+
+    private long getReconnectFeatureTimeout(final long proposedTimeout) {
+        var actualTimeout = proposedTimeout;
+        final var minimalTimeout = reconnectTries * reconnectWait;
+        if (proposedTimeout < minimalTimeout) {
+            LOG.info(
+                    "The provided timeout of {} seconds is too short for the configured ReconnectTries {} and ReconnectWait {}.",
+                    proposedTimeout,
+                    reconnectTries,
+                    reconnectWait);
+            LOG.info("Replacing the timeout with minimal applicable value {}.", minimalTimeout);
+            actualTimeout = minimalTimeout;
+        }
+        return actualTimeout;
+    }
+
+    private void handleReconnectTimeout() {
+        reconnectLock.lock();
+        try {
+            if (reconnectState.get() != InternalReconnectState.COMPLETED) {
+                if (isConnected.get()) {
+                    completeReconnectFuture(false);
+                } else {
+                    // timeout reached but no reconnection happened
+                    completeReconnectFutureExceptionally(new ReconnectException(TIMEOUT_REACHED_WITH_NO_RECONNECT));
+                }
+            }
+        } finally {
+            reconnectLock.unlock();
+        }
+    }
+
     private void invalidateAfterUnexpectedConnectionLoss(final WatchdogMessage watchdogMessage) {
         testRunObserver.invalidateTestRun(String.format(
                 "%s. Lost connection to device %s. Reason: %s",
@@ -610,7 +675,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
 
     private <T> T restrictedGetter(final RestrictedGetter<T> getter) {
         synchronized (resourceLock) {
-            while (inReconnectProcess.get()) {
+            while (reconnectState.get() == InternalReconnectState.RECONNECTING) {
                 LOG.debug("Attempted to access a connection-dependent object while the connection is interrupted, "
                         + "wait for connection to be re-established.");
                 try {
@@ -630,7 +695,9 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
      * @return true if the reconnection was successful, false otherwise
      */
     private boolean tryToReconnect() {
-        for (int count = 1; count <= reconnectTries && !isConnected.get() && !reconnectFuture.isDone(); count++) {
+        for (int count = 1;
+                count <= reconnectTries && reconnectState.get() == InternalReconnectState.RECONNECTING;
+                count++) {
             try {
                 if (count == 1) {
                     LOG.info("Wait for at most {} seconds before attempting to reconnect.", reconnectWait);
