@@ -47,7 +47,9 @@ import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -1106,6 +1108,40 @@ public class MdibHistorianTest {
                 messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_OPERATION_INVOKED_REPORT, report);
 
         testEpisodicReportBasedHistory(soapMessage, sequenceId);
+    }
+
+    @Test
+    void testProcessAllRemoteMdibAccess() throws Exception {
+        final var sequenceIds = List.of("seq-1", "seq-2");
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(0), BigInteger.ONE));
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildEpisodicMetricReport(sequenceIds.get(0), BigInteger.TWO, BigInteger.ONE));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, buildMdibEnvelope(sequenceIds.get(1), BigInteger.ONE));
+        messageStorageUtil.addInboundSecureHttpMessage(
+                storage, buildEpisodicAlertReport(sequenceIds.get(1), BigInteger.TWO, BigInteger.ONE));
+
+        final var mockObserver = mock(TestRunObserver.class);
+        final var historian = historianFactory.createMdibHistorian(storage, mockObserver);
+
+        final Map<String, List<BigInteger>> processedMdibVersionsBySequence = new HashMap<>();
+
+        historian.processAllRemoteMdibAccess((mdibAccess, sequenceId) -> {
+            processedMdibVersionsBySequence
+                    .computeIfAbsent(sequenceId, id -> new ArrayList<>())
+                    .add(mdibAccess.getMdibVersion().getVersion());
+        });
+
+        assertEquals(2, processedMdibVersionsBySequence.size());
+        assertTrue(processedMdibVersionsBySequence.containsKey(sequenceIds.get(0)));
+        assertTrue(processedMdibVersionsBySequence.containsKey(sequenceIds.get(1)));
+
+        assertEquals(List.of(BigInteger.ONE, BigInteger.TWO), processedMdibVersionsBySequence.get(sequenceIds.get(0)));
+        assertEquals(List.of(BigInteger.ONE, BigInteger.TWO), processedMdibVersionsBySequence.get(sequenceIds.get(1)));
+
+        assertEquals(2, processedMdibVersionsBySequence.get(sequenceIds.get(0)).size());
+        assertEquals(2, processedMdibVersionsBySequence.get(sequenceIds.get(1)).size());
     }
 
     /**
