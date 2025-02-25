@@ -69,7 +69,7 @@ jobs:
         run: |
           mkdir sdccc/build/zip
           cp -r sdccc/build/lib sdccc/build/zip/
-          cp -r sdccc/build/jre sdccc/build/zip/
+          cp -r sdccc/build/launch4j/jre sdccc/build/zip/
           cp -r sdccc/build/reports/dependency-license/downloaded-licenses/ sdccc/build/zip/lib/
           cp -r sdccc/build/reports/dependency-license/index.xml sdccc/build/zip/lib/
           cp -r configuration sdccc/build/zip/
