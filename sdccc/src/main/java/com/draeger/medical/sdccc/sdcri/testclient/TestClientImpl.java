@@ -569,8 +569,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     @Subscribe
     void onConnectionLoss(final WatchdogMessage watchdogMessage) {
         LOG.info("Watchdog detected disconnect from provider.");
-        if (shouldBeConnected.get() && reconnectState.get() == InternalReconnectState.ENABLED) {
-            reconnectState.set(InternalReconnectState.RECONNECTING);
+        if (shouldBeConnected.get() && reconnectState.compareAndSet(InternalReconnectState.ENABLED, InternalReconnectState.RECONNECTING)) {
             LOG.info("The disconnect from provider was expected, trying to reconnect.");
             if (reconnectExecutor.isRunning()) {
                 reconnectExecutor.get().submit(() -> {
@@ -600,14 +599,13 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private void completeReconnectFuture(final boolean result) {
         reconnectLock.lock();
         try {
-            if (reconnectState.get() != InternalReconnectState.COMPLETED) {
+            if (reconnectState.getAndSet(InternalReconnectState.COMPLETED) != InternalReconnectState.COMPLETED) {
                 if (!isConnected.get()) {
                     LOG.debug("No connection established during reconnect process, invalidating the test run.");
                     testRunObserver.invalidateTestRun(COULDN_T_RECONNECT);
                 }
                 reconnectFuture.complete(result);
             }
-            reconnectState.set(InternalReconnectState.COMPLETED);
             reconnectLockCondition.signalAll();
         } finally {
             reconnectLock.unlock();
@@ -617,12 +615,11 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private void completeReconnectFutureExceptionally(final Exception exception) {
         reconnectLock.lock();
         try {
-            if (reconnectState.get() != InternalReconnectState.COMPLETED) {
+            if (reconnectState.getAndSet(InternalReconnectState.COMPLETED) != InternalReconnectState.COMPLETED) {
                 LOG.error("Something went wrong during reconnect.", exception);
                 testRunObserver.invalidateTestRun(exception.getMessage());
                 reconnectFuture.completeExceptionally(exception);
             }
-            reconnectState.set(InternalReconnectState.COMPLETED);
             reconnectLockCondition.signalAll();
         } finally {
             reconnectLock.unlock();

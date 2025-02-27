@@ -38,7 +38,7 @@ class ReconnectWaitBarrier(parties: Int = 2) {
         try {
             barrier.await(timeout, TimeUnit.SECONDS)
         } catch (e: TimeoutException) {
-            logger.info { "Timeout reached while waiting for the provider to be ready" }
+            logger.debug { "Timeout reached while waiting for the provider to be ready" }
         }
     }
 
