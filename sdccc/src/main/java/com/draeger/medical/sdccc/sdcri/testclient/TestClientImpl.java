@@ -146,6 +146,7 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     private Future<?> reconnectScheduledTimeoutTask;
     private final ReentrantLock reconnectLock;
     private final Condition reconnectLockCondition;
+    // only update this state with the reconnectLock held
     private final AtomicReference<InternalReconnectState> reconnectState;
     private final ReconnectWaitBarrier providerWaitBarrier;
     private final AtomicBoolean isConnected;
