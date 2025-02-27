@@ -14,19 +14,25 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.somda.sdc.biceps.common.MdibEntity;
@@ -305,6 +311,32 @@ public class ArchitecturalRulesTest {
             .should()
             .callMethod(MdibEntity.class, "getStates")
             .because("Direct calls to getStates are disallowed use getStates(Class<T> var1) instead.");
+
+    @ArchTest
+    private static final ArchRule ENSURE_ENABLE_RECONNECT_FOLLOWED_BY_DISABLE_RECONNECT = classes()
+            .should(new ArchCondition<JavaClass>("call enableReconnect followed by disableReconnect") {
+                @Override
+                public void check(final JavaClass javaClass, final ConditionEvents events) {
+                    int callsEnableReconnect = 0;
+                    int callsDisableReconnect = 0;
+                    for (JavaMethodCall call : javaClass.getMethodCallsFromSelf()) {
+                        if (call.getTarget().getName().equals("enableReconnect")
+                                && call.getTarget().getOwner().isEquivalentTo(TestClient.class)) {
+                            callsEnableReconnect++;
+                        }
+                        if (call.getTarget().getName().equals("disableReconnect")
+                                && call.getTarget().getOwner().isEquivalentTo(TestClient.class)) {
+                            callsDisableReconnect++;
+                        }
+                    }
+                    if (callsEnableReconnect != callsDisableReconnect) {
+                        final String message = String.format(
+                                "Class %s calls enableReconnect but does not call disableReconnect later",
+                                javaClass.getName());
+                        events.add(SimpleConditionEvent.violated(javaClass, message));
+                    }
+                }
+            });
 
     private static ArchRule checkImpliedValue(
             final String methodName, final Class<?> targetClass, final String reason) {
