@@ -569,7 +569,8 @@ public class TestClientImpl extends AbstractIdleService implements TestClient, W
     @Subscribe
     void onConnectionLoss(final WatchdogMessage watchdogMessage) {
         LOG.info("Watchdog detected disconnect from provider.");
-        if (shouldBeConnected.get() && reconnectState.compareAndSet(InternalReconnectState.ENABLED, InternalReconnectState.RECONNECTING)) {
+        if (shouldBeConnected.get()
+                && reconnectState.compareAndSet(InternalReconnectState.ENABLED, InternalReconnectState.RECONNECTING)) {
             LOG.info("The disconnect from provider was expected, trying to reconnect.");
             if (reconnectExecutor.isRunning()) {
                 reconnectExecutor.get().submit(() -> {
