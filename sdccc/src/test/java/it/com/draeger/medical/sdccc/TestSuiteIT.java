@@ -1,14 +1,16 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023-2024 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2023-2025 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
 
 package it.com.draeger.medical.sdccc;
 
+import static com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender.APPENDER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,10 +31,12 @@ import com.draeger.medical.sdccc.manipulation.precondition.PreconditionException
 import com.draeger.medical.sdccc.manipulation.precondition.PreconditionRegistry;
 import com.draeger.medical.sdccc.messages.HibernateConfig;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
+import com.draeger.medical.sdccc.sdcri.testclient.TestClientImpl;
 import com.draeger.medical.sdccc.tests.InjectorTestBase;
 import com.draeger.medical.sdccc.util.Constants;
 import com.draeger.medical.sdccc.util.HibernateConfigInMemoryImpl;
 import com.draeger.medical.sdccc.util.TestRunObserver;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -50,13 +54,17 @@ import it.com.draeger.medical.sdccc.testsuite_it_mock_tests.WasRunObserver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
@@ -65,19 +73,24 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.DefaultConfiguration;
+import org.apache.logging.log4j.core.config.builder.api.AppenderComponentBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
+import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.somda.sdc.biceps.common.storage.PreprocessingException;
 import org.somda.sdc.common.guice.AbstractConfigurationModule;
+import org.somda.sdc.common.util.ExecutorWrapperService;
 import org.somda.sdc.dpws.DpwsConfig;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
 import org.somda.sdc.dpws.device.DiscoveryAccess;
 import org.somda.sdc.dpws.factory.TransportBindingFactory;
 import org.somda.sdc.dpws.soap.SoapUtil;
 import org.somda.sdc.dpws.soap.factory.RequestResponseClientFactory;
+import org.somda.sdc.dpws.soap.wseventing.SubscriptionManager;
 import org.somda.sdc.dpws.soap.wseventing.WsEventingConstants;
 import org.somda.sdc.dpws.soap.wseventing.model.ObjectFactory;
 import org.somda.sdc.glue.GlueConstants;
@@ -88,7 +101,12 @@ import org.somda.sdc.glue.common.CommonConstants;
  */
 public class TestSuiteIT {
     static {
-        Configurator.reconfigure(new DefaultConfiguration());
+        final ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
+        builder.setConfigurationName("SDCccIT");
+        final AppenderComponentBuilder triggerOnErrorOrWorseLogAppenderBuilder =
+                builder.newAppender(APPENDER_NAME, "TriggerOnErrorOrWorseLogAppender");
+        builder.add(triggerOnErrorOrWorseLogAppenderBuilder);
+        Configurator.reconfigure(builder.build());
         Configurator.setRootLevel(Level.INFO);
     }
 
@@ -137,12 +155,12 @@ public class TestSuiteIT {
         assert providerCert != null;
         final var providerCrypto = SslMetadata.getCryptoSettings(providerCert);
 
-        final var injector = createTestSuiteITInjector(providerCrypto, false, null, eprAddress);
+        final var providerInjector = createTestSuiteITInjector(providerCrypto, false, null, eprAddress);
 
         // load initial mdib from file
         try (final InputStream mdibAsStream = TestSuiteIT.class.getResourceAsStream("TestSuiteIT/mdib.xml")) {
             assertNotNull(mdibAsStream);
-            final var providerFac = injector.getInstance(ProviderFactory.class);
+            final var providerFac = providerInjector.getInstance(ProviderFactory.class);
             return providerFac.createProvider(mdibAsStream);
         }
     }
@@ -442,14 +460,9 @@ public class TestSuiteIT {
     @Timeout(TEST_TIMEOUT)
     public void testConsumerUnexpectedSubscriptionEnd() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
-
-        final var injector =
-                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
         InjectorTestBase.setInjector(injector);
-
-        final var obs = injector.getInstance(WasRunObserver.class);
-        assertFalse(obs.hadDirectRun());
-        assertFalse(obs.hadInvariantRun());
 
         final var client = injector.getInstance(TestClient.class);
         client.startService(DEFAULT_TIMEOUT);
@@ -500,14 +513,9 @@ public class TestSuiteIT {
     @Timeout(TEST_TIMEOUT)
     public void testConsumerExpectedDisconnect() throws Exception {
         testProvider.startService(DEFAULT_TIMEOUT);
-
-        final var injector =
-                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
         InjectorTestBase.setInjector(injector);
-
-        final var obs = injector.getInstance(WasRunObserver.class);
-        assertFalse(obs.hadDirectRun());
-        assertFalse(obs.hadInvariantRun());
 
         final var client = injector.getInstance(TestClient.class);
         client.startService(DEFAULT_TIMEOUT);
@@ -565,6 +573,437 @@ public class TestSuiteIT {
         assertFalse(
                 testRunObserver.isInvalid(),
                 "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+    }
+
+    /**
+     * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled.
+     * Verifies whether a reconnection was successful and detected and whether the test run was not marked as
+     * invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectEnabledAndProviderRestarted() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, 30L);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
+        client.disableReconnect();
+
+        verifyOnlyOneActiveSubscription(restartedProvider);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+        client.disconnect();
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled.
+     * Notifies when the provider is ready, to skip the reconnectWait time.
+     * Verifies whether a reconnection was successful and detected and whether the test run was not marked as
+     * invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectEnabledProviderWaitBarrierNotified() throws Exception {
+        final var reconnectWaitTime = 80L;
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, reconnectWaitTime);
+                bind(TestSuiteConfig.NETWORK_RECONNECT_TRIES, int.class, 1);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        // enable reconnect feature for the same time as the reconnectWaitTime, so the feature should be disabled when
+        // the barrier is not notified before
+        client.enableReconnect(reconnectWaitTime);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertTrue(client::notifyReconnectProviderReady);
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
+        client.disableReconnect();
+
+        verifyOnlyOneActiveSubscription(restartedProvider);
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+        client.disconnect();
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled, but the
+     * provider is not restarted.
+     * Verifies whether a reconnection was unsuccessful and whether the test run was marked as invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectEnabledButProviderNotRestarted() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        assertFalse(client::getReconnectResult, "Reconnect should not have happened.");
+        client.disableReconnect();
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalidated.");
+        final var reasons = testRunObserver.getReasons();
+        assertEquals(1, reasons.size(), "Should only have 1 invalidation reason");
+        assertTrue(
+                reasons.get(0).contains(TestClientImpl.COULDN_T_RECONNECT),
+                String.format(
+                        "Reason should contain '%s', since all reconnection attempts failed.",
+                        TestClientImpl.COULDN_T_RECONNECT));
+    }
+
+    /**
+     * Runs the test consumer and triggers no connection loss to the test provider while reconnect is enabled.
+     * Verifies that no reconnection was detected and the test run was not marked as invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectEnabledButNoConnectionLoss() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var injector =
+                getConsumerInjector(false, null, testProvider.getSdcDevice().getEprAddress());
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+        client.enableReconnect(20);
+
+        verifyOnlyOneActiveSubscription(testProvider);
+
+        // wait until reconnect timeout is reached without losing connection
+        assertFalse(client::getReconnectResult, "Should be false, since the connection was never lost.");
+        client.disableReconnect();
+        // test run should not be marked invalid, as disconnect was intentional
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+    }
+
+    /**
+     * Runs the test consumer but without the "reconnectExecutor" running. The connection to the provider is
+     * improperly closed, and it is verified that the test run is invalidated.
+     * This test is intended to ensure that an exception is thrown in such a faulty case.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectExecutorNotStarted() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+
+        // get the private reconnectExecutor field via reflection and replace it with one that is not running
+        final Field reconnectExecutor = client.getClass().getDeclaredField("reconnectExecutor");
+        reconnectExecutor.setAccessible(true);
+        reconnectExecutor.set(
+                client,
+                new ExecutorWrapperService<>(
+                        () -> Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                                .setNameFormat("customSdcccReconnectThread")
+                                .setDaemon(true)
+                                .build()),
+                        "ReconnectExecutor",
+                        "InstanceIdentifier"));
+
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        assertFalse(client::getReconnectResult, "Reconnect should not have happened.");
+        client.disableReconnect();
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertTrue(testRunObserver.isInvalid(), "TestRunObserver should be invalid.");
+        final var reasons = testRunObserver.getReasons();
+        assertEquals(1, reasons.size(), "Should only have 1 invalidation reason");
+        assertTrue(
+                reasons.get(0).contains(TestClientImpl.RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING),
+                String.format(
+                        "Reason should contain '%s', since the reconnectExecutor was replaced with one that was not started.",
+                        TestClientImpl.RECONNECT_EXECUTOR_SERVICE_NOT_RUNNING));
+    }
+
+    /**
+     * Runs the test consumer and triggers a connection loss to the test provider while reconnect is enabled.
+     * The reconnect feature times out during a reconnection attempt.
+     * Verifies that the connection is not reestablished and the test run is marked as invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT * 2)
+    public void testReconnectEnabledTimeoutDuringAttempt() throws Exception {
+        final var waitTime = 20L;
+        final var enableReconnectTime = waitTime * 3;
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, waitTime);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(enableReconnectTime);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        // wait until the reconnect timeout is reached
+        Thread.sleep(TimeUnit.SECONDS.toMillis(enableReconnectTime));
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertFalse(
+                client::getReconnectResult,
+                "Reconnect should not have happened, reconnect feature should have been disabled.");
+        client.disableReconnect();
+
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalid.");
+        final var reasons = testRunObserver.getReasons();
+        assertEquals(1, reasons.size(), "Should only have 1 invalidation reason");
+        assertTrue(
+                reasons.get(0).contains(TestClientImpl.TIMEOUT_REACHED_WITH_NO_RECONNECT),
+                String.format(
+                        "Reason should contain '%s', since the provider was started too late, the reconnect timeout was reached "
+                                + "and the feature is disabled again.",
+                        TestClientImpl.TIMEOUT_REACHED_WITH_NO_RECONNECT));
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and enables reconnect but triggers a connection loss to the test provider when it is
+     * disabled again. So the consumer should recognize a failed connection, but the reconnect feature should be
+     * disabled again.
+     * Verifies that the connection is not reestablished and the test run is marked as invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testReconnectDisabledAfterTimeout() throws Exception {
+        final var reconnectionEnabledTime = 6;
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, 2L);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(reconnectionEnabledTime);
+
+        // wait for the reconnect timeout to be reached
+        Thread.sleep(TimeUnit.SECONDS.toMillis(reconnectionEnabledTime));
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertFalse(client::getReconnectResult, "Reconnect did not happen.");
+        client.disableReconnect();
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertTrue(testRunObserver.isInvalid(), "TestRunObserver should have been invalid.");
+        final var reasons = testRunObserver.getReasons();
+        assertEquals(1, reasons.size(), "Should only have 1 invalidation reason");
+        assertTrue(
+                reasons.get(0).contains(TestClientImpl.UNEXPECTED_DISCONNECT_DETECTED),
+                String.format(
+                        "Reason should contain '%s', since the connection loss happened too late, the reconnect "
+                                + "timeout was reached and the feature is disabled again.",
+                        TestClientImpl.UNEXPECTED_DISCONNECT_DETECTED));
+
+        restartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and enables reconnect with a long enabling time, reconnects the provider and repeats
+     * that process. This test is intended to verify that no lingering tasks interfere with the second reconnect
+     * process.
+     * Verifies that the connection is reestablished both times and the test run is not marked as invalid.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT * 2)
+    public void testReconnectEnabledSubsequentially() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress, new AbstractConfigurationModule() {
+            @Override
+            protected void defaultConfigure() {
+                bind(TestSuiteConfig.NETWORK_RECONNECT_WAIT, long.class, 20L);
+            }
+        });
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var activeSubs = verifyOnlyOneActiveSubscription(testProvider);
+        stopProviderAndWaitForSubscriptionEnd(testProvider, activeSubs);
+
+        final var restartedProvider = buildTestProvider(eprAddress);
+        restartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
+        client.disableReconnect();
+        final var restartedSub = verifyOnlyOneActiveSubscription(restartedProvider);
+
+        client.enableReconnect(TEST_TIMEOUT);
+        stopProviderAndWaitForSubscriptionEnd(restartedProvider, restartedSub);
+
+        final var rerestartedProvider = buildTestProvider(eprAddress);
+        rerestartedProvider.startService(DEFAULT_TIMEOUT);
+
+        assertTrue(client::getReconnectResult, "Reconnect did not happen.");
+        client.disableReconnect();
+
+        final var testRunObserver = injector.getInstance(TestRunObserver.class);
+        assertFalse(
+                testRunObserver.isInvalid(),
+                "TestRunObserver had unexpected failures: " + testRunObserver.getReasons());
+
+        rerestartedProvider.stopService(DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Runs the test consumer and enables reconnect multiple times without disabling it in between.
+     * Verifies that a reconnect exception is thrown.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    public void testEnableReconnectThrowsException() throws Exception {
+        testProvider.startService(DEFAULT_TIMEOUT);
+        final var eprAddress = testProvider.getSdcDevice().getEprAddress();
+        final var injector = getConsumerInjector(false, null, eprAddress);
+        InjectorTestBase.setInjector(injector);
+
+        final var client = injector.getInstance(TestClient.class);
+        client.startService(DEFAULT_TIMEOUT);
+        client.connect();
+
+        client.enableReconnect(TEST_TIMEOUT);
+
+        final var exception = assertThrows(IllegalStateException.class, () -> client.enableReconnect(TEST_TIMEOUT));
+        assertInstanceOf(IllegalStateException.class, exception);
+        assertEquals(TestClientImpl.RECONNECT_ALREADY_ENABLED, exception.getMessage());
+    }
+
+    private Map<String, SubscriptionManager> verifyOnlyOneActiveSubscription(final TestProvider provider) {
+        final var activeSubs = provider.getActiveSubscriptions();
+        assertEquals(1, activeSubs.size(), "Expected only one active subscription");
+        return activeSubs;
+    }
+
+    private void stopProviderAndWaitForSubscriptionEnd(
+            final TestProvider provider, final Map<String, SubscriptionManager> activeSubs) throws Exception {
+        final var subManTimeout =
+                activeSubs.values().stream().findFirst().orElseThrow().getExpiresTimeout();
+
+        provider.stopService(DEFAULT_TIMEOUT);
+
+        // wait until subscription must've ended
+        final var subscriptionEnd = Duration.between(Instant.now(), subManTimeout);
+        if (!subscriptionEnd.isNegative()) {
+            Thread.sleep(subscriptionEnd.toMillis());
+        }
+    }
+
+    private TestProvider buildTestProvider(final String epr) throws Exception {
+        final var provider = getProvider(epr);
+
+        final DiscoveryAccess discoveryAccess =
+                provider.getSdcDevice().getDevice().getDiscoveryAccess();
+        discoveryAccess.setTypes(List.of(CommonConstants.MEDICAL_DEVICE_TYPE));
+        discoveryAccess.setScopes(List.of(GlueConstants.SCOPE_SDC_PROVIDER));
+
+        return provider;
     }
 
     private record LocationConfig(

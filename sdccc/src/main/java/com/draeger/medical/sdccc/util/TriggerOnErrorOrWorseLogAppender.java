@@ -7,8 +7,12 @@
 
 package com.draeger.medical.sdccc.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.Filter;
@@ -25,8 +29,13 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
  */
 @Plugin(name = "TriggerOnErrorOrWorseLogAppender", category = Core.CATEGORY_NAME, elementType = Appender.ELEMENT_TYPE)
 public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
+    public static final String APPENDER_NAME = "triggerOnErrorOrWorse";
+    private static final String RESET_WHITELIST_MARKER_NAME = "resetting_the_whitelist_marker";
+    public static final Marker RESET_WHITELIST_MARKER = MarkerManager.getMarker(RESET_WHITELIST_MARKER_NAME);
 
     private OnErrorOrWorseHandler onErrorOrWorseHandler;
+
+    private List<String> threadNameWhiteList = new ArrayList<>();
 
     protected TriggerOnErrorOrWorseLogAppender(final String name, final Filter filter) {
         super(name, filter, null, true, Property.EMPTY_ARRAY);
@@ -35,6 +44,7 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
     /**
      * Sets the OnErrorHandler that is called when a Log Message with LogLevel ERROR is logged through this
      * TriggerOnErrorOrWorseLogAppender.
+     *
      * @param onErrorOrWorseHandler the Handler.
      */
     public void setOnErrorOrWorseHandler(@Nullable final OnErrorOrWorseHandler onErrorOrWorseHandler) {
@@ -42,7 +52,17 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
     }
 
     /**
+     * Sets the whitelist for regex expr for thread names that should be ignored by the onErrorOrWorseHandler.
+     *
+     * @param whitelist list of regex to match thread names against
+     */
+    public void setThreadNameWhitelist(final List<String> whitelist) {
+        this.threadNameWhiteList = whitelist;
+    }
+
+    /**
      * Factory Method for creating TriggerOnErrorOrWorseLogAppender.
+     *
      * @param name   name of the Appender
      * @param filter filter of the Appender
      * @return the created Appender.
@@ -57,7 +77,13 @@ public class TriggerOnErrorOrWorseLogAppender extends AbstractAppender {
     public void append(final LogEvent event) {
         // call Handler on ERROR or worse
         if ((event.getLevel().intLevel() <= Level.ERROR.intLevel()) && onErrorOrWorseHandler != null) {
-            onErrorOrWorseHandler.onErrorOrWorse(event);
+            if (threadNameWhiteList.stream().noneMatch(event.getThreadName()::matches)) {
+                onErrorOrWorseHandler.onErrorOrWorse(event);
+            }
+        }
+        // reset whitelist, if log message with marker is seen
+        if (event.getMarker() != null && event.getMarker().getName().equals(RESET_WHITELIST_MARKER_NAME)) {
+            this.threadNameWhiteList = List.of();
         }
     }
 

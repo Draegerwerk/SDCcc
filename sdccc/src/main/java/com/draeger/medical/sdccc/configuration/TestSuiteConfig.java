@@ -44,6 +44,8 @@ public final class TestSuiteConfig {
     public static final String NETWORK_INTERFACE_ADDRESS = SDCCC + NETWORK + "InterfaceAddress";
     public static final String NETWORK_MAX_WAIT = SDCCC + NETWORK + "MaxWait";
     public static final String NETWORK_MULTICAST_TTL = SDCCC + NETWORK + "MulticastTTL"; // should be between 0 and 255
+    public static final String NETWORK_RECONNECT_TRIES = SDCCC + NETWORK + "ReconnectTries";
+    public static final String NETWORK_RECONNECT_WAIT = SDCCC + NETWORK + "ReconnectWait";
 
     /*
      * Consumer configuration

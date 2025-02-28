@@ -97,6 +97,14 @@ Discovery defaults to 128. When other values are needed, it can be configured us
 MulticastTTL=196
 ```
 
+The amount of reconnect tries defaults to 3 and the time to wait between reconnect attempts defaults to 5 seconds. The values can be changed using the following options
+
+```
+[SDCcc.Network]
+ReconnectTries=3
+ReconnectWait=5
+```
+
 ### Target Device (DUT) configuration
 
 In order for the test tool to connect to the DUT, appropriate filter criteria have to be set.

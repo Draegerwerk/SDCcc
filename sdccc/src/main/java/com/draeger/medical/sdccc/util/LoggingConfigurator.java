@@ -7,6 +7,8 @@
 
 package com.draeger.medical.sdccc.util;
 
+import static com.draeger.medical.sdccc.util.TriggerOnErrorOrWorseLogAppender.APPENDER_NAME;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -50,7 +52,7 @@ public final class LoggingConfigurator {
                 .addAttribute("additivity", false);
 
         final AppenderComponentBuilder triggerOnErrorOrWorseLogAppenderBuilder =
-                builder.newAppender("triggerOnErrorOrWorse", "TriggerOnErrorOrWorseLogAppender");
+                builder.newAppender(APPENDER_NAME, "TriggerOnErrorOrWorseLogAppender");
 
         builder.add(triggerOnErrorOrWorseLogAppenderBuilder);
         sdcccLogger.add(builder.newAppenderRef(triggerOnErrorOrWorseLogAppenderBuilder.getName()));
