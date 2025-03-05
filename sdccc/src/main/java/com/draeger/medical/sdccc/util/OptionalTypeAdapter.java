@@ -36,7 +36,7 @@ public class OptionalTypeAdapter<T> extends TypeAdapter<Optional<T>> {
         if (value == null || value.isEmpty()) {
             out.nullValue();
         } else {
-            delegate.write(out, value.get());
+            delegate.write(out, value.orElseThrow());
         }
     }
 
