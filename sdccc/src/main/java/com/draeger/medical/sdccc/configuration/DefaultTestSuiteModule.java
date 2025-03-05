@@ -64,6 +64,7 @@ public class DefaultTestSuiteModule extends AbstractModule {
     @Singleton
     public Gson provideGson() {
         return new GsonBuilder()
+                .serializeNulls()
                 .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
                 .create();
     }

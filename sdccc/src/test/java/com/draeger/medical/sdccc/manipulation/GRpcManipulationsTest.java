@@ -156,6 +156,93 @@ public class GRpcManipulationsTest {
     }
 
     /**
+     * Verifies that a ManipulationResponse with an empty Optional is serialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an empty Optional is serialized correctly")
+    public void testCreateContextStateWithEmptyOptionalSerialization() {
+
+        final ManipulationResponse<Optional<String>> fallbackResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.empty());
+        when(fallback.createContextStateWithAssociation(anyString(), any())).thenReturn(fallbackResponse);
+
+        final ManipulationResponse<Optional<String>> response =
+                manipulations.createContextStateWithAssociation("dummyHandle", ContextAssociation.ASSOC);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, response.getResult());
+        assertTrue(response.getResponse().isEmpty());
+    }
+
+    /**
+     * Verifies that a ManipulationResponse with an empty Optional is deserialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an empty Optional is deserialized correctly")
+    public void testCreateContextStateWithEmptyOptionalDeserialization() {
+
+        final ManipulationResponse<Optional<String>> originalResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.empty());
+
+        final Gson gson = new GsonBuilder()
+                .serializeNulls()
+                .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+                .create();
+        final GsonManipulationSerializer serializer = new GsonManipulationSerializer(gson);
+
+        final Type type = new TypeToken<ManipulationResponse<Optional<String>>>() {}.getType();
+
+        final String json = serializer.serialize(originalResponse);
+
+        final ManipulationResponse<Optional<String>> deserializedResponse = serializer.deserialize(json, type);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, deserializedResponse.getResult());
+        assertTrue(deserializedResponse.getResponse().isEmpty());
+    }
+
+    /**
+     * Verifies that a ManipulationResponse with an Optional containing null is serialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an Optional containing null is serialized correctly")
+    public void testCreateContextStateWithOptionalNullSerialization() {
+
+        final ManipulationResponse<Optional<String>> fallbackResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.ofNullable(null));
+        when(fallback.createContextStateWithAssociation(anyString(), any())).thenReturn(fallbackResponse);
+
+        final ManipulationResponse<Optional<String>> response =
+                manipulations.createContextStateWithAssociation("dummyHandle", ContextAssociation.ASSOC);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, response.getResult());
+        assertTrue(response.getResponse().isEmpty());
+    }
+
+    /**
+     * Verifies that a ManipulationResponse with an Optional containing null is deserialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an Optional containing null is deserialized correctly")
+    public void testCreateContextStateWithOptionalNullDeserialization() {
+
+        final ManipulationResponse<Optional<String>> originalResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.ofNullable(null));
+
+        final Gson gson = new GsonBuilder()
+                .serializeNulls()
+                .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+                .create();
+        final GsonManipulationSerializer serializer = new GsonManipulationSerializer(gson);
+
+        final Type type = new TypeToken<ManipulationResponse<Optional<String>>>() {}.getType();
+
+        final String json = serializer.serialize(originalResponse);
+        final ManipulationResponse<Optional<String>> deserializedResponse = serializer.deserialize(json, type);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, deserializedResponse.getResult());
+        assertTrue(deserializedResponse.getResponse().isEmpty());
+    }
+
+    /**
      * Verifies whether data is correctly transmitted to server and results are sent correctly.
      *
      * @throws Exception on any exception
