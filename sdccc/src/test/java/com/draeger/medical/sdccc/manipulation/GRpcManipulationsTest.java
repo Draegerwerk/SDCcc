@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import com.draeger.medical.sdccc.messages.ManipulationInfo;
 import com.draeger.medical.sdccc.messages.guice.ManipulationInfoFactory;
 import com.draeger.medical.sdccc.tests.annotations.TestDescription;
+import com.draeger.medical.sdccc.util.OptionalTypeAdapterFactory;
 import com.draeger.medical.t2iapi.BasicRequests;
 import com.draeger.medical.t2iapi.BasicResponses;
 import com.draeger.medical.t2iapi.ResponseTypes;
@@ -41,11 +42,15 @@ import com.draeger.medical.t2iapi.device.DeviceResponses;
 import com.draeger.medical.t2iapi.device.DeviceServiceGrpc;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +59,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.somda.sdc.biceps.model.participant.ContextAssociation;
 import org.somda.sdc.biceps.model.participant.LocationDetail;
 
 /**
@@ -88,13 +94,65 @@ public class GRpcManipulationsTest {
         final ManipulationInfo manipulationInfo = mock(ManipulationInfo.class);
         when(manipulationInfoFactory.create(anyLong(), anyLong(), any(), anyString(), anyString(), any()))
                 .thenReturn(manipulationInfo);
+
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+                .create();
         manipulations = new GRpcManipulations(
-                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(new Gson()));
+                serverAddress, fallback, manipulationInfoFactory, new GsonManipulationSerializer(gson));
     }
 
     @AfterEach
     void tearDown() throws InterruptedException {
         server.shutdownNow().awaitTermination();
+    }
+
+    /**
+     * Verifies that a ManipulationResponse with an Optional is serialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an Optional is serialized correctly")
+    public void testCreateContextStateWithAssociationSerialization() {
+
+        final String descriptorHandle = "testContextStateHandle";
+        final ContextAssociation association = ContextAssociation.ASSOC;
+
+        final ManipulationResponse<Optional<String>> fallbackResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.of(descriptorHandle));
+        when(fallback.createContextStateWithAssociation(anyString(), any())).thenReturn(fallbackResponse);
+
+        final ManipulationResponse<Optional<String>> response =
+                manipulations.createContextStateWithAssociation(descriptorHandle, association);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, response.getResult());
+        assertTrue(response.getResponse().isPresent());
+        assertEquals("testContextStateHandle", response.getResponse().get());
+    }
+
+    /**
+     * Verifies that a ManipulationResponse with an Optional is deserialized correctly.
+     */
+    @Test
+    @TestDescription("Verifies that a ManipulationResponse with an Optional is deserialized correctly")
+    public void testCreateContextStateWithAssociationDeserialization() {
+
+        final ManipulationResponse<Optional<String>> originalResponse =
+                ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.of("testContextStateHandle"));
+
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+                .create();
+        final GsonManipulationSerializer serializer = new GsonManipulationSerializer(gson);
+
+        final Type type = new TypeToken<ManipulationResponse<Optional<String>>>() {}.getType();
+
+        final String json = serializer.serialize(originalResponse);
+        final ManipulationResponse<Optional<String>> deserializedResponse = serializer.deserialize(json, type);
+
+        assertEquals(ResponseTypes.Result.RESULT_SUCCESS, deserializedResponse.getResult());
+        assertTrue(deserializedResponse.getResponse().isPresent());
+        assertEquals(
+                "testContextStateHandle", deserializedResponse.getResponse().get());
     }
 
     /**

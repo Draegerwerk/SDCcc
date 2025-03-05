@@ -20,10 +20,14 @@ import com.draeger.medical.sdccc.sdcri.CustomCryptoSettings;
 import com.draeger.medical.sdccc.sdcri.LocalAddressResolverImpl;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClient;
 import com.draeger.medical.sdccc.sdcri.testclient.TestClientImpl;
+import com.draeger.medical.sdccc.util.OptionalTypeAdapterFactory;
 import com.draeger.medical.sdccc.util.junit.guice.XmlReportFactory;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtil;
 import com.draeger.medical.sdccc.util.junit.util.ClassUtilImpl;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.somda.sdc.dpws.crypto.CryptoSettings;
@@ -50,5 +54,17 @@ public class DefaultTestSuiteModule extends AbstractModule {
         bind(Manipulations.class).to(GRpcManipulations.class).in(Singleton.class);
         bind(LocalAddressResolver.class).to(LocalAddressResolverImpl.class).in(Singleton.class);
         bind(ManipulationSerializer.class).to(GsonManipulationSerializer.class).in(Singleton.class);
+    }
+
+    /**
+     * Provides a singleton Gson instance configured with a custom OptionalTypeAdapter.
+     * @return A configured, singleton Gson instance.
+     */
+    @Provides
+    @Singleton
+    public Gson provideGson() {
+        return new GsonBuilder()
+                .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+                .create();
     }
 }
