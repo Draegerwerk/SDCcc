@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -240,7 +240,7 @@ public class GRpcManipulationsTest {
             final var response = manipulations.getRemovableDescriptorsOfClass().getResponse();
             // fallback should not have been called here
             verifyNoInteractions(fallback);
-            assertTrue(response.isEmpty(), "manipulation succeeded but shouldn't have");
+            assertNull(response, "manipulation succeeded but shouldn't have");
         }
     }
 

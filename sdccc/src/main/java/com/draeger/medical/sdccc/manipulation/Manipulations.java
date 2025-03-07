@@ -8,7 +8,6 @@
 package com.draeger.medical.sdccc.manipulation;
 
 import java.util.List;
-import java.util.Optional;
 import javax.xml.namespace.QName;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AlertActivation;
@@ -75,9 +74,9 @@ public interface Manipulations {
      *
      * @param descriptorHandle to associate a new context for
      * @param association      to set for new state
-     * @return result and handle of the newly created state, empty if unsuccessful
+     * @return result and handle of the newly created state, null if unsuccessful
      */
-    ManipulationResponse<Optional<String>> createContextStateWithAssociation(
+    ManipulationResponse<String> createContextStateWithAssociation(
             String descriptorHandle, ContextAssociation association);
 
     /**

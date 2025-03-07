@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -136,7 +135,7 @@ public class ManipulationPreconditions {
 
         final var modifiableDescriptors =
                 manipulations.getRemovableDescriptorsOfClass().getResponse();
-        if (modifiableDescriptors.isEmpty()) {
+        if (modifiableDescriptors == null) {
             log.info("No modifiable descriptors available for manipulation");
             return false;
         }
@@ -278,9 +277,9 @@ public class ManipulationPreconditions {
                         originalStates);
 
                 // associate another one if the first one worked out
-                if (newStateHandle.isPresent()) {
+                if (newStateHandle != null) {
                     // add new state to known states
-                    originalStates.add(newStateHandle.orElseThrow());
+                    originalStates.add(newStateHandle);
                     newStateHandle = associateNewPatientForHandle(
                             testClient.getSdcRemoteDevice(),
                             manipulations,
@@ -288,7 +287,7 @@ public class ManipulationPreconditions {
                             originalStates);
                 }
 
-                if (newStateHandle.isEmpty()) {
+                if (newStateHandle == null) {
                     testRunObserver.invalidateTestRun(String.format(
                             "Associating a new patient for handle %s failed", patientContextEntity.getHandle()));
                     noEmptyStateEncountered = false;
@@ -307,7 +306,7 @@ public class ManipulationPreconditions {
          * @param previousStateHandles previously present state handles, to ensure new state is actually new
          * @return handle of new valid state, or empty
          */
-        static Optional<String> associateNewPatientForHandle(
+        static String associateNewPatientForHandle(
                 final SdcRemoteDevice device,
                 final Manipulations manipulations,
                 final String handle,
@@ -316,17 +315,16 @@ public class ManipulationPreconditions {
             var stateHandle = manipulations
                     .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
                     .getResponse();
-            if (stateHandle.isEmpty()) {
+            if (stateHandle == null) {
                 LOG.error("Associating new patient failed for handle {}", handle);
-                return Optional.empty();
+                return null;
             }
-            LOG.debug("New patient created, state handle is {}", stateHandle.orElseThrow());
-            final var validState =
-                    verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
+            LOG.debug("New patient created, state handle is {}", stateHandle);
+            final var validState = verifyStatePresentAndAssociated(device, handle, stateHandle, previousStateHandles);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
-                stateHandle = Optional.empty();
+                stateHandle = null;
             }
             return stateHandle;
         }
@@ -479,9 +477,9 @@ public class ManipulationPreconditions {
                         originalStates);
 
                 // associate another one if the first one worked out
-                if (newStateHandle.isPresent()) {
+                if (newStateHandle != null) {
                     // add new state to known states
-                    originalStates.add(newStateHandle.orElseThrow());
+                    originalStates.add(newStateHandle);
                     newStateHandle = associateNewLocationForHandle(
                             testClient.getSdcRemoteDevice(),
                             testClient,
@@ -490,7 +488,7 @@ public class ManipulationPreconditions {
                             originalStates);
                 }
 
-                if (newStateHandle.isEmpty()) {
+                if (newStateHandle == null) {
                     testRunObserver.invalidateTestRun(String.format(
                             "Associating a new location for handle %s failed", locationContextEntity.getHandle()));
                     noEmptyStateEncountered = false;
@@ -509,7 +507,7 @@ public class ManipulationPreconditions {
          * @param previousStateHandles previously present state handles, to ensure new state is actually new
          * @return handle of new valid state, or empty
          */
-        static Optional<String> associateNewLocationForHandle(
+        static String associateNewLocationForHandle(
                 final SdcRemoteDevice device,
                 final TestClient testClient,
                 final Manipulations manipulations,
@@ -519,19 +517,18 @@ public class ManipulationPreconditions {
             var stateHandle = manipulations
                     .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
                     .getResponse();
-            if (stateHandle.isEmpty()) {
+            if (stateHandle == null) {
                 LOG.error("Associating new location failed for handle {}", handle);
-                return Optional.empty();
+                return null;
             }
-            waitForEpisodicContextReportToModifyStateHandle(testClient, stateHandle.orElseThrow());
+            waitForEpisodicContextReportToModifyStateHandle(testClient, stateHandle);
 
-            LOG.debug("New location created, state handle is {}", stateHandle.orElseThrow());
-            final var validState =
-                    verifyStatePresentAndAssociated(device, handle, stateHandle.orElseThrow(), previousStateHandles);
+            LOG.debug("New location created, state handle is {}", stateHandle);
+            final var validState = verifyStatePresentAndAssociated(device, handle, stateHandle, previousStateHandles);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
-                stateHandle = Optional.empty();
+                stateHandle = null;
             }
             return stateHandle;
         }

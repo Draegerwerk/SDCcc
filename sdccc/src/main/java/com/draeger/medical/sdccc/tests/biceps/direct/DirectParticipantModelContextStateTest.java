@@ -92,13 +92,12 @@ public class DirectParticipantModelContextStateTest extends InjectorTestBase {
         final var newHandle = manipulations
                 .createContextStateWithAssociation(contextDescriptor.getHandle(), ContextAssociation.ASSOC)
                 .getResponse();
-        assertTrue(
-                newHandle.isPresent(),
-                String.format("Manipulation was unsuccessful for handle %s", contextDescriptor.getHandle()));
-        final var newContextState = testClient
-                .getSdcRemoteDevice()
-                .getMdibAccess()
-                .getState(newHandle.orElseThrow(), AbstractContextState.class);
+
+        assertNotNull(
+                newHandle, String.format("Manipulation was unsuccessful for handle %s", contextDescriptor.getHandle()));
+
+        final var newContextState =
+                testClient.getSdcRemoteDevice().getMdibAccess().getState(newHandle, AbstractContextState.class);
 
         assertFalse(newContextState.isEmpty(), String.format("State with handle %s is not present", newHandle));
         assertSame(

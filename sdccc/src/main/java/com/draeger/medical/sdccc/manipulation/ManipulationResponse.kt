@@ -69,34 +69,34 @@ data class ManipulationResponse<T>(
     /**
      * Response of the manipulation.
      */
-    val response: T
+    val response: T?
 ) : Response {
     companion object {
         /**
          * Creates a ManipulationResponse from a ResponseTypes.Result and response content.
          */
         @JvmStatic
-        fun <T> from(status: ResponseTypes.Result, response: T): ManipulationResponse<T> =
+        fun <T> from(status: ResponseTypes.Result, response: T?): ManipulationResponse<T> =
             ManipulationResponse(status, response)
 
         /**
          * Creates a ManipulationResponse from a BasicResponses.BasicResponse and response content.
          */
         @JvmStatic
-        fun <T> from(status: BasicResponses.BasicResponse, response: T): ManipulationResponse<T> =
+        fun <T> from(status: BasicResponses.BasicResponse, response: T?): ManipulationResponse<T> =
             from(status.result, response)
 
         /**
          * Creates a ManipulationResponse with [ResponseTypes.Result.RESULT_SUCCESS] and response content.
          */
         @JvmStatic
-        fun <T> success(response: T): ManipulationResponse<T> = from(ResponseTypes.Result.RESULT_SUCCESS, response)
+        fun <T> success(response: T?): ManipulationResponse<T> = from(ResponseTypes.Result.RESULT_SUCCESS, response)
 
         /**
          * Creates a ManipulationResponse with [ResponseTypes.Result.RESULT_FAIL] and response content.
          */
         @JvmStatic
-        fun <T> fail(response: T): ManipulationResponse<T> = from(ResponseTypes.Result.RESULT_FAIL, response)
+        fun <T> fail(response: T?): ManipulationResponse<T> = from(ResponseTypes.Result.RESULT_FAIL, response)
 
         /**
          * Deserializes a [ManipulationResponse] from a string.

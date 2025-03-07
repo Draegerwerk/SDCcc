@@ -236,9 +236,9 @@ public class ManipulationPreconditionsTest {
         // make manipulation return our two patient context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(PATIENT_CONTEXT_STATE_HANDLE, PatientContextState.class))
@@ -267,9 +267,9 @@ public class ManipulationPreconditionsTest {
         // make manipulation return our two location context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(LOCATION_CONTEXT_STATE_HANDLE, LocationContextState.class))
@@ -356,9 +356,9 @@ public class ManipulationPreconditionsTest {
         // introduce error, manipulation returns same handle twice
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.fail(null));
 
         assertFalse(
                 ManipulationPreconditions.AssociatePatientsManipulation.manipulation(injector),
@@ -805,9 +805,9 @@ public class ManipulationPreconditionsTest {
         // introduce error, manipulation returns same handle twice
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.fail(null));
 
         final MdibAccessObservable mockMdibAccessObservable = mock(MdibAccessObservable.class);
         when(mockTestClient.getSdcRemoteDevice().getMdibAccessObservable()).thenReturn(mockMdibAccessObservable);
