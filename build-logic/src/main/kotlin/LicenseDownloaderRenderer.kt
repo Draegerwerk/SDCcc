@@ -68,6 +68,7 @@ class LicenseDownloaderRenderer(
         val url = URL(sanitizedUrl)
 
         val connection = url.openConnection()
+        connection.setRequestProperty("User-Agent", "LicenseDownloader")
         connection.connectTimeout = CONNECT_TIMEOUT
         connection.readTimeout = READ_TIMEOUT
         connection.connect()
