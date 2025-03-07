@@ -53,7 +53,7 @@ class LicenseDownloaderRenderer(
         moduleData.poms.forEach { pomData ->
             pomData.licenses.forEach { license ->
                 val url = license.url?.trim()
-                val fileName = license.name ?: "LICENSE"
+                val fileName = license.name?.replace(Regex("""[/\\:*?"<>|]"""), "_") ?: "LICENSE"
                 if (!url.isNullOrEmpty()) {
                     licenseDetails.add(url to fileName)
                 }
@@ -68,6 +68,7 @@ class LicenseDownloaderRenderer(
         val url = URL(sanitizedUrl)
 
         val connection = url.openConnection()
+        connection.setRequestProperty("User-Agent", "LicenseDownloader")
         connection.connectTimeout = CONNECT_TIMEOUT
         connection.readTimeout = READ_TIMEOUT
         connection.connect()
@@ -92,5 +93,4 @@ class LicenseDownloaderRenderer(
 
         project.logger.lifecycle("Downloaded license for $moduleName from $licenseUrl to $file")
     }
-
 }
