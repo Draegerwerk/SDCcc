@@ -128,7 +128,7 @@ public class ConditionalPreconditions {
                 manipulations.getRemovableDescriptorsOfClass().getResponse();
         logger.debug("Changing presence for descriptors {}", modifiableDescriptors);
 
-        if (modifiableDescriptors.isEmpty()) {
+        if (modifiableDescriptors == null) {
             logger.info("No modifiable descriptors available for manipulation");
             return false;
         }
@@ -422,7 +422,7 @@ public class ConditionalPreconditions {
             final List<String> removableMdsDescriptors = manipulations
                     .getRemovableDescriptorsOfClass(MdsDescriptor.class)
                     .getResponse();
-            if (removableMdsDescriptors.isEmpty()) {
+            if (removableMdsDescriptors == null) {
                 LOG.error("No removable MdsDescriptors could be found via the GetRemovableDescriptorsOfType "
                         + "manipulation. Please check if the test case applying this precondition is applicable to "
                         + "your device and if the GetRemovableDescriptorsOfType manipulation has been implemented "
@@ -860,9 +860,9 @@ public class ConditionalPreconditions {
                         contextStateClass);
 
                 // associate another one if the first one worked out
-                if (newStateHandle.isPresent()) {
+                if (newStateHandle != null) {
                     // add new state to known states
-                    originalStates.add(newStateHandle.orElseThrow());
+                    originalStates.add(newStateHandle);
                     newStateHandle = associateNewContextForHandle(
                             testClient.getSdcRemoteDevice(),
                             manipulations,
@@ -871,7 +871,7 @@ public class ConditionalPreconditions {
                             contextStateClass);
                 }
 
-                if (newStateHandle.isEmpty()) {
+                if (newStateHandle == null) {
                     testRunObserver.invalidateTestRun(
                             String.format("Associating a new context state for handle %s failed", entity.getHandle()));
                     return false;
@@ -890,7 +890,7 @@ public class ConditionalPreconditions {
          * @param contextStateClass    of the context state
          * @return handle of new valid state, or empty
          */
-        static Optional<String> associateNewContextForHandle(
+        static String associateNewContextForHandle(
                 final SdcRemoteDevice device,
                 final Manipulations manipulations,
                 final String handle,
@@ -900,17 +900,17 @@ public class ConditionalPreconditions {
             var stateHandle = manipulations
                     .createContextStateWithAssociation(handle, ContextAssociation.ASSOC)
                     .getResponse();
-            if (stateHandle.isEmpty()) {
+            if (stateHandle == null) {
                 LOG.error("Associating new context state failed for handle {}", handle);
-                return Optional.empty();
+                return null;
             }
-            LOG.debug("New context created, state handle is {}", stateHandle.orElseThrow());
+            LOG.debug("New context created, state handle is {}", stateHandle);
             final var validState = verifyStatePresentAndAssociated(
-                    device, handle, stateHandle.orElseThrow(), previousStateHandles, contextStateClass);
+                    device, handle, stateHandle, previousStateHandles, contextStateClass);
             if (!validState) {
                 LOG.error("Validation for new context state {} failed", stateHandle);
                 // remove state handle from return value in invalid cases
-                stateHandle = Optional.empty();
+                stateHandle = null;
             }
             return stateHandle;
         }

@@ -14,7 +14,6 @@ import com.google.inject.Singleton;
 import java.io.FilterInputStream;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.xml.namespace.QName;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -139,7 +138,7 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
-    public ManipulationResponse<Optional<String>> createContextStateWithAssociation(
+    public ManipulationResponse<String> createContextStateWithAssociation(
             final String descriptorHandle, final ContextAssociation association) {
         final var interactionMessage = String.format(
                 "Create a NEW context state for the descriptor %s and set the context association to %s."
@@ -152,9 +151,9 @@ public class FallbackManipulations implements Manipulations {
                 })
                 .displayStringInputUserInteraction(interactionMessage);
         if (data == null || data.isBlank()) {
-            return ManipulationResponse.from(ResponseTypes.Result.RESULT_FAIL, Optional.empty());
+            return ManipulationResponse.fail(null);
         }
-        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, Optional.of(data));
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, data);
     }
 
     @Override

@@ -197,7 +197,7 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
-    public ManipulationResponse<Optional<String>> createContextStateWithAssociation(
+    public ManipulationResponse<String> createContextStateWithAssociation(
             final String descriptorHandle, final ContextAssociation association) {
         final var request = ContextRequests.CreateContextStateWithAssociationRequest.newBuilder()
                 .setDescriptorHandle(descriptorHandle)
@@ -210,9 +210,9 @@ public class GRpcManipulations implements Manipulations {
                 response -> response.getStatus().getResult(),
                 msg -> {
                     if (msg.getContextStateHandle().isBlank()) {
-                        return ManipulationResponse.from(msg.getStatus(), Optional.empty());
+                        return ManipulationResponse.from(msg.getStatus(), null);
                     }
-                    return ManipulationResponse.from(msg.getStatus(), Optional.of(msg.getContextStateHandle()));
+                    return ManipulationResponse.from(msg.getStatus(), msg.getContextStateHandle());
                 },
                 ManipulationParameterUtil.buildContextAssociationManipulationParameterData(
                         descriptorHandle, association));

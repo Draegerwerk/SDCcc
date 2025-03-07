@@ -193,22 +193,22 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_PATIENT_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_PATIENT_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_LOCATION_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_LOCATION_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_ENSEMBLE_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_ENSEMBLE_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         MEANS_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_MEANS_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_MEANS_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_OPERATOR_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_OPERATOR_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_WORKFLOW_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_WORKFLOW_CONTEXT_STATE_HANDLE));
 
         testClass.testRequirement0125();
     }
@@ -248,10 +248,10 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_WORKFLOW_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_WORKFLOW_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE2, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_WORKFLOW_CONTEXT_STATE_HANDLE2)));
+                .thenReturn(ManipulationResponse.success(NEW_WORKFLOW_CONTEXT_STATE_HANDLE2));
 
         testClass.testRequirement0125();
     }
@@ -289,10 +289,10 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_PATIENT_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_PATIENT_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_OPERATOR_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_OPERATOR_CONTEXT_STATE_HANDLE));
 
         testClass.testRequirement0125();
     }
@@ -314,8 +314,10 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.fail(null));
         final var error = assertThrows(AssertionError.class, testClass::testRequirement0125);
+        System.out.println(error.getMessage());
+        System.out.println(PATIENT_CONTEXT_DESCRIPTOR_HANDLE);
         assertTrue(error.getMessage().contains(PATIENT_CONTEXT_DESCRIPTOR_HANDLE));
     }
 
@@ -350,10 +352,10 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_PATIENT_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_PATIENT_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_LOCATION_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_LOCATION_CONTEXT_STATE_HANDLE));
 
         final var error = assertThrows(AssertionError.class, testClass::testRequirement0125);
         assertTrue(error.getMessage().contains(NEW_LOCATION_CONTEXT_STATE_HANDLE));
@@ -393,10 +395,10 @@ public class DirectParticipantModelContextStateTestTest {
 
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_PATIENT_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_PATIENT_CONTEXT_STATE_HANDLE));
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(NEW_LOCATION_CONTEXT_STATE_HANDLE)));
+                .thenReturn(ManipulationResponse.success(NEW_LOCATION_CONTEXT_STATE_HANDLE));
 
         assertThrows(AssertionError.class, testClass::testRequirement0125);
     }

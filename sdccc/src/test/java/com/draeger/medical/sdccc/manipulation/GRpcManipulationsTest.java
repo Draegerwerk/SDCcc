@@ -240,7 +240,8 @@ public class GRpcManipulationsTest {
             final var response = manipulations.getRemovableDescriptorsOfClass().getResponse();
             // fallback should not have been called here
             verifyNoInteractions(fallback);
-            assertTrue(response.isEmpty(), "manipulation succeeded but shouldn't have");
+
+            assertTrue(response == null || response.isEmpty(), "manipulation succeeded but shouldn't have");
         }
     }
 

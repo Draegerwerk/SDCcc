@@ -1745,7 +1745,7 @@ public class ConditionalPreconditionsTest {
 
         // Manipulation of WorkflowContext is not supported
         when(mockManipulations.createContextStateWithAssociation(eq(WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE), any()))
-                .thenReturn(ManipulationResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED, Optional.empty()));
+                .thenReturn(ManipulationResponse.from(ResponseTypes.Result.RESULT_NOT_SUPPORTED, null));
 
         final var expectedContextStateHandleCount = Map.of(
                 MEANS_CONTEXT_DESCRIPTOR_HANDLE, 2L,
@@ -1940,9 +1940,9 @@ public class ConditionalPreconditionsTest {
             // introduce error, manipulation returns same handle twice
             when(mockManipulations.createContextStateWithAssociation(
                             PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1950,9 +1950,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1960,9 +1960,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(ENSEMBLE_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(ENSEMBLE_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1970,9 +1970,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             MEANS_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(MEANS_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(MEANS_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1980,9 +1980,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(OPERATOR_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(OPERATOR_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -1990,9 +1990,9 @@ public class ConditionalPreconditionsTest {
             associateAllContextStatesSetup();
             when(mockManipulations.createContextStateWithAssociation(
                             WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                    .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
-                    .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                    .thenReturn(ManipulationResponse.success(WORKFLOW_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.success(WORKFLOW_CONTEXT_STATE_HANDLE))
+                    .thenReturn(ManipulationResponse.fail(null));
 
             allKindsOfContextStatesAssociatedManipulationFailed();
         }
@@ -2062,44 +2062,44 @@ public class ConditionalPreconditionsTest {
         // make manipulation return our two patient context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         PATIENT_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(PATIENT_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(PATIENT_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // make manipulation return our two location context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         LOCATION_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(LOCATION_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(LOCATION_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // make manipulation return our two ensemble context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         ENSEMBLE_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(ENSEMBLE_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(ENSEMBLE_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(ENSEMBLE_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // make manipulation return our two means context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         MEANS_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(MEANS_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(MEANS_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(MEANS_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // make manipulation return our two operator context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         OPERATOR_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(OPERATOR_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(OPERATOR_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(OPERATOR_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // make manipulation return our two workflow context state handles and nothing afterwards
         when(mockManipulations.createContextStateWithAssociation(
                         WORKFLOW_CONTEXT_DESCRIPTOR_HANDLE, ContextAssociation.ASSOC))
-                .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE)))
-                .thenReturn(ManipulationResponse.success(Optional.of(WORKFLOW_CONTEXT_STATE_HANDLE2)))
-                .thenReturn(ManipulationResponse.fail(Optional.empty()));
+                .thenReturn(ManipulationResponse.success(WORKFLOW_CONTEXT_STATE_HANDLE))
+                .thenReturn(ManipulationResponse.success(WORKFLOW_CONTEXT_STATE_HANDLE2))
+                .thenReturn(ManipulationResponse.fail(null));
 
         // return mock states on request
         when(mockDevice.getMdibAccess().getState(PATIENT_CONTEXT_STATE_HANDLE, PatientContextState.class))
