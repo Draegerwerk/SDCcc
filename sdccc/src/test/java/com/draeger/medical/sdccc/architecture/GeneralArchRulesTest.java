@@ -1,6 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * Copyright (c) 2025 Draegerwerk AG & Co. KGaA.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -68,7 +68,7 @@ import org.somda.sdc.biceps.model.participant.MdsState;
 @AnalyzeClasses(
         packages = "com.draeger.medical.sdccc",
         importOptions = {ImportOption.DoNotIncludeTests.class})
-public class ArchitecturalRulesTest {
+public class GeneralArchRulesTest {
 
     private static final DescribedPredicate<JavaAnnotation<?>> TEST_IDENTIFIER_OF_A_STANDARD_REQUIREMENT =
             new DescribedPredicate<>("is annotated with the @TestIdentifier of a Standard "
@@ -284,21 +284,6 @@ public class ArchitecturalRulesTest {
     @ArchTest
     private static final ArchRule CHECK_MDIB_GET_INSTANCE_ID =
             checkImpliedValue("getInstanceId", Mdib.class, String.format(REASON, "instance id", "Mdib"));
-
-    @ArchTest
-    private static final ArchRule CHECK_DIRECT_TESTS_INITIAL_IMPLIED_VERSIONS = noClasses()
-            .that()
-            .resideInAPackage("..direct..")
-            .should()
-            .accessTargetWhere(
-                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getDescriptorVersion")))
-            .orShould()
-            .accessTargetWhere(
-                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getStateVersion")))
-            .orShould()
-            .accessTargetWhere(
-                    target(owner(assignableTo(ImpliedValueUtil.class))).and(nameMatching("getStateDescriptorVersion")))
-            .because("Initial implied value can not be reliable checked in direct tests");
 
     @ArchTest
     private static final ArchRule NO_CALLS_TO_GET_DESCRIPTOR = noClasses()

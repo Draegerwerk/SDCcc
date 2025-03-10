@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - moved test case specific parameter into separate file test_parameter.toml
 - sdc-ri version to 6.2.0-SNAPSHOT
 - build is now using gradle instead of maven
+- value of GLUE.R0036_0 from true to false in the example config test_configuration.toml
 
 ### Fixed
 
