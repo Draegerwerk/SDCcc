@@ -7,17 +7,17 @@
 
 package com.draeger.medical.sdccc.architecture;
 
-import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
-import com.tngtech.archunit.core.importer.ImportOption;
-import com.tngtech.archunit.junit.AnalyzeClasses;
-import com.tngtech.archunit.junit.ArchTest;
-import com.tngtech.archunit.lang.ArchRule;
-
 import static com.tngtech.archunit.core.domain.JavaAccess.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
+import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * Checks the listed Architectural Rules.
