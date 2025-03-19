@@ -52,7 +52,7 @@ public class InjectorTestBase {
      */
     public void assertTestData(final Collection<?> data, final String message) throws NoTestData {
         if (data.isEmpty()) {
-            LOG.error(message);
+            LOG.debug(message);
             throw new NoTestData(message);
         }
     }
@@ -66,7 +66,7 @@ public class InjectorTestBase {
      */
     public void assertTestData(final int data, final String message) throws NoTestData {
         if (data == 0) {
-            LOG.error(message);
+            LOG.debug(message);
             throw new NoTestData(message);
         }
     }
@@ -80,7 +80,7 @@ public class InjectorTestBase {
      */
     public void assertTestData(final boolean data, final String message) throws NoTestData {
         if (!data) {
-            LOG.error(message);
+            LOG.debug(message);
             throw new NoTestData(message);
         }
     }
@@ -94,7 +94,7 @@ public class InjectorTestBase {
      */
     public void assertTestDataNotNull(@Nullable final Object data, final String message) throws NoTestData {
         if (data == null) {
-            LOG.error(message);
+            LOG.debug(message);
             throw new NoTestData(message);
         }
     }
