@@ -23,9 +23,13 @@ import com.draeger.medical.sdccc.tests.annotations.TestIdentifier;
 import com.draeger.medical.sdccc.tests.util.ImpliedValueUtil;
 import com.draeger.medical.sdccc.tests.util.NoTestData;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.AccessTarget;
 import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -33,7 +37,11 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.somda.sdc.biceps.common.MdibEntity;
 import org.somda.sdc.biceps.model.message.AbstractReport;
@@ -322,6 +330,97 @@ public class GeneralArchRulesTest {
                     }
                 }
             });
+
+    /**
+     * Ensures that every method in GRpcManipulations overriding Manipulations method is called in GRpcManipulationsTest.
+     *
+     * @param importedClasses required by the ArchTest framework (unused)
+     * @throws AssertionError if any overridden method is not invoked in the test.
+     */
+    @ArchTest
+    public static void grpcManipulationsMethodsAreTested(final JavaClasses importedClasses) {
+        final List<String> violations = new ArrayList<>();
+
+        final JavaClasses productionClasses = new ClassFileImporter()
+                .withImportOption(new ImportOption.DoNotIncludeTests())
+                .importPackages("com.draeger.medical.sdccc.manipulation");
+
+        final JavaClass grpcManipulations = productionClasses.stream()
+                .filter(c -> c.getSimpleName().equals("GRpcManipulations"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("GRpcManipulations class not found in production code."));
+
+        final JavaClass manipulationsInterface = productionClasses.stream()
+                .filter(c -> c.getSimpleName().equals("Manipulations"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Manipulations interface not found in production code."));
+
+        final Set<JavaMethod> implementationMethods = grpcManipulations.getMethods().stream()
+                .filter(method -> method.getOwner().equals(grpcManipulations))
+                .filter(method -> manipulationsInterface.getMethods().stream().anyMatch(interfaceMethod -> {
+                    if (!method.getName().equals(interfaceMethod.getName())) {
+                        return false;
+                    }
+                    final List<String> methodParamTypes = method.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    final List<String> interfaceParamTypes = interfaceMethod.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    return methodParamTypes.equals(interfaceParamTypes);
+                }))
+                .collect(Collectors.toSet());
+
+        final JavaClasses testClasses =
+                new ClassFileImporter().importPackages("com.draeger.medical.sdccc.manipulation");
+        final JavaClass grpcManipulationsTest = testClasses.stream()
+                .filter(c -> c.getSimpleName().equals("GRpcManipulationsTest"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("GRpcManipulationsTest class not found in tests."));
+
+        final Set<JavaMethodCall> testCalls = grpcManipulationsTest.getMethodCallsFromSelf();
+
+        for (JavaMethod implMethod : implementationMethods) {
+            final boolean isTested = testCalls.stream().anyMatch(call -> {
+                final AccessTarget.MethodCallTarget target = call.getTarget();
+
+                if (target.getOwner().getFullName().equals(grpcManipulations.getFullName())) {
+                    if (!target.getName().equals(implMethod.getName())) {
+                        return false;
+                    }
+                    final List<String> targetParams = target.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    final List<String> implParams = implMethod.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    return targetParams.equals(implParams);
+                }
+
+                if (target.getOwner().getFullName().equals(grpcManipulations.getFullName())) {
+                    if (!target.getName().equals(implMethod.getName())) {
+                        return false;
+                    }
+                    final List<String> targetParams = target.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    final List<String> implParams = implMethod.getRawParameterTypes().stream()
+                            .map(t -> t.getFullName())
+                            .toList();
+                    return targetParams.equals(implParams);
+                }
+                return false;
+            });
+            if (!isTested) {
+                violations.add(String.format(
+                        "Implementation method %s (overriding an interface method) is not called in GRpcManipulationsTest.",
+                        implMethod.getFullName()));
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new AssertionError(String.join("\n", violations));
+        }
+    }
 
     private static ArchRule checkImpliedValue(
             final String methodName, final Class<?> targetClass, final String reason) {
