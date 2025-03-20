@@ -3,6 +3,10 @@
 This test tool aims to evaluate the conformity of medical devices with selected parts of "ISO/IEEE 11073-20702",
 "ISO/IEEE 11073-10207", "OASIS DPWS 1.1" and "ISO/IEEE 11073-20701".
 
+For this open source project the [Contributor License Agreement](Contributor_License_Agreement.md) governs all 
+relevant activities and your contributions.\
+By contributing to the project you agree to be bound by this Agreement and to license your work accordingly.
+
 ## Introduction of the Project and Test approach
 
 The test tool assumes the Role of an SDC Service Consumer to connect to the device under test (DUT) and interacts with
