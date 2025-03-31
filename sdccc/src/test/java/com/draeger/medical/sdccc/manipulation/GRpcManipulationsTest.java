@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -1101,7 +1102,7 @@ public class GRpcManipulationsTest {
 
         // not implemented
         {
-            when(fallback.triggerDescriptorUpdate((List<String>) any())).thenReturn(ResultResponse.notImplemented());
+            when(fallback.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.notImplemented());
 
             final SettableFuture<List<String>> receivedHandles = SettableFuture.create();
             deviceHandler.setTriggerDescriptorUpdateCall((request, responseObserver) -> {
@@ -1172,7 +1173,7 @@ public class GRpcManipulationsTest {
 
         // not implemented
         {
-            when(fallback.triggerDescriptorUpdate((List<String>) any())).thenReturn(ResultResponse.notImplemented());
+            when(fallback.triggerDescriptorUpdate(anyList())).thenReturn(ResultResponse.notImplemented());
 
             final SettableFuture<List<String>> receivedHandles = SettableFuture.create();
             deviceHandler.setTriggerDescriptorUpdateCall((request, responseObserver) -> {
