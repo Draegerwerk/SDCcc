@@ -502,7 +502,10 @@ public class GRpcManipulationsTest {
             });
 
             final ResultResponse response = manipulations.setMetricStatus(sequenceId, handle, category, activation);
-            assertSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation failed, but shouldn't have");
+            assertSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation failed, but shouldn't have");
             final var receivedRequest = requestFuture.get();
             assertEquals(handle, receivedRequest.getHandle(), "Metric handle mismatch");
             assertNotNull(receivedRequest.getStatus(), "Metric status should not be null");
@@ -523,7 +526,10 @@ public class GRpcManipulationsTest {
             });
 
             final ResultResponse response = manipulations.setMetricStatus(sequenceId, handle, category, activation);
-            assertNotSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation succeeded, but shouldn't have");
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded, but shouldn't have");
             verifyNoInteractions(fallback);
         }
     }
@@ -703,7 +709,10 @@ public class GRpcManipulationsTest {
             });
 
             final ResultResponse response = manipulations.setAlertActivation(handle, activationState);
-            assertSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation failed, but shouldn't have");
+            assertSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation failed, but shouldn't have");
             assertEquals(expected, receivedActivation.get());
             verifyNoInteractions(fallback);
         }
@@ -723,7 +732,10 @@ public class GRpcManipulationsTest {
             });
 
             final ResultResponse response = manipulations.setAlertActivation(handle, activationState);
-            assertNotSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation succeeded but shouldn't have");
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded but shouldn't have");
             assertEquals(expected, receivedActivation.get());
             verifyNoInteractions(fallback);
         }
@@ -764,7 +776,10 @@ public class GRpcManipulationsTest {
             final ManipulationResponse<String> response =
                     manipulations.createContextStateWithAssociation(descriptorHandle, association);
             assertNotNull(response, "Manipulation failed, but shouldn't have");
-            assertSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation failed, but shouldn't have");
+            assertSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation failed, but shouldn't have");
             assertEquals(expectedContextStateHandle, response.getResponse());
             final ContextRequests.CreateContextStateWithAssociationRequest capturedRequest = requestFuture.get();
             assertEquals(descriptorHandle, capturedRequest.getDescriptorHandle());
@@ -791,7 +806,10 @@ public class GRpcManipulationsTest {
 
             final ManipulationResponse<String> response =
                     manipulations.createContextStateWithAssociation(descriptorHandle, association);
-            assertNotSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation succeeded but shouldn't have");
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded but shouldn't have");
             verifyNoInteractions(fallback);
         }
     }
@@ -817,7 +835,10 @@ public class GRpcManipulationsTest {
             });
 
             final var response = manipulations.triggerAnyDescriptorUpdate();
-            assertSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation failed, but shouldn't have");
+            assertSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation failed, but shouldn't have");
             verifyNoInteractions(fallback);
         }
 
@@ -833,7 +854,10 @@ public class GRpcManipulationsTest {
             });
 
             final var response = manipulations.triggerAnyDescriptorUpdate();
-            assertNotSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation succeeded but shouldn't have");
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded but shouldn't have");
             verifyNoInteractions(fallback);
         }
 
@@ -850,7 +874,10 @@ public class GRpcManipulationsTest {
             });
 
             final var response = manipulations.triggerAnyDescriptorUpdate();
-            assertNotSame(ResponseTypes.Result.RESULT_SUCCESS, response.getResult(), "Manipulation succeeded but shouldn't have");
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded but shouldn't have");
             verify(fallback, times(1)).triggerAnyDescriptorUpdate();
         }
     }
