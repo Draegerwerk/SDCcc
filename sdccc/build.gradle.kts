@@ -10,6 +10,10 @@ plugins {
 val javaVersion = property("javaVersion").toString()
 
 dependencies {
+    implementation(enforcedPlatform("com.draeger.medical:sdccc-bom:1.0.0-SNAPSHOT"))
+    detekt(libs.detekt.cli)
+    detekt(libs.detekt.formatting)
+    api(libs.org.jetbrains.kotlin.kotlin.stdlib)
     api(libs.org.junit.jupiter.junit.jupiter.api)
     api(libs.org.junit.jupiter.junit.jupiter.engine)
     api(libs.org.junit.platform.junit.platform.launcher)

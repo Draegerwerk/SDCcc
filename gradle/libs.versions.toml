@@ -20,7 +20,6 @@ org-glassfish-jaxb = "4.0.5"
 org-hibernate-core = "5.4.24.Final"
 org-jetbrains-kotlin = "1.9.23"
 org-junit = "5.10.3"
-org-junit-platform = "1.10.2"
 org-mockito = "5.12.0"
 org-mockito-kotlin = "5.4.0"
 org-somda-sdc = "6.2.0"
@@ -46,9 +45,9 @@ org-checkerframework-checker-qual = { module = "org.checkerframework:checker-qua
 org-glassfish-jaxb-jaxb-core = { module = "org.glassfish.jaxb:jaxb-core", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-xjc = { module = "org.glassfish.jaxb:jaxb-xjc", version.ref = "org-glassfish-jaxb" }
-org-jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "org-jetbrains-annotations" }
-org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit" }
-org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit" }
+org-junit-jupiter-bom = { module = "org.junit:junit-bom", version.ref = "org-junit" }
+org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
+org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 org-jvnet-jaxb-jaxb-plugins = { module = "org.jvnet.jaxb:jaxb-plugins", version.ref = "org-jvnet-jaxb-plugins" }
 org-jvnet-jaxb-jaxb-plugin-annotate = { module = "org.jvnet.jaxb:jaxb-plugin-annotate", version.ref = "org-jvnet-jaxb-plugins" }
 org-jvnet-jaxb-jaxb-plugins-tools = { module = "org.jvnet.jaxb:jaxb-plugins-tools", version.ref = "org-jvnet-jaxb-plugins" }
@@ -72,9 +71,9 @@ org-hibernate-hibernate-core = { module = "org.hibernate:hibernate-core", versio
 org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "org-jetbrains-kotlin" }
 org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "org-jetbrains-kotlin" }
 org-jetbrains-kotlin-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }
-org-junit-jupiter-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit" }
-org-junit-platform-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "org-junit-platform" }
-org-junit-platform-junit-platform-reporting = { module = "org.junit.platform:junit-platform-reporting", version.ref = "org-junit-platform" }
+org-junit-jupiter-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
+org-junit-platform-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher"}
+org-junit-platform-junit-platform-reporting = { module = "org.junit.platform:junit-platform-reporting" }
 org-mockito-kotlin-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "org-mockito-kotlin" }
 org-mockito-mockito-core = { module = "org.mockito:mockito-core", version.ref = "org-mockito" }
 org-somda-sdc-common = { module = "org.somda.sdc:common", version.ref = "org-somda-sdc" }

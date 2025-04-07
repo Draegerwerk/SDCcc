@@ -14,13 +14,13 @@ val schemaDir = "src/main"
 
 
 dependencies {
+    implementation(enforcedPlatform("com.draeger.medical:sdccc-bom:1.0.0-SNAPSHOT"))
     api(libs.org.glassfish.jaxb.jaxb.core)
     api(libs.org.glassfish.jaxb.jaxb.runtime)
     api(libs.jakarta.xml.bind.jakarta.xml.bind.api)
     api(libs.io.github.threeten.jaxb.threeten.jaxb.core)
     api(libs.org.jvnet.jaxb.jaxb.plugins)
     api(libs.org.checkerframework.checker.qual)
-    api(libs.org.jetbrains.annotations)
 
     testImplementation(libs.org.junit.jupiter.junit.jupiter.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.engine)
