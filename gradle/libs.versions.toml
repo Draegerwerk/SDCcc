@@ -27,14 +27,17 @@ org-tomlj = "1.0.0"
 threeten-jaxb-core = "2.2.0"
 jakarta-xml-bind = "4.0.2"
 org-checkerframework = "3.44.0"
-org-jetbrains-annotations = "24.1.0"
 org-jvnet-jaxb-plugins = "4.0.8"
 edu-sc-seis-launch4j = "2.5.0"
 com-diffplug-spotless = "6.21.0"
 de-undercouch-download = "5.3.0"
 com-github-jk1-license = "2.9"
+sdccc-bom = "1.0.0-SNAPSHOT"
+sdccc-plugin-bom = "1.0.0-SNAPSHOT"
 
 [libraries]
+com-draeger-medical-sdccc-bom = { module = "com.draeger.medical:sdccc-bom", version.ref = "sdccc-bom" }
+com-draeger-medical-sdccc-plugin-bom = { module = "com.draeger.medical:sdccc-plugin-bom", version.ref = "sdccc-plugin-bom" }
 com-google-inject-guice = { module = "com.google.inject:guice", version.ref = "guice" }
 com-google-inject-extensions-guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
 detekt-cli = { module = "io.gitlab.arturbosch.detekt:detekt-cli", version.ref = "detekt" }

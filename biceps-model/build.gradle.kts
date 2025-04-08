@@ -14,7 +14,7 @@ val schemaDir = "src/main"
 
 
 dependencies {
-    implementation(enforcedPlatform("com.draeger.medical:sdccc-bom:1.0.0-SNAPSHOT"))
+    implementation(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
     api(libs.org.glassfish.jaxb.jaxb.core)
     api(libs.org.glassfish.jaxb.jaxb.runtime)
     api(libs.jakarta.xml.bind.jakarta.xml.bind.api)
