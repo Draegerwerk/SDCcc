@@ -26,7 +26,6 @@ org-somda-sdc = "6.2.0"
 org-tomlj = "1.0.0"
 threeten-jaxb-core = "2.2.0"
 jakarta-xml-bind = "4.0.2"
-org-checkerframework = "3.44.0"
 org-jvnet-jaxb-plugins = "4.0.8"
 edu-sc-seis-launch4j = "2.5.0"
 com-diffplug-spotless = "6.21.0"
@@ -44,7 +43,6 @@ detekt-cli = { module = "io.gitlab.arturbosch.detekt:detekt-cli", version.ref = 
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 io-github-threeten-jaxb-threeten-jaxb-core = { module = "io.github.threeten-jaxb:threeten-jaxb-core", version.ref = "threeten-jaxb-core" }
 jakarta-xml-bind-jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
-org-checkerframework-checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "org-checkerframework" }
 org-glassfish-jaxb-jaxb-core = { module = "org.glassfish.jaxb:jaxb-core", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-xjc = { module = "org.glassfish.jaxb:jaxb-xjc", version.ref = "org-glassfish-jaxb" }
