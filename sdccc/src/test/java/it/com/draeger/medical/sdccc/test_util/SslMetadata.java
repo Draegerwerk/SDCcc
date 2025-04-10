@@ -1,8 +1,7 @@
 /*
- * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
  *
- * SPDX-License-Identifier: MIT
+ * Copyright (C) 2025 Draegerwerk AG & Co. KGaA
  */
 
 package it.com.draeger.medical.sdccc.test_util;
