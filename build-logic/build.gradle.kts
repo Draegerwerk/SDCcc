@@ -26,7 +26,7 @@ gradlePlugin {
 }
 
 dependencies {
-    implementation(enforcedPlatform(libs.com.draeger.medical.sdccc.plugin.bom))
+    api(enforcedPlatform(libs.com.draeger.medical.sdccc.plugin.bom))
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
     implementation(libs.com.github.jk1.license.report)
     implementation(libs.gradleplugins.spotbugs)
