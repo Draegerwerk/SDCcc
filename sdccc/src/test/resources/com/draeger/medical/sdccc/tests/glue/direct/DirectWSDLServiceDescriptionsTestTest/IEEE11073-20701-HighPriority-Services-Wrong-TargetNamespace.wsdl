@@ -1,8 +1,7 @@
 <!--
-  ~ This Source Code Form is subject to the terms of the MIT License.
-  ~ Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+  ~ This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
   ~
-  ~ SPDX-License-Identifier: MIT
+  ~ Copyright (C) 2025 Draegerwerk AG & Co. KGaA
   -->
 
 <wsdl:definitions xmlns:dpws="http://docs.oasis-open.org/ws-dd/ns/dpws/2009/01" xmlns:mdpws="http://standards.ieee.org/downloads/11073/11073-20702-2016" xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message" xmlns:s12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:tns="http://standards.ieee.org/downloads/11073/11073-20701-2018" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:ns="http://standards.ieee.org/downloads/11073/11073-10207-2017/extension" xmlns:ns1="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant" xmlns:dt="http://standards.ieee.org/downloads/11073/11073-10207-2017" xmlns:wse="http://schemas.xmlsoap.org/ws/2004/08/eventing" targetNamespace="http://standards.ieee.org/downloads/11073/11073-20702-2016">
