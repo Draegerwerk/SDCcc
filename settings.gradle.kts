@@ -13,3 +13,4 @@ rootProject.name = "sdccc_parent"
 include(":biceps-model")
 include(":dpws-model")
 include(":sdccc")
+includeBuild("sdccc-bom")
