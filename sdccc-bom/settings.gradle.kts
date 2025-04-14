@@ -1,6 +1,4 @@
-rootProject.name = "build-logic"
-
-includeBuild("../sdccc-plugin-bom")
+rootProject.name = "sdccc-bom"
 
 // make libs.versions.toml available
 // see https://stackoverflow.com/a/70878181
