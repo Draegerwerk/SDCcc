@@ -710,6 +710,39 @@ public class MdibHistorian {
     }
 
     /**
+     * Processes each consecutive pair of RemoteMdibAccess instances from the episodic report based histories
+     * of all known sequence ids using the provided processor.
+     *
+     * @param processor a consumer that processes each pair of RemoteMdibAccess
+     */
+    public void processAllConsecutivePairs(final TriConsumer<RemoteMdibAccess, RemoteMdibAccess, String> processor)
+            throws IOException {
+        try (final Stream<String> sequenceIds = this.getKnownSequenceIds()) {
+            sequenceIds.forEach(sequenceId -> {
+                try (final MdibHistorian.HistorianResult history = episodicReportBasedHistory(sequenceId);
+                        final MdibHistorian.HistorianResult historyNext = episodicReportBasedHistory(sequenceId)) {
+
+                    // skip the first entry so that history and historyNext are off by one entry
+                    final var skippedElement = historyNext.next();
+                    if (skippedElement == null) {
+                        throw new NoTestData("Not enough input to compare mdib revisions");
+                    }
+
+                    RemoteMdibAccess first = history.next();
+                    RemoteMdibAccess second = historyNext.next();
+                    while (second != null) {
+                        processor.accept(first, second, sequenceId);
+                        first = history.next();
+                        second = historyNext.next();
+                    }
+                } catch (PreprocessingException | ReportProcessingException | NoTestData e) {
+                    fail(e);
+                }
+            });
+        }
+    }
+
+    /**
      * Processes a RemoteMdibAccess instance for which the AbstractReport is applicable across all known sequence ids.
      *
      * @param applicable a predicate that determines whether a given AbstractReport should be processed
