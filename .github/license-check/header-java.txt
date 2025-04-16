@@ -1,0 +1,5 @@
+/\*
+ \* This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
+ \*
+ \* Copyright \(C\) (?:([0-9]{4}-[0-9]{4})|([0-9]{4})) Draegerwerk AG & Co. KGaA
+ \*/

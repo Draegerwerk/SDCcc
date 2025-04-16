@@ -9,6 +9,7 @@ plugins {
 }
 
 dependencies {
+    api(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
     api(libs.org.glassfish.jaxb.jaxb.core)
     api(libs.org.glassfish.jaxb.jaxb.runtime)
     api(libs.jakarta.xml.bind.jakarta.xml.bind.api)

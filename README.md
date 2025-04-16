@@ -414,4 +414,4 @@ SDCcc was not developed according to ISO 9001.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+See LICENSE file
