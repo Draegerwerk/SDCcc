@@ -46,7 +46,7 @@ jobs:
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: ./gradlew check --no-build-cache -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }}
+          run: ./gradlew check  -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }}
           working-directory: ./ #optional
           options: #optional
         env:
@@ -61,7 +61,7 @@ jobs:
 
       - name: Build package and download license information
         run: |
-          ./gradlew build -x test -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }} -PexecutableSDCcc
+          ./gradlew build -x test --no-configuration-cache -Prevision=${{ env.RELEASE_VERSION }} -Pchangelist=${{ env.CHANGELIST }} -PexecutableSDCcc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
