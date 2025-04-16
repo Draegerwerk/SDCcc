@@ -778,10 +778,7 @@ public class InvariantMessageModelAnnexTest extends InjectorTestBase {
             try (final var historyNext = mdibHistorian.episodicReportBasedHistory(sequenceId)) {
                 // skip the first entry so that history and historyNext are off by one entry
                 final var skippedElement = historyNext.next();
-                if (skippedElement == null) {
-                    throw new NoTestData("Not enough input to compare mdib revisions");
-                }
-
+                assertTestData(skippedElement != null, "Not enough input to compare mdib revisions");
                 compareReportsWithMdib(
                         mdibHistorian,
                         sequenceId,
