@@ -8,8 +8,8 @@ package com.draeger.medical.sdccc.manipulation
 
 import com.draeger.medical.t2iapi.ResponseTypes
 import com.google.gson.Gson
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 /**
  * Test class for de-/serialization testing.
