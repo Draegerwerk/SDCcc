@@ -87,13 +87,14 @@ org-apache-derby-derby = { module = "org.apache.derby:derby", version.ref = "org
 org-apache-httpcomponents-httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "org-apache-httpclient" }
 org-apache-httpcomponents-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "org-apache-httpcore" }
 
-#log4j
+#log4j and slf4j
 org-apache-logging-log4j-log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version.ref = "org-apache-logging-log4j"  }
 org-apache-logging-log4j-log4j-api = { module = "org.apache.logging.log4j:log4j-api" }
 org-apache-logging-log4j-log4j-core = { module = "org.apache.logging.log4j:log4j-core" }
 org-apache-logging-log4j-log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl" }
 org-apache-logging-log4j-log4j-api-kotlin = { module = "org.apache.logging.log4j:log4j-api-kotlin", version.ref = "org-apache-logging-log4j-log4j-api-kotlin" }
 org-slf4j-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+org-slf4j-jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j-api" }
 
 org-bouncycastle-bcpkix-jdk15on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }
 org-bouncycastle-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "org-bouncycastle" }

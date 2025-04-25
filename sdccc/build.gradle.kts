@@ -40,6 +40,7 @@ dependencies {
     api(libs.org.apache.logging.log4j.log4j.slf4j2.impl)
     api(libs.org.apache.logging.log4j.log4j.api.kotlin)
     api(libs.org.slf4j.slf4j.api)
+    api(libs.org.slf4j.jcl.over.slf4j)
 
     api(libs.com.github.spotbugs.spotbugs.annotations)
     api(libs.net.sf.saxon.saxon.he)
