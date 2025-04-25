@@ -52,9 +52,10 @@ class XjcPlugin : Plugin<Project> {
 
         @Suppress("ObjectLiteralToLambda") // conversion doesn't work, SAM support is messed up
         val createXjcOutputDirAction = object : Action<Task> {
-            override fun execute(it: Task) {
-                it.doLast {
-                    project.layout.buildDirectory.dir(GENERATED_SOURCES_FOLDER_PATH).get().asFile.mkdirs()
+            override fun execute(task: Task) {
+                task.outputs.dir(xjcOutputDir)
+                task.doLast {
+                    xjcOutputDir.asFile.mkdirs()
                 }
             }
         }
@@ -106,6 +107,12 @@ class XjcPlugin : Plugin<Project> {
                     extension.schemaLocation.get().toString(),
                     extension.schemaLocation.get().toString()
                 )
+
+                javaExec.inputs.dir(extension.schemaLocation)
+                javaExec.inputs.property("xjcArgs", extension.args.orElse(emptyList()))
+
+                javaExec.outputs.dir(xjcOutputDir)
+                javaExec.outputs.file(episodeOutputFile)
             }
 
         }
