@@ -11,6 +11,7 @@ val javaVersion = property("javaVersion").toString()
 
 dependencies {
     api(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
+    annotationProcessor(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
     detekt(libs.detekt.cli)
     detekt(libs.detekt.formatting)
     api(libs.org.jetbrains.kotlin.kotlin.stdlib)
@@ -36,8 +37,9 @@ dependencies {
 
     api(libs.org.apache.logging.log4j.log4j.api)
     api(libs.org.apache.logging.log4j.log4j.core)
-    api(libs.org.apache.logging.log4j.log4j.slf4j.impl)
+    api(libs.org.apache.logging.log4j.log4j.slf4j2.impl)
     api(libs.org.apache.logging.log4j.log4j.api.kotlin)
+    api(libs.org.slf4j.slf4j.api)
 
     api(libs.com.github.spotbugs.spotbugs.annotations)
     api(libs.net.sf.saxon.saxon.he)

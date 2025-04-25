@@ -70,6 +70,9 @@ class XjcPlugin : Plugin<Project> {
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.glassfish.jaxb.jaxb.xjc").get().get())
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.jvnet.jaxb.jaxb.plugins").get().get())
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.jvnet.jaxb.jaxb.plugins.tools").get().get())
+                project.dependencies.add(CONFIG_NAME, project.dependencies.enforcedPlatform(libs.findLibrary("org.apache.logging.log4j.log4j.bom").get().get()))
+                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.apache.logging.log4j.log4j.slf4j2.impl").get().get())
+                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.slf4j.slf4j.api").get().get())
 
                 // append additional user-specified arguments
                 val newClassPath = jaxb + extension.jaxbClasspath.getOrElse(project.objects.fileCollection())
