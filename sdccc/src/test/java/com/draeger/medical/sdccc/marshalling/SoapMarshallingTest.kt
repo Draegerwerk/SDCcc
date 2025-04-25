@@ -1,8 +1,7 @@
 /*
- * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2025 Draegerwerk AG & Co. KGaA.
+ * This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
  *
- * SPDX-License-Identifier: MIT
+ * Copyright (C) 2025 Draegerwerk AG & Co. KGaA
  */
 
 package com.draeger.medical.sdccc.marshalling
@@ -10,12 +9,12 @@ package com.draeger.medical.sdccc.marshalling
 import com.draeger.medical.biceps.model.extension.ExtensionType
 import com.draeger.medical.biceps.model.message.GetMdibResponse
 import com.draeger.medical.dpws.soap.model.Envelope
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.w3c.dom.Element
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 
 /**
  * Unit tests for the soap marshalling.
@@ -59,8 +58,10 @@ class SoapMarshallingTest {
 
         assertEquals(1, unmarshaledExtension.any.size, "The unmarshalled data is not present.")
 
-        val myExt = unmarshaledExtension.any[0]
-        assertIs<Element>(myExt)
+        val extension = unmarshaledExtension.any[0]
+        assertInstanceOf(Element::class.java, extension)
+        // added a null check before casting to avoid detekt finding CastNullableToNonNullableType
+        val myExt = (extension ?: error("Extension is null")) as Element
 
         assertEquals("http://biceps.extension", myExt.namespaceURI, "namespaceURI is not as expected.")
         assertEquals("MyExt", myExt.localName, "localName is not as expected.")

@@ -162,9 +162,9 @@ will make all devices match during discovery.
 
 ### Manipulation API
 
-The test tool uses *T2IAPI* version `4.1.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
-state, or to trigger a certain behavior. When using SDCcc with automated manipulations, it must be ensured that the same
-version of *T2IAPI* is used for the test execution by both parties. It must also be ensured that the device's
+The test tool uses *T2IAPI* version `4.2.0`. The *T2IAPI* is required for some test cases to put the DUT in a certain
+state, or to trigger a certain behavior. When using the test tool with automated manipulations, it must be ensured that
+the same version of *T2IAPI* is used for the test execution by both parties. It must also be ensured that the device's
 manipulations are implemented according to the descriptions in the T2IAPI sources. Further information can be found
 in the changelog.
 
@@ -311,6 +311,13 @@ this case in order to minimize the risk of such an invalid application going unn
 
 [General]
 
+Prior to using the test tool, the user is responsible for:
+
+- Ensuring by other means than the test tool (e.g. unit test) that in the scenario of communicating with not more than
+  one SERVICE CONSUMER the DUT never sends two HTTP requests containing MdibVersions simultaneously and, if HTTP requests
+  have been sent previously, only sends a request containing an MdibVersion when for each and every previous request
+  during the same test run a respective response has been received.
+
 | **Limitation**                                                                                                                                                                                          |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul> |
@@ -411,4 +418,4 @@ SDCcc was not developed according to ISO 9001.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+See LICENSE file

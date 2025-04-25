@@ -14,15 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - a command line parameter to print the version of the sdccc test tool
 - add config parameter to set the minimum amount of time the test tool is supposed to collect data
 - unmarshal SOAP messages with casting to a configurable class
-- 
+
 ### Changed
 
 - the SoapMarshalling is now configurable regarding packages to scan for JAXB classes and the schemas for validation 
 - the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
-- sdc-ri version to 6.2.0
+- sdc-ri version to 6.2.1
 - build is now using gradle instead of maven
 - value of GLUE.R0036_0 from true to false in the example config test_configuration.toml
+- t2iapi version to 4.2.0
 
 ### Fixed
 
@@ -35,6 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - consumer test related implementations
+
+## [9.0.2] - 2025-01-27 
+
+### Fixed
+
+- SequenceIds are now ordered by the timestamp of the first message that used them
+
+## [9.0.1] - 2024-08-19
+
+### Fixed
+
+- biceps:C-11, biceps:C-12, biceps:C-13, biceps:C-14 and biceps:C-15 no longer fails incorrectly if a DescriptionModificationReport with the same MdibVersion has been sent for the respective EpisodicReport.
 
 ## [9.0.0] - 2024-02-23
 
