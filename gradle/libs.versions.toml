@@ -42,6 +42,7 @@ org-somda-sdc-model = "6.0.1"
 org-tomlj = "1.0.0"
 org-jvnet-jaxb-plugins = "4.0.8"
 protoc-version = "3.25.0"
+slf4j-api = "2.0.17"
 sdccc-bom = "1.0.0-SNAPSHOT"
 sdccc-plugin-bom = "1.0.0-SNAPSHOT"
 threeten-jaxb-core = "2.2.0"
@@ -85,10 +86,16 @@ org-apache-commons-commons-lang3 = { module = "org.apache.commons:commons-lang3"
 org-apache-derby-derby = { module = "org.apache.derby:derby", version.ref = "org-apache-derby" }
 org-apache-httpcomponents-httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "org-apache-httpclient" }
 org-apache-httpcomponents-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "org-apache-httpcore" }
-org-apache-logging-log4j-log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "org-apache-logging-log4j" }
-org-apache-logging-log4j-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "org-apache-logging-log4j" }
-org-apache-logging-log4j-log4j-slf4j-impl = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "org-apache-logging-log4j" }
+
+#log4j and slf4j
+org-apache-logging-log4j-log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version.ref = "org-apache-logging-log4j"  }
+org-apache-logging-log4j-log4j-api = { module = "org.apache.logging.log4j:log4j-api" }
+org-apache-logging-log4j-log4j-core = { module = "org.apache.logging.log4j:log4j-core" }
+org-apache-logging-log4j-log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl" }
 org-apache-logging-log4j-log4j-api-kotlin = { module = "org.apache.logging.log4j:log4j-api-kotlin", version.ref = "org-apache-logging-log4j-log4j-api-kotlin" }
+org-slf4j-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+org-slf4j-jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j-api" }
+
 org-bouncycastle-bcpkix-jdk15on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }
 org-bouncycastle-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "org-bouncycastle" }
 org-hibernate-hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "org-hibernate-core" }

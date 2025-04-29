@@ -15,6 +15,7 @@ javaPlatform {
 
 dependencies {
     api(enforcedPlatform(libs.org.junit.jupiter.bom))
+    api(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
     constraints {
         api(libs.com.google.code.findbugs.jsr305)
         api(libs.com.google.inject.guice)
@@ -53,8 +54,10 @@ dependencies {
         api(libs.org.apache.httpcomponents.httpcore)
         api(libs.org.apache.logging.log4j.log4j.api)
         api(libs.org.apache.logging.log4j.log4j.core)
-        api(libs.org.apache.logging.log4j.log4j.slf4j.impl)
+        api(libs.org.apache.logging.log4j.log4j.slf4j2.impl)
         api(libs.org.apache.logging.log4j.log4j.api.kotlin)
+        api(libs.org.slf4j.slf4j.api)
+        api(libs.org.slf4j.jcl.over.slf4j)
         api(libs.org.bouncycastle.bcpkix.jdk15on)
         api(libs.org.bouncycastle.bcprov.jdk15on)
         api(libs.org.hibernate.hibernate.core)
