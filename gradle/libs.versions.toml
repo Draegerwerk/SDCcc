@@ -11,7 +11,7 @@ com-github-spotbugs = "5.0.14"
 com-github-spotbugs-annotations = "4.7.3"
 com-lemonappdev-konsist = "0.15.1"
 com-lmax-disruptor = "3.4.2"
-com-tngtech-archunit-junit5 = "1.2.1"
+com-tngtech-archunit = "1.2.1"
 detekt = "1.23.3"
 de-undercouch-download = "5.3.0"
 edu-sc-seis-launch4j = "2.5.0"
@@ -22,8 +22,10 @@ jakarta-inject = "2.0.1"
 jakarta-xml-bind = "4.0.2"
 javax-annotation = "1.3.2"
 javax-persistence = "2.2"
+jetbrains-annotations = "24.1.0"
 net-sf-saxon-he = "9.9.1-7"
 commons-io = "2.17.0"
+opentest4j = "1.3.0"
 org-apache-commons = "3.12.0"
 org-apache-derby = "10.15.2.0"
 org-apache-httpclient = "4.5.14"
@@ -58,16 +60,19 @@ detekt-cli = { module = "io.gitlab.arturbosch.detekt:detekt-cli", version.ref = 
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 io-github-threeten-jaxb-threeten-jaxb-core = { module = "io.github.threeten-jaxb:threeten-jaxb-core", version.ref = "threeten-jaxb-core" }
 io-grpc-grpc-api = { module = "io.grpc:grpc-api", version.ref = "grpc-version" }
+io-grpc-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc-version" }
 jakarta-xml-bind-jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 org-glassfish-jaxb-jaxb-core = { module = "org.glassfish.jaxb:jaxb-core", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-xjc = { module = "org.glassfish.jaxb:jaxb-xjc", version.ref = "org-glassfish-jaxb" }
+org-jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 org-junit-jupiter-bom = { module = "org.junit:junit-bom", version.ref = "org-junit" }
 org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 org-jvnet-jaxb-jaxb-plugins = { module = "org.jvnet.jaxb:jaxb-plugins", version.ref = "org-jvnet-jaxb-plugins" }
 org-jvnet-jaxb-jaxb-plugin-annotate = { module = "org.jvnet.jaxb:jaxb-plugin-annotate", version.ref = "org-jvnet-jaxb-plugins" }
 org-jvnet-jaxb-jaxb-plugins-tools = { module = "org.jvnet.jaxb:jaxb-plugins-tools", version.ref = "org-jvnet-jaxb-plugins" }
+org-opentest4j-opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j"}
 com-github-spotbugs = { module = "com.github.spotbugs:spotbugs", version.ref = "com-github-spotbugs" }
 com-draeger-medical-t2iapi = { module = "com.draeger.medical:t2iapi", version.ref = "com-draeger-medical-t2iapi" }
 com-github-spotbugs-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "com-github-spotbugs-annotations" }
@@ -75,7 +80,9 @@ com-google-guava-guava = { module = "com.google.guava:guava", version.ref = "com
 com-google-code-gson-gson = { module = "com.google.code.gson:gson", version.ref = "com-google-code-gson" }
 com-lemonappdev-konsist = { module = "com.lemonappdev:konsist", version.ref = "com-lemonappdev-konsist" }
 com-lmax-disruptor = { module = "com.lmax:disruptor", version.ref = "com-lmax-disruptor" }
-com-tngtech-archunit-archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "com-tngtech-archunit-junit5" }
+com-tngtech-archunit-archunit = { module = "com.tngtech.archunit:archunit", version.ref = "com-tngtech-archunit" }
+com-tngtech-archunit-archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "com-tngtech-archunit" }
+com-tngtech-archunit-archunit-junit5-api = { module = "com.tngtech.archunit:archunit-junit5-api", version.ref = "com-tngtech-archunit" }
 commons-cli-commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 jakarta-inject-jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject" }
 javax-annotation-javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation" }
