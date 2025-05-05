@@ -6,11 +6,7 @@ repositories {
     mavenCentral()
 }
 
-val actualRevision = checkNotNull(project.findProperty("revision")) { "No revision property configured" }
-val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No changelist property configured" }
-
 group = "com.draeger.medical"
-version = "$actualRevision$actualChangeList"
 
 javaPlatform {
     allowDependencies()
