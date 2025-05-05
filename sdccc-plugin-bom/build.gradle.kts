@@ -7,7 +7,6 @@ repositories {
 }
 
 group = "com.draeger.medical"
-version = "1.0.0-SNAPSHOT"
 
 dependencies {
     constraints {
