@@ -6,8 +6,11 @@ repositories {
     mavenCentral()
 }
 
+val actualRevision = checkNotNull(project.findProperty("revision")) { "No revision property configured" }
+val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No changelist property configured" }
+
 group = "com.draeger.medical"
-version = "1.0.0-SNAPSHOT"
+version = "$actualRevision$actualChangeList"
 
 javaPlatform {
     allowDependencies()
@@ -35,7 +38,6 @@ dependencies {
         api(libs.org.junit.jupiter.junit.jupiter.api)
         api(libs.org.junit.jupiter.junit.jupiter.engine)
         api(libs.org.jvnet.jaxb.jaxb.plugins)
-        api(libs.org.jvnet.jaxb.jaxb.plugin.annotate)
         api(libs.org.jvnet.jaxb.jaxb.plugins.tools)
         api(libs.com.github.spotbugs)
         api(libs.com.draeger.medical.t2iapi)

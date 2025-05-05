@@ -6,8 +6,11 @@ repositories {
     mavenCentral()
 }
 
+val actualRevision = checkNotNull(project.findProperty("revision")) { "No revision property configured" }
+val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No changelist property configured" }
+
 group = "com.draeger.medical"
-version = "1.0.0-SNAPSHOT"
+version = "$actualRevision$actualChangeList"
 
 dependencies {
     constraints {

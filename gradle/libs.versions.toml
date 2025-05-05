@@ -45,13 +45,11 @@ org-tomlj = "1.0.0"
 org-jvnet-jaxb-plugins = "4.0.8"
 protoc-version = "3.25.0"
 slf4j-api = "2.0.17"
-sdccc-bom = "1.0.0-SNAPSHOT"
-sdccc-plugin-bom = "1.0.0-SNAPSHOT"
 threeten-jaxb-core = "2.2.0"
 
 [libraries]
-com-draeger-medical-sdccc-bom = { module = "com.draeger.medical:sdccc-bom", version.ref = "sdccc-bom" }
-com-draeger-medical-sdccc-plugin-bom = { module = "com.draeger.medical:sdccc-plugin-bom", version.ref = "sdccc-plugin-bom" }
+com-draeger-medical-sdccc-bom = { module = "com.draeger.medical:sdccc-bom" }
+com-draeger-medical-sdccc-plugin-bom = { module = "com.draeger.medical:sdccc-plugin-bom" }
 com-google-code-findbugs-jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs" }
 com-google-inject-guice = { module = "com.google.inject:guice", version.ref = "guice" }
 com-google-inject-extensions-guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
@@ -70,7 +68,6 @@ org-junit-jupiter-bom = { module = "org.junit:junit-bom", version.ref = "org-jun
 org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 org-jvnet-jaxb-jaxb-plugins = { module = "org.jvnet.jaxb:jaxb-plugins", version.ref = "org-jvnet-jaxb-plugins" }
-org-jvnet-jaxb-jaxb-plugin-annotate = { module = "org.jvnet.jaxb:jaxb-plugin-annotate", version.ref = "org-jvnet-jaxb-plugins" }
 org-jvnet-jaxb-jaxb-plugins-tools = { module = "org.jvnet.jaxb:jaxb-plugins-tools", version.ref = "org-jvnet-jaxb-plugins" }
 org-opentest4j-opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j"}
 com-github-spotbugs = { module = "com.github.spotbugs:spotbugs", version.ref = "com-github-spotbugs" }
