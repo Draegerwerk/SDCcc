@@ -42,7 +42,6 @@ org-mockito-kotlin = "5.4.0"
 org-somda-sdc = "6.2.1"
 org-somda-sdc-model = "6.0.1"
 org-tomlj = "1.0.0"
-org-jvnet-jaxb-plugins = "4.0.8"
 protoc-version = "3.25.0"
 slf4j-api = "2.0.17"
 threeten-jaxb-core = "2.2.0"
@@ -67,8 +66,6 @@ org-jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref 
 org-junit-jupiter-bom = { module = "org.junit:junit-bom", version.ref = "org-junit" }
 org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
-org-jvnet-jaxb-jaxb-plugins = { module = "org.jvnet.jaxb:jaxb-plugins", version.ref = "org-jvnet-jaxb-plugins" }
-org-jvnet-jaxb-jaxb-plugins-tools = { module = "org.jvnet.jaxb:jaxb-plugins-tools", version.ref = "org-jvnet-jaxb-plugins" }
 org-opentest4j-opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j"}
 com-github-spotbugs = { module = "com.github.spotbugs:spotbugs", version.ref = "com-github-spotbugs" }
 com-draeger-medical-t2iapi = { module = "com.draeger.medical:t2iapi", version.ref = "com-draeger-medical-t2iapi" }
@@ -105,7 +102,6 @@ org-bouncycastle-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk18on", 
 org-hibernate-hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "org-hibernate-core" }
 org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "org-jetbrains-kotlin" }
 org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "org-jetbrains-kotlin" }
-org-jetbrains-kotlin-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }
 org-junit-jupiter-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 org-junit-platform-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 org-junit-platform-junit-platform-engine = { module = "org.junit.platform:junit-platform-engine" }

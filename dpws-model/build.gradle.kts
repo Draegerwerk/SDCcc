@@ -14,7 +14,6 @@ dependencies {
     api(libs.org.glassfish.jaxb.jaxb.runtime)
     api(libs.jakarta.xml.bind.jakarta.xml.bind.api)
     api(libs.io.github.threeten.jaxb.threeten.jaxb.core)
-    api(libs.org.jvnet.jaxb.jaxb.plugins)
     implementation(libs.jakarta.xml.bind.jakarta.xml.bind.api)
 }
 

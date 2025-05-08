@@ -74,7 +74,6 @@ dependencies {
     testImplementation(libs.com.tngtech.archunit.archunit.junit5)
     testImplementation(libs.com.tngtech.archunit.archunit.junit5.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.params)
-    testImplementation(libs.org.jetbrains.kotlin.kotlin.test.junit5)
     testImplementation(libs.org.opentest4j.opentest4j)
 
     annotationProcessor(libs.org.apache.logging.log4j.log4j.core)
