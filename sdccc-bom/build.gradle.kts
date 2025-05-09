@@ -15,6 +15,7 @@ javaPlatform {
 dependencies {
     api(enforcedPlatform(libs.org.junit.jupiter.bom))
     api(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
+    api(enforcedPlatform(libs.org.jetbrains.kotlin.kotlin.bom))
     constraints {
         api(libs.com.google.code.findbugs.jsr305)
         api(libs.com.google.inject.guice)

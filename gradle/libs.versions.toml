@@ -35,7 +35,9 @@ org-apache-logging-log4j-log4j-api-kotlin = "1.4.0"
 org-bouncycastle = "1.78.1"
 org-glassfish-jaxb = "4.0.5"
 org-hibernate-core = "5.4.24.Final"
-org-jetbrains-kotlin = "1.9.23"
+# also check that the version in root settings.gradle.kts aligns, since version catalogs can not be used there
+# (see: https://discuss.gradle.org/t/how-to-use-version-catalog-in-the-root-settings-gradle-kts-file/44603)
+org-jetbrains-kotlin = "1.9.24"
 org-junit = "5.10.3"
 org-mockito = "5.12.0"
 org-mockito-kotlin = "5.4.0"
@@ -100,8 +102,9 @@ org-slf4j-jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = 
 org-bouncycastle-bcpkix-jdk15on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }
 org-bouncycastle-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "org-bouncycastle" }
 org-hibernate-hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "org-hibernate-core" }
-org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "org-jetbrains-kotlin" }
-org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "org-jetbrains-kotlin" }
+org-jetbrains-kotlin-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "org-jetbrains-kotlin" }
+org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
 org-junit-jupiter-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 org-junit-platform-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 org-junit-platform-junit-platform-engine = { module = "org.junit.platform:junit-platform-engine" }
