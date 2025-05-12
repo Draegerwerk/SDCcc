@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the SoapMarshalling is now configurable regarding packages to scan for JAXB classes and the schemas for validation 
 - the collected data is now flushed after each precondition 
 - moved test case specific parameter into separate file test_parameter.toml
-- sdc-ri version to 6.2.1
+- sdc-ri version to 6.2.2
 - build is now using gradle instead of maven
 - value of GLUE.R0036_0 from true to false in the example config test_configuration.toml
 - t2iapi version to 4.2.0
