@@ -11,9 +11,11 @@ val javaVersion = property("javaVersion").toString()
 
 dependencies {
     api(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
+    annotationProcessor(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
     detekt(libs.detekt.cli)
     detekt(libs.detekt.formatting)
     api(libs.org.jetbrains.kotlin.kotlin.stdlib)
+    api(libs.org.jetbrains.annotations)
     api(libs.org.junit.jupiter.junit.jupiter.api)
     api(libs.org.junit.jupiter.junit.jupiter.engine)
     api(libs.org.junit.platform.junit.platform.launcher)
@@ -36,8 +38,10 @@ dependencies {
 
     api(libs.org.apache.logging.log4j.log4j.api)
     api(libs.org.apache.logging.log4j.log4j.core)
-    api(libs.org.apache.logging.log4j.log4j.slf4j.impl)
+    api(libs.org.apache.logging.log4j.log4j.slf4j2.impl)
     api(libs.org.apache.logging.log4j.log4j.api.kotlin)
+    api(libs.org.slf4j.slf4j.api)
+    api(libs.org.slf4j.jcl.over.slf4j)
 
     api(libs.com.github.spotbugs.spotbugs.annotations)
     api(libs.net.sf.saxon.saxon.he)
@@ -61,13 +65,16 @@ dependencies {
     api(libs.com.lemonappdev.konsist)
     api(libs.com.google.guava.guava)
     api(libs.com.google.code.gson.gson)
+    testImplementation(libs.io.grpc.grpc.stub)
     testImplementation(libs.org.mockito.mockito.core)
     testImplementation(libs.org.mockito.kotlin.mockito.kotlin)
     testImplementation(projects.bicepsModel)
     testImplementation(projects.dpwsModel)
+    testImplementation(libs.com.tngtech.archunit.archunit)
     testImplementation(libs.com.tngtech.archunit.archunit.junit5)
+    testImplementation(libs.com.tngtech.archunit.archunit.junit5.api)
     testImplementation(libs.org.junit.jupiter.junit.jupiter.params)
-    testImplementation(libs.org.jetbrains.kotlin.kotlin.test.junit5)
+    testImplementation(libs.org.opentest4j.opentest4j)
 
     annotationProcessor(libs.org.apache.logging.log4j.log4j.core)
 }
@@ -91,6 +98,7 @@ tasks.check {
 tasks.test {
     useJUnitPlatform()
     exclude("it/com/draeger/medical/sdccc/testsuite_it_mock_tests/**")
+    testLogging.showStandardStreams = true
     maxHeapSize = "3g"
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 }

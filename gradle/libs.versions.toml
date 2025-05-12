@@ -11,7 +11,7 @@ com-github-spotbugs = "5.0.14"
 com-github-spotbugs-annotations = "4.7.3"
 com-lemonappdev-konsist = "0.15.1"
 com-lmax-disruptor = "3.4.2"
-com-tngtech-archunit-junit5 = "1.2.1"
+com-tngtech-archunit = "1.2.1"
 detekt = "1.23.3"
 de-undercouch-download = "5.3.0"
 edu-sc-seis-launch4j = "2.5.0"
@@ -22,8 +22,10 @@ jakarta-inject = "2.0.1"
 jakarta-xml-bind = "4.0.2"
 javax-annotation = "1.3.2"
 javax-persistence = "2.2"
+jetbrains-annotations = "24.1.0"
 net-sf-saxon-he = "9.9.1-7"
 commons-io = "2.17.0"
+opentest4j = "1.3.0"
 org-apache-commons = "3.12.0"
 org-apache-derby = "10.15.2.0"
 org-apache-httpclient = "4.5.14"
@@ -33,22 +35,22 @@ org-apache-logging-log4j-log4j-api-kotlin = "1.4.0"
 org-bouncycastle = "1.78.1"
 org-glassfish-jaxb = "4.0.5"
 org-hibernate-core = "5.4.24.Final"
-org-jetbrains-kotlin = "1.9.23"
+# also check that the version in root settings.gradle.kts aligns, since version catalogs can not be used there
+# (see: https://discuss.gradle.org/t/how-to-use-version-catalog-in-the-root-settings-gradle-kts-file/44603)
+org-jetbrains-kotlin = "1.9.24"
 org-junit = "5.10.3"
 org-mockito = "5.12.0"
 org-mockito-kotlin = "5.4.0"
 org-somda-sdc = "6.2.1"
 org-somda-sdc-model = "6.0.1"
 org-tomlj = "1.0.0"
-org-jvnet-jaxb-plugins = "4.0.8"
 protoc-version = "3.25.0"
-sdccc-bom = "1.0.0-SNAPSHOT"
-sdccc-plugin-bom = "1.0.0-SNAPSHOT"
+slf4j-api = "2.0.17"
 threeten-jaxb-core = "2.2.0"
 
 [libraries]
-com-draeger-medical-sdccc-bom = { module = "com.draeger.medical:sdccc-bom", version.ref = "sdccc-bom" }
-com-draeger-medical-sdccc-plugin-bom = { module = "com.draeger.medical:sdccc-plugin-bom", version.ref = "sdccc-plugin-bom" }
+com-draeger-medical-sdccc-bom = { module = "com.draeger.medical:sdccc-bom" }
+com-draeger-medical-sdccc-plugin-bom = { module = "com.draeger.medical:sdccc-plugin-bom" }
 com-google-code-findbugs-jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs" }
 com-google-inject-guice = { module = "com.google.inject:guice", version.ref = "guice" }
 com-google-inject-extensions-guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
@@ -57,16 +59,16 @@ detekt-cli = { module = "io.gitlab.arturbosch.detekt:detekt-cli", version.ref = 
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 io-github-threeten-jaxb-threeten-jaxb-core = { module = "io.github.threeten-jaxb:threeten-jaxb-core", version.ref = "threeten-jaxb-core" }
 io-grpc-grpc-api = { module = "io.grpc:grpc-api", version.ref = "grpc-version" }
+io-grpc-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc-version" }
 jakarta-xml-bind-jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 org-glassfish-jaxb-jaxb-core = { module = "org.glassfish.jaxb:jaxb-core", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "org-glassfish-jaxb" }
 org-glassfish-jaxb-jaxb-xjc = { module = "org.glassfish.jaxb:jaxb-xjc", version.ref = "org-glassfish-jaxb" }
+org-jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 org-junit-jupiter-bom = { module = "org.junit:junit-bom", version.ref = "org-junit" }
 org-junit-jupiter-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 org-junit-jupiter-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
-org-jvnet-jaxb-jaxb-plugins = { module = "org.jvnet.jaxb:jaxb-plugins", version.ref = "org-jvnet-jaxb-plugins" }
-org-jvnet-jaxb-jaxb-plugin-annotate = { module = "org.jvnet.jaxb:jaxb-plugin-annotate", version.ref = "org-jvnet-jaxb-plugins" }
-org-jvnet-jaxb-jaxb-plugins-tools = { module = "org.jvnet.jaxb:jaxb-plugins-tools", version.ref = "org-jvnet-jaxb-plugins" }
+org-opentest4j-opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j"}
 com-github-spotbugs = { module = "com.github.spotbugs:spotbugs", version.ref = "com-github-spotbugs" }
 com-draeger-medical-t2iapi = { module = "com.draeger.medical:t2iapi", version.ref = "com-draeger-medical-t2iapi" }
 com-github-spotbugs-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "com-github-spotbugs-annotations" }
@@ -74,7 +76,9 @@ com-google-guava-guava = { module = "com.google.guava:guava", version.ref = "com
 com-google-code-gson-gson = { module = "com.google.code.gson:gson", version.ref = "com-google-code-gson" }
 com-lemonappdev-konsist = { module = "com.lemonappdev:konsist", version.ref = "com-lemonappdev-konsist" }
 com-lmax-disruptor = { module = "com.lmax:disruptor", version.ref = "com-lmax-disruptor" }
-com-tngtech-archunit-archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "com-tngtech-archunit-junit5" }
+com-tngtech-archunit-archunit = { module = "com.tngtech.archunit:archunit", version.ref = "com-tngtech-archunit" }
+com-tngtech-archunit-archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "com-tngtech-archunit" }
+com-tngtech-archunit-archunit-junit5-api = { module = "com.tngtech.archunit:archunit-junit5-api", version.ref = "com-tngtech-archunit" }
 commons-cli-commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 jakarta-inject-jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject" }
 javax-annotation-javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation" }
@@ -85,16 +89,22 @@ org-apache-commons-commons-lang3 = { module = "org.apache.commons:commons-lang3"
 org-apache-derby-derby = { module = "org.apache.derby:derby", version.ref = "org-apache-derby" }
 org-apache-httpcomponents-httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "org-apache-httpclient" }
 org-apache-httpcomponents-httpcore = { module = "org.apache.httpcomponents:httpcore", version.ref = "org-apache-httpcore" }
-org-apache-logging-log4j-log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "org-apache-logging-log4j" }
-org-apache-logging-log4j-log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "org-apache-logging-log4j" }
-org-apache-logging-log4j-log4j-slf4j-impl = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "org-apache-logging-log4j" }
+
+#log4j and slf4j
+org-apache-logging-log4j-log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version.ref = "org-apache-logging-log4j"  }
+org-apache-logging-log4j-log4j-api = { module = "org.apache.logging.log4j:log4j-api" }
+org-apache-logging-log4j-log4j-core = { module = "org.apache.logging.log4j:log4j-core" }
+org-apache-logging-log4j-log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl" }
 org-apache-logging-log4j-log4j-api-kotlin = { module = "org.apache.logging.log4j:log4j-api-kotlin", version.ref = "org-apache-logging-log4j-log4j-api-kotlin" }
+org-slf4j-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+org-slf4j-jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j-api" }
+
 org-bouncycastle-bcpkix-jdk15on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "org-bouncycastle" }
 org-bouncycastle-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "org-bouncycastle" }
 org-hibernate-hibernate-core = { module = "org.hibernate:hibernate-core", version.ref = "org-hibernate-core" }
-org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "org-jetbrains-kotlin" }
-org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "org-jetbrains-kotlin" }
-org-jetbrains-kotlin-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }
+org-jetbrains-kotlin-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "org-jetbrains-kotlin" }
+org-jetbrains-kotlin-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+org-jetbrains-kotlin-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
 org-junit-jupiter-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 org-junit-platform-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 org-junit-platform-junit-platform-engine = { module = "org.junit.platform:junit-platform-engine" }
