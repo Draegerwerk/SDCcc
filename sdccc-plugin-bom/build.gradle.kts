@@ -8,7 +8,12 @@ repositories {
 
 group = "com.draeger.medical"
 
+javaPlatform {
+    allowDependencies()
+}
+
 dependencies {
+    api(enforcedPlatform(libs.org.jetbrains.kotlin.kotlin.bom))
     constraints {
         api(libs.com.github.jk1.license.report)
         api(libs.gradleplugins.spotbugs)
