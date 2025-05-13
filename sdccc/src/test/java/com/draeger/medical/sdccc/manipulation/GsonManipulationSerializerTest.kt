@@ -1,16 +1,15 @@
 /*
- * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2024 Draegerwerk AG & Co. KGaA.
+ * This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
  *
- * SPDX-License-Identifier: MIT
+ * Copyright (C) 2025 Draegerwerk AG & Co. KGaA
  */
 
 package com.draeger.medical.sdccc.manipulation
 
 import com.draeger.medical.t2iapi.ResponseTypes
 import com.google.gson.Gson
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 /**
  * Test class for de-/serialization testing.

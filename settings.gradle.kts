@@ -7,9 +7,23 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
+buildscript {
+    configurations.all {
+        resolutionStrategy {
+            force("org.jetbrains.kotlin:kotlin-bom:1.9.24")
+        }
+    }
+}
+
+plugins {
+    id("com.autonomousapps.build-health") version "2.17.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.24" apply false
+}
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "sdccc_parent"
 include(":biceps-model")
 include(":dpws-model")
 include(":sdccc")
+includeBuild("sdccc-bom")

@@ -9,10 +9,6 @@ plugins {
 repositories {
     mavenLocal()
 
-    maven {
-        url = uri("https://maven.pkg.github.com/Draegerwerk/t2iapi")
-    }
-
     mavenCentral()
 
     maven {
@@ -34,4 +30,3 @@ tasks.withType<JavaCompile>() {
 tasks.withType<Javadoc>() {
     options.encoding = "UTF-8"
 }
-

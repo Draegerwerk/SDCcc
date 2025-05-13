@@ -1,11 +1,23 @@
-[DraegerLicenseMIT]
+[LicenseHeaderJava]
 file_name_pattern: sdccc/src/**/*.java
 file_header_encoding: utf-8
-header_regex_file: .github/license-check/header-MIT-draeger-java.txt
+header_regex_file: .github/license-check/header-java.txt
 header_regex_file_encoding: utf-8
 
-[DraegerLicenseMITKt]
+[LicenseHeaderKt]
 file_name_pattern: sdccc/src/**/*.kt
 file_header_encoding: utf-8
-header_regex_file: .github/license-check/header-MIT-draeger-java.txt
+header_regex_file: .github/license-check/header-java.txt
+header_regex_file_encoding: utf-8
+
+[LicenseHeaderXml]
+file_name_pattern: sdccc/src/test/**/*.xml
+file_header_encoding: utf-8
+header_regex_file: .github/license-check/header-xml.txt
+header_regex_file_encoding: utf-8
+
+[LicenseHeaderWsdl]
+file_name_pattern: sdccc/src/test/**/*.wsdl
+file_header_encoding: utf-8
+header_regex_file: .github/license-check/header-xml.txt
 header_regex_file_encoding: utf-8

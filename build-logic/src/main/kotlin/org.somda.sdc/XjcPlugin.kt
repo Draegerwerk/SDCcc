@@ -52,9 +52,10 @@ class XjcPlugin : Plugin<Project> {
 
         @Suppress("ObjectLiteralToLambda") // conversion doesn't work, SAM support is messed up
         val createXjcOutputDirAction = object : Action<Task> {
-            override fun execute(it: Task) {
-                it.doLast {
-                    project.layout.buildDirectory.dir(GENERATED_SOURCES_FOLDER_PATH).get().asFile.mkdirs()
+            override fun execute(task: Task) {
+                task.outputs.dir(xjcOutputDir)
+                task.doLast {
+                    xjcOutputDir.asFile.mkdirs()
                 }
             }
         }
@@ -68,8 +69,10 @@ class XjcPlugin : Plugin<Project> {
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.glassfish.jaxb.jaxb.core").get().get())
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.glassfish.jaxb.jaxb.runtime").get().get())
                 project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.glassfish.jaxb.jaxb.xjc").get().get())
-                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.jvnet.jaxb.jaxb.plugins").get().get())
-                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.jvnet.jaxb.jaxb.plugins.tools").get().get())
+                project.dependencies.add(CONFIG_NAME, project.dependencies.enforcedPlatform(libs.findLibrary("org.apache.logging.log4j.log4j.bom").get().get()))
+                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.apache.logging.log4j.log4j.slf4j2.impl").get().get())
+                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.slf4j.slf4j.api").get().get())
+                project.dependencies.add(CONFIG_NAME, libs.findLibrary("org.slf4j.jcl.over.slf4j").get().get())
 
                 // append additional user-specified arguments
                 val newClassPath = jaxb + extension.jaxbClasspath.getOrElse(project.objects.fileCollection())
@@ -103,6 +106,12 @@ class XjcPlugin : Plugin<Project> {
                     extension.schemaLocation.get().toString(),
                     extension.schemaLocation.get().toString()
                 )
+
+                javaExec.inputs.dir(extension.schemaLocation)
+                javaExec.inputs.property("xjcArgs", extension.args.orElse(emptyList()))
+
+                javaExec.outputs.dir(xjcOutputDir)
+                javaExec.outputs.file(episodeOutputFile)
             }
 
         }

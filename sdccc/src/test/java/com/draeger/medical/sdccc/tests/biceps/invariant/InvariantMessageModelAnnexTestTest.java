@@ -1,12 +1,12 @@
 /*
- * This Source Code Form is subject to the terms of the MIT License.
- * Copyright (c) 2023 Draegerwerk AG & Co. KGaA.
+ * This Source Code Form is subject to the terms of the "SDCcc non-commercial use license".
  *
- * SPDX-License-Identifier: MIT
+ * Copyright (C) 2025 Draegerwerk AG & Co. KGaA
  */
 
 package com.draeger.medical.sdccc.tests.biceps.invariant;
 
+import static com.draeger.medical.sdccc.util.MdibBuilder.DEFAULT_MDS_HANDLE;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -184,9 +184,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -234,9 +234,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -282,9 +282,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -334,9 +334,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -382,7 +382,7 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final Pair<MdsDescriptor, MdsState> mdsDescriptor = mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final Pair<MdsDescriptor, MdsState> mdsDescriptor = mdibBuilder.buildMds(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -427,9 +427,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -472,9 +472,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final String parentDescriptor = "parentDescriptor";
         final Envelope first = buildDescriptionModificationReport(
@@ -525,9 +525,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO, BigInteger.ONE);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -560,9 +560,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -576,9 +576,7 @@ public class InvariantMessageModelAnnexTestTest {
                 SEQUENCE_ID,
                 BigInteger.TWO,
                 buildDescriptionModificationReportPart(
-                        DescriptionModificationType.CRT,
-                        MdibBuilder.DEFAULT_MDS_HANDLE,
-                        mdibBuilder.buildVmd(crtPart1Handle)),
+                        DescriptionModificationType.CRT, DEFAULT_MDS_HANDLE, mdibBuilder.buildVmd(crtPart1Handle)),
                 buildDescriptionModificationReportPart(
                         DescriptionModificationType.CRT, crtPart1Handle, mdibBuilder.buildChannel("second channel")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
@@ -605,9 +603,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -621,9 +619,7 @@ public class InvariantMessageModelAnnexTestTest {
                 SEQUENCE_ID,
                 BigInteger.TWO,
                 buildDescriptionModificationReportPart(
-                        DescriptionModificationType.CRT,
-                        MdibBuilder.DEFAULT_MDS_HANDLE,
-                        mdibBuilder.buildVmd(crtPart1Handle)),
+                        DescriptionModificationType.CRT, DEFAULT_MDS_HANDLE, mdibBuilder.buildVmd(crtPart1Handle)),
                 buildDescriptionModificationReportPart(
                         DescriptionModificationType.CRT, crtPart1Handle, mdibBuilder.buildChannel("second channel")));
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
@@ -653,9 +649,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.ZERO);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -729,9 +725,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -769,9 +765,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -795,9 +791,9 @@ public class InvariantMessageModelAnnexTestTest {
         final Envelope initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
         messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
 
-        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsDescriptor mdsDescriptor = mdibBuilder.buildMdsDescriptor(DEFAULT_MDS_HANDLE);
         mdsDescriptor.setDescriptorVersion(BigInteger.TEN);
-        final MdsState mdsState = mdibBuilder.buildMdsState(MdibBuilder.DEFAULT_MDS_HANDLE);
+        final MdsState mdsState = mdibBuilder.buildMdsState(DEFAULT_MDS_HANDLE);
 
         final Envelope first = buildDescriptionModificationReport(
                 SEQUENCE_ID,
@@ -834,7 +830,7 @@ public class InvariantMessageModelAnnexTestTest {
                 BigInteger.ONE,
                 buildDescriptionModificationReportPart(
                         DescriptionModificationType.UPT,
-                        mdibBuilder.buildMds(MdibBuilder.DEFAULT_MDS_HANDLE),
+                        mdibBuilder.buildMds(DEFAULT_MDS_HANDLE),
                         mdibBuilder.buildAlertSystem(MDS_ALERT_SYSTEM_HANDLE, AlertActivation.ON)));
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
 
@@ -1650,6 +1646,81 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC11GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var first = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.PSD, false));
+
+        final var secondDescriptionModification = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildAlertConditionDescriptor(
+                                        VMD_ALERT_CONDITION_HANDLE, AlertConditionKind.OTH, AlertConditionPriority.ME),
+                                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true))));
+
+        final var second = buildEpisodicAlertReport(
+                SEQUENCE_ID,
+                BigInteger.TWO,
+                buildAlertConditionState(VMD_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_ALERT_CONDITION_HANDLE, AlertActivation.ON, true),
+                buildAlertConditionState(MDS_SECOND_ALERT_CONDITION_HANDLE, AlertActivation.ON, true));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, first);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, secondDescriptionModification);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, second);
+
+        testClass.testRequirementC11();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC11GoodDescriptionModificationInsertDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var handle = VMD_ALERT_CONDITION_HANDLE + "other";
+
+        final var descriptionModificationReportWithAlertChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        DEFAULT_MDS_HANDLE,
+                        Pair.of(
+                                mdibBuilder.buildAlertConditionDescriptor(
+                                        handle, AlertConditionKind.OTH, AlertConditionPriority.ME),
+                                buildAlertConditionState(handle, AlertActivation.ON, true))));
+
+        final var alertReport = buildEpisodicAlertReport(
+                SEQUENCE_ID, BigInteger.ONE, buildAlertConditionState(handle, AlertActivation.ON, true));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithAlertChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, alertReport);
+
+        testClass.testRequirementC11();
+    }
+
+    /**
      * Tests whether duplicated EpisodicAlertReports pass the test.
      *
      * @throws Exception on any exception
@@ -1832,6 +1903,67 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC12();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC12GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithComponentChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildBatteryDescriptor(BATTERY_HANDLE),
+                                buildBatteryState(BATTERY_HANDLE, ComponentActivation.STND_BY, 10L))));
+
+        final var componentReport = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.ONE, buildBatteryState(BATTERY_HANDLE, ComponentActivation.STND_BY, 10L));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithComponentChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
+
+        testClass.testRequirementC12();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC12GoodDescriptionModificationInsertDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var handle = BATTERY_HANDLE + "other";
+
+        final var descriptionModificationReportWithComponentChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        DEFAULT_MDS_HANDLE,
+                        Pair.of(
+                                mdibBuilder.buildBatteryDescriptor(handle),
+                                buildBatteryState(handle, ComponentActivation.STND_BY, 10L))));
+
+        final var componentReport = buildEpisodicComponentReport(
+                SEQUENCE_ID, BigInteger.ONE, buildBatteryState(handle, ComponentActivation.STND_BY, 10L));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithComponentChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, componentReport);
 
         testClass.testRequirementC12();
     }
@@ -2033,6 +2165,85 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC13();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC13GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithContextChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildPatientContextDescriptor(PATIENT_CONTEXT_DESCRIPTOR_HANDLE),
+                                buildPatientContextState(
+                                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                                        PATIENT_CONTEXT_STATE_HANDLE,
+                                        ContextAssociation.ASSOC,
+                                        mdibBuilder.buildCodedValue("newCodedValue")))));
+
+        final var contextReport = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildPatientContextState(
+                        PATIENT_CONTEXT_DESCRIPTOR_HANDLE,
+                        PATIENT_CONTEXT_STATE_HANDLE,
+                        ContextAssociation.ASSOC,
+                        mdibBuilder.buildCodedValue("newCodedValue")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithContextChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
+
+        testClass.testRequirementC13();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC13GoodDescriptionModificationInsertDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var handle = OPERATOR_CONTEXT_DESCRIPTOR_HANDLE + "other";
+        final var stateHandle = OPERATOR_CONTEXT_STATE_HANDLE + "other";
+
+        final var descriptionModificationReportWithContextChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        SYSTEM_CONTEXT_HANDLE,
+                        Pair.of(
+                                mdibBuilder.buildOperatorContextDescriptor(handle),
+                                buildOperatorContextState(
+                                        handle,
+                                        stateHandle,
+                                        ContextAssociation.ASSOC,
+                                        mdibBuilder.buildCodedValue("newCodedValue")))));
+
+        final var contextReport = buildEpisodicContextReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildOperatorContextState(
+                        handle, stateHandle, ContextAssociation.ASSOC, mdibBuilder.buildCodedValue("newCodedValue")));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithContextChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, contextReport);
 
         testClass.testRequirementC13();
     }
@@ -2285,6 +2496,91 @@ public class InvariantMessageModelAnnexTestTest {
     }
 
     /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC14GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithMetricChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildNumericMetricDescriptor(
+                                        NUMERIC_METRIC_HANDLE,
+                                        MetricCategory.RCMM,
+                                        MetricAvailability.CONT,
+                                        mdibBuilder.buildCodedValue("abc"),
+                                        BigDecimal.ONE),
+                                buildNumericMetricState(
+                                        NUMERIC_METRIC_HANDLE,
+                                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                                        ComponentActivation.NOT_RDY))));
+
+        final var metricReport = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        NUMERIC_METRIC_HANDLE,
+                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                        ComponentActivation.NOT_RDY));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithMetricChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
+
+        testClass.testRequirementC14();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC14GoodDescriptionModificationInsertDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var handle = NUMERIC_METRIC_HANDLE + "other";
+
+        final var descriptionModificationReportWithMetricChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        CHANNEL_HANDLE,
+                        Pair.of(
+                                mdibBuilder.buildNumericMetricDescriptor(
+                                        handle,
+                                        MetricCategory.RCMM,
+                                        MetricAvailability.CONT,
+                                        mdibBuilder.buildCodedValue("abc"),
+                                        BigDecimal.ONE),
+                                buildNumericMetricState(
+                                        handle,
+                                        mdibBuilder.buildNumericMetricValue(BigDecimal.TEN),
+                                        ComponentActivation.NOT_RDY))));
+
+        final var metricReport = buildEpisodicMetricReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildNumericMetricState(
+                        handle, mdibBuilder.buildNumericMetricValue(BigDecimal.TEN), ComponentActivation.NOT_RDY));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithMetricChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, metricReport);
+
+        testClass.testRequirementC14();
+    }
+
+    /**
      * Tests whether duplicated EpisodicMetricReports pass the test.
      *
      * @throws Exception on any exception
@@ -2469,6 +2765,70 @@ public class InvariantMessageModelAnnexTestTest {
         messageStorageUtil.addInboundSecureHttpMessage(storage, first);
         messageStorageUtil.addInboundSecureHttpMessage(storage, second);
         messageStorageUtil.addInboundSecureHttpMessage(storage, third);
+
+        testClass.testRequirementC15();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC15GoodDescriptionModificationDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var descriptionModificationReportWithOperationStateChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.UPT,
+                        Pair.of(
+                                mdibBuilder.buildSetStringOperationDescriptor(
+                                        SET_STRING_OPERATION_HANDLE, "someTarget"),
+                                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS))));
+
+        final var operationalStateReport = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildSetStringOperationState(SET_STRING_OPERATION_HANDLE, OperatingMode.DIS));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithOperationStateChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, operationalStateReport);
+
+        testClass.testRequirementC15();
+    }
+
+    /**
+     * Tests whether a DescriptionModificationReport with the same MdibVersion that already contains
+     * the changed state does not fail the test.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    public void testRequirementC15GoodDescriptionModificationInsertDoesNotFailTheTest() throws Exception {
+        final var initial = buildMdib(SEQUENCE_ID, BigInteger.ZERO);
+
+        final var handle = SET_STRING_OPERATION_HANDLE + "other";
+
+        final var descriptionModificationReportWithOperationStateChanges = buildDescriptionModificationReport(
+                SEQUENCE_ID,
+                BigInteger.ONE,
+                buildDescriptionModificationReportPart(
+                        DescriptionModificationType.CRT,
+                        SCO_HANDLE,
+                        Pair.of(
+                                mdibBuilder.buildSetStringOperationDescriptor(handle, "someTarget"),
+                                buildSetStringOperationState(handle, OperatingMode.DIS))));
+
+        final var operationalStateReport = buildEpisodicOperationalStateReport(
+                SEQUENCE_ID, BigInteger.ONE, buildSetStringOperationState(handle, OperatingMode.DIS));
+
+        messageStorageUtil.addInboundSecureHttpMessage(storage, initial);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, descriptionModificationReportWithOperationStateChanges);
+        messageStorageUtil.addInboundSecureHttpMessage(storage, operationalStateReport);
 
         testClass.testRequirementC15();
     }
@@ -2843,6 +3203,7 @@ public class InvariantMessageModelAnnexTestTest {
         for (var reportPart : reportParts) {
             report.getReportPart().add(reportPart);
         }
+
         return messageBuilder.createSoapMessageWithBody(ActionConstants.ACTION_EPISODIC_ALERT_REPORT, report);
     }
 
