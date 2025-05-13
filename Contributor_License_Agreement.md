@@ -1,10 +1,9 @@
 # **DRÄGER CONTRIBUTOR LICENSE** AGREEMENT
 
-At Dräger, we are keen on promoting Free and Open-Source Software (FOSS) —
-both for our own use and the use in the FOSS Community. For Us and for You to
-be certain what it means legally to contribute to one of our Projects, we are
-required to have this Agreement in place. It governs the way We are allowed to
-make use of your Contribution and the Project it is part of.
+For Us and for You to be certain what it means legally to contribute to one 
+of our Projects, we are required to have this Agreement in place. It governs 
+the way We are allowed to make use of your Contribution and the Project 
+it is part of.
 
 This is a legally binding document, so please read it carefully before agreeing
 to it.
@@ -18,14 +17,14 @@ regarding Your Contribution. This Agreements becomes effective when we accept
 Your Contribution. Please note that We are under no obligation to use Your
 Contribution or to continue to use a Contribution in any of our Projects.
 Except for the license granted herein to Us and to the recipients of the
-open-source software made available by Us or by our Subsidiaries and/or
+software made available by Us or by our Subsidiaries and/or
 Affiliates, You reserve all right, title, and interest in and to Your
 Contributions.
 
 ## 1. Definitions
 
 "**Dräger**", "**Us**" or "**We**" means Drägerwerk AG & Co. KGaA or any of our
-Subsidiaries and/or Affiliates initiating or maintaining the open-source
+Subsidiaries and/or Affiliates initiating or maintaining the 
 software project You intend to provide Your Contribution to.
 
 1.1  "**You**" (or "**Your**") shall mean the natural person or legal entity
