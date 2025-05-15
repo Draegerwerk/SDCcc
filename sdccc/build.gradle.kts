@@ -9,6 +9,20 @@ plugins {
 
 val javaVersion = property("javaVersion").toString()
 
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(
+            module("commons-logging:commons-logging")
+        ).using(
+            module(
+                "${libs.org.slf4j.jcl.over.slf4j.get().group}:" +
+                        "${libs.org.slf4j.jcl.over.slf4j.get().name}:" +
+                        "${libs.org.slf4j.jcl.over.slf4j.get().version}"
+            )
+        )
+    }
+}
+
 dependencies {
     api(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
     annotationProcessor(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
