@@ -11,3 +11,10 @@ val actualChangeList = checkNotNull(project.findProperty("changelist")) { "No ch
 
 group = "com.draeger.medical"
 version = "$actualRevision$actualChangeList"
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Implementation-Title"] = project.name
+        attributes["Implementation-Version"] = project.version
+    }
+}
