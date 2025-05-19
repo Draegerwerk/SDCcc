@@ -287,7 +287,7 @@ R0021=false
 After a test run, a folder *testruns* is created in the same directory as the executable by default. The directory can
 be changed with the command line argument `test_run_directory` (see Section **Running SDCcc**) and the results are
 saved in that folder. Each test run has its own directory, which is named according to the following scheme
-*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument `no_subdirecotries` is set, in which case the test
+*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument `no_subdirectories` is set, in which case the test
 run files are saved directly in the *testruns* folder. Inside this directory there is a subdirectory *Database* and 
 three files *SDCcc.log*, *TEST-SDCcc_direct.xml* and *TEST-SDCcc_invariant.xml*. *Database* is a database in which all 
 messages exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run
