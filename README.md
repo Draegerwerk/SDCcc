@@ -314,12 +314,13 @@ Prior to using the test tool, the user is responsible for:
   have been sent previously, only sends a request containing an MdibVersion when for each and every previous request
   during the same test run a respective response has been received.
 
-| **Limitation**                                                                                                                                                                                          |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul> |
-| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                               |
-| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                   |
-| Multipart/Related Content-Type is not supported                                                                                                                                                         |
+| **Limitation**                                                                                                                                                                                                          |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul>                 |
+| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                               |
+| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                                   |
+| Multipart/Related Content-Type is not supported                                                                                                                                                                         |
+| The DUT must ensure that it is compliant with XML 1.0 Fourth Edition, as only XML 1.0 Fourth Edition is fully supported due to the use of Apache Xerces 2.12.2, which is included in the JDK 17 used by the SDCcc tool. |
 
 [MDPWS]
 
