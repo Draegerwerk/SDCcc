@@ -218,6 +218,28 @@ public class GRpcManipulations implements Manipulations {
     }
 
     @Override
+    public ManipulationResponse<String> createContextStateWithAssocAndBindingMdibVersion(
+            final String descriptorHandle, final ContextAssociation association) {
+        final var request = ContextRequests.CreateContextStateWithAssocAndBindingMdibVersionRequest.newBuilder()
+                .setDescriptorHandle(descriptorHandle)
+                .setContextAssociation(toApiContextType(association))
+                .build();
+
+        return performCallWrapper(
+                v -> contextStub.createContextStateWithAssocAndBindingMdibVersion(request),
+                v -> fallback.createContextStateWithAssocAndBindingMdibVersion(descriptorHandle, association),
+                response -> response.getStatus().getResult(),
+                msg -> {
+                    if (msg.getContextStateHandle().isBlank()) {
+                        return ManipulationResponse.from(msg.getStatus(), null);
+                    }
+                    return ManipulationResponse.from(msg.getStatus(), msg.getContextStateHandle());
+                },
+                ManipulationParameterUtil.buildContextAssociationManipulationParameterData(
+                        descriptorHandle, association));
+    }
+
+    @Override
     public ResultResponse setAlertActivation(final String handle, final AlertActivation activationState) {
         final var message = ActivationStateRequests.SetAlertActivationRequest.newBuilder()
                 .setHandle(handle)
