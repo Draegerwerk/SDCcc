@@ -79,7 +79,7 @@ public interface Manipulations {
             String descriptorHandle, ContextAssociation association);
 
     /**
-     * Associates a <em>new</em> context state for the given descriptor handle, sets the association and
+     * Associates a <em>new</em> context state for the given descriptor handle. Then sets the association and
      * gives it a BindingMdibVersion
      *
      * @param descriptorHandle to associate a new context for
