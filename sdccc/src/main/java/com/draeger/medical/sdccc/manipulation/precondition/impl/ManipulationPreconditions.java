@@ -1764,14 +1764,14 @@ public class ManipulationPreconditions {
     }
 
     /**
-     * Set every
+     * Associate contextState to every descriptor.
      */
     public static class AssociateContextStateWithBindingMdibVersion extends ManipulationPrecondition {
 
         private static final Logger LOG = LogManager.getLogger(AssociateContextStateWithBindingMdibVersion.class);
 
         /**
-         * Creates a
+         * Creates a AssociateContextStateWithBindingMdibVersion precondition.
          */
         public AssociateContextStateWithBindingMdibVersion() {
             super(AssociateContextStateWithBindingMdibVersion::manipulation);
