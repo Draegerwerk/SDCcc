@@ -3,7 +3,7 @@
 [versions]
 commons-cli = "1.4"
 com-diffplug-spotless = "6.21.0"
-com-draeger-medical-t2iapi = "4.2.0"
+com-draeger-medical-t2iapi = "4.3.0.541-SNAPSHOT"
 com-google-code-gson = "2.11.0"
 com-google-guava = "33.4.7-jre"
 com-github-jk1-license = "2.9"

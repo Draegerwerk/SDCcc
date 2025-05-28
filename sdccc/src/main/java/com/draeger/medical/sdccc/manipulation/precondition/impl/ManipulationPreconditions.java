@@ -36,6 +36,7 @@ import org.somda.sdc.biceps.common.access.MdibAccessObservable;
 import org.somda.sdc.biceps.common.access.MdibAccessObserver;
 import org.somda.sdc.biceps.common.event.ContextStateModificationMessage;
 import org.somda.sdc.biceps.model.participant.AbstractAlertState;
+import org.somda.sdc.biceps.model.participant.AbstractContextDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractContextState;
 import org.somda.sdc.biceps.model.participant.AbstractDescriptor;
 import org.somda.sdc.biceps.model.participant.AbstractDeviceComponentDescriptor;
@@ -1759,6 +1760,64 @@ public class ManipulationPreconditions {
             final boolean result1 = removeAndReinsertDescriptors(injector, LOG);
             final boolean result2 = descriptionUpdateWithParentChildRelationshipManipulation(injector, LOG);
             return result1 || result2;
+        }
+    }
+
+    /**
+     * Set every
+     */
+    public static class AssociateContextStateWithBindingMdibVersion extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(AssociateContextStateWithBindingMdibVersion.class);
+
+        /**
+         * Creates a
+         */
+        public AssociateContextStateWithBindingMdibVersion() {
+            super(AssociateContextStateWithBindingMdibVersion::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            LOG.info("Executing AssocBindingMdibVersion");
+            final var testClient = injector.getInstance(TestClient.class);
+            final var manipulations = injector.getInstance(Manipulations.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice;
+
+            remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                LOG.error("remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final var abstractDeviceComponentEntities = mdibAccess.findEntitiesByType(AbstractContextDescriptor.class);
+
+            boolean atLeastOneSuccessful = false;
+            boolean noFailure = true;
+            for (MdibEntity abstractDeviceComponentEntity : abstractDeviceComponentEntities) {
+
+                final ResponseTypes.Result result = manipulations
+                        .createContextStateWithAssocAndBindingMdibVersion(
+                                abstractDeviceComponentEntity.getHandle(), ContextAssociation.ASSOC)
+                        .getResult();
+
+                switch (result) {
+                    case RESULT_NOT_SUPPORTED:
+                        break;
+                    case RESULT_SUCCESS:
+                        atLeastOneSuccessful = true;
+                        break;
+                    default:
+                        noFailure = false;
+                        break;
+                }
+            }
+            return atLeastOneSuccessful && noFailure;
         }
     }
 }
