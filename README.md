@@ -287,7 +287,7 @@ R0021=false
 After a test run, a folder *testruns* is created in the same directory as the executable by default. The directory can
 be changed with the command line argument `test_run_directory` (see Section **Running SDCcc**) and the results are
 saved in that folder. Each test run has its own directory, which is named according to the following scheme
-*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument `no_subdirecotries` is set, in which case the test
+*SDCcc-Testrun_YYYY-MM-DDTHH-mm-SS*, unless the command line argument `no_subdirectories` is set, in which case the test
 run files are saved directly in the *testruns* folder. Inside this directory there is a subdirectory *Database* and 
 three files *SDCcc.log*, *TEST-SDCcc_direct.xml* and *TEST-SDCcc_invariant.xml*. *Database* is a database in which all 
 messages exchanged during the test run are recorded. *SDCcc.log* is the complete log file of the test run
@@ -314,12 +314,13 @@ Prior to using the test tool, the user is responsible for:
   have been sent previously, only sends a request containing an MdibVersion when for each and every previous request
   during the same test run a respective response has been received.
 
-| **Limitation**                                                                                                                                                                                          |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul> |
-| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                               |
-| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                   |
-| Multipart/Related Content-Type is not supported                                                                                                                                                         |
+| **Limitation**                                                                                                                                                                                                                                                                                                                                                           |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| The SDCcc tool does not support the following HTTP Headers in test cases which use messages stored in the database: <ul><li>transfer-encoding</li><li>content-length</li><li>content-encoding</li></ul>                                                                                                                                                                  |
+| The ArchiveService is not supported and will be ignored by the test tool.                                                                                                                                                                                                                                                                                                |
+| Safe data transmission (MDPWS Ch. 9) is not supported                                                                                                                                                                                                                                                                                                                    |
+| Multipart/Related Content-Type is not supported                                                                                                                                                                                                                                                                                                                          |
+| Due to the use of Apache Xerces 2.12.2, which is included in the JDK 17 used by the SDCcc tool, only XML 1.0 Fourth Edition is fully supported. Therefore, the DUT must ensure that it only sends messages that are compliant with XML 1.0 Fourth Edition and that it can process messages that are compliant with XML 1.0 Fourth Edition and not XML 1.0 Fifth Edition. |
 
 [MDPWS]
 

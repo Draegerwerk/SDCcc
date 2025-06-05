@@ -9,6 +9,20 @@ plugins {
 
 val javaVersion = property("javaVersion").toString()
 
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(
+            module("commons-logging:commons-logging")
+        ).using(
+            module(
+                "${libs.org.slf4j.jcl.over.slf4j.get().group}:" +
+                        "${libs.org.slf4j.jcl.over.slf4j.get().name}:" +
+                        "${libs.org.slf4j.jcl.over.slf4j.get().version}"
+            )
+        )
+    }
+}
+
 dependencies {
     api(enforcedPlatform(libs.com.draeger.medical.sdccc.bom))
     annotationProcessor(enforcedPlatform(libs.org.apache.logging.log4j.log4j.bom))
@@ -57,8 +71,8 @@ dependencies {
     api(libs.javax.persistence.javax.persistence.api)
     api(libs.org.glassfish.jaxb.jaxb.core)
     api(libs.org.glassfish.jaxb.jaxb.runtime)
-    api(libs.org.bouncycastle.bcprov.jdk15on)
-    api(libs.org.bouncycastle.bcpkix.jdk15on)
+    api(libs.org.bouncycastle.bcprov.jdk18on)
+    api(libs.org.bouncycastle.bcpkix.jdk18on)
     api(libs.com.lmax.disruptor)
     api(libs.jakarta.inject.jakarta.inject.api)
     api(libs.org.jetbrains.kotlin.kotlin.reflect)
