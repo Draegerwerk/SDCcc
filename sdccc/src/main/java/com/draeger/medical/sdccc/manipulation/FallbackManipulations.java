@@ -159,7 +159,7 @@ public class FallbackManipulations implements Manipulations {
     public ManipulationResponse<String> createContextStateWithAssocAndBindingMdibVersion(
             final String descriptorHandle, final ContextAssociation association) {
         final var interactionMessage = String.format(
-                "Create a NEW context state for the descriptor %s and set the context association to %s"
+                "For a new or existing context state of the descriptor %s set the context association to %s"
                         + " and set a BindingMdibVersion."
                         + " Provide the state handle of the newly created context state.",
                 descriptorHandle, association.value());

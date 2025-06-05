@@ -1764,7 +1764,7 @@ public class ManipulationPreconditions {
     }
 
     /**
-     * Associate contextState to every descriptor.
+     * Associate context states with a BindingMdibVersion to every abstract context descriptor.
      */
     public static class AssociateContextStateWithBindingMdibVersion extends ManipulationPrecondition {
 
