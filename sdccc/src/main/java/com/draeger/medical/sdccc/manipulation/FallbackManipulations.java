@@ -156,6 +156,26 @@ public class FallbackManipulations implements Manipulations {
     }
 
     @Override
+    public ManipulationResponse<String> createContextStateWithAssocAndBindingMdibVersion(
+            final String descriptorHandle, final ContextAssociation association) {
+        final var interactionMessage = String.format(
+                "For a new or existing context state of the descriptor %s set the context association to %s"
+                        + " and set a BindingMdibVersion."
+                        + " Provide the state handle of the newly created context state.",
+                descriptorHandle, association.value());
+        final var data = interactionFactory
+                .createUserInteraction(new FilterInputStream(System.in) {
+                    @Override
+                    public void close() {}
+                })
+                .displayStringInputUserInteraction(interactionMessage);
+        if (data == null || data.isBlank()) {
+            return ManipulationResponse.fail(null);
+        }
+        return ManipulationResponse.from(ResponseTypes.Result.RESULT_SUCCESS, data);
+    }
+
+    @Override
     public ResultResponse setAlertActivation(final String handle, final AlertActivation activationState) {
         final var interactionMessage =
                 String.format("Set activation state for handle %s to %s", handle, activationState.name());
