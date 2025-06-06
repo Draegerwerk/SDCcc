@@ -389,11 +389,12 @@ Prior to using the test tool, the user is responsible for:
 
 [GLUE]
 
-| **Requirement** | **T2IAPI Manipulation**    |
-|-----------------|----------------------------|
-| R0036_0         | SetLocationDetail          |
-| R0056           | TriggerAnyDescriptorUpdate |
-| R0078_0         | TriggerReport              |
+| **Requirement** | **T2IAPI Manipulation**                          |
+|-----------------|--------------------------------------------------|
+| R0013           | createContextStateWithAssocAndBindingMdibVersion |
+| R0036_0         | SetLocationDetail                                |
+| R0056           | TriggerAnyDescriptorUpdate                       |
+| R0078_0         | TriggerReport                                    |
 
 ## Exit Codes
 
