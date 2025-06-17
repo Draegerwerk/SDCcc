@@ -286,6 +286,8 @@ public class InvariantNonFunctionalQualityAttributesTest extends InjectorTestBas
     @TestDescription("Starting from the initially retrieved mdib, applies every episodic report to the mdib and"
             + " verifies for every context state, that the BindingEndTime is set, when the UnbindingMdibVersion is"
             + " present.")
+    @RequirePrecondition(
+            manipulationPreconditions = {ManipulationPreconditions.AssociateContextStateWithUnbindingMdibVersion.class})
     void testRequirementR0072() throws NoTestData, IOException {
         final var mdibHistorian = mdibHistorianFactory.createMdibHistorian(
                 messageStorage, getInjector().getInstance(TestRunObserver.class));
