@@ -895,6 +895,80 @@ public class GRpcManipulationsTest {
     @Test
     @Timeout(TEST_TIMEOUT)
     @TestDescription("Verifies whether data is correctly transmitted to server and results are sent correctly")
+    public void testCreateContextStateWithAssocAndUnbindingMdibVersionSuccessAndFailure() throws Exception {
+        final String descriptorHandle = "descHandle";
+        final String expectedContextStateHandle = "contextHandle";
+
+        final ContextAssociation association = ContextAssociation.DIS;
+
+        // success
+        {
+            final SettableFuture<ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest>
+                    requestFuture = SettableFuture.create();
+            contextHandler.setCreateContextStateWithAssocAndUnbindingMdibVersionCall((request, responseObserver) -> {
+                requestFuture.set(request);
+                final ContextResponses.CreateContextStateWithAssociationResponse reply =
+                        ContextResponses.CreateContextStateWithAssociationResponse.newBuilder()
+                                .setStatus(BasicResponses.BasicResponse.newBuilder()
+                                        .setResult(ResponseTypes.Result.RESULT_SUCCESS)
+                                        .build())
+                                .setContextStateHandle(expectedContextStateHandle)
+                                .build();
+                responseObserver.onNext(reply);
+                responseObserver.onCompleted();
+                return null;
+            });
+
+            final ManipulationResponse<String> response =
+                    manipulations.createContextStateWithAssocAndUnbindingMdibVersion(descriptorHandle, association);
+            assertNotNull(response, "Manipulation failed, but shouldn't have");
+            assertSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation failed, but shouldn't have");
+            assertEquals(expectedContextStateHandle, response.getResponse());
+            final ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest capturedRequest =
+                    requestFuture.get();
+            assertEquals(descriptorHandle, capturedRequest.getDescriptorHandle());
+            verifyNoInteractions(fallback);
+        }
+
+        // failure
+        {
+            final SettableFuture<ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest>
+                    requestFutureFailure = SettableFuture.create();
+            contextHandler.setCreateContextStateWithAssocAndUnbindingMdibVersionCall((request, responseObserver) -> {
+                requestFutureFailure.set(request);
+                final ContextResponses.CreateContextStateWithAssociationResponse reply =
+                        ContextResponses.CreateContextStateWithAssociationResponse.newBuilder()
+                                .setStatus(BasicResponses.BasicResponse.newBuilder()
+                                        .setResult(ResponseTypes.Result.RESULT_FAIL)
+                                        .build())
+                                .setContextStateHandle("")
+                                .build();
+                responseObserver.onNext(reply);
+                responseObserver.onCompleted();
+                return null;
+            });
+
+            final ManipulationResponse<String> response =
+                    manipulations.createContextStateWithAssocAndUnbindingMdibVersion(descriptorHandle, association);
+            assertNotSame(
+                    ResponseTypes.Result.RESULT_SUCCESS,
+                    response.getResult(),
+                    "Manipulation succeeded but shouldn't have");
+            verifyNoInteractions(fallback);
+        }
+    }
+
+    /**
+     * Verifies whether data is correctly transmitted to server and results are sent correctly.
+     *
+     * @throws Exception on any exception
+     */
+    @Test
+    @Timeout(TEST_TIMEOUT)
+    @TestDescription("Verifies whether data is correctly transmitted to server and results are sent correctly")
     public void testTriggerAnyDescriptorUpdate() throws Exception {
         // success
         {
@@ -1329,6 +1403,17 @@ public class GRpcManipulationsTest {
                     return null;
                 };
 
+        private BiFunction<
+                        ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest,
+                        StreamObserver<ContextResponses.CreateContextStateWithAssociationResponse>,
+                        Void>
+                createContextStateWithAssocAndUnbindingMdibVersionCall = (request, responseObserver) -> {
+                    asyncUnimplementedUnaryCall(
+                            ContextServiceGrpc.getCreateContextStateWithAssocAndUnbindingMdibVersionMethod(),
+                            responseObserver);
+                    return null;
+                };
+
         public void setSetLocationDetailCall(
                 final BiFunction<
                                 ContextRequests.SetLocationDetailRequest,
@@ -1375,6 +1460,22 @@ public class GRpcManipulationsTest {
                 final ContextRequests.CreateContextStateWithAssocAndBindingMdibVersionRequest request,
                 final StreamObserver<ContextResponses.CreateContextStateWithAssociationResponse> responseObserver) {
             createContextStateWithAssocAndBindingMdibVersionCall.apply(request, responseObserver);
+        }
+
+        public void setCreateContextStateWithAssocAndUnbindingMdibVersionCall(
+                final BiFunction<
+                                ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest,
+                                StreamObserver<ContextResponses.CreateContextStateWithAssociationResponse>,
+                                Void>
+                        call) {
+            this.createContextStateWithAssocAndUnbindingMdibVersionCall = call;
+        }
+
+        @Override
+        public void createContextStateWithAssocAndUnbindingMdibVersion(
+                final ContextRequests.CreateContextStateWithAssocAndUnbindingMdibVersionRequest request,
+                final StreamObserver<ContextResponses.CreateContextStateWithAssociationResponse> responseObserver) {
+            createContextStateWithAssocAndUnbindingMdibVersionCall.apply(request, responseObserver);
         }
     }
 

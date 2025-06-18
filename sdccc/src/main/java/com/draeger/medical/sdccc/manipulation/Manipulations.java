@@ -90,6 +90,17 @@ public interface Manipulations {
             String descriptorHandle, ContextAssociation association);
 
     /**
+     * Sets the association of a new or existing context state for the given descriptor handle.
+     * And gives it a UnbindingMdibVersion.
+     *
+     * @param descriptorHandle to associate a new context for
+     * @param association      to set for new state
+     * @return result and handle of the newly created state, null if unsuccessful
+     */
+    ManipulationResponse<String> createContextStateWithAssocAndUnbindingMdibVersion(
+            String descriptorHandle, ContextAssociation association);
+
+    /**
      * Set the activation state of an alert system.
      *
      * @param handle          state handle to set activation state for

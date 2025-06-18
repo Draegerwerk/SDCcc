@@ -1820,4 +1820,62 @@ public class ManipulationPreconditions {
             return atLeastOneSuccessful && noFailure;
         }
     }
+
+    /**
+     * Associate context states with a UnbindingMdibVersion to every abstract context descriptor.
+     */
+    public static class AssociateContextStateWithUnbindingMdibVersion extends ManipulationPrecondition {
+
+        private static final Logger LOG = LogManager.getLogger(AssociateContextStateWithUnbindingMdibVersion.class);
+
+        /**
+         * Creates a AssociateContextStateWithUnbindingMdibVersion precondition.
+         */
+        public AssociateContextStateWithUnbindingMdibVersion() {
+            super(AssociateContextStateWithUnbindingMdibVersion::manipulation);
+        }
+
+        /**
+         * @return true if successful, false otherwise
+         */
+        static boolean manipulation(final Injector injector) {
+            LOG.info("Executing AssocUnbindingMdibVersion");
+            final var testClient = injector.getInstance(TestClient.class);
+            final var manipulations = injector.getInstance(Manipulations.class);
+
+            final MdibAccess mdibAccess;
+            final SdcRemoteDevice remoteDevice;
+
+            remoteDevice = testClient.getSdcRemoteDevice();
+            if (remoteDevice == null) {
+                LOG.error("remote device could not be accessed, likely due to a disconnect");
+                return false;
+            }
+            mdibAccess = remoteDevice.getMdibAccess();
+
+            final var abstractDeviceComponentEntities = mdibAccess.findEntitiesByType(AbstractContextDescriptor.class);
+
+            boolean atLeastOneSuccessful = false;
+            boolean noFailure = true;
+            for (MdibEntity abstractDeviceComponentEntity : abstractDeviceComponentEntities) {
+
+                final ResponseTypes.Result result = manipulations
+                        .createContextStateWithAssocAndUnbindingMdibVersion(
+                                abstractDeviceComponentEntity.getHandle(), ContextAssociation.ASSOC)
+                        .getResult();
+
+                switch (result) {
+                    case RESULT_NOT_SUPPORTED:
+                        break;
+                    case RESULT_SUCCESS:
+                        atLeastOneSuccessful = true;
+                        break;
+                    default:
+                        noFailure = false;
+                        break;
+                }
+            }
+            return atLeastOneSuccessful && noFailure;
+        }
+    }
 }
